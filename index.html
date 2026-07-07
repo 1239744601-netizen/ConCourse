@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ConCourse — Conquer your course selections</title>
+<link rel="icon" type="image/svg+xml" href="concourse-icon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --panel-2: #f2f5fa;
+    --border: #e3e8f0;
+    --text: #1f2733;
+    --muted: #6b7488;
+    --muted-2: #a2abbd;
+    --accent: #4361ee;
+    --accent-2: #10b981;
+    --danger: #e5484d;
+    --warn: #c77700;
+    --shadow: 0 4px 16px rgba(30,44,80,.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #ffffff, #f4f6fb);
+  }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: .3px; }
+  header p { margin: 12px 0 0; color: var(--muted-2); font-size: 13px; max-width: 720px; line-height: 1.5; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 52px; height: 52px; flex: none; }
+  .brand-name { font-size: 28px; font-weight: 800; letter-spacing: -.5px; line-height: 1; }
+  .brand-name .bn-a { color: var(--accent); }
+  .brand-name .bn-b { color: var(--text); }
+  .brand-tag { font-family: 'Cinzel', Georgia, 'Times New Roman', serif; font-size: 12.5px; font-weight: 600; letter-spacing: 1.4px; color: var(--muted); margin-top: 6px; }
+  .wrap {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 20px;
+    padding: 20px 28px 60px;
+    align-items: start;
+  }
+  @media (max-width: 980px) { .wrap { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .panel h2 { margin: 0 0 16px; font-size: 17px; text-transform: uppercase; letter-spacing: .6px; color: var(--text); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .panel h2::before { content: ""; width: 5px; height: 18px; background: var(--accent); border-radius: 3px; flex: none; }
+  label { display: block; font-size: 12px; color: var(--text); margin: 10px 0 4px; font-weight: 600; }
+  input, select {
+    width: 100%;
+    padding: 9px 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: filter .15s, transform .05s;
+  }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: #ffffff; }
+  .btn-accent { background: var(--accent-2); color: #ffffff; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); padding: 6px 10px; font-size: 12px; }
+  button:hover { filter: brightness(1.08); }
+  .days { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .day-chip {
+    padding: 6px 9px; border-radius: 7px; font-size: 12px; cursor: pointer;
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); user-select: none;
+  }
+  .day-chip.on { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 600; }
+  .slot-list { margin: 8px 0; }
+  .slot-item {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 10px; margin-bottom: 6px; font-size: 13px;
+  }
+  .slot-item .x { cursor: pointer; color: var(--danger); font-weight: 700; padding: 0 4px; }
+  .course-card {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; margin-bottom: 10px;
+  }
+  .course-card.req { border-color: var(--accent-2); }
+  .course-card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .course-title { font-weight: 700; font-size: 14px; }
+  .course-meta { color: var(--muted); font-size: 12px; }
+  .badge { display: inline-block; background: #e7ecfe; color: #3550d0; font-size: 11px; padding: 2px 7px; border-radius: 20px; margin-top: 4px; margin-right: 4px; }
+  .badge.warn { background: #fdf0dc; color: #a86400; }
+  .badge.req { background: #dcf5ea; color: #0a8e5f; }
+  .sec-line { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+  .prefs label.chk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); margin: 8px 0; cursor: pointer; }
+  .prefs input[type=checkbox] { width: auto; }
+  .toolbar { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  /* Grid */
+  .grid-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .event {
+    position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 4px 6px;
+    font-size: 11px; overflow: hidden; color: #06231a; box-shadow: var(--shadow); cursor: default;
+  }
+  .event b { display: block; font-size: 11px; }
+  .event small { opacity: .85; }
+  .empty-note { color: var(--muted); font-size: 14px; text-align: center; padding: 40px 10px; }
+  .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin: 10px 0 4px; }
+  .stat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
+  .stat b { display: block; font-size: 16px; color: var(--text); }
+  .alt-list { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .alt-btn { font-size: 12px; padding: 6px 10px; }
+  .alt-btn.active { outline: 2px solid var(--accent); }
+  .hidden { display: none; }
+  .hint { font-size: 11.5px; color: var(--muted-2); margin-top: 4px; line-height: 1.45; }
+  .conflict-warn { background: #fdecec; border: 1px solid #f4c4c4; color: #b3261e; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
+  .info-box { background: #e6f7f0; border: 1px solid #bce6d5; color: #0a7a51; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin: 10px 0; }
+  .dropped { background: #f5f3fb; border: 1px solid var(--border); color: var(--muted); padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-top: 10px; }
+  .dropped b { color: var(--warn); }
+  .link { color: var(--accent); cursor: pointer; text-decoration: underline; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ConCourse">
+      <rect x="0" y="0" width="100" height="100" rx="26" fill="#4361ee"/>
+      <rect x="22" y="48" width="8" height="14" rx="3" fill="#ffc24b"/>
+      <rect x="33" y="36" width="8" height="26" rx="3" fill="#ffc24b"/>
+      <rect x="59" y="36" width="8" height="26" rx="3" fill="#ffc24b"/>
+      <rect x="70" y="48" width="8" height="14" rx="3" fill="#ffc24b"/>
+      <circle cx="26" cy="48" r="2" fill="#fff3d6"/>
+      <circle cx="37" cy="36" r="2" fill="#fff3d6"/>
+      <circle cx="63" cy="36" r="2" fill="#fff3d6"/>
+      <circle cx="74" cy="48" r="2" fill="#fff3d6"/>
+      <rect x="20" y="62" width="60" height="17" rx="5" fill="#ffc24b"/>
+      <rect x="20" y="74" width="60" height="5" rx="2.5" fill="#f2a72e"/>
+      <polygon points="50,9 54.5,18 54.5,50 45.5,50 45.5,18" fill="#eef2ff"/>
+      <line x1="50" y1="14" x2="50" y2="49" stroke="#c3d0ee" stroke-width="1"/>
+      <rect x="38" y="50" width="24" height="6" rx="3" fill="#ffc24b"/>
+      <rect x="47" y="56" width="6" height="7" rx="1.5" fill="#e59a1f"/>
+      <path d="M50 66.5 L54 71 L50 75.5 L46 71 Z" fill="#10b981"/>
+    </svg>
+    <div>
+      <div class="brand-name"><span class="bn-a">Con</span><span class="bn-b">Course</span></div>
+      <div class="brand-tag">Conquer your course selections</div>
+    </div>
+  </div>
+  <p>Add every course you'd <i>like</i> to take — even more than you can fit in one semester. Set your required credits, and ConCourse enumerates every conflict-free combination, reaches your credit goal with the fewest courses, and ranks the best timetables for you.</p>
+</header>
+
+<div class="wrap">
+  <!-- LEFT: input -->
+  <div>
+    <div class="panel">
+      <h2>Add a Course</h2>
+      <label>Course name</label>
+      <input id="cName" placeholder="e.g. Introduction to Algorithms" />
+      <div class="row">
+        <div>
+          <label>Course code</label>
+          <input id="cCode" placeholder="e.g. CS 3410" />
+        </div>
+        <div>
+          <label>Professor</label>
+          <input id="cProf" placeholder="e.g. Dr. Lee" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Credits</label>
+          <input id="cCredits" type="number" min="0" step="1" value="3" />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <label class="chk" style="display:flex; align-items:center; gap:8px; margin-top:9px;">
+            <input type="checkbox" id="cReq" style="width:auto" /> Must take this course
+          </label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <label>Add a time slot (a section option for this course)</label>
+      <div class="days" id="dayPicker">
+        <span class="day-chip" data-d="1">Mon</span>
+        <span class="day-chip" data-d="2">Tue</span>
+        <span class="day-chip" data-d="3">Wed</span>
+        <span class="day-chip" data-d="4">Thu</span>
+        <span class="day-chip" data-d="5">Fri</span>
+        <span class="day-chip" data-d="6">Sat</span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label>Start</label>
+          <input id="sStart" type="time" value="09:00" />
+        </div>
+        <div>
+          <label>End</label>
+          <input id="sEnd" type="time" value="10:15" />
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn-ghost" id="addSlot">+ Add this slot as an option</button>
+      </div>
+      <div class="slot-list" id="pendingSlots"></div>
+
+      <label>How are the time slots above used?</label>
+      <select id="cSlotMode">
+        <option value="one">Alternative sections — pick the best ONE</option>
+        <option value="all">All required — the course meets at EVERY slot</option>
+      </select>
+      <div class="hint"><b>Pick one:</b> the professor offers the same class at several times; the scheduler chooses whichever fits best. <b>All required:</b> the course actually meets at every slot listed (e.g. lecture + lab, or different times on different days) — all are reserved together.</div>
+
+      <div class="divider"></div>
+      <button class="btn-primary" id="addCourse" style="width:100%">Add Course to List</button>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>Your Wishlist</h2>
+      <div id="courseList"><div class="empty-note">No courses yet. Add one above ☝️</div></div>
+      <div class="toolbar">
+        <button class="btn-ghost" id="loadSample">Load sample data</button>
+        <button class="btn-ghost" id="clearAll">Clear all</button>
+      </div>
+    </div>
+
+    <div class="panel prefs" style="margin-top:16px">
+      <h2>Semester Load</h2>
+
+      <label>Required credits this semester <span style="color:var(--danger)">*</span> (mandatory)</label>
+      <div class="row">
+        <div>
+          <input id="minCredits" type="number" min="0" step="1" placeholder="e.g. 15 — required" />
+          <div class="hint">Minimum total credits the timetable MUST reach.</div>
+        </div>
+        <div>
+          <input id="maxCredits" type="number" min="0" step="1" placeholder="max — optional" />
+          <div class="hint">Optional upper cap.</div>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin:6px 0 2px">🎯 <b>Goal:</b> reach your required credits with the <b>fewest courses possible</b> (favoring higher-credit courses). Fewer classes, same credits — less time on campus.</div>
+
+      <label>Free weekdays (a day off, besides the weekend)</label>
+      <select id="freeCount">
+        <option value="0">None — no preference</option>
+        <option value="1">At least 1 free weekday</option>
+        <option value="2">At least 2 free weekdays</option>
+      </select>
+      <div class="days" id="freeDayPicker" style="margin-top:8px">
+        <span class="day-chip" data-d="1">Mon</span>
+        <span class="day-chip" data-d="2">Tue</span>
+        <span class="day-chip" data-d="3">Wed</span>
+        <span class="day-chip" data-d="4">Thu</span>
+        <span class="day-chip" data-d="5">Fri</span>
+      </div>
+      <div class="hint">Optional: click a specific day you want guaranteed class-free. Otherwise the scheduler decides which day(s) to free while still fitting your courses.</div>
+
+      <div class="divider"></div>
+      <h2>Preferences (ranking)</h2>
+      <label class="chk"><input type="checkbox" id="pCompact" checked /> Prefer compact days (classes close together)</label>
+      <label class="chk"><input type="checkbox" id="pFewDays" checked /> Prefer fewer days on campus</label>
+      <label class="chk"><input type="checkbox" id="pNoEarly" /> Avoid classes before <input id="earlyTime" type="time" value="09:00" style="width:auto; display:inline-block; padding:4px 6px" /></label>
+      <label class="chk"><input type="checkbox" id="pNoLate" /> Avoid classes after <input id="lateTime" type="time" value="17:00" style="width:auto; display:inline-block; padding:4px 6px" /></label>
+      <label class="chk"><input type="checkbox" id="pLunch" /> Keep a lunch break (12:00–13:00 free)</label>
+      <div class="divider"></div>
+      <button class="btn-accent" id="generate" style="width:100%">⚡ Generate Best Schedules</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: results -->
+  <div class="panel">
+    <div class="grid-head">
+      <h2 style="margin:0">Weekly Timetable</h2>
+      <div id="scoreArea"></div>
+    </div>
+    <div id="statArea"></div>
+    <div id="altArea"></div>
+    <div id="warnArea"></div>
+    <div id="droppedArea"></div>
+    <div id="calArea">
+      <div class="empty-note">Add your wishlist, set your semester load, and hit <b>Generate Best Schedules</b> to see your optimized timetable here.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const DAYS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// ---------- State ----------
+let courses = [];        // {id,name,code,prof,credits,required,slots:[{days:[..],start,end}]}
+let pendingSlots = [];
+let selectedDays = new Set();
+let selectedFreeDays = new Set();  // specific weekdays the user wants kept class-free
+let solutions = [];      // ranked list
+let activeSolution = 0;
+let genNote = "";        // banner note from last generation (e.g. free-day tradeoff)
+
+// ---------- Helpers ----------
+const $ = id => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2, 9);
+function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
+function fmt(min){ let h=Math.floor(min/60), m=min%60; const ap=h>=12?"PM":"AM"; let hh=h%12; if(hh===0)hh=12; return `${hh}:${String(m).padStart(2,"0")} ${ap}`; }
+function slotLabel(s){ return `${s.days.map(x=>DAYS[x]).join("/")} ${fmt(s.start)}–${fmt(s.end)}`; }
+function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+
+// ---------- Day picker ----------
+$("dayPicker").addEventListener("click", e => {
+  const chip = e.target.closest(".day-chip");
+  if(!chip) return;
+  const d = +chip.dataset.d;
+  if(selectedDays.has(d)){ selectedDays.delete(d); chip.classList.remove("on"); }
+  else { selectedDays.add(d); chip.classList.add("on"); }
+});
+
+// ---------- Free-day picker ----------
+$("freeDayPicker").addEventListener("click", e => {
+  const chip = e.target.closest(".day-chip");
+  if(!chip) return;
+  const d = +chip.dataset.d;
+  if(selectedFreeDays.has(d)){ selectedFreeDays.delete(d); chip.classList.remove("on"); }
+  else { selectedFreeDays.add(d); chip.classList.add("on"); }
+});
+
+// ---------- Add slot ----------
+$("addSlot").addEventListener("click", () => {
+  if(selectedDays.size === 0){ alert("Pick at least one day for this slot."); return; }
+  const start = toMin($("sStart").value), end = toMin($("sEnd").value);
+  if(!(end > start)){ alert("End time must be after start time."); return; }
+  pendingSlots.push({ days: [...selectedDays].sort(), start, end });
+  renderPending();
+});
+
+function renderPending(){
+  const el = $("pendingSlots");
+  if(pendingSlots.length === 0){ el.innerHTML = ""; return; }
+  el.innerHTML = pendingSlots.map((s,i)=>`
+    <div class="slot-item"><span>${slotLabel(s)}</span><span class="x" data-i="${i}">✕</span></div>
+  `).join("");
+  el.querySelectorAll(".x").forEach(x=>x.onclick=()=>{ pendingSlots.splice(+x.dataset.i,1); renderPending(); });
+}
+
+// ---------- Add course ----------
+$("addCourse").addEventListener("click", () => {
+  const name = $("cName").value.trim();
+  if(!name){ alert("Enter a course name."); return; }
+  if(pendingSlots.length === 0){ alert("Add at least one time slot for this course."); return; }
+  courses.push({
+    id: uid(),
+    name,
+    code: $("cCode").value.trim(),
+    prof: $("cProf").value.trim(),
+    credits: Math.max(0, parseInt($("cCredits").value)||0),
+    required: $("cReq").checked,
+    slotMode: $("cSlotMode").value,   // "one" (pick a section) or "all" (meets at every slot)
+    slots: pendingSlots
+  });
+  pendingSlots = []; selectedDays.clear();
+  $("cName").value=""; $("cCode").value=""; $("cProf").value=""; $("cCredits").value="3"; $("cReq").checked=false; $("cSlotMode").value="one";
+  document.querySelectorAll(".day-chip.on").forEach(c=>c.classList.remove("on"));
+  renderPending(); renderCourses();
+});
+
+function renderCourses(){
+  const el = $("courseList");
+  if(courses.length === 0){ el.innerHTML = `<div class="empty-note">No courses yet. Add one above ☝️</div>`; return; }
+  el.innerHTML = courses.map(c=>`
+    <div class="course-card ${c.required?"req":""}">
+      <div class="top">
+        <div>
+          <div class="course-title">${escapeHtml(c.name)}</div>
+          <div class="course-meta">${escapeHtml(c.code||"—")} ${c.prof?"· "+escapeHtml(c.prof):""} · ${c.credits} cr</div>
+          <div>
+            ${c.required?`<span class="badge req">Must take</span>`:""}
+            ${c.slotMode==="all"
+              ? `<span class="badge">meets at all ${c.slots.length} slot${c.slots.length>1?"s":""}</span>`
+              : `<span class="badge ${c.slots.length===1?"warn":""}">${c.slots.length} section option${c.slots.length>1?"s":""}</span>`}
+          </div>
+          ${c.slots.map(s=>`<div class="sec-line">${c.slotMode==="all"?"▣":"•"} ${slotLabel(s)}</div>`).join("")}
+        </div>
+        <button class="btn-danger" data-id="${c.id}">Remove</button>
+      </div>
+    </div>
+  `).join("");
+  el.querySelectorAll(".btn-danger").forEach(b=>b.onclick=()=>{ courses=courses.filter(c=>c.id!==b.dataset.id); renderCourses(); });
+}
+
+// ---------- Conflict detection ----------
+function slotsOverlap(a, b){
+  if(!a.days.some(d => b.days.includes(d))) return false;
+  return a.start < b.end && b.start < a.end;
+}
+
+// ---------- Generate ----------
+$("generate").addEventListener("click", generate);
+
+function generate(){
+  if(courses.length === 0){ alert("Add some courses first."); return; }
+  const prefs = readPrefs();
+
+  // Required credits is MANDATORY
+  const minCrRaw = $("minCredits").value.trim();
+  if(minCrRaw === ""){
+    $("warnArea").innerHTML = `<div class="conflict-warn">⚠️ Please set your <b>Required credits this semester</b> — it's mandatory before a timetable can be built.</div>`;
+    $("minCredits").focus(); solutions=[]; clearResults(); return;
+  }
+  const minCr = Math.max(0, parseInt(minCrRaw)||0);
+  const maxCr = $("maxCredits").value.trim()==="" ? Infinity : Math.max(0, parseInt($("maxCredits").value)||0);
+  if(maxCr < minCr){
+    $("warnArea").innerHTML = `<div class="conflict-warn">⚠️ Max credits (${maxCr}) is less than your required minimum (${minCr}). Fix the caps.</div>`;
+    solutions=[]; clearResults(); return;
+  }
+
+  // Free-weekday constraint
+  const freeCount = parseInt($("freeCount").value)||0;         // 0 / 1 / 2
+  const specificFree = [...selectedFreeDays];                  // explicit days that must be class-free
+
+  const results = [];
+  const seen = new Set();
+  const MAX = 20000;                              // safety cap on combinations
+  const chosen = [];                              // {course, slots:[...]}
+  let minAnyCourses = Infinity;                   // fewest courses IGNORING free-day rule (to detect tradeoff)
+
+  // total credits currently chosen + best still reachable from course i onward (for pruning)
+  const suffixCredits = new Array(courses.length + 1).fill(0);
+  for(let i = courses.length - 1; i >= 0; i--) suffixCredits[i] = suffixCredits[i+1] + courses[i].credits;
+
+  // do any two slots in a bundle overlap each other? (invalid "all-required" course)
+  function bundleSelfConsistent(slots){
+    for(let a=0;a<slots.length;a++) for(let b=a+1;b<slots.length;b++) if(slotsOverlap(slots[a], slots[b])) return false;
+    return true;
+  }
+  // does a candidate bundle of slots conflict with what's already chosen?
+  function conflictsWithChosen(cand){
+    for(const ch of chosen) for(const a of ch.slots) for(const b of cand) if(slotsOverlap(a,b)) return true;
+    return false;
+  }
+  // does this pick-set satisfy the free-weekday rule?
+  function freeDaysOK(){
+    const wd = new Set();
+    for(const ch of chosen) for(const s of ch.slots) for(const d of s.days) if(d>=1 && d<=5) wd.add(d);
+    if(specificFree.length){ for(const d of specificFree) if(wd.has(d)) return false; return true; }
+    if(freeCount > 0){ return (5 - wd.size) >= freeCount; }
+    return true;
+  }
+
+  function backtrack(i, credits){
+    if(results.length >= MAX) return;
+    if(i === courses.length){
+      if(chosen.length === 0) return;
+      for(const c of courses){ if(c.required && !chosen.some(ch=>ch.course.id===c.id)) return; }
+      if(credits < minCr || credits > maxCr) return;   // must land within the credit window
+      minAnyCourses = Math.min(minAnyCourses, chosen.length);
+      if(!freeDaysOK()) return;
+      const key = chosen.map(ch=>ch.course.id+"#"+ch.chosenSlotKey).sort().join("|");
+      if(seen.has(key)) return;
+      seen.add(key);
+      results.push(chosen.map(ch=>({courseId:ch.course.id, slots:ch.slots})));
+      return;
+    }
+    // prune: even taking every remaining course can't reach the minimum → dead end
+    if(credits + suffixCredits[i] < minCr) return;
+
+    const course = courses[i];
+
+    // Candidate slot-bundles for this course
+    let candidates;
+    if(course.slotMode === "all"){
+      candidates = bundleSelfConsistent(course.slots) ? [{ slots: course.slots, key: "ALL" }] : [];
+    } else {
+      candidates = course.slots.map((s,idx)=>({ slots: [s], key: "S"+idx }));
+    }
+
+    // Option A: include this course via one of its candidates
+    for(const cand of candidates){
+      if(credits + course.credits > maxCr) continue;
+      if(!conflictsWithChosen(cand.slots)){
+        chosen.push({ course, slots: cand.slots, chosenSlotKey: cand.key });
+        backtrack(i+1, credits + course.credits);
+        chosen.pop();
+      }
+    }
+    // Option B: skip this course (only allowed if not required)
+    if(!course.required) backtrack(i+1, credits);
+  }
+  backtrack(0, 0);
+
+  if(results.length === 0){
+    solutions = [];
+    renderNoSolution(minCr, (freeCount>0 || specificFree.length>0));
+    return;
+  }
+
+  const minCourses = Math.min(...results.map(r=>r.length));
+
+  // Did keeping free days force MORE courses than otherwise needed?
+  genNote = "";
+  if((freeCount>0 || specificFree.length) && minCourses > minAnyCourses){
+    genNote = `Keeping ${specificFree.length ? specificFree.map(d=>DAYS[d]).join(" & ")+" free" : freeCount+" free weekday"+(freeCount>1?"s":"")} needs ${minCourses} courses to hit your credits, vs ${minAnyCourses} without the day-off rule.`;
+  }
+
+  const scored = results.map(r => ({ picks: r, score: scoreSchedule(r, prefs) }));
+  scored.sort((a,b)=> a.score.total - b.score.total);
+  solutions = scored.slice(0, 6);
+  activeSolution = 0;
+  renderResults();
+}
+
+function readPrefs(){
+  return {
+    compact: $("pCompact").checked,
+    fewDays: $("pFewDays").checked,
+    noEarly: $("pNoEarly").checked, early: toMin($("earlyTime").value),
+    noLate: $("pNoLate").checked, late: toMin($("lateTime").value),
+    lunch: $("pLunch").checked
+  };
+}
+
+// Lower score = better
+function scoreSchedule(picks, prefs){
+  const byDay = {};
+  let credits = 0;
+  for(const p of picks){
+    const c = courses.find(x=>x.id===p.courseId); credits += c ? c.credits : 0;
+    for(const s of p.slots){ for(const d of s.days){ (byDay[d]=byDay[d]||[]).push({start:s.start,end:s.end}); } }
+  }
+  let total = 0, gapMin = 0, daysUsed = 0, earlyPenalty = 0, latePenalty = 0, lunchPenalty = 0;
+  for(const d in byDay){
+    daysUsed++;
+    const arr = byDay[d].sort((a,b)=>a.start-b.start);
+    for(let i=1;i<arr.length;i++){ const gap = arr[i].start - arr[i-1].end; if(gap>0) gapMin += gap; }
+    const first = arr[0].start, last = arr[arr.length-1].end;
+    if(prefs.noEarly && first < prefs.early) earlyPenalty += (prefs.early - first);
+    if(prefs.noLate && last > prefs.late) latePenalty += (last - prefs.late);
+    if(prefs.lunch){ for(const c of arr){ if(c.start < 780 && c.end > 720) lunchPenalty += 60; } }
+  }
+  // Primary goal: FEWEST courses to reach the credit target.
+  total += picks.length * 100000;
+  // Tie-break: among equal course counts, prefer MORE credits ("as many credits as they can").
+  total -= credits * 200;
+  if(prefs.compact) total += gapMin * 1.0;
+  if(prefs.fewDays) total += daysUsed * 120;
+  total += earlyPenalty * 1.5 + latePenalty * 1.5 + lunchPenalty * 2;
+  return { total, gapMin, daysUsed, credits, count: picks.length };
+}
+
+// ---------- Rendering ----------
+function clearResults(){
+  $("scoreArea").innerHTML=""; $("statArea").innerHTML=""; $("altArea").innerHTML=""; $("droppedArea").innerHTML="";
+  $("calArea").innerHTML = `<div class="empty-note">No valid timetable found.</div>`;
+}
+
+function renderNoSolution(minCr, freeReq){
+  $("scoreArea").innerHTML = ""; $("statArea").innerHTML = ""; $("altArea").innerHTML = ""; $("droppedArea").innerHTML="";
+  const causes = [
+    `you can't reach the required <b>${minCr} credits</b> without a time conflict`,
+    freeReq ? `the requested <b>free weekday(s)</b> leave too little room` : ``,
+    `"must take" courses overlap each other`,
+    `an "all-required" course's own slots overlap each other`,
+  ].filter(Boolean);
+  $("warnArea").innerHTML = `<div class="conflict-warn">⚠️ No conflict-free schedule matches your constraints. Likely causes: ${causes.join("; ")}. Try lowering required credits, reducing free weekdays, adding more section options, or relaxing the credit cap.</div>`;
+  $("calArea").innerHTML = `<div class="empty-note">No valid timetable found.</div>`;
+}
+
+function renderResults(){
+  const sol = solutions[activeSolution];
+  const s = sol.score;
+  $("warnArea").innerHTML = "";
+  const includedIds = new Set(sol.picks.map(p=>p.courseId));
+  const dropped = courses.filter(c=>!includedIds.has(c.id));
+
+  // free weekdays (Mon–Fri with zero classes)
+  const wd = new Set();
+  sol.picks.forEach(p => p.slots.forEach(s2 => s2.days.forEach(d => { if(d>=1 && d<=5) wd.add(d); })));
+  const freeWk = 5 - wd.size;
+  const freeWkDays = [1,2,3,4,5].filter(d=>!wd.has(d)).map(d=>DAYS[d]).join(", ") || "none";
+
+  $("scoreArea").innerHTML = `<div class="badge">Ranked #${activeSolution+1} of ${solutions.length}</div>`;
+  $("statArea").innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><b>${s.count}</b>courses taken</div>
+      <div class="stat"><b>${s.credits}</b>credits</div>
+      <div class="stat"><b>${s.daysUsed}</b>days on campus</div>
+      <div class="stat"><b>${freeWk}</b>free weekday${freeWk!==1?"s":""} (${freeWkDays})</div>
+      <div class="stat"><b>${(s.gapMin/60).toFixed(1)}h</b>total gaps</div>
+    </div>
+    ${genNote ? `<div class="dropped" style="border-color:var(--warn)">⚖️ <b>Tradeoff:</b> ${genNote}</div>` : ""}`;
+
+  if(dropped.length){
+    $("droppedArea").innerHTML = `<div class="dropped">📌 <b>Left off (not needed to reach your credit goal):</b> ${dropped.map(c=>escapeHtml(c.name)).join(", ")} — this schedule already hits ${s.credits} credits with just ${s.count} course${s.count>1?"s":""}. Other ranked options below may use a different mix.</div>`;
+  } else {
+    $("droppedArea").innerHTML = `<div class="info-box">✅ Every wishlist course was needed and fits conflict-free.</div>`;
+  }
+
+  $("altArea").innerHTML = solutions.length>1
+    ? `<div class="alt-list">` + solutions.map((so,i)=>`<button class="btn-ghost alt-btn ${i===activeSolution?"active":""}" data-i="${i}" title="${so.score.count} courses, ${so.score.credits} credits, ${so.score.daysUsed} days">Option ${i+1} · ${so.score.count}c/${so.score.credits}cr/${so.score.daysUsed}d</button>`).join("") + `</div>`
+    : "";
+  $("altArea").querySelectorAll(".alt-btn").forEach(b=>b.onclick=()=>{ activeSolution=+b.dataset.i; renderResults(); });
+
+  renderCalendar(sol.picks);
+}
+
+const COLORS = ["#8fd6a4","#9db8ff","#ffcf87","#ff9db1","#c7a2ff","#87e0e0","#ffd0a0","#a0e6b0","#e0b0ff","#b0d0ff"];
+
+function renderCalendar(picks){
+  let minT = 24*60, maxT = 0;
+  const events = [];
+  // stable color per course id
+  const colorFor = {};
+  courses.forEach((c,i)=> colorFor[c.id] = COLORS[i % COLORS.length]);
+  picks.forEach((p) => {
+    const course = courses.find(c=>c.id===p.courseId);
+    for(const s of p.slots){
+      for(const d of s.days){
+        events.push({ day:d, start:s.start, end:s.end, course, color: colorFor[course.id] });
+        minT = Math.min(minT, s.start); maxT = Math.max(maxT, s.end);
+      }
+    }
+  });
+  minT = Math.floor(minT/60)*60; maxT = Math.ceil(maxT/60)*60;
+  if(minT >= maxT){ minT = 8*60; maxT = 18*60; }
+  const PXPERMIN = 0.9;
+  const totalH = (maxT - minT) * PXPERMIN;
+  const usedSat = events.some(e=>e.day===6);
+  const showDays = usedSat ? [1,2,3,4,5,6] : [1,2,3,4,5];
+
+  let hourRows = "";
+  for(let t=minT; t<=maxT; t+=60){
+    hourRows += `<div style="position:absolute; top:${(t-minT)*PXPERMIN}px; left:0; right:0; height:1px; background:var(--border);"></div>
+      <div style="position:absolute; top:${(t-minT)*PXPERMIN-6}px; left:-52px; width:48px; text-align:right; font-size:11px; color:var(--muted);">${fmt(t)}</div>`;
+  }
+  const colW = `calc((100% - 56px) / ${showDays.length})`;
+  let cols = "";
+  showDays.forEach((d, ci) => {
+    let evHtml = "";
+    for(const e of events.filter(e=>e.day===d)){
+      const top = (e.start - minT) * PXPERMIN, h = (e.end - e.start) * PXPERMIN;
+      evHtml += `<div class="event" style="top:${top}px; height:${h}px; background:${e.color};">
+        <b>${escapeHtml(e.course.name)}</b>
+        <small>${escapeHtml(e.course.code||"")}${e.course.prof?" · "+escapeHtml(e.course.prof):""}</small>
+        <small>${fmt(e.start)}–${fmt(e.end)}</small>
+      </div>`;
+    }
+    cols += `<div style="position:absolute; left:calc(56px + ${ci} * ${colW}); width:${colW}; top:0; height:${totalH}px; border-left:1px solid var(--border);">${evHtml}</div>`;
+  });
+  const headers = `<div style="display:flex; margin-left:56px;">` +
+    showDays.map(d=>`<div style="flex:1; text-align:center; font-size:12px; color:var(--muted); font-weight:600; padding-bottom:6px;">${DAYS[d]}</div>`).join("") + `</div>`;
+
+  $("calArea").innerHTML = `
+    ${headers}
+    <div style="position:relative; height:${totalH}px; margin-left:56px;">
+      ${hourRows}
+      ${cols}
+    </div>
+    <div class="hint" style="margin-top:14px">Showing ranked option ${activeSolution+1}. ${solutions.length>1?"Use the Option buttons above to compare alternatives.":""} <span class="link" id="printBtn">Print / Save as PDF</span></div>
+  `;
+  const pb = $("printBtn"); if(pb) pb.onclick = ()=>window.print();
+}
+
+// ---------- Sample + clear ----------
+$("loadSample").addEventListener("click", () => {
+  courses = [
+    { id:uid(), name:"Data Structures", code:"CS 2110", prof:"Dr. Rao", credits:4, required:true, slotMode:"one", slots:[
+      { days:[1,3], start:toMin("09:00"), end:toMin("10:15") },
+      { days:[2,4], start:toMin("13:00"), end:toMin("14:15") },
+    ]},
+    { id:uid(), name:"Physics w/ Lab", code:"PHYS 2213", prof:"Dr. Novak", credits:4, required:false, slotMode:"all", slots:[
+      { days:[1,3], start:toMin("10:30"), end:toMin("11:20") },   // lecture
+      { days:[4], start:toMin("14:00"), end:toMin("16:30") },     // lab (both required)
+    ]},
+    { id:uid(), name:"Linear Algebra", code:"MATH 2210", prof:"Dr. Chen", credits:4, required:false, slotMode:"one", slots:[
+      { days:[1,3,5], start:toMin("11:30"), end:toMin("12:20") },
+      { days:[2,4], start:toMin("09:30"), end:toMin("10:45") },
+    ]},
+    { id:uid(), name:"Intro Psychology", code:"PSY 1101", prof:"Dr. Owens", credits:3, required:false, slotMode:"one", slots:[
+      { days:[2,4], start:toMin("11:00"), end:toMin("12:15") },
+      { days:[1,3], start:toMin("14:00"), end:toMin("15:15") },
+    ]},
+    { id:uid(), name:"Technical Writing", code:"ENG 2020", prof:"Ms. Patel", credits:3, required:false, slotMode:"one", slots:[
+      { days:[5], start:toMin("13:00"), end:toMin("15:30") },
+      { days:[3], start:toMin("15:30"), end:toMin("18:00") },
+    ]},
+    { id:uid(), name:"Microeconomics", code:"ECON 1110", prof:"Dr. Vale", credits:3, required:false, slotMode:"one", slots:[
+      { days:[2,4], start:toMin("13:00"), end:toMin("14:15") },
+      { days:[1,3], start:toMin("11:30"), end:toMin("12:45") },
+    ]},
+    { id:uid(), name:"World History", code:"HIST 1500", prof:"Dr. Amin", credits:3, required:false, slotMode:"one", slots:[
+      { days:[1,3], start:toMin("09:00"), end:toMin("10:15") },
+      { days:[5], start:toMin("10:00"), end:toMin("12:30") },
+    ]},
+  ];
+  renderCourses();
+});
+
+$("clearAll").addEventListener("click", () => {
+  if(confirm("Remove all courses?")){ courses=[]; solutions=[]; renderCourses();
+    $("calArea").innerHTML = `<div class="empty-note">Add your wishlist, set your semester load, and hit <b>Generate Best Schedules</b> to see your optimized timetable here.</div>`;
+    $("scoreArea").innerHTML=""; $("statArea").innerHTML=""; $("altArea").innerHTML=""; $("warnArea").innerHTML=""; $("droppedArea").innerHTML="";
+  }
+});
+
+renderPending();
+renderCourses();
+</script>
+</body>
+</html>
