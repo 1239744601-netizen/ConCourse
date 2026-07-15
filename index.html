@@ -44,6 +44,22 @@
   .brand-name .bn-a { color: var(--accent); }
   .brand-name .bn-b { color: var(--text); }
   .brand-tag { font-family: 'Cinzel', Georgia, 'Times New Roman', serif; font-size: 12.5px; font-weight: 600; letter-spacing: 1.4px; color: var(--muted); margin-top: 6px; }
+  [hidden] { display: none !important; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+  .auth-bar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+  .auth-user { color: var(--muted); font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .auth-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(31,39,51,.48); }
+  .auth-card { width: min(430px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: 0 24px 70px rgba(20,30,60,.24); }
+  .auth-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .auth-card h2 { margin: 0; font-size: 20px; }
+  .auth-card p { margin: 6px 0 14px; color: var(--muted); font-size: 13px; }
+  .auth-close { padding: 4px 9px; font-size: 18px; line-height: 1; }
+  .auth-message { min-height: 20px; margin: 12px 0 0 !important; }
+  .auth-note { font-size: 11.5px !important; color: var(--muted-2) !important; margin-bottom: 0 !important; }
+  @media (max-width: 720px) {
+    .header-row { align-items: flex-start; }
+    .auth-user { max-width: 150px; }
+  }
   .wrap {
     display: grid;
     grid-template-columns: 420px 1fr;
@@ -172,6 +188,7 @@
 </head>
 <body>
 <header>
+  <div class="header-row">
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ConCourse">
       <rect x="0" y="0" width="100" height="100" rx="26" fill="#4361ee"/>
@@ -205,10 +222,39 @@
       <div class="brand-tag">Conquer your course registrations</div>
     </div>
   </div>
+  <div class="auth-bar" aria-label="Account controls">
+    <span class="auth-user" id="authUser">Not signed in</span>
+    <button class="btn-primary" id="authOpenBtn">Sign in</button>
+    <button class="btn-ghost" id="saveAccountBtn" hidden>Save now</button>
+    <button class="btn-ghost" id="signOutBtn" hidden>Sign out</button>
+  </div>
+  </div>
   <p>Add every course you'd <i>like</i> to take — even more than you can fit in one semester. Set your required credits, and ConCourse enumerates every conflict-free combination, reaches your credit goal with the fewest courses, and ranks the best timetables for you.</p>
 </header>
 
-<div class="wrap">
+<div class="auth-modal" id="authModal" hidden>
+  <section class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-card-head">
+      <div>
+        <h2 id="authTitle">Your ConCourse account</h2>
+        <p>Sign in to keep your wishlist and scheduling preferences synced.</p>
+      </div>
+      <button class="btn-ghost auth-close" id="authCloseBtn" aria-label="Close sign-in dialog">×</button>
+    </div>
+    <label for="authEmail">Email</label>
+    <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+    <label for="authPassword">Password</label>
+    <input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters" />
+    <div class="toolbar">
+      <button class="btn-primary" id="signInBtn">Sign in</button>
+      <button class="btn-ghost" id="signUpBtn">Create account</button>
+    </div>
+    <p class="auth-message" id="authMessage" aria-live="polite"></p>
+    <p class="auth-note">New accounts may need email confirmation before the first sign-in.</p>
+  </section>
+</div>
+
+<div class="wrap" id="appWrap" hidden>
   <!-- LEFT: input -->
   <div>
     <div class="panel">
@@ -376,6 +422,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 "use strict";
 const DAYS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -398,6 +445,259 @@ function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
 function fmt(min){ let h=Math.floor(min/60), m=min%60; const ap=h>=12?"PM":"AM"; let hh=h%12; if(hh===0)hh=12; return `${hh}:${String(m).padStart(2,"0")} ${ap}`; }
 function slotLabel(s){ return `${s.days.map(x=>DAYS[x]).join("/")} ${fmt(s.start)}–${fmt(s.end)}`; }
 function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function invalidateSchedules(){
+  solutions = [];
+  activeSolution = 0;
+  genNote = "";
+  $("scoreArea").innerHTML = "";
+  $("statArea").innerHTML = "";
+  $("altArea").innerHTML = "";
+  $("warnArea").innerHTML = "";
+  $("droppedArea").innerHTML = "";
+  $("colorModeBar").style.display = "none";
+  $("colorLegend").innerHTML = "";
+  $("calArea").innerHTML = `<div class="empty-note">Add your wishlist, set your semester load, and hit <b>Generate Best Schedules</b> to see your optimized timetable here.</div>`;
+}
+
+// ---------- Account + cloud persistence ----------
+// Replace both values with Project Settings > API values from Supabase.
+// The publishable key is safe in browser code when Row Level Security is enabled.
+const SUPABASE_URL = "https://uqnwvxceznsxbxhkspeo.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Sl_mKACQoAp70JNH3og2uw_hMFXSZn4";
+const SUPABASE_CONFIGURED =
+  /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL) &&
+  !SUPABASE_PUBLISHABLE_KEY.startsWith("PASTE_");
+
+let authClient = null;
+let currentUser = null;
+let loadedUserId = null;
+let loadingUserState = false;
+let accountSaveTimer = null;
+
+function setAuthMessage(message, isError=false){
+  const el = $("authMessage");
+  el.textContent = message || "";
+  el.style.color = isError ? "var(--danger)" : "var(--muted)";
+}
+
+function openAuthModal(){
+  if(!authClient) return;
+  $("authModal").hidden = false;
+  setAuthMessage("");
+  setTimeout(() => $("authEmail").focus(), 0);
+}
+
+function closeAuthModal(){
+  $("authModal").hidden = true;
+  $("authPassword").value = "";
+}
+
+function collectUserState(){
+  return {
+    version: 1,
+    courses,
+    breaks,
+    selectedFreeDays: [...selectedFreeDays],
+    semester: {
+      minCredits: $("minCredits").value,
+      maxCredits: $("maxCredits").value,
+      countMode: (document.querySelector('input[name="countMode"]:checked')||{}).value || "fewest",
+      exactN: $("exactN").value,
+      freeCount: $("freeCount").value
+    },
+    preferences: {
+      compact: $("pCompact").checked,
+      fewDays: $("pFewDays").checked,
+      noEarly: $("pNoEarly").checked,
+      earlyTime: $("earlyTime").value,
+      noLate: $("pNoLate").checked,
+      lateTime: $("lateTime").value
+    }
+  };
+}
+
+function applyUserState(state={}){
+  loadingUserState = true;
+  const semester = state.semester || {};
+  const prefs = state.preferences || {};
+
+  courses = Array.isArray(state.courses) ? state.courses : [];
+  breaks = Array.isArray(state.breaks) ? state.breaks : [];
+  selectedFreeDays = new Set(
+    (Array.isArray(state.selectedFreeDays) ? state.selectedFreeDays : [])
+      .map(Number)
+      .filter(d => d >= 1 && d <= 5)
+  );
+
+  $("minCredits").value = semester.minCredits ?? "";
+  $("maxCredits").value = semester.maxCredits ?? "";
+  $("exactN").value = semester.exactN ?? "5";
+  $("freeCount").value = ["0","1","2"].includes(String(semester.freeCount)) ? String(semester.freeCount) : "0";
+
+  const countMode = semester.countMode === "exact" ? "exact" : "fewest";
+  const countRadio = document.querySelector(`input[name="countMode"][value="${countMode}"]`);
+  if(countRadio) countRadio.checked = true;
+  $("exactN").disabled = countMode !== "exact";
+
+  $("pCompact").checked = prefs.compact ?? true;
+  $("pFewDays").checked = prefs.fewDays ?? true;
+  $("pNoEarly").checked = prefs.noEarly ?? false;
+  $("earlyTime").value = prefs.earlyTime || "09:00";
+  $("pNoLate").checked = prefs.noLate ?? false;
+  $("lateTime").value = prefs.lateTime || "17:00";
+
+  document.querySelectorAll("#freeDayPicker .day-chip").forEach(chip => {
+    chip.classList.toggle("on", selectedFreeDays.has(+chip.dataset.d));
+  });
+
+  invalidateSchedules();
+  renderCourses();
+  renderBreaks();
+  syncChoice("countModeChoice");
+  loadingUserState = false;
+}
+
+async function saveUserState({silent=false}={}){
+  if(!authClient || !currentUser || loadingUserState) return;
+  clearTimeout(accountSaveTimer);
+  const button = $("saveAccountBtn");
+  if(!silent) button.textContent = "Saving…";
+
+  const { error } = await authClient
+    .from("user_state")
+    .upsert({
+      user_id: currentUser.id,
+      state: collectUserState(),
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id" });
+
+  if(error){
+    button.textContent = "Save failed";
+    setAuthMessage(error.message, true);
+    console.error("Could not save ConCourse state:", error);
+    return;
+  }
+
+  button.textContent = "Saved";
+  setTimeout(() => { if(currentUser) button.textContent = "Save now"; }, 1300);
+}
+
+function queueUserStateSave(){
+  if(!currentUser || loadingUserState) return;
+  clearTimeout(accountSaveTimer);
+  $("saveAccountBtn").textContent = "Unsaved";
+  accountSaveTimer = setTimeout(() => saveUserState({silent:true}), 700);
+}
+
+async function loadUserState(){
+  if(!authClient || !currentUser) return;
+  const userId = currentUser.id;
+  $("saveAccountBtn").textContent = "Loading…";
+
+  const { data, error } = await authClient
+    .from("user_state")
+    .select("state")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if(!currentUser || currentUser.id !== userId) return;
+  if(error){
+    $("saveAccountBtn").textContent = "Load failed";
+    setAuthMessage(error.message, true);
+    console.error("Could not load ConCourse state:", error);
+    return;
+  }
+
+  applyUserState(data?.state || {});
+  loadedUserId = userId;
+  $("saveAccountBtn").textContent = "Save now";
+  if(!data) await saveUserState({silent:true});
+}
+
+function applySession(session){
+  const previousUserId = currentUser?.id || null;
+  currentUser = session?.user || null;
+  const signedIn = !!currentUser;
+
+  $("authUser").textContent = signedIn ? currentUser.email : "Not signed in";
+  $("authOpenBtn").hidden = signedIn;
+  $("saveAccountBtn").hidden = !signedIn;
+  $("signOutBtn").hidden = !signedIn;
+  $("appWrap").hidden = !signedIn;
+
+  if(signedIn){
+    closeAuthModal();
+    if(loadedUserId !== currentUser.id) loadUserState();
+  } else {
+    loadedUserId = null;
+    if(previousUserId) applyUserState({});
+  }
+}
+
+async function submitAuth(mode){
+  const email = $("authEmail").value.trim();
+  const password = $("authPassword").value;
+  if(!email || password.length < 8){
+    setAuthMessage("Enter a valid email and a password of at least 8 characters.", true);
+    return;
+  }
+
+  $("signInBtn").disabled = true;
+  $("signUpBtn").disabled = true;
+  setAuthMessage(mode === "signup" ? "Creating your account…" : "Signing you in…");
+
+  const result = mode === "signup"
+    ? await authClient.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: "https://1239744601-netizen.github.io/ConCourse/" }
+      })
+    : await authClient.auth.signInWithPassword({ email, password });
+
+  $("signInBtn").disabled = false;
+  $("signUpBtn").disabled = false;
+  if(result.error){
+    setAuthMessage(result.error.message, true);
+    return;
+  }
+  setAuthMessage(mode === "signup" && !result.data.session
+    ? "Account created. Check your email, then return here to sign in."
+    : "Signed in successfully.");
+}
+
+function initializeAccount(){
+  $("authOpenBtn").onclick = openAuthModal;
+  $("authCloseBtn").onclick = closeAuthModal;
+  $("authModal").addEventListener("click", e => { if(e.target === $("authModal")) closeAuthModal(); });
+  document.addEventListener("keydown", e => {
+    if(e.key === "Escape" && !$("authModal").hidden) closeAuthModal();
+    if(e.key === "Enter" && !$("authModal").hidden) submitAuth("signin");
+  });
+
+  if(!SUPABASE_CONFIGURED || !window.supabase){
+    $("authUser").textContent = "Supabase setup required";
+    $("authOpenBtn").disabled = true;
+    $("authOpenBtn").textContent = "Configure login";
+    $("appWrap").hidden = false;
+    console.warn("Add the Supabase URL and publishable key near the top of the ConCourse script.");
+    return;
+  }
+
+  authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  $("signInBtn").onclick = () => submitAuth("signin");
+  $("signUpBtn").onclick = () => submitAuth("signup");
+  $("saveAccountBtn").onclick = () => saveUserState();
+  $("signOutBtn").onclick = async () => {
+    const { error } = await authClient.auth.signOut();
+    if(error) setAuthMessage(error.message, true);
+  };
+
+  authClient.auth.getSession().then(({data,error}) => {
+    if(error) setAuthMessage(error.message, true);
+    applySession(data?.session || null);
+  });
+  authClient.auth.onAuthStateChange((_event, session) => applySession(session));
+}
 
 // ---------- Day picker ----------
 $("dayPicker").addEventListener("click", e => {
@@ -405,7 +705,14 @@ $("dayPicker").addEventListener("click", e => {
   if(!chip) return;
   const d = +chip.dataset.d;
   if(selectedDays.has(d)){ selectedDays.delete(d); chip.classList.remove("on"); }
-  else { selectedDays.add(d); chip.classList.add("on"); }
+  else {
+    // A session represents one class meeting on one day. Selecting another
+    // day moves the selection instead of silently turning it into extra days.
+    selectedDays.clear();
+    document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
+    selectedDays.add(d);
+    chip.classList.add("on");
+  }
 });
 
 // ---------- Free-day picker ----------
@@ -415,6 +722,7 @@ $("freeDayPicker").addEventListener("click", e => {
   const d = +chip.dataset.d;
   if(selectedFreeDays.has(d)){ selectedFreeDays.delete(d); chip.classList.remove("on"); }
   else { selectedFreeDays.add(d); chip.classList.add("on"); }
+  queueUserStateSave();
 });
 
 // ---------- Break windows to keep free ----------
@@ -425,6 +733,7 @@ $("addBreak").addEventListener("click", () => {
   breaks.push({ start, end });
   breaks.sort((a,b)=>a.start-b.start);
   renderBreaks();
+  queueUserStateSave();
 });
 function renderBreaks(){
   const el = $("breakList");
@@ -432,7 +741,11 @@ function renderBreaks(){
   el.innerHTML = breaks.map((b,i)=>`
     <div class="slot-item"><span>${fmt(b.start)} – ${fmt(b.end)}</span><span class="x" data-i="${i}">✕</span></div>
   `).join("");
-  el.querySelectorAll(".x").forEach(x=>x.onclick=()=>{ breaks.splice(+x.dataset.i,1); renderBreaks(); });
+  el.querySelectorAll(".x").forEach(x=>x.onclick=()=>{
+    breaks.splice(+x.dataset.i,1);
+    renderBreaks();
+    queueUserStateSave();
+  });
 }
 
 // ---------- Radio choice-cards (highlight the selected option) ----------
@@ -454,6 +767,14 @@ if(g) g.addEventListener("change", () => {
 
 function isMulti(){ return $("cMulti").checked; }
 function sessionsPerWeek(){ return parseInt($("sessionsPerWeek").value)||1; }
+function resetCourseOptions(){
+  pendingSlots = [];
+  savedOptions = [];
+  selectedDays.clear();
+  document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
+  renderPending();
+  renderSavedOptions();
+}
 function updateSessionUi(){
   const multi = isMulti(), n = sessionsPerWeek();
   $("optionArea").style.display = multi ? "block" : "none";
@@ -467,7 +788,10 @@ function updateSessionUi(){
   if(pendingSlots.length > n){ pendingSlots.length = n; renderPending(); }
 }
 $("cMulti").addEventListener("change", updateSessionUi);
-$("sessionsPerWeek").addEventListener("change", updateSessionUi);
+$("sessionsPerWeek").addEventListener("change", () => {
+  resetCourseOptions();
+  updateSessionUi();
+});
 
 // ---------- Add a session to the current option ----------
 $("addSlot").addEventListener("click", () => {
@@ -480,6 +804,10 @@ $("addSlot").addEventListener("click", () => {
   const start = toMin($("sStart").value), end = toMin($("sEnd").value);
   if(!(end > start)){ alert("End time must be after start time."); return; }
   const cand = { days: [...selectedDays].sort(), start, end };
+  if(pendingSlots.some(s => s.days.some(d => cand.days.includes(d)))){
+    alert("Each weekly session must be on a different day.");
+    return;
+  }
   for(const s of pendingSlots){ if(slotsOverlap(s, cand)){ alert("This session overlaps the other session in this option. Put them on different days/times."); return; } }
   pendingSlots.push(cand);
   selectedDays.clear();
@@ -491,6 +819,11 @@ $("addSlot").addEventListener("click", () => {
 $("saveOption").addEventListener("click", () => {
   const n = sessionsPerWeek();
   if(pendingSlots.length !== n){ alert(`Each time option needs all ${n} session${n>1?"s":""} first.`); return; }
+  const key = optionKey({ sessions: pendingSlots });
+  if(savedOptions.some(option => optionKey(option) === key)){
+    alert("That time option is already saved.");
+    return;
+  }
   savedOptions.push({ sessions: pendingSlots.slice() });
   pendingSlots = []; selectedDays.clear();
   document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
@@ -498,6 +831,12 @@ $("saveOption").addEventListener("click", () => {
 });
 
 function optionLabel(opt){ return opt.sessions.map(slotLabel).join("  +  "); }
+function optionKey(opt){
+  return opt.sessions
+    .map(s=>`${[...s.days].sort((a,b)=>a-b).join(",")}@${s.start}-${s.end}`)
+    .sort()
+    .join("|");
+}
 
 function renderPending(){
   const el = $("pendingSlots");
@@ -525,8 +864,15 @@ $("addCourse").addEventListener("click", () => {
   const multi = isMulti(), n = sessionsPerWeek();
 
   // Assemble the whole-schedule options. Each option = a fixed bundle of n sessions.
+  if(savedOptions.some(option => option.sessions.length !== n)){
+    alert("The number of sessions changed. Rebuild the course's time options.");
+    return;
+  }
   const options = savedOptions.slice();
-  if(pendingSlots.length === n){ options.push({ sessions: pendingSlots.slice() }); }
+  if(pendingSlots.length === n){
+    const pendingOption = { sessions: pendingSlots.slice() };
+    if(!options.some(option => optionKey(option) === optionKey(pendingOption))) options.push(pendingOption);
+  }
   else if(pendingSlots.length > 0){ alert(`Finish the current option first — it needs all ${n} session${n>1?"s":""} (or clear it).`); return; }
 
   if(options.length === 0){ alert(`Add this course's ${n} session${n>1?"s":""} (its weekly schedule) first.`); return; }
@@ -543,11 +889,15 @@ $("addCourse").addEventListener("click", () => {
     multiOffer: multi && options.length > 1,
     options                       // each option is a whole fixed schedule; ConCourse picks exactly one
   });
+  invalidateSchedules();
   pendingSlots = []; savedOptions = []; selectedDays.clear();
   $("cName").value=""; $("cCode").value=""; $("cProf").value=""; $("cCredits").value="3"; $("cReq").checked=false;
   $("cMulti").checked=false; $("sessionsPerWeek").value="1"; updateSessionUi();
-  document.querySelectorAll(".day-chip.on").forEach(c=>c.classList.remove("on"));
+  // Only reset the course-session picker. The free-day picker has its own
+  // state and must stay visually in sync with selectedFreeDays.
+  document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
   renderPending(); renderSavedOptions(); renderCourses();
+  queueUserStateSave();
 });
 
 function renderCourses(){
@@ -572,7 +922,12 @@ function renderCourses(){
       </div>
     </div>
   `).join("");
-  el.querySelectorAll(".btn-danger").forEach(b=>b.onclick=()=>{ courses=courses.filter(c=>c.id!==b.dataset.id); renderCourses(); });
+  el.querySelectorAll(".btn-danger").forEach(b=>b.onclick=()=>{
+    courses = courses.filter(c=>c.id!==b.dataset.id);
+    invalidateSchedules();
+    renderCourses();
+    queueUserStateSave();
+  });
 }
 
 // ---------- Conflict detection ----------
@@ -616,7 +971,8 @@ function generate(){
 
   const results = [];
   const seen = new Set();
-  const MAX = 20000;                              // safety cap on combinations
+  const MAX_RESULTS = 20000;
+  let resultsTruncated = false;
   const chosen = [];                              // {course, slots:[...]}
   let minAnyCourses = Infinity;                   // fewest courses IGNORING free-day rule (to detect tradeoff)
 
@@ -638,13 +994,12 @@ function generate(){
   function freeDaysOK(){
     const wd = new Set();
     for(const ch of chosen) for(const s of ch.slots) for(const d of s.days) if(d>=1 && d<=5) wd.add(d);
-    if(specificFree.length){ for(const d of specificFree) if(wd.has(d)) return false; return true; }
-    if(freeCount > 0){ return (5 - wd.size) >= freeCount; }
-    return true;
+    if(specificFree.some(d => wd.has(d))) return false;
+    return freeCount === 0 || (5 - wd.size) >= freeCount;
   }
 
   function backtrack(i, credits){
-    if(results.length >= MAX) return;
+    if(resultsTruncated) return;
     if(i === courses.length){
       if(chosen.length === 0) return;
       if(countMode === "exact" && chosen.length !== exactN) return;   // exactly N courses
@@ -652,9 +1007,12 @@ function generate(){
       if(credits < minCr || credits > maxCr) return;   // must land within the credit window
       minAnyCourses = Math.min(minAnyCourses, chosen.length);
       if(!freeDaysOK()) return;
-      const key = chosen.map(ch=>ch.course.id+"#"+ch.chosenSlotKey).sort().join("|");
+      // Deduplicate schedules by their actual meetings, not by option index.
+      // This also protects against duplicate options in preloaded/imported data.
+      const key = chosen.map(ch=>ch.course.id+"#"+optionKey({sessions:ch.slots})).sort().join("|");
       if(seen.has(key)) return;
       seen.add(key);
+      if(results.length >= MAX_RESULTS){ resultsTruncated = true; return; }
       results.push(chosen.map(ch=>({courseId:ch.course.id, slots:ch.slots})));
       return;
     }
@@ -683,6 +1041,12 @@ function generate(){
   }
   backtrack(0, 0);
 
+  if(resultsTruncated){
+    solutions = [];
+    renderSearchLimit(MAX_RESULTS);
+    return;
+  }
+
   if(results.length === 0){
     solutions = [];
     renderNoSolution(minCr, (freeCount>0 || specificFree.length>0));
@@ -694,7 +1058,11 @@ function generate(){
   // Did keeping free days force MORE courses than otherwise needed?
   genNote = "";
   if((freeCount>0 || specificFree.length) && minCourses > minAnyCourses){
-    genNote = `Keeping ${specificFree.length ? specificFree.map(d=>DAYS[d]).join(" & ")+" free" : freeCount+" free weekday"+(freeCount>1?"s":"")} needs ${minCourses} courses to hit your credits, vs ${minAnyCourses} without the day-off rule.`;
+    const freeDayRequirement = [
+      specificFree.length ? `${specificFree.map(d=>DAYS[d]).join(" & ")} free` : "",
+      freeCount > specificFree.length ? `at least ${freeCount} free weekday${freeCount>1?"s":""}` : ""
+    ].filter(Boolean).join(" and ");
+    genNote = `Keeping ${freeDayRequirement} needs ${minCourses} courses to hit your credits, vs ${minAnyCourses} without the day-off rule.`;
   }
 
   const scored = results.map(r => ({ picks: r, score: scoreSchedule(r, prefs) }));
@@ -766,6 +1134,17 @@ function renderNoSolution(minCr, freeReq){
   ].filter(Boolean);
   $("warnArea").innerHTML = `<div class="conflict-warn">⚠️ No conflict-free schedule matches your constraints. Likely causes: ${causes.join("; ")}. Try lowering required credits, reducing free weekdays, adding more section options, or relaxing the credit cap.</div>`;
   $("calArea").innerHTML = `<div class="empty-note">No valid timetable found.</div>`;
+}
+
+function renderSearchLimit(limit){
+  $("scoreArea").innerHTML = "";
+  $("statArea").innerHTML = "";
+  $("altArea").innerHTML = "";
+  $("droppedArea").innerHTML = "";
+  $("colorModeBar").style.display = "none";
+  $("colorLegend").innerHTML = "";
+  $("warnArea").innerHTML = `<div class="conflict-warn">⚠️ This search has more than ${limit.toLocaleString()} valid schedules, so no potentially incomplete ranking is shown. Narrow the credit range, choose free weekdays, or mark required courses, then generate again.</div>`;
+  $("calArea").innerHTML = `<div class="empty-note">Too many valid timetables to rank accurately.</div>`;
 }
 
 function renderResults(){
@@ -855,7 +1234,7 @@ function renderCalendar(picks){
     hourRows += `<div style="position:absolute; top:${(t-minT)*PXPERMIN}px; left:0; right:0; height:1px; background:var(--border);"></div>
       <div style="position:absolute; top:${(t-minT)*PXPERMIN-6}px; left:-58px; width:54px; text-align:right; white-space:nowrap; font-size:11px; color:var(--muted);">${fmt(t)}</div>`;
   }
-  const colW = `calc((100% - 56px) / ${showDays.length})`;
+  const colW = `${100 / showDays.length}%`;
   let cols = "";
   showDays.forEach((d, ci) => {
     let evHtml = "";
@@ -867,7 +1246,7 @@ function renderCalendar(picks){
         <small>${fmt(e.start)}–${fmt(e.end)}</small>
       </div>`;
     }
-    cols += `<div style="position:absolute; left:calc(56px + ${ci} * ${colW}); width:${colW}; top:0; height:${totalH}px; border-left:1px solid var(--border);">${evHtml}</div>`;
+    cols += `<div style="position:absolute; left:${ci * 100 / showDays.length}%; width:${colW}; top:0; height:${totalH}px; border-left:1px solid var(--border);">${evHtml}</div>`;
   });
   const headers = `<div style="display:flex; margin-left:56px;">` +
     showDays.map(d=>`<div style="flex:1; text-align:center; font-size:12px; color:var(--muted); font-weight:600; padding-bottom:6px;">${DAYS[d]}</div>`).join("") + `</div>`;
@@ -914,20 +1293,33 @@ $("loadSample").addEventListener("click", () => {
       { sessions:[ {days:[1],start:toMin("16:00"),end:toMin("18:00")}, {days:[3],start:toMin("16:00"),end:toMin("17:00")} ] },   // Sec 1002: Mon + Wed
     ]},
   ];
+  invalidateSchedules();
   renderCourses();
+  queueUserStateSave();
 });
 
 $("clearAll").addEventListener("click", () => {
-  if(confirm("Remove all courses?")){ courses=[]; solutions=[]; renderCourses();
-    $("calArea").innerHTML = `<div class="empty-note">Add your wishlist, set your semester load, and hit <b>Generate Best Schedules</b> to see your optimized timetable here.</div>`;
-    $("scoreArea").innerHTML=""; $("statArea").innerHTML=""; $("altArea").innerHTML=""; $("warnArea").innerHTML=""; $("droppedArea").innerHTML="";
-    $("colorModeBar").style.display = "none";
+  if(confirm("Remove all courses?")){
+    courses = [];
+    invalidateSchedules();
+    renderCourses();
+    queueUserStateSave();
   }
+});
+
+// Auto-save semester settings and ranking preferences after meaningful changes.
+const PERSISTED_CONTROL_IDS = new Set([
+  "minCredits", "maxCredits", "exactN", "freeCount",
+  "pCompact", "pFewDays", "pNoEarly", "earlyTime", "pNoLate", "lateTime"
+]);
+$("appWrap").addEventListener("change", e => {
+  if(PERSISTED_CONTROL_IDS.has(e.target.id) || e.target.name === "countMode") queueUserStateSave();
 });
 
 renderPending();
 renderCourses();
 updateSessionUi();
+initializeAccount();
 </script>
 </body>
 </html>
