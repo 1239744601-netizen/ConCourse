@@ -565,6 +565,130 @@
     .row,
     .row-3 { grid-template-columns: 1fr; }
   }
+
+  /* Welcome gate + compact dashboard */
+  #landingScreen {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+  #landingScreen .hero-copy {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 26px;
+    padding: 38px 0 5vh;
+  }
+  .landing-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 34px;
+  }
+  .start-app-btn {
+    min-width: 190px;
+    min-height: 52px;
+    padding: 13px 23px;
+    font-size: 15px;
+    box-shadow: 0 16px 36px rgba(78,70,220,.3), inset 0 1px 0 rgba(255,255,255,.24);
+  }
+  .start-app-btn span { display: inline-block; margin-left: 7px; transition: transform .2s ease; }
+  .start-app-btn:hover span { transform: translateX(4px); }
+  .start-hint { min-height: 18px; color: var(--muted-2); font-size: 12px; }
+
+  body.app-active #landingScreen {
+    min-height: 0;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    overflow: visible;
+    padding: 9px 28px 12px;
+    background: rgba(245,245,247,.72);
+    border-bottom: 1px solid rgba(29,29,31,.055);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+  body.app-active #landingScreen::before,
+  body.app-active #landingScreen::after,
+  body.app-active #landingScreen .hero-copy { display: none; }
+  body.app-active .header-row { width: 100%; max-width: 1560px; }
+  body.app-active .brand { cursor: pointer; }
+
+  .wrap {
+    max-width: 1600px;
+    grid-template-columns: minmax(360px, 420px) minmax(300px, 360px) minmax(480px, 1fr);
+    grid-template-areas:
+      "builder wishlist timetable"
+      "builder semester timetable";
+    gap: 16px;
+    padding-top: 14px;
+    align-items: start;
+  }
+  .wrap > div:first-child { display: contents; }
+  #courseBuilderPanel { grid-area: builder; }
+  #wishlistPanel { grid-area: wishlist; margin-top: 0 !important; }
+  #semesterPanel { grid-area: semester; margin-top: 0 !important; }
+  #timetablePanel { grid-area: timetable; min-width: 0; min-height: 560px; }
+
+  .wrap .panel { padding: 18px; border-radius: 23px; }
+  .wrap .panel h2 { margin-bottom: 13px; }
+  .wrap label { margin-top: 9px; }
+  .wrap input,
+  .wrap select { min-height: 39px; padding: 8px 10px; }
+  .wrap button { min-height: 37px; padding: 8px 14px; }
+  .wrap .divider { margin: 14px 0; }
+  .wrap .choice-group { gap: 6px; }
+  .wrap .choice { padding: 9px 10px; }
+  .wrap .prefs label.chk { margin: 6px 0; font-size: 12px; }
+  .wrap .empty-note { padding: 24px 10px; }
+  #courseList { max-height: 390px; overflow: auto; padding-right: 2px; }
+  #wishlistPanel .toolbar { margin-top: 10px; }
+  #semesterPanel .c-eg { display: none; }
+  #timetablePanel #calArea > .empty-note {
+    min-height: 420px;
+    display: grid;
+    place-items: center;
+    max-width: 540px;
+    margin: 0 auto;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 1300px) {
+    .wrap {
+      max-width: 1080px;
+      grid-template-columns: minmax(350px, 420px) minmax(0, 1fr);
+      grid-template-areas:
+        "builder wishlist"
+        "builder semester"
+        "timetable timetable";
+    }
+    #timetablePanel { min-height: 420px; }
+  }
+  @media (max-width: 900px) {
+    #landingScreen .hero-copy { padding-top: 24px; }
+    .wrap {
+      max-width: 720px;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "wishlist"
+        "semester"
+        "builder"
+        "timetable";
+    }
+    #courseList { max-height: 320px; }
+  }
+  @media (max-width: 720px) {
+    #landingScreen { padding-bottom: 30px; }
+    #landingScreen .hero-copy { margin-top: 10px; padding-bottom: 20px; }
+    .landing-actions { margin-top: 26px; }
+    body.app-active #landingScreen { padding: 7px 10px 9px; }
+    .wrap { padding-top: 8px; }
+  }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   }
@@ -584,7 +708,7 @@
 </style>
 </head>
 <body>
-<header>
+<header id="landingScreen">
   <div class="header-row">
   <div class="brand">
     <svg class="brand-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ConCourse">
@@ -635,6 +759,10 @@
       <span>Credit-aware</span>
       <span>Built around you</span>
     </div>
+    <div class="landing-actions">
+      <button class="btn-accent start-app-btn" id="startAppBtn" hidden>Start planning <span aria-hidden="true">→</span></button>
+      <div class="start-hint" id="startHint">Sign in to unlock your course planner.</div>
+    </div>
   </div>
 </header>
 
@@ -663,7 +791,7 @@
 <div class="wrap" id="appWrap" hidden>
   <!-- LEFT: input -->
   <div>
-    <div class="panel">
+    <div class="panel" id="courseBuilderPanel">
       <h2>Add a Course</h2>
       <label>Course name</label>
       <input id="cName" placeholder="e.g. Introduction to Algorithms" />
@@ -739,7 +867,7 @@
       <button class="btn-primary" id="addCourse" style="width:100%">Add Course to List</button>
     </div>
 
-    <div class="panel" style="margin-top:16px">
+    <div class="panel" id="wishlistPanel">
       <h2>Your Wishlist</h2>
       <div id="courseList"><div class="empty-note">No courses yet. Add one above ☝️</div></div>
       <div class="toolbar">
@@ -748,7 +876,7 @@
       </div>
     </div>
 
-    <div class="panel prefs" style="margin-top:16px">
+    <div class="panel prefs" id="semesterPanel">
       <h2>Semester Load</h2>
 
       <label>Required credits this semester <span style="color:var(--danger)">*</span> (mandatory)</label>
@@ -807,7 +935,7 @@
   </div>
 
   <!-- RIGHT: results -->
-  <div class="panel">
+  <div class="panel" id="timetablePanel">
     <div class="grid-head">
       <h2 style="margin:0">Weekly Timetable</h2>
       <div id="scoreArea"></div>
@@ -843,6 +971,7 @@ let breaks = [];         // {start,end} windows the user wants kept class-free e
 let solutions = [];      // ranked list
 let activeSolution = 0;
 let genNote = "";        // banner note from last generation (e.g. free-day tradeoff)
+let appStarted = false;  // authenticated users still choose when to enter the planner
 
 // ---------- Helpers ----------
 const $ = id => document.getElementById(id);
@@ -896,6 +1025,21 @@ function openAuthModal(){
 function closeAuthModal(){
   $("authModal").hidden = true;
   $("authPassword").value = "";
+}
+
+function enterPlanner(){
+  if(!currentUser){ openAuthModal(); return; }
+  appStarted = true;
+  document.body.classList.add("app-active");
+  $("appWrap").hidden = false;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function leavePlanner(){
+  appStarted = false;
+  document.body.classList.remove("app-active");
+  $("appWrap").hidden = true;
+  window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function collectUserState(){
@@ -1029,12 +1173,17 @@ function applySession(session){
   $("authOpenBtn").hidden = signedIn;
   $("saveAccountBtn").hidden = !signedIn;
   $("signOutBtn").hidden = !signedIn;
-  $("appWrap").hidden = !signedIn;
+  $("startAppBtn").hidden = !signedIn;
+  $("startHint").textContent = signedIn
+    ? `Signed in as ${currentUser.email}. Your planner is ready.`
+    : "Sign in to unlock your course planner.";
+  $("appWrap").hidden = !signedIn || !appStarted;
 
   if(signedIn){
     closeAuthModal();
     if(loadedUserId !== currentUser.id) loadUserState();
   } else {
+    leavePlanner();
     loadedUserId = null;
     if(previousUserId) applyUserState({});
   }
@@ -1073,6 +1222,15 @@ async function submitAuth(mode){
 
 function initializeAccount(){
   $("authOpenBtn").onclick = openAuthModal;
+  $("startAppBtn").onclick = enterPlanner;
+  const brandHome = $("landingScreen").querySelector(".brand");
+  brandHome.setAttribute("role", "button");
+  brandHome.setAttribute("tabindex", "0");
+  brandHome.setAttribute("title", "Return to welcome screen");
+  brandHome.onclick = () => { if(appStarted) leavePlanner(); };
+  brandHome.onkeydown = e => {
+    if(appStarted && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); leavePlanner(); }
+  };
   $("authCloseBtn").onclick = closeAuthModal;
   $("authModal").addEventListener("click", e => { if(e.target === $("authModal")) closeAuthModal(); });
   document.addEventListener("keydown", e => {
@@ -1084,7 +1242,8 @@ function initializeAccount(){
     $("authUser").textContent = "Supabase setup required";
     $("authOpenBtn").disabled = true;
     $("authOpenBtn").textContent = "Configure login";
-    $("appWrap").hidden = false;
+    $("startHint").textContent = "Connect Supabase to enable sign-in and start planning.";
+    $("appWrap").hidden = true;
     console.warn("Add the Supabase URL and publishable key near the top of the ConCourse script.");
     return;
   }
