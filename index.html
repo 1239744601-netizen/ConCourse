@@ -563,9 +563,12 @@
     padding-top: 2px;
     animation: revealUp .24s cubic-bezier(.2,.8,.2,1) both;
   }
-  .school-search-wrap { position: relative; }
-  .school-search-wrap input { padding-right: 38px; }
-  .school-spinner {
+  .school-search-wrap,
+  .username-wrap { position: relative; }
+  .school-search-wrap input,
+  .username-wrap input { padding-right: 38px; }
+  .school-spinner,
+  .username-spinner {
     position: absolute;
     top: 14px;
     right: 13px;
@@ -906,13 +909,20 @@
     <label for="authPassword">Password</label>
     <input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters" />
     <div class="registration-fields" id="registrationFields" hidden>
+      <label for="authUsername">Username</label>
+      <div class="username-wrap">
+        <input id="authUsername" type="text" minlength="3" maxlength="24" autocomplete="username" placeholder="Choose a unique username" aria-describedby="usernameStatus" />
+        <span class="username-spinner" id="usernameSpinner" hidden aria-hidden="true"></span>
+      </div>
+      <div class="field-status" id="usernameStatus" aria-live="polite">Use 3–24 lowercase letters, numbers, or underscores.</div>
+
       <label for="schoolName">School or university</label>
       <div class="school-search-wrap">
         <input id="schoolName" type="text" autocomplete="organization" placeholder="Search for your institution" aria-describedby="schoolStatus" aria-autocomplete="list" aria-controls="schoolResults" />
         <span class="school-spinner" id="schoolSpinner" hidden aria-hidden="true"></span>
         <div class="school-results" id="schoolResults" role="listbox" hidden></div>
       </div>
-      <div class="field-status" id="schoolStatus" aria-live="polite">Enter at least three characters, then select a directory result.</div>
+      <div class="field-status" id="schoolStatus" aria-live="polite">Start typing to see institution suggestions.</div>
 
       <label for="majorStudy">Major or field of study</label>
       <input id="majorStudy" type="text" list="majorOptions" autocomplete="off" placeholder="e.g. Computer Science" />
@@ -1184,6 +1194,11 @@ let selectedSchool = null;
 let schoolSearchTimer = null;
 let schoolLookupController = null;
 let schoolDirectoryAvailable = true;
+let usernameCheckTimer = null;
+let usernameAvailable = null;
+let usernameCheckSequence = 0;
+let usernameCheckedValue = "";
+const schoolSearchCache = new Map();
 const UNIVERSITY_DIRECTORY_URL = "https://universities.hipolabs.com/search";
 
 function setAuthMessage(message, isError=false){
@@ -1223,7 +1238,61 @@ function setAuthMode(mode){
   $("signInBtn").setAttribute("aria-selected", String(!signingUp));
   $("signUpBtn").setAttribute("aria-selected", String(signingUp));
   setAuthMessage("");
-  if(signingUp) setTimeout(() => $("schoolName").focus(), 0);
+  if(signingUp) setTimeout(() => $("authUsername").focus(), 0);
+}
+
+function normalizeUsername(value){
+  return value.trim().toLowerCase();
+}
+
+function setUsernameStatus(message, kind=""){
+  const status = $("usernameStatus");
+  status.textContent = message;
+  status.className = `field-status${kind ? " "+kind : ""}`;
+}
+
+function validUsername(username){
+  return /^[a-z0-9_]{3,24}$/.test(username);
+}
+
+async function checkUsernameAvailability(username){
+  const sequence = ++usernameCheckSequence;
+  usernameAvailable = null;
+  usernameCheckedValue = "";
+  $("usernameSpinner").hidden = false;
+  setUsernameStatus("Checking username availability…");
+  try {
+    const { data, error } = await authClient.rpc("username_available", { candidate: username });
+    if(sequence !== usernameCheckSequence) return null;
+    if(error) throw error;
+    usernameAvailable = data === true;
+    usernameCheckedValue = username;
+    setUsernameStatus(usernameAvailable ? "Username is available." : "This username is already in use.", usernameAvailable ? "matched" : "error");
+    return usernameAvailable;
+  } catch(error){
+    if(sequence !== usernameCheckSequence) return null;
+    usernameAvailable = null;
+    setUsernameStatus("Username checking is unavailable. Run the latest Supabase setup SQL.", "error");
+    return null;
+  } finally {
+    if(sequence === usernameCheckSequence) $("usernameSpinner").hidden = true;
+  }
+}
+
+function handleUsernameInput(){
+  clearTimeout(usernameCheckTimer);
+  usernameCheckSequence += 1;
+  usernameAvailable = null;
+  usernameCheckedValue = "";
+  $("usernameSpinner").hidden = true;
+  const input = $("authUsername");
+  const username = normalizeUsername(input.value);
+  if(input.value !== username) input.value = username;
+  if(!validUsername(username)){
+    setUsernameStatus("Use 3–24 lowercase letters, numbers, or underscores.", username.length ? "error" : "");
+    return;
+  }
+  usernameCheckTimer = setTimeout(() => checkUsernameAvailability(username), 380);
 }
 
 function setSchoolStatus(message, kind=""){
@@ -1266,6 +1335,18 @@ function renderSchoolResults(schools){
 
 async function searchSchoolDirectory(query){
   schoolLookupController?.abort();
+  const cacheKey = query.toLocaleLowerCase();
+  const cachedSchools = schoolSearchCache.get(cacheKey);
+  if(cachedSchools){
+    schoolLookupController = null;
+    schoolDirectoryAvailable = true;
+    renderSchoolResults(cachedSchools);
+    setSchoolStatus(cachedSchools.length
+      ? "Select the institution that matches your school."
+      : "No directory match found. You may continue, but the school will be marked unverified.",
+      cachedSchools.length ? "" : "error");
+    return;
+  }
   const controller = new AbortController();
   schoolLookupController = controller;
   $("schoolSpinner").hidden = false;
@@ -1291,6 +1372,7 @@ async function searchSchoolDirectory(query){
       .filter(item => item.name && !seen.has(`${item.name}|${item.country}`) && seen.add(`${item.name}|${item.country}`))
       .slice(0, 7);
 
+    schoolSearchCache.set(cacheKey, schools);
     schoolDirectoryAvailable = true;
     renderSchoolResults(schools);
     setSchoolStatus(schools.length
@@ -1310,13 +1392,16 @@ async function searchSchoolDirectory(query){
 function handleSchoolInput(){
   selectedSchool = null;
   clearTimeout(schoolSearchTimer);
+  schoolLookupController?.abort();
+  schoolLookupController = null;
+  $("schoolSpinner").hidden = true;
   hideSchoolResults();
   const query = $("schoolName").value.trim();
-  if(query.length < 3){
-    setSchoolStatus("Enter at least three characters, then select a directory result.");
+  if(query.length < 1){
+    setSchoolStatus("Start typing to see institution suggestions.");
     return;
   }
-  schoolSearchTimer = setTimeout(() => searchSchoolDirectory(query), 420);
+  schoolSearchTimer = setTimeout(() => searchSchoolDirectory(query), query.length === 1 ? 550 : 300);
 }
 
 function enterPlanner(){
@@ -1461,7 +1546,8 @@ function applySession(session){
   currentUser = session?.user || null;
   const signedIn = !!currentUser;
 
-  $("authUser").textContent = signedIn ? currentUser.email : "Not signed in";
+  const username = currentUser?.user_metadata?.username;
+  $("authUser").textContent = signedIn ? (username ? `@${username}` : currentUser.email) : "Not signed in";
   $("authOpenBtn").hidden = signedIn;
   $("saveAccountBtn").hidden = !signedIn;
   $("signOutBtn").hidden = !signedIn;
@@ -1493,8 +1579,24 @@ async function submitAuth(mode){
   }
 
   const signingUp = mode === "signup";
+  const username = normalizeUsername($("authUsername").value);
   const schoolName = $("schoolName").value.trim();
   const majorStudy = $("majorStudy").value.trim();
+  if(signingUp && !validUsername(username)){
+    setAuthMessage("Choose a username using 3–24 lowercase letters, numbers, or underscores.", true);
+    $("authUsername").focus();
+    return;
+  }
+  if(signingUp && (usernameAvailable !== true || usernameCheckedValue !== username)){
+    const available = await checkUsernameAvailability(username);
+    if(available !== true){
+      setAuthMessage(available === false
+        ? "That username is already in use. Choose another one."
+        : "Username availability could not be checked. Run the latest Supabase setup SQL, then try again.", true);
+      $("authUsername").focus();
+      return;
+    }
+  }
   if(signingUp && schoolName.length < 3){
     setAuthMessage("Enter your school or university name.", true);
     $("schoolName").focus();
@@ -1516,6 +1618,7 @@ async function submitAuth(mode){
         options: {
           emailRedirectTo: "https://1239744601-netizen.github.io/ConCourse/",
           data: {
+            username,
             school_name: selectedSchool?.name || schoolName,
             school_country: selectedSchool?.country || null,
             school_domain: selectedSchool?.domains?.[0] || null,
@@ -1550,6 +1653,7 @@ function initializeAccount(){
     if(appStarted && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); leavePlanner(); }
   };
   $("authCloseBtn").onclick = closeAuthModal;
+  $("authUsername").addEventListener("input", handleUsernameInput);
   $("schoolName").addEventListener("input", handleSchoolInput);
   document.addEventListener("click", e => {
     if(!e.target.closest(".school-search-wrap")) $("schoolResults").hidden = true;
