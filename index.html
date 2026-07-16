@@ -450,6 +450,9 @@
     line-height: .91;
   }
   .hero-copy h1 span {
+    display: block;
+    width: 100%;
+    text-align: center;
     color: transparent;
     background: linear-gradient(92deg, #0071e3 5%, #5e5ce6 54%, #af52de 100%);
     background-clip: text;
@@ -924,14 +927,6 @@
   }
   .configurator-intro {
     padding: 8px 0 30px;
-  }
-  .configurator-eyebrow {
-    margin: 0 0 12px;
-    color: #bf4800;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
   }
   .configurator-intro h1 {
     max-width: 520px;
@@ -1455,35 +1450,6 @@
     -webkit-text-fill-color: transparent;
   }
 
-  .configurator-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    width: fit-content;
-    min-height: 29px;
-    margin-bottom: 14px;
-    padding: 6px 11px;
-    border: 1px solid rgba(0,102,204,.12);
-    border-radius: 980px;
-    background: rgba(255,255,255,.78);
-    color: #0066cc;
-    box-shadow: 0 8px 22px rgba(0,102,204,.07);
-    font-size: 10.5px;
-    font-weight: 720;
-    letter-spacing: .075em;
-    line-height: 1;
-    text-transform: uppercase;
-  }
-  .configurator-eyebrow::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    flex: 0 0 6px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0a84ff, #7c3aed);
-    box-shadow: 0 0 0 4px rgba(10,132,255,.1);
-  }
-
   .configurator-column .panel {
     margin: 0 0 18px !important;
     padding: clamp(27px, 2.6vw, 36px);
@@ -1733,7 +1699,7 @@
   </div>
   <div class="hero-copy">
     <div class="hero-kicker"><span></span><b data-i18n="intelligentPlanning">Intelligent course planning</b></div>
-    <h1 data-i18n-html="heroTitle">Build your best<br><span>semester.</span></h1>
+    <h1 data-i18n-html="heroTitle">Build your best<span>semester</span></h1>
     <p data-i18n="heroDescription">Add every course you want. ConCourse explores every conflict-free combination, reaches your credit goal, and ranks the schedules that fit your life.</p>
     <div class="hero-pills" aria-label="ConCourse highlights">
       <span data-i18n="conflictFree">Conflict-free</span>
@@ -1839,7 +1805,6 @@
   <!-- Scrolling configuration column -->
   <div class="configurator-column">
     <div class="configurator-intro">
-      <p class="configurator-eyebrow" data-i18n="semesterConfigurator">Semester configurator</p>
       <h1 data-i18n-html="configuratorTitle">Choose the details.<br>Build your shortlist.</h1>
       <p data-i18n="configuratorDescription">Add course options and set your semester priorities. When everything is ready, ConCourse opens your ranked timetable in a dedicated full-screen view.</p>
     </div>
@@ -1992,7 +1957,6 @@
   <div class="panel" id="wishlistPanel">
     <div class="wishlist-header">
       <div>
-        <p class="configurator-eyebrow" data-i18n="yourSelection">Your selection</p>
         <h2 data-i18n="courseWishlist">Course wishlist</h2>
         <p data-i18n="wishlistDescription">Everything you add appears here. Review your choices before generating the final timetable.</p>
       </div>
@@ -2011,7 +1975,6 @@
   <div class="schedule-page-header">
     <button class="btn-ghost schedule-back" id="editSelections"><span aria-hidden="true">←</span> <span data-i18n="editSelections">Edit selections</span></button>
     <div>
-      <p class="configurator-eyebrow" data-i18n="semesterResolved">Your semester, resolved</p>
       <h1 data-i18n="weeklyTimetable">Weekly timetable</h1>
       <p data-i18n="timetableDescription">Compare ranked options, review the tradeoffs, and save the schedule that works for you.</p>
     </div>
@@ -2019,7 +1982,6 @@
   <div class="panel" id="timetablePanel">
     <div class="grid-head">
       <div class="panel-heading timetable-heading">
-        <span class="panel-index" data-i18n="result">RESULT</span>
         <div><h2 data-i18n="bestSchedule">Best conflict-free schedule</h2><p data-i18n="bestScheduleDescription">Your highest-ranked option is shown at full scale.</p></div>
       </div>
       <div id="scoreArea"></div>
@@ -2074,7 +2036,7 @@ let currentLanguage = "en";
 const TRANSLATIONS = {
   "zh-CN": {
     brandTag:"轻松规划课程注册", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
-    intelligentPlanning:"智能课程规划", heroTitle:"打造你最理想的<br><span>学期。</span>",
+    intelligentPlanning:"智能课程规划", heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
     conflictFree:"无时间冲突", creditAware:"智能计算学分", builtAroundYou:"为你量身规划", startPlanning:"开始规划",
     accountTitle:"你的 ConCourse 账户", createAccount:"创建账户", email:"邮箱", password:"密码",
@@ -2083,7 +2045,7 @@ const TRANSLATIONS = {
     realNamePrivacy:"与公开资料分开保存。只有网站所有者能在受保护的数据库中访问这些信息。",
     givenName:"名字", middleName:"中间名", familyName:"姓氏", optional:"选填", school:"学校或大学",
     schoolPlaceholder:"搜索你的学校", major:"专业或研究领域", majorPlaceholder:"例如：计算机科学",
-    semesterConfigurator:"学期配置", configuratorTitle:"选择详细条件。<br>建立课程清单。",
+    configuratorTitle:"选择详细条件。<br>建立课程清单。",
     configuratorDescription:"添加课程选项并设置学期偏好。准备完成后，ConCourse 会在独立全屏页面中展示排名课表。",
     courses:"课程", criteria:"条件", courseBuilder:"课程设置", courseBuilderDescription:"设置每门课程及其可选上课时间。",
     courseName:"课程名称", courseCode:"课程代码", professor:"教师", credits:"学分", mustTake:"必须修读",
@@ -2099,10 +2061,10 @@ const TRANSLATIONS = {
     freeWeekdays:"空闲工作日（周末以外的休息日）", noFreeDayPreference:"无 — 没有偏好", oneFreeWeekday:"至少 1 个空闲工作日", twoFreeWeekdays:"至少 2 个空闲工作日",
     compactClasses:"优先紧凑排课（减少每天课程之间的等待时间）", fewerDays:"优先减少到校天数", avoidBefore:"避免早于此时间的课程", avoidAfter:"避免晚于此时间的课程",
     dailyBreaks:"每天需要保留的休息时间（选填）", add:"+ 添加", noCourses:"尚未添加课程。请从课程设置开始。",
-    yourSelection:"你的选择", courseWishlist:"课程清单", wishlistDescription:"你添加的课程都会显示在这里。生成最终课表前请检查选择。",
-    loadSample:"加载示例数据", clearAll:"全部清除", editSelections:"修改选择", semesterResolved:"你的学期方案",
+    courseWishlist:"课程清单", wishlistDescription:"你添加的课程都会显示在这里。生成最终课表前请检查选择。",
+    loadSample:"加载示例数据", clearAll:"全部清除", editSelections:"修改选择",
     weeklyTimetable:"每周课表", timetableDescription:"比较排名方案、查看取舍，并保存最适合你的课表。",
-    result:"结果", bestSchedule:"最佳无冲突课表", bestScheduleDescription:"最高排名方案以完整尺寸显示。",
+    bestSchedule:"最佳无冲突课表", bestScheduleDescription:"最高排名方案以完整尺寸显示。",
     colorBy:"配色方式", everyCourse:"每门课程", mustElective:"必修与选修",
     rankedOf:"第 {rank} 名，共 {total} 个方案", coursesTakenStat:"门课程", creditsStat:"学分", daysOnCampusStat:"天到校",
     freeWeekdayStat:"个空闲工作日（{days}）", freeWeekdaysStat:"个空闲工作日（{days}）", none:"无", totalGapsStat:"总空档", tradeoffTitle:"取舍：",
@@ -2131,7 +2093,7 @@ const TRANSLATIONS = {
   },
   "zh-HK": {
     brandTag:"輕鬆規劃課程註冊", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
-    intelligentPlanning:"智能課程規劃", heroTitle:"砌出你最理想嘅<br><span>學期。</span>",
+    intelligentPlanning:"智能課程規劃", heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
     conflictFree:"唔撞時間", creditAware:"智能計學分", builtAroundYou:"為你度身規劃", startPlanning:"開始規劃",
     accountTitle:"你嘅 ConCourse 帳戶", createAccount:"建立帳戶", email:"電郵", password:"密碼",
@@ -2140,7 +2102,7 @@ const TRANSLATIONS = {
     realNamePrivacy:"同公開資料分開儲存。只有網站擁有人可以喺受保護資料庫查看呢啲資料。",
     givenName:"名字", middleName:"中間名", familyName:"姓氏", optional:"選填", school:"學校或大學",
     schoolPlaceholder:"搜尋你嘅學校", major:"主修或研究範疇", majorPlaceholder:"例如：電腦科學",
-    semesterConfigurator:"學期設定", configuratorTitle:"揀好詳細條件。<br>建立選科清單。",
+    configuratorTitle:"揀好詳細條件。<br>建立選科清單。",
     configuratorDescription:"加入課程選項同設定學期偏好。準備好之後，ConCourse 會喺獨立全畫面顯示排序時間表。",
     courses:"課程", criteria:"條件", courseBuilder:"課程設定", courseBuilderDescription:"設定每科同可選上課時段。",
     courseName:"課程名稱", courseCode:"課程編號", professor:"教授", credits:"學分", mustTake:"必須修讀",
@@ -2156,10 +2118,10 @@ const TRANSLATIONS = {
     freeWeekdays:"空閒平日（週末以外嘅休息日）", noFreeDayPreference:"冇 — 無特別偏好", oneFreeWeekday:"最少 1 個空閒平日", twoFreeWeekdays:"最少 2 個空閒平日",
     compactClasses:"優先緊湊排堂（減少每日堂與堂之間嘅等候時間）", fewerDays:"優先減少返學日數", avoidBefore:"避免早過呢個時間嘅堂", avoidAfter:"避免遲過呢個時間嘅堂",
     dailyBreaks:"每日要留空嘅休息時間（選填）", add:"+ 加入", noCourses:"仲未加入課程。請由課程設定開始。",
-    yourSelection:"你嘅選擇", courseWishlist:"選科清單", wishlistDescription:"你加嘅課程會全部喺度顯示。產生最終時間表前請先檢查。",
-    loadSample:"載入示例資料", clearAll:"全部清除", editSelections:"修改選擇", semesterResolved:"你嘅學期方案",
+    courseWishlist:"選科清單", wishlistDescription:"你加嘅課程會全部喺度顯示。產生最終時間表前請先檢查。",
+    loadSample:"載入示例資料", clearAll:"全部清除", editSelections:"修改選擇",
     weeklyTimetable:"每週時間表", timetableDescription:"比較排序方案、睇清取捨，再儲存最啱你嘅時間表。",
-    result:"結果", bestSchedule:"最佳無衝突時間表", bestScheduleDescription:"最高排名方案會以完整尺寸顯示。",
+    bestSchedule:"最佳無衝突時間表", bestScheduleDescription:"最高排名方案會以完整尺寸顯示。",
     colorBy:"配色方式", everyCourse:"每科", mustElective:"必修同選修",
     rankedOf:"第 {rank} 名，共 {total} 個方案", coursesTakenStat:"科", creditsStat:"學分", daysOnCampusStat:"日返學",
     freeWeekdayStat:"個空閒平日（{days}）", freeWeekdaysStat:"個空閒平日（{days}）", none:"冇", totalGapsStat:"總空檔", tradeoffTitle:"取捨：",
