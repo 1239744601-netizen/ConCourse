@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ConCourse — Conquer your course registrations</title>
 <link rel="icon" type="image/svg+xml" href="concourse-icon.svg" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
     --bg: #f4f6fb;
     --panel: #ffffff;
     --panel-2: #f2f5fa;
@@ -26,7 +24,7 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
     background: var(--bg);
     color: var(--text);
     line-height: 1.5;
@@ -43,7 +41,7 @@
   .brand-name { font-size: 28px; font-weight: 800; letter-spacing: -.5px; line-height: 1; }
   .brand-name .bn-a { color: var(--accent); }
   .brand-name .bn-b { color: var(--text); }
-  .brand-tag { font-family: 'Cinzel', Georgia, 'Times New Roman', serif; font-size: 12.5px; font-weight: 600; letter-spacing: 1.4px; color: var(--muted); margin-top: 6px; }
+  .brand-tag { font-family: var(--font-sans); font-size: 12.5px; font-weight: 600; letter-spacing: 1.4px; color: var(--muted); margin-top: 6px; }
   [hidden] { display: none !important; }
   .header-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
   .auth-bar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
@@ -219,7 +217,7 @@
     min-height: 100vh;
     overflow-x: hidden;
     overflow-y: auto;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--font-sans);
     background:
       radial-gradient(circle at 10% 24%, rgba(0,113,227,.08), transparent 28rem),
       radial-gradient(circle at 92% 42%, rgba(123,97,255,.07), transparent 30rem),
@@ -1412,6 +1410,147 @@
   #schedulePage .event b { font-size: 13px; }
   #schedulePage .event small { font-size: 11px; }
 
+  /* Unified typography and section hierarchy */
+  body,
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2,
+  h3,
+  .brand-name,
+  .course-title {
+    font-family: var(--font-sans);
+    text-wrap: balance;
+  }
+  button,
+  input,
+  select,
+  textarea { font-synthesis: none; }
+
+  :where(button, a, input, select, textarea):focus-visible {
+    outline: 3px solid rgba(10,132,255,.3);
+    outline-offset: 3px;
+  }
+
+  .hero-copy h1,
+  .configurator-intro h1,
+  .wishlist-header h2,
+  .schedule-page-header h1 {
+    font-weight: 740;
+    font-synthesis: none;
+  }
+  .configurator-intro h1,
+  .wishlist-header h2,
+  .schedule-page-header h1 {
+    width: fit-content;
+    max-width: 100%;
+    color: transparent;
+    background: linear-gradient(105deg, #1d1d1f 2%, #1d1d1f 30%, #0066cc 66%, #7c3aed 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .configurator-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    min-height: 29px;
+    margin-bottom: 14px;
+    padding: 6px 11px;
+    border: 1px solid rgba(0,102,204,.12);
+    border-radius: 980px;
+    background: rgba(255,255,255,.78);
+    color: #0066cc;
+    box-shadow: 0 8px 22px rgba(0,102,204,.07);
+    font-size: 10.5px;
+    font-weight: 720;
+    letter-spacing: .075em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .configurator-eyebrow::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0a84ff, #7c3aed);
+    box-shadow: 0 0 0 4px rgba(10,132,255,.1);
+  }
+
+  .configurator-column .panel {
+    margin: 0 0 18px !important;
+    padding: clamp(27px, 2.6vw, 36px);
+    border: 1px solid rgba(29,29,31,.075);
+    border-radius: 27px;
+    background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(249,250,253,.92));
+    box-shadow: 0 18px 50px rgba(31,47,78,.07), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .configurator-column .panel:first-of-type { border-top: 1px solid rgba(29,29,31,.075); }
+  .configurator-column .panel:hover { box-shadow: 0 22px 58px rgba(31,47,78,.09), inset 0 1px 0 rgba(255,255,255,.92); }
+  .configurator-column .panel-heading { align-items: center; }
+  .configurator-column .panel-heading .panel-index {
+    background: linear-gradient(145deg, #1687f8, #4f5de8 62%, #7c3aed);
+    box-shadow: 0 9px 20px rgba(61,85,218,.24), inset 0 1px 0 rgba(255,255,255,.32);
+  }
+  .configurator-column .panel-heading h2 {
+    font-weight: 720;
+    letter-spacing: -.035em;
+  }
+  .configurator-column .panel-heading p { color: #73737a; }
+  .configurator-column .divider { background: linear-gradient(90deg, transparent, #d8d8de 12%, #d8d8de 88%, transparent); }
+
+  .wishlist-header {
+    position: relative;
+    border-bottom: 0;
+  }
+  .wishlist-header::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0,113,227,.42), rgba(124,58,237,.26) 42%, rgba(29,29,31,.06));
+  }
+  .wishlist-count {
+    border-color: rgba(0,113,227,.12);
+    color: #005fbd;
+    box-shadow: 0 8px 20px rgba(0,113,227,.07);
+  }
+  #wishlistPanel .course-title { font-size: 15.5px; font-weight: 690; letter-spacing: -.02em; }
+
+  .auth-card-head h2 {
+    position: relative;
+    padding-bottom: 10px;
+    font-weight: 730;
+  }
+  .auth-card-head h2::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 42px;
+    height: 3px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #0a84ff, #7c3aed);
+  }
+
+  #schedulePage #timetablePanel .panel-index {
+    background: linear-gradient(135deg, #1d1d1f, #38383c);
+    box-shadow: 0 8px 18px rgba(0,0,0,.16);
+  }
+  #schedulePage #timetablePanel .panel-heading h2 {
+    font-weight: 720;
+    letter-spacing: -.035em;
+  }
+
   @media (min-width: 1051px) {
     body.app-active:not(.schedule-active) {
       height: 100svh;
@@ -1896,7 +2035,7 @@
       <span id="colorLegend" class="cm-legend"></span>
     </div>
     <div id="calArea">
-      <div class="empty-note">Add courses, define your semester criteria, and generate ranked schedules to view your timetable.</div>
+      <div class="empty-note" data-i18n="emptySchedule">Add courses, define your semester criteria, and generate ranked schedules to view your timetable.</div>
     </div>
   </div>
 </section>
@@ -1984,6 +2123,10 @@ const TRANSLATIONS = {
     schoolRequired:"请输入学校或大学名称。", majorRequired:"请输入专业或研究领域。", creatingAccount:"正在创建账户…", signingIn:"正在登录…",
     accountCreated:"账户已创建。请检查邮箱，然后返回登录。", signedInSuccess:"登录成功。", authRequestFailed:"登录服务暂时无法连接。请检查网络后重试。", signedInReady:"已以 {email} 登录。你的课程规划器已准备就绪。",
     saving:"正在保存…", saveFailed:"保存失败", saved:"已保存", unsaved:"未保存", loading:"正在加载…", loadFailed:"加载失败",
+    emptySchedule:"添加课程、设置学期条件并生成排名方案，即可查看课表。", sessionLabelOne:"添加上课时段（日期 + 时间）", sessionLabelTwo:"添加两个上课时段（日期 + 时间）",
+    sessionOnce:"此课程每周上课一次。", sessionTwice:"此课程每周在不同日期上课两次。", multiSessionHint:"{base} 请先建立完整时间选项（共 {count} 个时段），按“保存时间选项”，再添加教师提供的其他选项。ConCourse 每次会保留一个完整选项。",
+    fixedSessionHint:"{base} 添加全部 {count} 个时段，它们会作为固定课表保存在一起。", wishlistCountOne:"{count} 门课程", wishlistCountMany:"{count} 门课程", remove:"移除", mustTakeBadge:"必须修读", sessionsWeekly:"每周 {count} 次",
+    chooseOption:"从 {count} 个选项中选 1 个", optionLabel:"选项 {option}", meetingLabel:"上课", creditsShort:"学分", noValidTimetable:"未找到有效课表。", tooManyTimetables:"有效课表过多，无法准确排名。",
     supabaseRequired:"需要设置 Supabase", configureLogin:"设置登录", connectSupabase:"连接 Supabase 后即可启用登录并开始规划。"
   },
   "zh-HK": {
@@ -2037,6 +2180,10 @@ const TRANSLATIONS = {
     schoolRequired:"請輸入學校或大學名稱。", majorRequired:"請輸入主修或研究範疇。", creatingAccount:"正在建立帳戶…", signingIn:"正在登入…",
     accountCreated:"帳戶已建立。請檢查電郵，之後返嚟登入。", signedInSuccess:"登入成功。", authRequestFailed:"登入服務暫時連接唔到。請檢查網絡再試。", signedInReady:"已用 {email} 登入。你嘅課程規劃器已經準備好。",
     saving:"正在儲存…", saveFailed:"儲存失敗", saved:"已儲存", unsaved:"未儲存", loading:"正在載入…", loadFailed:"載入失敗",
+    emptySchedule:"加入課程、設定學期條件，再產生排序方案，就可以查看時間表。", sessionLabelOne:"加入上堂時段（日子 + 時間）", sessionLabelTwo:"加入兩個上堂時段（日子 + 時間）",
+    sessionOnce:"呢科每星期上堂一次。", sessionTwice:"呢科每星期喺唔同日子上堂兩次。", multiSessionHint:"{base} 請先建立完整時間選項（共 {count} 個時段），按「儲存時間選項」，再加入教授提供嘅其他選項。ConCourse 每次會保留一個完整選項。",
+    fixedSessionHint:"{base} 加入全部 {count} 個時段，佢哋會一齊保留做固定時間表。", wishlistCountOne:"{count} 科", wishlistCountMany:"{count} 科", remove:"移除", mustTakeBadge:"必須修讀", sessionsWeekly:"每週 {count} 次",
+    chooseOption:"由 {count} 個選項揀 1 個", optionLabel:"選項 {option}", meetingLabel:"上堂", creditsShort:"學分", noValidTimetable:"搵唔到有效時間表。", tooManyTimetables:"有效時間表太多，未能準確排序。",
     supabaseRequired:"需要設定 Supabase", configureLogin:"設定登入", connectSupabase:"連接 Supabase 之後就可以登入同開始規劃。"
   }
 };
@@ -2067,7 +2214,12 @@ function t(key, variables={}){
     showingRankedOption:"Showing ranked option {option}.", compareAlternatives:"Use the Option buttons above to compare alternatives.", printPdf:"Print / Save as PDF",
     completeWishlistTitle:"Complete wishlist:", completeWishlistMessage:"Every selected course fits this schedule without a time conflict.",
     notIncludedTitle:"Not included in this schedule:", exactMixReason:"you asked for exactly {count} courses, and this mix hits {credits} credits", fewestMixReason:"this schedule already hits {credits} credits with just {count} courses",
-    otherOptionsMix:"Other ranked options may use a different course mix.", mustTakeLegend:"Must-take", electiveLegend:"Elective"
+    otherOptionsMix:"Other ranked options may use a different course mix.", mustTakeLegend:"Must-take", electiveLegend:"Elective",
+    addSession:"+ Add session", noCourses:"No courses added. Use Course builder to begin.",
+    emptySchedule:"Add courses, define your semester criteria, and generate ranked schedules to view your timetable.", sessionLabelOne:"Add the session (day + time)", sessionLabelTwo:"Add both sessions (day + time)",
+    sessionOnce:"This course meets once a week.", sessionTwice:"This course meets on two different days.", multiSessionHint:"{base} Build one complete time option, save it, then add the professor's other options. ConCourse keeps each option together.",
+    fixedSessionHint:"{base} Add the full weekly meeting pattern; it stays together as the fixed schedule.", wishlistCountOne:"{count} course", wishlistCountMany:"{count} courses", remove:"Remove", mustTakeBadge:"Must take", sessionsWeekly:"{count}× / week",
+    chooseOption:"pick 1 of {count} options", optionLabel:"Option {option}", meetingLabel:"Meeting", creditsShort:"cr", noValidTimetable:"No valid timetable found.", tooManyTimetables:"Too many valid timetables to rank accurately."
   };
   let value = TRANSLATIONS[currentLanguage]?.[key] ?? english[key] ?? key;
   for(const [name,replacement] of Object.entries(variables)) value = value.replaceAll(`{${name}}`, replacement);
@@ -2114,6 +2266,11 @@ function applyLanguage(language, {persist=true}={}){
   }
   if(!$("authUsername").value) setUsernameStatus(t("usernameHelp"));
   if(!$("schoolName").value) setSchoolStatus(t("startTyping"));
+  updateSessionUi();
+  renderPending();
+  renderSavedOptions();
+  renderBreaks();
+  renderCourses();
   if(solutions.length && solutions[activeSolution]) renderResults();
 }
 
@@ -2136,7 +2293,7 @@ function invalidateSchedules(){
   $("colorModeBar").style.display = "none";
   $("colorLegend").innerHTML = "";
   if($("plannerAlert")) $("plannerAlert").innerHTML = "";
-  $("calArea").innerHTML = `<div class="empty-note">Add courses, define your semester criteria, and generate ranked schedules to view your timetable.</div>`;
+  $("calArea").innerHTML = `<div class="empty-note">${escapeHtml(t("emptySchedule"))}</div>`;
 }
 
 // ---------- Account + cloud persistence ----------
@@ -2844,7 +3001,7 @@ function renderBreaks(){
   const el = $("breakList");
   if(breaks.length === 0){ el.innerHTML = ""; return; }
   el.innerHTML = breaks.map((b,i)=>`
-    <div class="slot-item"><span>${fmt(b.start)} – ${fmt(b.end)}</span><button class="x" data-i="${i}" aria-label="Remove break">Remove</button></div>
+    <div class="slot-item"><span>${fmt(b.start)} – ${fmt(b.end)}</span><button class="x" data-i="${i}" aria-label="${escapeHtml(t("remove"))}">${escapeHtml(t("remove"))}</button></div>
   `).join("");
   el.querySelectorAll(".x").forEach(x=>x.onclick=()=>{
     breaks.splice(+x.dataset.i,1);
@@ -2884,12 +3041,10 @@ function updateSessionUi(){
   const multi = isMulti(), n = sessionsPerWeek();
   $("optionArea").style.display = multi ? "block" : "none";
   if(!multi){ savedOptions = []; renderSavedOptions(); }
-  $("sessionLabel").textContent = n === 1 ? "Add the session (day + time)" : "Add both sessions (day + time)";
-  const base = n === 1 ? "This course meets once a week." : "This course meets on two different days.";
-  $("sessionHint").textContent = multi
-    ? `${base} Build one full time option (all ${n} session${n>1?"s":""}), press "Save this time option", then add the professor's other options. ConCourse keeps one whole option.`
-    : `${base} Add its ${n} session${n>1?"s":""} — kept together as the fixed schedule.`;
-  $("addSlot").textContent = "+ Add session";
+  $("sessionLabel").textContent = t(n === 1 ? "sessionLabelOne" : "sessionLabelTwo");
+  const base = t(n === 1 ? "sessionOnce" : "sessionTwice");
+  $("sessionHint").textContent = t(multi ? "multiSessionHint" : "fixedSessionHint", {base, count:n});
+  $("addSlot").textContent = t("addSession");
   if(pendingSlots.length > n){ pendingSlots.length = n; renderPending(); }
 }
 $("cMulti").addEventListener("change", updateSessionUi);
@@ -2947,7 +3102,7 @@ function renderPending(){
   const el = $("pendingSlots");
   if(pendingSlots.length === 0){ el.innerHTML = ""; return; }
   el.innerHTML = pendingSlots.map((s,i)=>`
-    <div class="slot-item"><span>${slotLabel(s)}</span><button class="x" data-i="${i}" aria-label="Remove session">Remove</button></div>
+    <div class="slot-item"><span>${slotLabel(s)}</span><button class="x" data-i="${i}" aria-label="${escapeHtml(t("remove"))}">${escapeHtml(t("remove"))}</button></div>
   `).join("");
   el.querySelectorAll(".x").forEach(x=>x.onclick=()=>{ pendingSlots.splice(+x.dataset.i,1); renderPending(); });
 }
@@ -2957,7 +3112,7 @@ function renderSavedOptions(){
   if(!el) return;
   if(savedOptions.length === 0){ el.innerHTML = ""; return; }
   el.innerHTML = savedOptions.map((o,i)=>`
-    <div class="slot-item"><span>Option ${i+1}: ${optionLabel(o)}</span><button class="x" data-i="${i}" aria-label="Remove time option">Remove</button></div>
+    <div class="slot-item"><span>${escapeHtml(t("optionLabel", {option:i+1}))}: ${optionLabel(o)}</span><button class="x" data-i="${i}" aria-label="${escapeHtml(t("remove"))}">${escapeHtml(t("remove"))}</button></div>
   `).join("");
   el.querySelectorAll(".x").forEach(x=>x.onclick=()=>{ savedOptions.splice(+x.dataset.i,1); renderSavedOptions(); });
 }
@@ -3007,24 +3162,24 @@ $("addCourse").addEventListener("click", () => {
 
 function renderCourses(){
   const el = $("courseList");
-  $("wishlistCount").textContent = `${courses.length} course${courses.length===1?"":"s"}`;
-  if(courses.length === 0){ el.innerHTML = `<div class="empty-note">No courses added. Use Course builder to begin.</div>`; return; }
+  $("wishlistCount").textContent = t(courses.length === 1 ? "wishlistCountOne" : "wishlistCountMany", {count:courses.length});
+  if(courses.length === 0){ el.innerHTML = `<div class="empty-note">${escapeHtml(t("noCourses"))}</div>`; return; }
   el.innerHTML = courses.map(c=>`
     <div class="course-card ${c.required?"req":""}">
       <div class="top">
         <div>
           <div class="course-title">${escapeHtml(c.name)}</div>
-          <div class="course-meta">${escapeHtml(c.code||"—")} ${c.prof?"· "+escapeHtml(c.prof):""} · ${c.credits} cr</div>
+          <div class="course-meta">${escapeHtml(c.code||"—")} ${c.prof?"· "+escapeHtml(c.prof):""} · ${c.credits} ${escapeHtml(t("creditsShort"))}</div>
           <div>
-            ${c.required?`<span class="badge req">Must take</span>`:""}
-            <span class="badge">${c.sessionsPerWeek}× / week</span>
-            ${c.options.length>1?`<span class="badge">pick 1 of ${c.options.length} options</span>`:""}
+            ${c.required?`<span class="badge req">${escapeHtml(t("mustTakeBadge"))}</span>`:""}
+            <span class="badge">${escapeHtml(t("sessionsWeekly", {count:c.sessionsPerWeek}))}</span>
+            ${c.options.length>1?`<span class="badge">${escapeHtml(t("chooseOption", {count:c.options.length}))}</span>`:""}
           </div>
           ${c.options.length>1
-            ? c.options.map((o,i)=>`<div class="sec-line">Option ${i+1}: ${o.sessions.map(slotLabel).join("  +  ")}</div>`).join("")
-            : c.options[0].sessions.map(s=>`<div class="sec-line">Meeting: ${slotLabel(s)}</div>`).join("")}
+            ? c.options.map((o,i)=>`<div class="sec-line">${escapeHtml(t("optionLabel", {option:i+1}))}: ${o.sessions.map(slotLabel).join("  +  ")}</div>`).join("")
+            : c.options[0].sessions.map(s=>`<div class="sec-line">${escapeHtml(t("meetingLabel"))}: ${slotLabel(s)}</div>`).join("")}
         </div>
-        <button class="btn-danger" data-id="${c.id}">Remove</button>
+        <button class="btn-danger" data-id="${c.id}">${escapeHtml(t("remove"))}</button>
       </div>
     </div>
   `).join("");
@@ -3237,7 +3392,7 @@ function scoreSchedule(picks, prefs){
 function clearResults(){
   $("scoreArea").innerHTML=""; $("statArea").innerHTML=""; $("altArea").innerHTML=""; $("droppedArea").innerHTML="";
   $("colorModeBar").style.display = "none";
-  $("calArea").innerHTML = `<div class="empty-note">No valid timetable found.</div>`;
+  $("calArea").innerHTML = `<div class="empty-note">${escapeHtml(t("noValidTimetable"))}</div>`;
 }
 
 function renderNoSolution(minCr, freeReq){
@@ -3252,7 +3407,7 @@ function renderNoSolution(minCr, freeReq){
   const message = `<b>No matching schedule.</b> Likely causes: ${causes.join("; ")}. Try lowering required credits, reducing free weekdays, adding more section options, or relaxing the credit cap.`;
   $("warnArea").innerHTML = `<div class="conflict-warn">${message}</div>`;
   setPlannerAlert(message);
-  $("calArea").innerHTML = `<div class="empty-note">No valid timetable found.</div>`;
+  $("calArea").innerHTML = `<div class="empty-note">${escapeHtml(t("noValidTimetable"))}</div>`;
 }
 
 function renderSearchLimit(limit){
@@ -3265,7 +3420,7 @@ function renderSearchLimit(limit){
   const message = `<b>Search is too broad.</b> More than ${limit.toLocaleString()} valid schedules were found, so an incomplete ranking is not shown. Narrow the credit range, choose free weekdays, or mark required courses, then generate again.`;
   $("warnArea").innerHTML = `<div class="conflict-warn">${message}</div>`;
   setPlannerAlert(message);
-  $("calArea").innerHTML = `<div class="empty-note">Too many valid timetables to rank accurately.</div>`;
+  $("calArea").innerHTML = `<div class="empty-note">${escapeHtml(t("tooManyTimetables"))}</div>`;
 }
 
 function renderResults(){
