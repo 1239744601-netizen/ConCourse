@@ -321,7 +321,7 @@
       inset 0 1px 0 rgba(255,255,255,.92);
     cursor: pointer;
     isolation: isolate;
-    transition: transform .22s cubic-bezier(.2,.8,.2,1), border-color .22s ease, box-shadow .22s ease;
+    transition: border-color .22s ease, box-shadow .22s ease, background-color .22s ease;
   }
   .language-control::before {
     content: "";
@@ -331,17 +331,16 @@
     border-radius: 50%;
     background: radial-gradient(circle, rgba(95,130,255,.22), transparent 68%);
     pointer-events: none;
-    transition: transform .28s ease, opacity .28s ease;
+    transition: opacity .22s ease;
   }
   .language-control:hover {
-    transform: translateY(-1px);
     border-color: rgba(182,198,248,.92);
     box-shadow:
       0 11px 28px rgba(28,52,105,.14),
       inset 0 0 0 1px rgba(72,107,210,.12),
       inset 0 1px 0 rgba(255,255,255,.96);
   }
-  .language-control:hover::before { transform: translate3d(10px,6px,0) scale(1.08); }
+  .language-control:hover::before { opacity: .86; }
   .language-control:focus-within {
     border-color: rgba(67,97,238,.58);
     box-shadow:
@@ -350,6 +349,8 @@
       inset 0 0 0 1px rgba(67,97,238,.12);
   }
   .language-icon {
+    position: relative;
+    inset: auto;
     display: grid;
     place-items: center;
     width: 31px;
@@ -360,6 +361,7 @@
     color: #fff;
     box-shadow: 0 5px 13px rgba(56,83,203,.30), inset 0 1px 0 rgba(255,255,255,.34);
     pointer-events: none;
+    transform: none;
   }
   .language-icon svg { width: 16px; height: 16px; filter: drop-shadow(0 1px 1px rgba(11,30,100,.18)); }
   .language-text {
@@ -405,9 +407,9 @@
     color: #64708c;
     pointer-events: none;
     transform: translateY(-50%);
-    transition: transform .22s ease, color .22s ease;
+    transition: color .22s ease;
   }
-  .language-control:hover .language-chevron { color: #3655d3; transform: translateY(-45%); }
+  .language-control:hover .language-chevron { color: #3655d3; transform: translateY(-50%); }
 
   .hero-copy {
     position: relative;
@@ -1403,6 +1405,38 @@
   #schedulePage .event b { font-size: 13px; }
   #schedulePage .event small { font-size: 11px; }
 
+  @media (min-width: 1051px) {
+    body.app-active:not(.schedule-active) {
+      height: 100svh;
+      overflow-y: hidden;
+    }
+    body.app-active:not(.schedule-active) .wrap {
+      height: calc(100svh - 79px);
+      min-height: 0;
+      align-items: stretch;
+      overflow: hidden;
+      padding-top: 24px;
+      padding-bottom: 24px;
+    }
+    body.app-active:not(.schedule-active) .configurator-column {
+      height: 100%;
+      min-height: 0;
+      padding-right: clamp(10px, 1.2vw, 18px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+      scrollbar-gutter: stable;
+      scrollbar-color: rgba(29,29,31,.28) transparent;
+    }
+    body.app-active:not(.schedule-active) .configurator-nav { top: 0; }
+    body.app-active:not(.schedule-active) #wishlistPanel {
+      position: relative;
+      top: auto;
+      height: 100%;
+      min-height: 0;
+    }
+  }
+
   @media (max-width: 1050px) {
     .wrap {
       max-width: 920px;
@@ -1431,7 +1465,7 @@
     .language-chevron { right: 9px; }
     .private-name-grid { grid-template-columns: 1fr; }
   }
-  @media (max-height: 840px) {
+  @media (max-height: 840px) and (max-width: 1050px) {
     body.app-active #landingScreen {
       position: relative;
       top: auto;
