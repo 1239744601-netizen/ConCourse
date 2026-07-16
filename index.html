@@ -297,7 +297,27 @@
     color: var(--muted-2);
   }
   .auth-bar { gap: 7px; }
+  .auth-identity {
+    display: flex;
+    min-width: 0;
+    max-width: 280px;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
+  }
   .auth-user { max-width: 210px; color: var(--muted); font-size: 12px; font-weight: 520; }
+  .auth-academic {
+    display: block;
+    max-width: 280px;
+    margin-top: 3px;
+    overflow: hidden;
+    color: #0066cc;
+    font-size: 9.5px;
+    font-weight: 650;
+    letter-spacing: .01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .auth-bar button { min-height: 36px; padding: 8px 14px; border-radius: 980px; font-size: 12px; }
   .language-control {
     position: relative;
@@ -840,7 +860,7 @@
     .header-row { min-height: 54px; padding: 7px 8px 7px 10px; border-radius: 17px; }
     .brand-tag { display: none; }
     .brand-mark { width: 36px; height: 36px; }
-    .auth-user { display: none; }
+    .auth-identity { display: none; }
     .auth-bar button { padding: 8px 11px; }
     .hero-copy { margin-top: 58px; }
     .hero-copy h1 { font-size: clamp(48px, 15vw, 70px); letter-spacing: -3.5px; }
@@ -1294,6 +1314,43 @@
     font-weight: 650;
     white-space: nowrap;
   }
+  .wishlist-profile {
+    width: min(100%, 430px);
+    margin: 0 0 22px;
+    padding: 14px;
+    border: 1px solid rgba(0,113,227,.11);
+    border-radius: 18px;
+    background: rgba(255,255,255,.72);
+    box-shadow: 0 10px 28px rgba(0,113,227,.055);
+  }
+  .wishlist-profile-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: #0066cc;
+    font-size: 10px;
+    font-weight: 720;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+  .wishlist-profile-title::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0a84ff, #7c3aed);
+    box-shadow: 0 0 0 4px rgba(10,132,255,.1);
+  }
+  .wishlist-profile-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .wishlist-profile label { margin: 0; color: var(--muted); font-size: 10px; }
+  .wishlist-profile label span { display: block; margin-bottom: 5px; }
+  .wishlist-profile select { min-height: 40px; padding-block: 8px; background: #fff; font-size: 12px; }
+  .wishlist-profile-note { margin: 9px 0 0 !important; color: var(--muted-2) !important; font-size: 10px !important; line-height: 1.4 !important; }
   #wishlistPanel #courseList {
     flex: 1 1 auto;
     min-height: 0;
@@ -1380,6 +1437,21 @@
   }
   #schedulePage #timetablePanel .panel-heading h2 { font-size: clamp(24px, 2.4vw, 36px); }
   #schedulePage #timetablePanel .panel-heading p { font-size: 14px; }
+  .final-timetable-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 12px 0 16px;
+    padding: 14px 16px;
+    border: 1px solid rgba(0,113,227,.11);
+    border-radius: 18px;
+    background: rgba(255,255,255,.76);
+  }
+  .final-timetable-copy { min-width: 0; }
+  .final-timetable-copy b { display: block; font-size: 13px; }
+  .final-timetable-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+  #saveFinalTimetable { flex: none; }
   #schedulePage #timetablePanel .stat { min-width: 145px; padding: 13px 15px; }
   #schedulePage #timetablePanel .stat b { font-size: 23px; }
   #schedulePage #calArea {
@@ -1564,12 +1636,16 @@
     #wishlistPanel { min-height: 540px; padding: 24px 18px; border-radius: 28px; }
     .wishlist-header { flex-direction: column; gap: 14px; }
     .wishlist-header h2 { font-size: 36px; }
+    .wishlist-profile { width: 100%; }
+    .wishlist-profile-controls { grid-template-columns: 1fr; }
     #wishlistPanel #courseList > .empty-note { min-height: 260px; padding: 30px; }
     .schedule-page { padding: 28px 12px 70px; }
     .schedule-page-header { padding: 0 6px; }
     .schedule-page-header h1 { font-size: 46px; }
     #schedulePage #timetablePanel { min-height: 720px; padding: 20px 14px; border-radius: 28px; }
     #schedulePage #timetablePanel .grid-head { align-items: flex-start; flex-direction: column; }
+    .final-timetable-bar { align-items: stretch; flex-direction: column; }
+    #saveFinalTimetable { width: 100%; }
     #schedulePage #calArea { min-height: 620px; }
     .language-control { min-width: 119px; height: 36px; margin-right: 0; }
     .language-icon { width: 29px; height: 29px; flex-basis: 29px; }
@@ -1626,7 +1702,7 @@
     #schedulePage { display: block !important; padding: 0 !important; }
     .panel { border: none !important; box-shadow: none !important; margin: 0 !important; }
     #timetablePanel { position: static !important; height: auto !important; min-height: 0 !important; overflow: visible !important; padding: 0 !important; }
-    .grid-head, #scoreArea, #statArea, #altArea, #warnArea, #droppedArea, #colorModeBar { display: none !important; }
+    .grid-head, #scoreArea, #statArea, #altArea, .final-timetable-bar, #warnArea, #droppedArea, #colorModeBar { display: none !important; }
     #calArea .hint { display: none !important; }
     #calArea { overflow: visible !important; zoom: var(--print-scale, 1); }
     .calendar-scroll { height: auto !important; overflow: visible !important; }
@@ -1673,7 +1749,10 @@
     </div>
   </div>
   <div class="auth-bar" aria-label="Account controls">
-    <span class="auth-user" id="authUser">Not signed in</span>
+    <div class="auth-identity">
+      <span class="auth-user" id="authUser">Not signed in</span>
+      <span class="auth-academic" id="authAcademic" hidden></span>
+    </div>
     <button class="btn-primary" id="authOpenBtn" data-i18n="signIn">Sign in</button>
     <button class="btn-ghost" id="saveAccountBtn" hidden data-i18n="saveNow">Save now</button>
     <button class="btn-ghost" id="signOutBtn" hidden data-i18n="signOut">Sign out</button>
@@ -1957,6 +2036,35 @@
   <div class="panel" id="wishlistPanel">
     <div class="wishlist-header">
       <div>
+        <div class="wishlist-profile">
+          <div class="wishlist-profile-title" data-i18n="academicProfile">Academic profile</div>
+          <div class="wishlist-profile-controls">
+            <label for="degreeLevel">
+              <span data-i18n="degreeLevel">Degree level</span>
+              <select id="degreeLevel">
+                <option value="" data-i18n="chooseDegree">Choose degree</option>
+                <option value="bachelor" data-i18n="bachelorDegree">Bachelor</option>
+                <option value="master" data-i18n="masterDegree">Master</option>
+                <option value="phd" data-i18n="phdDegree">PhD</option>
+              </select>
+            </label>
+            <label for="studyYear">
+              <span data-i18n="yearOfStudy">Year of study</span>
+              <select id="studyYear">
+                <option value="" data-i18n="chooseYear">Choose year</option>
+                <option value="1" data-i18n="studyYear1">Year 1</option>
+                <option value="2" data-i18n="studyYear2">Year 2</option>
+                <option value="3" data-i18n="studyYear3">Year 3</option>
+                <option value="4" data-i18n="studyYear4">Year 4</option>
+                <option value="5" data-i18n="studyYear5">Year 5</option>
+                <option value="6" data-i18n="studyYear6">Year 6</option>
+                <option value="7" data-i18n="studyYear7">Year 7</option>
+                <option value="8" data-i18n="studyYear8">Year 8</option>
+              </select>
+            </label>
+          </div>
+          <p class="wishlist-profile-note" data-i18n="academicProfileNote">Saved with your account and attached to your final semester timetable.</p>
+        </div>
         <h2 data-i18n="courseWishlist">Course wishlist</h2>
         <p data-i18n="wishlistDescription">Everything you add appears here. Review your choices before generating the final timetable.</p>
       </div>
@@ -1988,6 +2096,13 @@
     </div>
     <div id="statArea"></div>
     <div id="altArea"></div>
+    <div class="final-timetable-bar">
+      <div class="final-timetable-copy">
+        <b data-i18n="finalTimetableTitle">Final semester timetable</b>
+        <span id="finalTimetableStatus" data-i18n="finalTimetableNotSaved">No final timetable has been saved yet.</span>
+      </div>
+      <button type="button" class="btn-primary" id="saveFinalTimetable" data-i18n="saveFinalTimetable">Save as final timetable</button>
+    </div>
     <div id="warnArea"></div>
     <div id="droppedArea"></div>
     <div id="colorModeBar" class="color-bar" style="display:none">
@@ -2017,6 +2132,7 @@ let breaks = [];         // {start,end} windows the user wants kept class-free e
 let solutions = [];      // ranked list
 let activeSolution = 0;
 let genNote = "";        // banner note from last generation (e.g. free-day tradeoff)
+let finalTimetable = null; // explicitly saved final schedule snapshot for the semester
 let appStarted = false;  // authenticated users still choose when to enter the planner
 
 // ---------- Helpers ----------
@@ -2045,6 +2161,10 @@ const TRANSLATIONS = {
     realNamePrivacy:"与公开资料分开保存。只有网站所有者能在受保护的数据库中访问这些信息。",
     givenName:"名字", middleName:"中间名", familyName:"姓氏", optional:"选填", school:"学校或大学",
     schoolPlaceholder:"搜索你的学校", major:"专业或研究领域", majorPlaceholder:"例如：计算机科学",
+    academicProfile:"学术资料", degreeLevel:"学位类型", chooseDegree:"选择学位", bachelorDegree:"本科", masterDegree:"硕士", phdDegree:"博士",
+    yearOfStudy:"就读年级", chooseYear:"选择年级", studyYear1:"第 1 年", studyYear2:"第 2 年", studyYear3:"第 3 年", studyYear4:"第 4 年", studyYear5:"第 5 年", studyYear6:"第 6 年", studyYear7:"第 7 年", studyYear8:"第 8 年",
+    academicProfileNote:"此资料会保存到你的账户，并附加到最终学期课表。", finalTimetableTitle:"最终学期课表", finalTimetableNotSaved:"尚未保存最终课表。", saveFinalTimetable:"保存为最终课表",
+    finalTimetableSaved:"最终课表已于 {date} 保存。", academicStageRequired:"请先选择学位类型和就读年级。", requiredInformation:"必填信息：",
     configuratorTitle:"选择详细条件。<br>建立课程清单。",
     configuratorDescription:"添加课程选项并设置学期偏好。准备完成后，ConCourse 会在独立全屏页面中展示排名课表。",
     courses:"课程", criteria:"条件", courseBuilder:"课程设置", courseBuilderDescription:"设置每门课程及其可选上课时间。",
@@ -2102,6 +2222,10 @@ const TRANSLATIONS = {
     realNamePrivacy:"同公開資料分開儲存。只有網站擁有人可以喺受保護資料庫查看呢啲資料。",
     givenName:"名字", middleName:"中間名", familyName:"姓氏", optional:"選填", school:"學校或大學",
     schoolPlaceholder:"搜尋你嘅學校", major:"主修或研究範疇", majorPlaceholder:"例如：電腦科學",
+    academicProfile:"學術資料", degreeLevel:"學位類別", chooseDegree:"揀學位", bachelorDegree:"學士", masterDegree:"碩士", phdDegree:"博士",
+    yearOfStudy:"就讀年級", chooseYear:"揀年級", studyYear1:"第 1 年", studyYear2:"第 2 年", studyYear3:"第 3 年", studyYear4:"第 4 年", studyYear5:"第 5 年", studyYear6:"第 6 年", studyYear7:"第 7 年", studyYear8:"第 8 年",
+    academicProfileNote:"呢啲資料會儲存到你嘅帳戶，並附加到最終學期時間表。", finalTimetableTitle:"最終學期時間表", finalTimetableNotSaved:"仲未儲存最終時間表。", saveFinalTimetable:"儲存為最終時間表",
+    finalTimetableSaved:"最終時間表已於 {date} 儲存。", academicStageRequired:"請先揀學位類別同就讀年級。", requiredInformation:"必填資料：",
     configuratorTitle:"揀好詳細條件。<br>建立選科清單。",
     configuratorDescription:"加入課程選項同設定學期偏好。準備好之後，ConCourse 會喺獨立全畫面顯示排序時間表。",
     courses:"課程", criteria:"條件", courseBuilder:"課程設定", courseBuilderDescription:"設定每科同可選上課時段。",
@@ -2156,6 +2280,10 @@ function t(key, variables={}){
     signInSubtitle:"Sign in to continue to your planning workspace.", signUpSubtitle:"Create your academic profile and planning workspace.",
     signUpNote:"Institution matching confirms that a school exists; it does not verify current enrollment.",
     signInNote:"Your schedules are encrypted in transit and isolated by account-level database policies.",
+    academicProfile:"Academic profile", degreeLevel:"Degree level", chooseDegree:"Choose degree", bachelorDegree:"Bachelor", masterDegree:"Master", phdDegree:"PhD",
+    yearOfStudy:"Year of study", chooseYear:"Choose year", studyYear1:"Year 1", studyYear2:"Year 2", studyYear3:"Year 3", studyYear4:"Year 4", studyYear5:"Year 5", studyYear6:"Year 6", studyYear7:"Year 7", studyYear8:"Year 8",
+    academicProfileNote:"Saved with your account and attached to your final semester timetable.", finalTimetableTitle:"Final semester timetable", finalTimetableNotSaved:"No final timetable has been saved yet.", saveFinalTimetable:"Save as final timetable",
+    finalTimetableSaved:"Final timetable saved on {date}.", academicStageRequired:"Choose your degree level and year of study first.", requiredInformation:"Required information:",
     usernameHelp:"Use 3–24 uppercase or lowercase letters, numbers, or underscores. Capitalization matters: Alex and alex are different.", checkingUsername:"Checking username availability…",
     usernameAvailable:"Username is available.", usernameUsed:"This username is already in use.",
     usernameUnavailable:"Username checking is unavailable. Run the latest Supabase setup SQL.", startTyping:"Start typing to see institution suggestions.",
@@ -2214,15 +2342,15 @@ function applyLanguage(language, {persist=true}={}){
   setAuthMode(authMode);
   if(!SUPABASE_CONFIGURED || !window.supabase){
     $("authUser").textContent = t("supabaseRequired");
+    $("authAcademic").hidden = true;
     $("authOpenBtn").textContent = t("configureLogin");
     $("startHint").textContent = t("connectSupabase");
   } else if(!currentUser){
-    $("authUser").textContent = t("notSignedIn");
+    renderAccountIdentity();
     $("startHint").textContent = t("signInUnlock");
   } else {
-    const username = currentUser.user_metadata?.username;
-    $("authUser").textContent = username ? `@${username}` : currentUser.email;
-    const academic = [currentUser.user_metadata?.school_name, currentUser.user_metadata?.major_of_study].filter(Boolean).join(" · ");
+    renderAccountIdentity();
+    const academic = getAcademicIdentity().label;
     $("startHint").textContent = academic || t("signedInReady", {email: currentUser.email});
     $("saveAccountBtn").textContent = t("saveNow");
   }
@@ -2233,6 +2361,7 @@ function applyLanguage(language, {persist=true}={}){
   renderSavedOptions();
   renderBreaks();
   renderCourses();
+  renderFinalTimetableStatus();
   if(solutions.length && solutions[activeSolution]) renderResults();
 }
 
@@ -2269,6 +2398,7 @@ const SUPABASE_CONFIGURED =
 
 let authClient = null;
 let currentUser = null;
+let loadedAcademicProfile = {};
 let loadedUserId = null;
 let loadingUserId = null;
 let loadingUserState = false;
@@ -2287,6 +2417,36 @@ const schoolSearchCache = new Map();
 const ROR_DIRECTORY_URL = "https://api.ror.org/v2/organizations";
 const HIPO_DIRECTORY_URL = "https://universities.hipolabs.com/search";
 const DIRECTORY_TIMEOUT_MS = 5500;
+
+function getAcademicIdentity(){
+  const metadata = currentUser?.user_metadata || {};
+  const school = loadedAcademicProfile.school_name || metadata.school_name || "";
+  const major = loadedAcademicProfile.major_of_study || metadata.major_of_study || "";
+  return { school, major, label:[school, major].filter(Boolean).join(" · ") };
+}
+
+function renderAccountIdentity(){
+  const username = currentUser?.user_metadata?.username;
+  $("authUser").textContent = currentUser
+    ? (username ? `@${username}` : currentUser.email)
+    : t("notSignedIn");
+  const academic = getAcademicIdentity().label;
+  $("authAcademic").textContent = academic;
+  $("authAcademic").hidden = !currentUser || !academic;
+}
+
+function renderFinalTimetableStatus(){
+  const status = $("finalTimetableStatus");
+  if(!status) return;
+  if(!finalTimetable?.savedAt){
+    status.textContent = t("finalTimetableNotSaved");
+    return;
+  }
+  const locale = currentLanguage === "zh-CN" ? "zh-CN" : currentLanguage === "zh-HK" ? "zh-HK" : "en-GB";
+  const savedDate = new Date(finalTimetable.savedAt);
+  const formatted = Number.isNaN(savedDate.getTime()) ? finalTimetable.savedAt : savedDate.toLocaleString(locale, {dateStyle:"medium", timeStyle:"short"});
+  status.textContent = t("finalTimetableSaved", {date:formatted});
+}
 
 function setAuthMessage(message, isError=false){
   const el = $("authMessage");
@@ -2608,10 +2768,15 @@ function showPlannerEditor(){
 
 function collectUserState(){
   return {
-    version: 1,
+    version: 2,
     courses,
     breaks,
     selectedFreeDays: [...selectedFreeDays],
+    academic: {
+      degreeLevel: $("degreeLevel").value,
+      studyYear: $("studyYear").value ? Number($("studyYear").value) : null
+    },
+    finalTimetable,
     semester: {
       minCredits: $("minCredits").value,
       maxCredits: $("maxCredits").value,
@@ -2630,8 +2795,9 @@ function collectUserState(){
   };
 }
 
-function applyUserState(state={}){
+function applyUserState(state={}, profile={}){
   loadingUserState = true;
+  const academic = state.academic || {};
   const semester = state.semester || {};
   const prefs = state.preferences || {};
 
@@ -2647,6 +2813,13 @@ function applyUserState(state={}){
   $("maxCredits").value = semester.maxCredits ?? "";
   $("exactN").value = semester.exactN ?? "5";
   $("freeCount").value = ["0","1","2"].includes(String(semester.freeCount)) ? String(semester.freeCount) : "0";
+  const degreeLevel = ["bachelor","master","phd"].includes(academic.degreeLevel)
+    ? academic.degreeLevel
+    : (["bachelor","master","phd"].includes(profile.degree_level) ? profile.degree_level : "");
+  const studyYear = Number(academic.studyYear || profile.study_year || 0);
+  $("degreeLevel").value = degreeLevel;
+  $("studyYear").value = studyYear >= 1 && studyYear <= 8 ? String(studyYear) : "";
+  finalTimetable = state.finalTimetable && typeof state.finalTimetable === "object" ? state.finalTimetable : null;
 
   const countMode = semester.countMode === "exact" ? "exact" : "fewest";
   const countRadio = document.querySelector(`input[name="countMode"][value="${countMode}"]`);
@@ -2668,20 +2841,22 @@ function applyUserState(state={}){
   renderCourses();
   renderBreaks();
   syncChoice("countModeChoice");
+  renderFinalTimetableStatus();
   loadingUserState = false;
 }
 
 async function saveUserState({silent=false}={}){
-  if(!authClient || !currentUser || loadingUserState) return;
+  if(!authClient || !currentUser || loadingUserState) return false;
   clearTimeout(accountSaveTimer);
   const button = $("saveAccountBtn");
   if(!silent) button.textContent = t("saving");
+  const userState = collectUserState();
 
   const { error } = await authClient
     .from("user_state")
     .upsert({
       user_id: currentUser.id,
-      state: collectUserState(),
+      state: userState,
       updated_at: new Date().toISOString()
     }, { onConflict: "user_id" });
 
@@ -2689,11 +2864,26 @@ async function saveUserState({silent=false}={}){
     button.textContent = t("saveFailed");
     setAuthMessage(error.message, true);
     console.error("Could not save ConCourse state:", error);
-    return;
+    return false;
+  }
+
+  const degreeLevel = userState.academic.degreeLevel;
+  const studyYear = userState.academic.studyYear;
+  if(degreeLevel && studyYear){
+    const { error: profileError } = await authClient
+      .from("profiles")
+      .update({ degree_level:degreeLevel, study_year:studyYear, updated_at:new Date().toISOString() })
+      .eq("user_id", currentUser.id);
+    if(profileError){
+      console.warn("Academic level was saved in planner state but could not be mirrored to the profile table:", profileError);
+    } else {
+      loadedAcademicProfile = { ...loadedAcademicProfile, degree_level:degreeLevel, study_year:studyYear };
+    }
   }
 
   button.textContent = t("saved");
   setTimeout(() => { if(currentUser) button.textContent = t("saveNow"); }, 1300);
+  return true;
 }
 
 function queueUserStateSave(){
@@ -2711,11 +2901,11 @@ async function loadUserState(){
   $("saveAccountBtn").textContent = t("loading");
 
   try {
-    const { data, error } = await authClient
-      .from("user_state")
-      .select("state")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const [stateResponse, profileResponse] = await Promise.all([
+      authClient.from("user_state").select("state").eq("user_id", userId).maybeSingle(),
+      authClient.from("profiles").select("school_name, major_of_study, degree_level, study_year").eq("user_id", userId).maybeSingle()
+    ]);
+    const { data, error } = stateResponse;
 
     if(!currentUser || currentUser.id !== userId) return;
     if(error){
@@ -2724,8 +2914,15 @@ async function loadUserState(){
       console.error("Could not load ConCourse state:", error);
       return;
     }
+    if(profileResponse.error){
+      console.warn("Could not load the extended academic profile. Run the latest Supabase setup SQL:", profileResponse.error);
+      loadedAcademicProfile = {};
+    } else {
+      loadedAcademicProfile = profileResponse.data || {};
+    }
 
-    applyUserState(data?.state || {});
+    renderAccountIdentity();
+    applyUserState(data?.state || {}, loadedAcademicProfile);
     loadedUserId = userId;
     $("saveAccountBtn").textContent = t("saveNow");
     if(!data) await saveUserState({silent:true});
@@ -2744,16 +2941,14 @@ function applySession(session){
   const previousUserId = currentUser?.id || null;
   currentUser = session?.user || null;
   const signedIn = !!currentUser;
+  if(previousUserId !== currentUser?.id) loadedAcademicProfile = {};
 
-  const username = currentUser?.user_metadata?.username;
-  $("authUser").textContent = signedIn ? (username ? `@${username}` : currentUser.email) : t("notSignedIn");
+  renderAccountIdentity();
   $("authOpenBtn").hidden = signedIn;
   $("saveAccountBtn").hidden = !signedIn;
   $("signOutBtn").hidden = !signedIn;
   $("startAppBtn").hidden = !signedIn;
-  const academic = signedIn
-    ? [currentUser.user_metadata?.school_name, currentUser.user_metadata?.major_of_study].filter(Boolean).join(" · ")
-    : "";
+  const academic = signedIn ? getAcademicIdentity().label : "";
   $("startHint").textContent = signedIn
     ? (academic || t("signedInReady", {email: currentUser.email}))
     : t("signInUnlock");
@@ -2770,7 +2965,8 @@ function applySession(session){
     leavePlanner();
     loadedUserId = null;
     loadingUserId = null;
-    if(previousUserId) applyUserState({});
+    loadedAcademicProfile = {};
+    if(previousUserId) applyUserState({}, {});
   }
 }
 
@@ -3168,8 +3364,74 @@ function setPlannerAlert(message){
     : "";
 }
 
+function academicStageComplete(){
+  return ["bachelor","master","phd"].includes($("degreeLevel").value)
+    && /^[1-8]$/.test($("studyYear").value);
+}
+
+function buildFinalTimetableSnapshot(){
+  const solution = solutions[activeSolution];
+  if(!solution || !academicStageComplete()) return null;
+  const identity = getAcademicIdentity();
+  return {
+    savedAt: new Date().toISOString(),
+    degreeLevel: $("degreeLevel").value,
+    studyYear: Number($("studyYear").value),
+    schoolName: identity.school,
+    majorOfStudy: identity.major,
+    rankedOption: activeSolution + 1,
+    summary: {
+      courseCount: solution.score.count,
+      credits: solution.score.credits,
+      daysOnCampus: solution.score.daysUsed,
+      gapMinutes: solution.score.gapMin
+    },
+    courses: solution.picks.map(pick => {
+      const course = courses.find(item => item.id === pick.courseId);
+      return {
+        courseId: pick.courseId,
+        name: course?.name || "",
+        code: course?.code || "",
+        professor: course?.prof || "",
+        credits: course?.credits || 0,
+        required: !!course?.required,
+        slots: pick.slots.map(slot => ({days:[...slot.days], start:slot.start, end:slot.end}))
+      };
+    })
+  };
+}
+
+$("saveFinalTimetable").addEventListener("click", async () => {
+  if(!academicStageComplete()){
+    showPlannerEditor();
+    setPlannerAlert(`<b>${escapeHtml(t("requiredInformation"))}</b> ${escapeHtml(t("academicStageRequired"))}`);
+    ($("degreeLevel").value ? $("studyYear") : $("degreeLevel")).focus();
+    return;
+  }
+  const snapshot = buildFinalTimetableSnapshot();
+  if(!snapshot) return;
+  const previousFinalTimetable = finalTimetable;
+  finalTimetable = snapshot;
+  renderFinalTimetableStatus();
+  const button = $("saveFinalTimetable");
+  button.disabled = true;
+  button.textContent = t("saving");
+  const saved = await saveUserState({silent:true});
+  if(!saved){
+    finalTimetable = previousFinalTimetable;
+    renderFinalTimetableStatus();
+  }
+  button.disabled = false;
+  button.textContent = t("saveFinalTimetable");
+});
+
 function generate(){
   setPlannerAlert("");
+  if(!academicStageComplete()){
+    setPlannerAlert(`<b>${escapeHtml(t("requiredInformation"))}</b> ${escapeHtml(t("academicStageRequired"))}`);
+    ($("degreeLevel").value ? $("studyYear") : $("degreeLevel")).focus();
+    return;
+  }
   if(courses.length === 0){
     setPlannerAlert("<b>Add courses first.</b> Build your wishlist before generating a timetable.");
     return;
@@ -3557,7 +3819,7 @@ $("clearAll").addEventListener("click", () => {
 
 // Auto-save semester settings and ranking preferences after meaningful changes.
 const PERSISTED_CONTROL_IDS = new Set([
-  "minCredits", "maxCredits", "exactN", "freeCount",
+  "degreeLevel", "studyYear", "minCredits", "maxCredits", "exactN", "freeCount",
   "pCompact", "pFewDays", "pNoEarly", "earlyTime", "pNoLate", "lateTime"
 ]);
 $("appWrap").addEventListener("change", e => {

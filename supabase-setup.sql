@@ -57,6 +57,21 @@ create table if not exists public.profiles (
 
 -- Safe to rerun if the profiles table was created by an earlier version.
 alter table public.profiles add column if not exists username text;
+alter table public.profiles add column if not exists degree_level text;
+alter table public.profiles add column if not exists study_year smallint;
+
+-- Degree level and year are selected in the wishlist workspace. Keeping them
+-- as profile columns makes them visible and filterable in the Supabase dashboard,
+-- while the final chosen timetable remains in the user's private JSON state.
+alter table public.profiles drop constraint if exists profiles_degree_level_check;
+alter table public.profiles
+  add constraint profiles_degree_level_check
+  check (degree_level is null or degree_level in ('bachelor', 'master', 'phd'));
+
+alter table public.profiles drop constraint if exists profiles_study_year_check;
+alter table public.profiles
+  add constraint profiles_study_year_check
+  check (study_year is null or study_year between 1 and 8);
 
 -- Preserve the user's capitalization while accepting both uppercase and
 -- lowercase letters. Uniqueness is case-sensitive, so Alex and alex can be
