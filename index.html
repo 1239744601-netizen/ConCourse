@@ -1112,15 +1112,22 @@
   #timetablePanel .grid-head { flex: none; margin-bottom: 15px; }
   #timetablePanel .panel-heading { gap: 12px; margin: 0; }
   #timetablePanel .panel-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
     width: auto;
-    min-width: 45px;
-    padding: 0 10px;
+    min-width: 62px;
+    height: 28px;
+    padding: 0 12px;
     border: 0;
     border-radius: 980px;
     background: #1d1d1f;
     color: #fff;
     font-size: 8.5px;
+    line-height: 1;
     letter-spacing: .08em;
+    white-space: nowrap;
   }
   #timetablePanel .panel-heading h2 { font-size: 22px; letter-spacing: -.03em; }
   #timetablePanel .panel-heading p { margin-top: 5px; font-size: 12px; }
@@ -1916,7 +1923,11 @@ const $ = id => document.getElementById(id);
 const uid = () => Math.random().toString(36).slice(2, 9);
 function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
 function fmt(min){ let h=Math.floor(min/60), m=min%60; const ap=h>=12?"PM":"AM"; let hh=h%12; if(hh===0)hh=12; return `${hh}:${String(m).padStart(2,"0")} ${ap}`; }
-function slotLabel(s){ return `${s.days.map(x=>DAYS[x]).join("/")} ${fmt(s.start)}–${fmt(s.end)}`; }
+function localizedDay(day){
+  const keys = ["", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  return currentLanguage === "en" ? DAYS[day] : t(keys[day]);
+}
+function slotLabel(s){ return `${s.days.map(localizedDay).join("/")} ${fmt(s.start)}–${fmt(s.end)}`; }
 function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 
 // ---------- Language ----------
@@ -1954,6 +1965,13 @@ const TRANSLATIONS = {
     weeklyTimetable:"每周课表", timetableDescription:"比较排名方案、查看取舍，并保存最适合你的课表。",
     result:"结果", bestSchedule:"最佳无冲突课表", bestScheduleDescription:"最高排名方案以完整尺寸显示。",
     colorBy:"配色方式", everyCourse:"每门课程", mustElective:"必修与选修",
+    rankedOf:"第 {rank} 名，共 {total} 个方案", coursesTakenStat:"门课程", creditsStat:"学分", daysOnCampusStat:"天到校",
+    freeWeekdayStat:"个空闲工作日（{days}）", freeWeekdaysStat:"个空闲工作日（{days}）", none:"无", totalGapsStat:"总空档", tradeoffTitle:"取舍：",
+    optionButton:"方案 {option} · {count}门/{credits}学分/{days}天", optionTitle:"{count} 门课程，{credits} 学分，{days} 天到校",
+    showingRankedOption:"当前显示排名方案 {option}。", compareAlternatives:"使用上方的方案按钮比较其他选择。", printPdf:"打印 / 另存为 PDF",
+    completeWishlistTitle:"完整课程清单：", completeWishlistMessage:"所有选定课程均可无时间冲突地加入此课表。",
+    notIncludedTitle:"此课表未包含：", exactMixReason:"你指定了 {count} 门课程，而该组合达到 {credits} 学分", fewestMixReason:"此课表只需 {count} 门课程便达到 {credits} 学分",
+    otherOptionsMix:"其他排名方案可能使用不同的课程组合。", mustTakeLegend:"必修", electiveLegend:"选修",
     notSignedIn:"尚未登录", signInUnlock:"登录后即可使用课程规划器。", signInSubtitle:"登录以继续进入规划空间。",
     signUpSubtitle:"创建你的学术资料和规划空间。", signUpNote:"学校匹配仅确认学校存在，并不验证在校身份。",
     signInNote:"你的课表通过加密连接传输，并受账户级数据库策略保护。", checkingUsername:"正在检查用户名…",
@@ -2000,6 +2018,13 @@ const TRANSLATIONS = {
     weeklyTimetable:"每週時間表", timetableDescription:"比較排序方案、睇清取捨，再儲存最啱你嘅時間表。",
     result:"結果", bestSchedule:"最佳無衝突時間表", bestScheduleDescription:"最高排名方案會以完整尺寸顯示。",
     colorBy:"配色方式", everyCourse:"每科", mustElective:"必修同選修",
+    rankedOf:"第 {rank} 名，共 {total} 個方案", coursesTakenStat:"科", creditsStat:"學分", daysOnCampusStat:"日返學",
+    freeWeekdayStat:"個空閒平日（{days}）", freeWeekdaysStat:"個空閒平日（{days}）", none:"冇", totalGapsStat:"總空檔", tradeoffTitle:"取捨：",
+    optionButton:"方案 {option} · {count}科/{credits}學分/{days}日", optionTitle:"{count} 科，{credits} 學分，{days} 日返學",
+    showingRankedOption:"而家顯示排名方案 {option}。", compareAlternatives:"用上面嘅方案按鈕比較其他選擇。", printPdf:"列印 / 另存做 PDF",
+    completeWishlistTitle:"完整選科清單：", completeWishlistMessage:"所有已選課程都可以冇時間衝突咁加入呢個時間表。",
+    notIncludedTitle:"呢個時間表未包括：", exactMixReason:"你指定咗 {count} 科，而呢個組合達到 {credits} 學分", fewestMixReason:"呢個時間表只需 {count} 科就達到 {credits} 學分",
+    otherOptionsMix:"其他排名方案可能會用唔同嘅課程組合。", mustTakeLegend:"必修", electiveLegend:"選修",
     notSignedIn:"尚未登入", signInUnlock:"登入後就可以使用課程規劃器。", signInSubtitle:"登入以繼續進入規劃空間。",
     signUpSubtitle:"建立你嘅學術資料同規劃空間。", signUpNote:"學校配對只確認學校存在，唔代表驗證在校身份。",
     signInNote:"你嘅時間表會經加密連線傳送，並受帳戶級資料庫政策保護。", checkingUsername:"正在檢查用戶名稱…",
@@ -2034,7 +2059,15 @@ function t(key, variables={}){
     schoolRequired:"Enter your school or university name.", majorRequired:"Enter your major or field of study.",
     creatingAccount:"Creating your account…", signingIn:"Signing you in…", accountCreated:"Account created. Check your email, then return here to sign in.", signedInSuccess:"Signed in successfully.", authRequestFailed:"The sign-in service could not be reached. Check your connection and try again.",
     signedInReady:"Signed in as {email}. Your planner is ready.", saving:"Saving…", saveFailed:"Save failed", saved:"Saved", unsaved:"Unsaved", loading:"Loading…", loadFailed:"Load failed",
-    supabaseRequired:"Supabase setup required", configureLogin:"Configure login", connectSupabase:"Connect Supabase to enable sign-in and start planning."
+    supabaseRequired:"Supabase setup required", configureLogin:"Configure login", connectSupabase:"Connect Supabase to enable sign-in and start planning.",
+    monday:"Mon", tuesday:"Tue", wednesday:"Wed", thursday:"Thu", friday:"Fri", saturday:"Sat",
+    rankedOf:"Ranked #{rank} of {total}", coursesTakenStat:"courses taken", creditsStat:"credits", daysOnCampusStat:"days on campus",
+    freeWeekdayStat:"free weekday ({days})", freeWeekdaysStat:"free weekdays ({days})", none:"none", totalGapsStat:"total gaps", tradeoffTitle:"Tradeoff:",
+    optionButton:"Option {option} · {count}c/{credits}cr/{days}d", optionTitle:"{count} courses, {credits} credits, {days} days",
+    showingRankedOption:"Showing ranked option {option}.", compareAlternatives:"Use the Option buttons above to compare alternatives.", printPdf:"Print / Save as PDF",
+    completeWishlistTitle:"Complete wishlist:", completeWishlistMessage:"Every selected course fits this schedule without a time conflict.",
+    notIncludedTitle:"Not included in this schedule:", exactMixReason:"you asked for exactly {count} courses, and this mix hits {credits} credits", fewestMixReason:"this schedule already hits {credits} credits with just {count} courses",
+    otherOptionsMix:"Other ranked options may use a different course mix.", mustTakeLegend:"Must-take", electiveLegend:"Elective"
   };
   let value = TRANSLATIONS[currentLanguage]?.[key] ?? english[key] ?? key;
   for(const [name,replacement] of Object.entries(variables)) value = value.replaceAll(`{${name}}`, replacement);
@@ -2081,6 +2114,7 @@ function applyLanguage(language, {persist=true}={}){
   }
   if(!$("authUsername").value) setUsernameStatus(t("usernameHelp"));
   if(!$("schoolName").value) setSchoolStatus(t("startTyping"));
+  if(solutions.length && solutions[activeSolution]) renderResults();
 }
 
 function initializeLanguage(){
@@ -3245,31 +3279,33 @@ function renderResults(){
   const wd = new Set();
   sol.picks.forEach(p => p.slots.forEach(s2 => s2.days.forEach(d => { if(d>=1 && d<=5) wd.add(d); })));
   const freeWk = 5 - wd.size;
-  const freeWkDays = [1,2,3,4,5].filter(d=>!wd.has(d)).map(d=>DAYS[d]).join(", ") || "none";
+  const freeWkDays = [1,2,3,4,5].filter(d=>!wd.has(d)).map(localizedDay).join(", ") || t("none");
+  const freeWeekdayLabel = t(freeWk === 1 ? "freeWeekdayStat" : "freeWeekdaysStat", {days:freeWkDays});
 
-  $("scoreArea").innerHTML = `<div class="badge">Ranked #${activeSolution+1} of ${solutions.length}</div>`;
+  $("scoreArea").innerHTML = `<div class="badge">${escapeHtml(t("rankedOf", {rank:activeSolution+1, total:solutions.length}))}</div>`;
   $("statArea").innerHTML = `
     <div class="stat-row">
-      <div class="stat"><b>${s.count}</b>courses taken</div>
-      <div class="stat"><b>${s.credits}</b>credits</div>
-      <div class="stat"><b>${s.daysUsed}</b>days on campus</div>
-      <div class="stat"><b>${freeWk}</b>free weekday${freeWk!==1?"s":""} (${freeWkDays})</div>
-      <div class="stat"><b>${(s.gapMin/60).toFixed(1)}h</b>total gaps</div>
+      <div class="stat"><b>${s.count}</b>${escapeHtml(t("coursesTakenStat"))}</div>
+      <div class="stat"><b>${s.credits}</b>${escapeHtml(t("creditsStat"))}</div>
+      <div class="stat"><b>${s.daysUsed}</b>${escapeHtml(t("daysOnCampusStat"))}</div>
+      <div class="stat"><b>${freeWk}</b>${escapeHtml(freeWeekdayLabel)}</div>
+      <div class="stat"><b>${(s.gapMin/60).toFixed(1)}h</b>${escapeHtml(t("totalGapsStat"))}</div>
     </div>
-    ${genNote ? `<div class="dropped" style="border-color:var(--warn)"><b>Tradeoff:</b> ${genNote}</div>` : ""}`;
+    ${genNote ? `<div class="dropped" style="border-color:var(--warn)"><b>${escapeHtml(t("tradeoffTitle"))}</b> ${escapeHtml(genNote)}</div>` : ""}`;
 
   const exactMode = (document.querySelector('input[name="countMode"]:checked')||{}).value === "exact";
   if(dropped.length){
-    const why = exactMode
-      ? `you asked for exactly ${s.count} course${s.count>1?"s":""}, and this mix hits ${s.credits} credits`
-      : `this schedule already hits ${s.credits} credits with just ${s.count} course${s.count>1?"s":""}`;
-    $("droppedArea").innerHTML = `<div class="dropped"><b>Not included in this schedule:</b> ${dropped.map(c=>escapeHtml(c.name)).join(", ")} — ${why}. Other ranked options may use a different course mix.</div>`;
+    const why = t(exactMode ? "exactMixReason" : "fewestMixReason", {count:s.count, credits:s.credits});
+    $("droppedArea").innerHTML = `<div class="dropped"><b>${escapeHtml(t("notIncludedTitle"))}</b> ${dropped.map(c=>escapeHtml(c.name)).join(", ")} — ${escapeHtml(why)}. ${escapeHtml(t("otherOptionsMix"))}</div>`;
   } else {
-    $("droppedArea").innerHTML = `<div class="info-box"><b>Complete wishlist:</b> Every selected course fits this schedule without a time conflict.</div>`;
+    $("droppedArea").innerHTML = `<div class="info-box"><b>${escapeHtml(t("completeWishlistTitle"))}</b> ${escapeHtml(t("completeWishlistMessage"))}</div>`;
   }
 
   $("altArea").innerHTML = solutions.length>1
-    ? `<div class="alt-list">` + solutions.map((so,i)=>`<button class="btn-ghost alt-btn ${i===activeSolution?"active":""}" data-i="${i}" title="${so.score.count} courses, ${so.score.credits} credits, ${so.score.daysUsed} days">Option ${i+1} · ${so.score.count}c/${so.score.credits}cr/${so.score.daysUsed}d</button>`).join("") + `</div>`
+    ? `<div class="alt-list">` + solutions.map((so,i)=>{
+        const variables = {option:i+1, count:so.score.count, credits:so.score.credits, days:so.score.daysUsed};
+        return `<button class="btn-ghost alt-btn ${i===activeSolution?"active":""}" data-i="${i}" title="${escapeHtml(t("optionTitle", variables))}">${escapeHtml(t("optionButton", variables))}</button>`;
+      }).join("") + `</div>`
     : "";
   $("altArea").querySelectorAll(".alt-btn").forEach(b=>b.onclick=()=>{ activeSolution=+b.dataset.i; renderResults(); });
 
@@ -3298,7 +3334,7 @@ function renderCalendar(picks){
   // legend (only meaningful in "type" mode)
   const lg = $("colorLegend");
   if(lg) lg.innerHTML = colorMode === "type"
-    ? `<span class="lg"><span class="sw" style="background:${MUST_COLOR}"></span>Must-take</span><span class="lg"><span class="sw" style="background:${ELECTIVE_COLOR}"></span>Elective</span>`
+    ? `<span class="lg"><span class="sw" style="background:${MUST_COLOR}"></span>${escapeHtml(t("mustTakeLegend"))}</span><span class="lg"><span class="sw" style="background:${ELECTIVE_COLOR}"></span>${escapeHtml(t("electiveLegend"))}</span>`
     : "";
   picks.forEach((p) => {
     const course = courses.find(c=>c.id===p.courseId);
@@ -3338,7 +3374,9 @@ function renderCalendar(picks){
     cols += `<div style="position:absolute; left:${ci * 100 / showDays.length}%; width:${colW}; top:0; height:${totalH}px; border-left:1px solid var(--border);">${evHtml}</div>`;
   });
   const headers = `<div class="calendar-days" style="display:flex; margin-left:56px;">` +
-    showDays.map(d=>`<div style="flex:1; text-align:center; font-size:12px; color:var(--muted); font-weight:600; padding-bottom:6px;">${DAYS[d]}</div>`).join("") + `</div>`;
+    showDays.map(d=>`<div style="flex:1; text-align:center; font-size:12px; color:var(--muted); font-weight:600; padding-bottom:6px;">${escapeHtml(localizedDay(d))}</div>`).join("") + `</div>`;
+
+  const comparisonHint = solutions.length > 1 ? ` ${escapeHtml(t("compareAlternatives"))}` : "";
 
   $("calArea").innerHTML = `
     <div class="calendar-scroll">
@@ -3350,7 +3388,7 @@ function renderCalendar(picks){
         </div>
       </div>
     </div>
-    <div class="hint" style="margin-top:14px">Showing ranked option ${activeSolution+1}. ${solutions.length>1?"Use the Option buttons above to compare alternatives.":""} <span class="link" id="printBtn">Print / Save as PDF</span></div>
+    <div class="hint" style="margin-top:14px">${escapeHtml(t("showingRankedOption", {option:activeSolution+1}))}${comparisonHint} <span class="link" id="printBtn">${escapeHtml(t("printPdf"))}</span></div>
   `;
   // scale the grid so it fits a single landscape page when printed (header row + grid ≈ totalH + 30)
   const printScale = Math.min(1, 690 / (totalH + 30));
