@@ -743,76 +743,335 @@
   body.app-active .header-row { width: 100%; max-width: 1560px; }
   body.app-active .brand { cursor: pointer; }
 
+  /* Product-configurator workspace: fixed outcome + scrolling selections */
+  body.app-active {
+    background:
+      radial-gradient(circle at 18% 16%, rgba(0,113,227,.055), transparent 32rem),
+      #fff;
+  }
   .wrap {
-    max-width: 1600px;
-    grid-template-columns: minmax(360px, 420px) minmax(300px, 360px) minmax(480px, 1fr);
-    grid-template-areas:
-      "builder wishlist timetable"
-      "builder semester timetable";
-    gap: 16px;
-    padding-top: 14px;
+    width: 100%;
+    max-width: 1760px;
+    grid-template-columns: minmax(620px, 1.45fr) minmax(420px, .72fr);
+    grid-template-areas: "result config";
+    gap: clamp(34px, 4.5vw, 76px);
+    padding: 42px clamp(28px, 4vw, 72px) 120px;
     align-items: start;
   }
-  .wrap > div:first-child { display: contents; }
-  #courseBuilderPanel { grid-area: builder; }
-  #wishlistPanel { grid-area: wishlist; margin-top: 0 !important; }
-  #semesterPanel { grid-area: semester; margin-top: 0 !important; }
-  #timetablePanel { grid-area: timetable; min-width: 0; min-height: 560px; }
-
-  .wrap .panel { padding: 18px; border-radius: 23px; }
-  .wrap .panel h2 { margin-bottom: 13px; }
-  .wrap label { margin-top: 9px; }
-  .wrap input,
-  .wrap select { min-height: 39px; padding: 8px 10px; }
-  .wrap button { min-height: 37px; padding: 8px 14px; }
-  .wrap .divider { margin: 14px 0; }
-  .wrap .choice-group { gap: 6px; }
-  .wrap .choice { padding: 9px 10px; }
-  .wrap .prefs label.chk { margin: 6px 0; font-size: 12px; }
-  .wrap .empty-note { padding: 24px 10px; }
-  #courseList { max-height: 390px; overflow: auto; padding-right: 2px; }
-  #wishlistPanel .toolbar { margin-top: 10px; }
-  #semesterPanel .c-eg { display: none; }
-  #timetablePanel #calArea > .empty-note {
-    min-height: 420px;
+  .configurator-column {
+    grid-area: config;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+  .configurator-intro {
+    padding: 8px 0 30px;
+  }
+  .configurator-eyebrow {
+    margin: 0 0 12px;
+    color: #bf4800;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .configurator-intro h1 {
+    max-width: 520px;
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(38px, 3.5vw, 58px);
+    font-weight: 700;
+    letter-spacing: -.055em;
+    line-height: .98;
+  }
+  .configurator-intro > p:last-child {
+    max-width: 500px;
+    margin: 20px 0 0;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .configurator-nav {
+    position: sticky;
+    z-index: 30;
+    top: 76px;
     display: grid;
-    place-items: center;
-    max-width: 540px;
-    margin: 0 auto;
-    font-size: 15px;
-    line-height: 1.6;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 0 0 18px;
+    padding: 7px;
+    border: 1px solid rgba(29,29,31,.07);
+    border-radius: 18px;
+    background: rgba(255,255,255,.88);
+    box-shadow: 0 10px 28px rgba(0,0,0,.055);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+  }
+  .configurator-nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 39px;
+    border-radius: 12px;
+    color: #424245;
+    font-size: 11.5px;
+    font-weight: 630;
+    text-decoration: none;
+    transition: background .2s ease, color .2s ease;
+  }
+  .configurator-nav a:hover { background: #f5f5f7; color: #0066cc; }
+  .configurator-nav span { color: #86868b; font-size: 9px; letter-spacing: .06em; }
+
+  .configurator-column .panel {
+    scroll-margin-top: 145px;
+    margin: 0 !important;
+    padding: 40px 0;
+    border: 0;
+    border-bottom: 1px solid #d2d2d7;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .configurator-column .panel:first-of-type { border-top: 1px solid #d2d2d7; }
+  .configurator-column .panel:hover { box-shadow: none; }
+  .configurator-column .panel-heading { gap: 14px; margin-bottom: 27px; }
+  .configurator-column .panel-heading .panel-index {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 10px;
+  }
+  .configurator-column .panel-heading h2 {
+    margin-top: 0 !important;
+    font-size: 24px;
+    letter-spacing: -.025em;
+  }
+  .configurator-column .panel-heading p { margin-top: 5px; font-size: 12.5px; line-height: 1.45; }
+  .configurator-column label { margin-top: 17px; font-size: 12px; }
+  .configurator-column input,
+  .configurator-column select {
+    min-height: 50px;
+    padding: 12px 14px;
+    border-color: #d2d2d7;
+    border-radius: 13px;
+    background: #fff;
+    font-size: 14px;
+  }
+  .configurator-column input[type="checkbox"],
+  .configurator-column input[type="radio"] {
+    width: auto;
+    min-height: 0;
+    padding: 0;
+  }
+  .configurator-column .prefs label.chk input[type="time"] {
+    min-height: 34px;
+    padding: 4px 7px !important;
+  }
+  .configurator-column .row { gap: 12px; }
+  .configurator-column button { min-height: 44px; padding: 11px 18px; }
+  .configurator-column .divider { margin: 27px 0; background: #e8e8ed; }
+  .configurator-column .days { gap: 8px; }
+  .configurator-column .day-chip {
+    min-width: 48px;
+    padding: 9px 12px;
+    border-color: #d2d2d7;
+    background: #fff;
+    text-align: center;
+  }
+  .configurator-column .day-chip.on {
+    border-color: #0071e3;
+    background: #0071e3;
+  }
+  .configurator-column .choice-group { gap: 10px; }
+  .configurator-column .choice {
+    padding: 15px 16px;
+    border: 2px solid #d2d2d7;
+    border-radius: 16px;
+    background: #fff;
+  }
+  .configurator-column .choice:hover { border-color: #86868b; }
+  .configurator-column .choice.sel {
+    border-color: #0071e3;
+    background: rgba(0,113,227,.035);
+    box-shadow: 0 0 0 1px #0071e3;
+  }
+  .configurator-column .choice .c-txt { font-size: 13px; line-height: 1.45; }
+  .configurator-column .prefs label.chk {
+    margin: 11px 0;
+    padding: 13px 14px;
+    border: 1px solid #e2e2e7;
+    border-radius: 13px;
+    background: #fbfbfd;
+    font-size: 12.5px;
+  }
+  .configurator-column .course-card {
+    margin-bottom: 10px;
+    padding: 15px;
+    border-color: #e2e2e7;
+    border-radius: 15px;
+    background: #fbfbfd;
+  }
+  #courseList { max-height: none; overflow: visible; padding: 0; }
+  #wishlistPanel .toolbar { margin-top: 16px; }
+  #generate {
+    position: sticky;
+    z-index: 20;
+    bottom: 18px;
+    min-height: 54px;
+    font-size: 14px;
+    box-shadow: 0 16px 34px rgba(78,70,220,.28), inset 0 1px 0 rgba(255,255,255,.24);
   }
 
-  @media (max-width: 1300px) {
-    .wrap {
-      max-width: 1080px;
-      grid-template-columns: minmax(350px, 420px) minmax(0, 1fr);
-      grid-template-areas:
-        "builder wishlist"
-        "builder semester"
-        "timetable timetable";
-    }
-    #timetablePanel { min-height: 420px; }
+  #timetablePanel {
+    grid-area: result;
+    position: sticky;
+    top: 91px;
+    display: flex;
+    min-width: 0;
+    height: calc(100svh - 116px);
+    min-height: 650px;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 30px;
+    border: 1px solid rgba(255,255,255,.92);
+    border-radius: 36px;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(0,113,227,.11), transparent 28rem),
+      radial-gradient(circle at 100% 100%, rgba(175,82,222,.09), transparent 30rem),
+      #f5f5f7;
+    box-shadow: 0 30px 90px rgba(0,0,0,.1), inset 0 0 0 1px rgba(29,29,31,.035);
   }
-  @media (max-width: 900px) {
+  #timetablePanel:hover { box-shadow: 0 30px 90px rgba(0,0,0,.1), inset 0 0 0 1px rgba(29,29,31,.035); }
+  #timetablePanel .grid-head { flex: none; margin-bottom: 15px; }
+  #timetablePanel .panel-heading { gap: 12px; margin: 0; }
+  #timetablePanel .panel-index {
+    width: auto;
+    min-width: 45px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 980px;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 8.5px;
+    letter-spacing: .08em;
+  }
+  #timetablePanel .panel-heading h2 { font-size: 22px; letter-spacing: -.03em; }
+  #timetablePanel .panel-heading p { margin-top: 5px; font-size: 12px; }
+  #timetablePanel #statArea,
+  #timetablePanel #altArea,
+  #timetablePanel #warnArea,
+  #timetablePanel #droppedArea { flex: none; }
+  #timetablePanel .stat-row { gap: 8px; margin: 6px 0 8px; }
+  #timetablePanel .stat {
+    flex: 1 1 105px;
+    min-width: 0;
+    padding: 9px 11px;
+    border-color: rgba(29,29,31,.075);
+    border-radius: 13px;
+    background: rgba(255,255,255,.72);
+  }
+  #timetablePanel .stat b { font-size: 17px; }
+  #timetablePanel .color-bar {
+    flex: none;
+    margin: 8px 0;
+    border-color: rgba(29,29,31,.075);
+    background: rgba(255,255,255,.66);
+  }
+  #calArea {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    padding: 4px 0 0;
+  }
+  .calendar-scroll {
+    width: 100%;
+    height: calc(100% - 29px);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .calendar-canvas {
+    min-width: 720px;
+    padding: 5px 8px 16px;
+  }
+  .calendar-days { position: sticky; z-index: 8; top: 0; padding-top: 3px; background: linear-gradient(#f5f5f7 70%, rgba(245,245,247,0)); }
+  .event {
+    left: 4px;
+    right: 4px;
+    padding: 7px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.25;
+    box-shadow: 0 5px 14px rgba(0,0,0,.08);
+  }
+  .event b { margin-bottom: 2px; font-size: 12px; line-height: 1.2; }
+  .event small { display: block; font-size: 10px; line-height: 1.25; }
+  #timetablePanel #calArea > .empty-note {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-height: 390px;
+    place-items: center;
+    padding: 45px;
+    border: 1px solid rgba(29,29,31,.07);
+    border-radius: 25px;
+    background:
+      linear-gradient(rgba(255,255,255,.66), rgba(255,255,255,.66)),
+      repeating-linear-gradient(90deg, transparent 0 18%, rgba(0,113,227,.07) 18% calc(18% + 1px)),
+      repeating-linear-gradient(0deg, transparent 0 64px, rgba(0,113,227,.07) 64px 65px);
+    color: #6e6e73;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 1250px) {
+    .wrap {
+      grid-template-columns: minmax(560px, 1fr) minmax(390px, 420px);
+      gap: 30px;
+      padding-inline: 24px;
+    }
+    #timetablePanel { padding: 24px; }
+  }
+  @media (max-width: 1050px) {
     #landingScreen .hero-copy { padding-top: 24px; }
     .wrap {
-      max-width: 720px;
-      grid-template-columns: 1fr;
+      max-width: 920px;
+      grid-template-columns: minmax(0, 1fr);
       grid-template-areas:
-        "wishlist"
-        "semester"
-        "builder"
-        "timetable";
+        "config"
+        "result";
+      gap: 42px;
     }
-    #courseList { max-height: 320px; }
+    #timetablePanel {
+      position: relative;
+      top: auto;
+      height: auto;
+      min-height: 760px;
+    }
   }
   @media (max-width: 720px) {
     #landingScreen { padding-bottom: 30px; }
     #landingScreen .hero-copy { margin-top: 10px; padding-bottom: 20px; }
     .landing-actions { margin-top: 26px; }
     body.app-active #landingScreen { padding: 7px 10px 9px; }
-    .wrap { padding-top: 8px; }
+    .wrap { gap: 28px; padding: 22px 12px 70px; }
+    .configurator-intro { padding-inline: 5px; }
+    .configurator-intro h1 { font-size: 42px; }
+    .configurator-intro > p:last-child { font-size: 15px; }
+    .configurator-nav { top: 66px; }
+    .configurator-nav a { gap: 4px; font-size: 10.5px; }
+    .configurator-column .panel { padding: 34px 5px; }
+    .configurator-column .panel-heading h2 { font-size: 22px; }
+    #timetablePanel { min-height: 700px; padding: 18px; border-radius: 28px; }
+    #timetablePanel .grid-head { align-items: flex-start; }
+    #timetablePanel .panel-heading h2 { font-size: 19px; }
+    .calendar-canvas { min-width: 720px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -824,9 +1083,12 @@
     header, .wrap > div:first-child { display: none !important; }
     .wrap { display: block !important; padding: 0 !important; }
     .panel { border: none !important; box-shadow: none !important; margin: 0 !important; }
+    #timetablePanel { position: static !important; height: auto !important; min-height: 0 !important; overflow: visible !important; padding: 0 !important; }
     .grid-head, #scoreArea, #statArea, #altArea, #warnArea, #droppedArea, #colorModeBar { display: none !important; }
     #calArea .hint { display: none !important; }
-    #calArea { zoom: var(--print-scale, 1); }
+    #calArea { overflow: visible !important; zoom: var(--print-scale, 1); }
+    .calendar-scroll { height: auto !important; overflow: visible !important; }
+    .calendar-canvas { min-width: 0 !important; padding: 0 !important; }
     #calArea, #calArea * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .event { box-shadow: none !important; }
   }
@@ -958,8 +1220,18 @@
 </div>
 
 <div class="wrap" id="appWrap" hidden>
-  <!-- LEFT: input -->
-  <div>
+  <!-- Scrolling configuration column -->
+  <div class="configurator-column">
+    <div class="configurator-intro">
+      <p class="configurator-eyebrow">Semester configurator</p>
+      <h1>Choose the details.<br>See the week take shape.</h1>
+      <p>Build your course set one decision at a time. Your best conflict-free timetable remains visible beside every selection.</p>
+    </div>
+    <nav class="configurator-nav" aria-label="Planner sections">
+      <a href="#courseBuilderPanel"><span>01</span> Courses</a>
+      <a href="#wishlistPanel"><span>02</span> Wishlist</a>
+      <a href="#semesterPanel"><span>03</span> Criteria</a>
+    </nav>
     <div class="panel" id="courseBuilderPanel">
       <div class="panel-heading">
         <span class="panel-index">01</span>
@@ -1036,7 +1308,7 @@
       <div class="hint" id="sessionHint">Add the day and time this course meets. All sessions are kept together as its fixed weekly schedule.</div>
 
       <div class="divider"></div>
-      <button class="btn-primary" id="addCourse" style="width:100%">Add Course to List</button>
+      <button class="btn-primary" id="addCourse" style="width:100%">Add course to wishlist</button>
     </div>
 
     <div class="panel" id="wishlistPanel">
@@ -1112,12 +1384,12 @@
     </div>
   </div>
 
-  <!-- RIGHT: results -->
+  <!-- Persistent outcome canvas -->
   <div class="panel" id="timetablePanel">
     <div class="grid-head">
       <div class="panel-heading timetable-heading">
-        <span class="panel-index">04</span>
-        <div><h2>Weekly timetable</h2><p>Compare your highest-ranked conflict-free schedules.</p></div>
+        <span class="panel-index">LIVE</span>
+        <div><h2>Your weekly timetable</h2><p>A full-size preview of your highest-ranked conflict-free schedule.</p></div>
       </div>
       <div id="scoreArea"></div>
     </div>
@@ -2216,7 +2488,7 @@ function renderCalendar(picks){
   });
   minT = Math.floor(minT/60)*60; maxT = Math.ceil(maxT/60)*60;
   if(minT >= maxT){ minT = 8*60; maxT = 18*60; }
-  const PXPERMIN = 0.9;
+  const PXPERMIN = window.innerWidth >= 1050 ? 1.05 : 0.95;
   const totalH = (maxT - minT) * PXPERMIN;
   const usedSat = events.some(e=>e.day===6);
   const showDays = usedSat ? [1,2,3,4,5,6] : [1,2,3,4,5];
@@ -2240,14 +2512,18 @@ function renderCalendar(picks){
     }
     cols += `<div style="position:absolute; left:${ci * 100 / showDays.length}%; width:${colW}; top:0; height:${totalH}px; border-left:1px solid var(--border);">${evHtml}</div>`;
   });
-  const headers = `<div style="display:flex; margin-left:56px;">` +
+  const headers = `<div class="calendar-days" style="display:flex; margin-left:56px;">` +
     showDays.map(d=>`<div style="flex:1; text-align:center; font-size:12px; color:var(--muted); font-weight:600; padding-bottom:6px;">${DAYS[d]}</div>`).join("") + `</div>`;
 
   $("calArea").innerHTML = `
-    ${headers}
-    <div style="position:relative; height:${totalH}px; margin-left:56px;">
-      ${hourRows}
-      ${cols}
+    <div class="calendar-scroll">
+      <div class="calendar-canvas">
+        ${headers}
+        <div style="position:relative; height:${totalH}px; margin-left:56px;">
+          ${hourRows}
+          ${cols}
+        </div>
+      </div>
     </div>
     <div class="hint" style="margin-top:14px">Showing ranked option ${activeSolution+1}. ${solutions.length>1?"Use the Option buttons above to compare alternatives.":""} <span class="link" id="printBtn">Print / Save as PDF</span></div>
   `;
