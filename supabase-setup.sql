@@ -58,23 +58,34 @@ create table if not exists public.profiles (
 -- Safe to rerun if the profiles table was created by an earlier version.
 alter table public.profiles add column if not exists username text;
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_constraint
-    where conname = 'profiles_username_format'
-      and conrelid = 'public.profiles'::regclass
-  ) then
-    alter table public.profiles
-      add constraint profiles_username_format
-      check (username is null or username ~ '^[a-z0-9_]{3,24}$');
-  end if;
-end;
-$$;
+-- Preserve the user's capitalization while accepting both uppercase and
+-- lowercase letters. Uniqueness is case-sensitive, so Alex and alex can be
+-- registered as separate accounts, while the exact same spelling cannot.
+alter table public.profiles drop constraint if exists profiles_username_format;
+alter table public.profiles
+  add constraint profiles_username_format
+  check (username is null or username ~ '^[A-Za-z0-9_]{3,24}$');
 
-create unique index if not exists profiles_username_unique
+drop index if exists public.profiles_username_unique;
+create unique index profiles_username_unique
   on public.profiles (username)
   where username is not null;
+
+-- Confidential legal names are deliberately separated from public academic
+-- profiles. RLS is enabled and no anon/authenticated policies or grants are
+-- provided. The website owner can access these rows from the Supabase dashboard
+-- or another trusted service-role environment; browser clients cannot read them.
+create table if not exists public.private_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  given_name text not null,
+  middle_name text,
+  family_name text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.private_profiles enable row level security;
+revoke all on table public.private_profiles from anon, authenticated;
 
 alter table public.profiles enable row level security;
 
@@ -103,11 +114,11 @@ security definer
 set search_path = ''
 as $$
   select coalesce(
-    lower(trim(candidate)) ~ '^[a-z0-9_]{3,24}$'
+    trim(candidate) ~ '^[A-Za-z0-9_]{3,24}$'
     and not exists (
       select 1
       from public.profiles
-      where username = lower(trim(candidate))
+      where username = trim(candidate)
     ),
     false
   );
@@ -135,8 +146,8 @@ begin
   ) values (
     new.id,
     case
-      when lower(trim(new.raw_user_meta_data ->> 'username')) ~ '^[a-z0-9_]{3,24}$'
-        then lower(trim(new.raw_user_meta_data ->> 'username'))
+      when trim(new.raw_user_meta_data ->> 'username') ~ '^[A-Za-z0-9_]{3,24}$'
+        then trim(new.raw_user_meta_data ->> 'username')
       else null
     end,
     new.raw_user_meta_data ->> 'school_name',
@@ -154,6 +165,23 @@ begin
     school_website = excluded.school_website,
     school_verification = excluded.school_verification,
     major_of_study = excluded.major_of_study,
+    updated_at = now();
+
+  insert into public.private_profiles (
+    user_id,
+    given_name,
+    middle_name,
+    family_name
+  ) values (
+    new.id,
+    coalesce(nullif(trim(new.raw_user_meta_data ->> 'given_name'), ''), 'Not provided'),
+    nullif(trim(new.raw_user_meta_data ->> 'middle_name'), ''),
+    coalesce(nullif(trim(new.raw_user_meta_data ->> 'family_name'), ''), 'Not provided')
+  )
+  on conflict (user_id) do update set
+    given_name = excluded.given_name,
+    middle_name = excluded.middle_name,
+    family_name = excluded.family_name,
     updated_at = now();
   return new;
 end;
@@ -178,8 +206,8 @@ insert into public.profiles (
 select
   id,
   case
-    when lower(trim(raw_user_meta_data ->> 'username')) ~ '^[a-z0-9_]{3,24}$'
-      then lower(trim(raw_user_meta_data ->> 'username'))
+    when trim(raw_user_meta_data ->> 'username') ~ '^[A-Za-z0-9_]{3,24}$'
+      then trim(raw_user_meta_data ->> 'username')
     else null
   end,
   raw_user_meta_data ->> 'school_name',
@@ -188,5 +216,20 @@ select
   raw_user_meta_data ->> 'school_website',
   coalesce(raw_user_meta_data ->> 'school_verification', 'unverified'),
   raw_user_meta_data ->> 'major_of_study'
+from auth.users
+on conflict (user_id) do nothing;
+
+-- Backfill the confidential table for accounts created before this migration.
+insert into public.private_profiles (
+  user_id,
+  given_name,
+  middle_name,
+  family_name
+)
+select
+  id,
+  coalesce(nullif(trim(raw_user_meta_data ->> 'given_name'), ''), 'Not provided'),
+  nullif(trim(raw_user_meta_data ->> 'middle_name'), ''),
+  coalesce(nullif(trim(raw_user_meta_data ->> 'family_name'), ''), 'Not provided')
 from auth.users
 on conflict (user_id) do nothing;
