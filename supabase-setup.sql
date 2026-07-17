@@ -482,17 +482,22 @@ on conflict (user_id) do update set
 where public.school_memberships.status = 'pending';
 
 -- Extended member profile. All columns, including phone and pasted social URLs,
--- are readable directly only by their owner. Feed/message RPCs expose a small
--- safe subset (display name and messaging preference), never the phone number.
+-- are readable directly only by their owner. Community RPCs expose only a
+-- visibility-checked subset; the schoolmate profile may include an explicitly
+-- shared WeChat ID, but never the phone number or private contact fields.
 create table if not exists public.member_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   display_name text check (display_name is null or (display_name = trim(display_name) and char_length(display_name) between 1 and 80)),
   bio text check (bio is null or char_length(bio) <= 500),
   phone_number text check (phone_number is null or char_length(phone_number) <= 32),
   interests text[] not null default '{}'::text[] check (cardinality(interests) <= 20 and char_length(array_to_string(interests, ',')) <= 1000),
+  avatar_path text,
+  avatar_revision bigint not null default 0,
   instagram_url text,
   whatsapp_url text,
   linkedin_url text,
+  wechat_id text,
+  share_wechat boolean not null default false,
   website_url text,
   profile_visibility text not null default 'school' check (profile_visibility in ('school', 'private')),
   allow_messages boolean not null default false,
@@ -502,6 +507,10 @@ create table if not exists public.member_profiles (
 );
 
 alter table public.member_profiles add column if not exists analytics_consent boolean not null default false;
+alter table public.member_profiles add column if not exists avatar_path text;
+alter table public.member_profiles add column if not exists avatar_revision bigint not null default 0;
+alter table public.member_profiles add column if not exists wechat_id text;
+alter table public.member_profiles add column if not exists share_wechat boolean not null default false;
 do $$
 begin
   -- If this upgrades a draft schema whose default was opt-out-in-reverse,
@@ -557,6 +566,26 @@ alter table public.member_profiles add constraint member_profiles_display_name_b
 alter table public.member_profiles drop constraint if exists member_profiles_interests_bounded;
 alter table public.member_profiles add constraint member_profiles_interests_bounded
   check (public.bounded_profile_interests(interests));
+alter table public.member_profiles drop constraint if exists member_profiles_avatar_path_owned;
+alter table public.member_profiles add constraint member_profiles_avatar_path_owned
+  check (
+    avatar_path is null
+    or avatar_path = user_id::text || '/avatar.webp'
+    or avatar_path ~ ('^' || user_id::text || '/avatar-[0-9a-f-]{36}\.webp$')
+  );
+alter table public.member_profiles drop constraint if exists member_profiles_avatar_revision_nonnegative;
+alter table public.member_profiles add constraint member_profiles_avatar_revision_nonnegative
+  check (avatar_revision >= 0);
+alter table public.member_profiles drop constraint if exists member_profiles_wechat_id_bounded;
+alter table public.member_profiles add constraint member_profiles_wechat_id_bounded
+  check (
+    wechat_id is null
+    or (
+      wechat_id = trim(wechat_id)
+      and char_length(wechat_id) between 1 and 64
+      and wechat_id !~ '[[:cntrl:]]'
+    )
+  );
 alter table public.member_profiles drop constraint if exists member_profiles_instagram_https;
 alter table public.member_profiles add constraint member_profiles_instagram_https
   check (instagram_url is null or instagram_url ~ '^https://([^/]+\.)?instagram\.com/');
@@ -923,6 +952,144 @@ revoke all on table public.post_likes from anon, authenticated;
 revoke all on table public.content_reports from anon, authenticated;
 revoke all on table public.user_blocks from anon, authenticated;
 
+-- Profile avatars use private, versioned WebP objects. A new object is written
+-- before the member_profiles pointer changes, so a failed database save cannot
+-- replace the currently visible avatar. The legacy /avatar.webp path remains
+-- readable until an existing user replaces it.
+-- private so the profile_visibility, verified-school, and blocking rules are
+-- enforced for every authenticated download rather than bypassed by a public
+-- object URL.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'member-avatars',
+  'member-avatars',
+  false,
+  2097152,
+  array['image/webp']::text[]
+)
+on conflict (id) do update set
+  name = excluded.name,
+  public = false,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+-- This helper is deliberately narrow: it returns only an authorization
+-- decision and does not expose school keys, profile details, or block rows.
+-- A schoolmate may read only the exact object currently referenced by the
+-- target profile; superseded or removed objects remain owner-only.
+drop policy if exists "Verified schoolmates can read visible avatars" on storage.objects;
+drop function if exists public.can_view_member_avatar(text);
+create or replace function public.can_view_member_avatar(p_owner_id text, p_object_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    coalesce(p_owner_id = (select auth.uid())::text, false)
+    or exists (
+      select 1
+      from public.school_memberships viewer
+      join public.school_memberships target
+        on target.school_key = viewer.school_key
+       and target.status = 'verified'
+      join public.member_profiles member
+        on member.user_id = target.user_id
+       and member.profile_visibility = 'school'
+       and member.avatar_path = p_object_path
+      where viewer.user_id = (select auth.uid())
+        and viewer.status = 'verified'
+        and target.user_id::text = p_owner_id
+        and not exists (
+          select 1
+          from public.user_blocks block
+          where (block.blocker_id = viewer.user_id and block.blocked_id = target.user_id)
+             or (block.blocker_id = target.user_id and block.blocked_id = viewer.user_id)
+        )
+    );
+$$;
+
+revoke all on function public.can_view_member_avatar(text, text) from public, anon, authenticated;
+grant execute on function public.can_view_member_avatar(text, text) to authenticated;
+
+drop policy if exists "Avatar owners can upload" on storage.objects;
+create policy "Avatar owners can upload"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'member-avatars'
+  and (
+    name = (select auth.uid())::text || '/avatar.webp'
+    or name ~ ('^' || (select auth.uid())::text || '/avatar-[0-9a-f-]{36}\.webp$')
+  )
+);
+
+-- Owner SELECT access is also required for upload RETURNING metadata and for
+-- replacing the stable object path with Storage upsert.
+drop policy if exists "Avatar owners can read" on storage.objects;
+create policy "Avatar owners can read"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'member-avatars'
+  and owner_id = (select auth.uid())::text
+  and (
+    name = (select auth.uid())::text || '/avatar.webp'
+    or name ~ ('^' || (select auth.uid())::text || '/avatar-[0-9a-f-]{36}\.webp$')
+  )
+);
+
+drop policy if exists "Avatar owners can replace" on storage.objects;
+create policy "Avatar owners can replace"
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'member-avatars'
+  and owner_id = (select auth.uid())::text
+  and (
+    name = (select auth.uid())::text || '/avatar.webp'
+    or name ~ ('^' || (select auth.uid())::text || '/avatar-[0-9a-f-]{36}\.webp$')
+  )
+)
+with check (
+  bucket_id = 'member-avatars'
+  and owner_id = (select auth.uid())::text
+  and (
+    name = (select auth.uid())::text || '/avatar.webp'
+    or name ~ ('^' || (select auth.uid())::text || '/avatar-[0-9a-f-]{36}\.webp$')
+  )
+);
+
+drop policy if exists "Avatar owners can delete" on storage.objects;
+create policy "Avatar owners can delete"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'member-avatars'
+  and owner_id = (select auth.uid())::text
+  and (
+    name = (select auth.uid())::text || '/avatar.webp'
+    or name ~ ('^' || (select auth.uid())::text || '/avatar-[0-9a-f-]{36}\.webp$')
+  )
+);
+
+-- Schoolmates may fetch an avatar but cannot list the bucket. The object must
+-- retain the path assigned to its authenticated owner, and the helper repeats
+-- every verified-school, visibility, and bilateral block check.
+drop policy if exists "Verified schoolmates can read visible avatars" on storage.objects;
+create policy "Verified schoolmates can read visible avatars"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'member-avatars'
+  and owner_id is not null
+  and (
+    name = owner_id || '/avatar.webp'
+    or name ~ ('^' || owner_id || '/avatar-[0-9a-f-]{36}\.webp$')
+  )
+  and storage.allow_any_operation(array[
+    'object.get_authenticated_info',
+    'object.get_authenticated'
+  ])
+  and public.can_view_member_avatar(owner_id, name)
+);
+
 create or replace function public.publish_community_post(p_body text, p_tags text[] default '{}'::text[])
 returns uuid
 language plpgsql
@@ -955,12 +1122,17 @@ $$;
 revoke all on function public.publish_community_post(text, text[]) from public;
 grant execute on function public.publish_community_post(text, text[]) to authenticated;
 
+-- The avatar_path column changes this RPC's composite return type, so an
+-- explicit drop is required when upgrading an already-configured project.
+drop function if exists public.get_school_feed(integer, integer);
 create or replace function public.get_school_feed(p_limit integer default 30, p_offset integer default 0)
 returns table (
   post_id uuid,
   author_id uuid,
   author_username text,
   display_name text,
+  avatar_path text,
+  avatar_revision bigint,
   major_of_study text,
   body text,
   tags text[],
@@ -987,6 +1159,8 @@ begin
     post.author_id,
     profile.username,
     case when member.profile_visibility = 'school' then member.display_name else null end,
+    case when member.profile_visibility = 'school' then member.avatar_path else null end,
+    case when member.profile_visibility = 'school' then member.avatar_revision else null end,
     case when member.profile_visibility = 'school' then profile.major_of_study else null end,
     post.body,
     post.tags,
@@ -1033,6 +1207,8 @@ $$;
 revoke all on function public.get_school_feed(integer, integer) from public;
 grant execute on function public.get_school_feed(integer, integer) to authenticated;
 
+-- avatar_path and the opt-in WeChat value extend the RPC return type.
+drop function if exists public.get_schoolmate_profile(uuid);
 create or replace function public.get_schoolmate_profile(p_user_id uuid)
 returns table (
   username text,
@@ -1042,8 +1218,11 @@ returns table (
   study_year smallint,
   bio text,
   interests text[],
+  avatar_path text,
+  avatar_revision bigint,
   instagram_url text,
   linkedin_url text,
+  wechat_id text,
   website_url text
 )
 language plpgsql
@@ -1077,8 +1256,11 @@ begin
     profile.study_year,
     member.bio,
     member.interests,
+    member.avatar_path,
+    member.avatar_revision,
     member.instagram_url,
     member.linkedin_url,
+    case when member.share_wechat then member.wechat_id else null end,
     member.website_url
   from public.profiles profile
   join public.member_profiles member on member.user_id = profile.user_id
@@ -1563,12 +1745,17 @@ $$;
 revoke all on function public.start_direct_conversation(text) from public;
 grant execute on function public.start_direct_conversation(text) to authenticated;
 
+-- other_avatar_path changes the RPC return type and therefore requires a drop
+-- before recreation on projects that already installed the student hub.
+drop function if exists public.get_my_conversations();
 create or replace function public.get_my_conversations()
 returns table (
   conversation_id uuid,
   other_user_id uuid,
   other_username text,
   other_display_name text,
+  other_avatar_path text,
+  other_avatar_revision bigint,
   last_message text,
   last_message_at timestamptz
 )
@@ -1597,6 +1784,8 @@ begin
     mine.other_id,
     profile.username,
     case when member.profile_visibility = 'school' then member.display_name else null end,
+    case when member.profile_visibility = 'school' then member.avatar_path else null end,
+    case when member.profile_visibility = 'school' then member.avatar_revision else null end,
     latest.body,
     latest.created_at
   from mine

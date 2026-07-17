@@ -10,7 +10,7 @@
     profileRequest: 0,
     profilePreviewRequest: 0,
     socialConnectionRequest: 0,
-    activeView: "overview",
+    activeView: "community",
     membership: null,
     membershipError: "",
     profile: null,
@@ -41,7 +41,15 @@
     sendingMessage: false,
     messagePoll: null,
     loadingFeed: false,
-    loadingConversations: false
+    loadingConversations: false,
+    feedTopic: "all",
+    feedQuery: "",
+    avatarPendingBlob: null,
+    avatarPendingUrl: "",
+    avatarDeleteRequested: false,
+    avatarBusy: false,
+    avatarUrlCache: new Map(),
+    avatarLoadCache: new Map()
   };
 
   const SOCIAL_PROVIDERS = Object.freeze({
@@ -115,6 +123,7 @@
   );
 
   function resetSensitiveState(nextUserId){
+    revokeAvatarUrls();
     hubState.sessionUserId = nextUserId;
     hubState.generation += 1;
     hubState.conversationRequest += 1;
@@ -150,12 +159,23 @@
     hubState.sendingMessage = false;
     hubState.loadingFeed = false;
     hubState.loadingConversations = false;
+    hubState.feedTopic = "all";
+    hubState.feedQuery = "";
+    hubState.avatarPendingBlob = null;
+    hubState.avatarPendingUrl = "";
+    hubState.avatarDeleteRequested = false;
+    hubState.avatarBusy = false;
     configureMessagePolling(false);
     closeHubAction(null, {restoreFocus:false});
 
     fillMemberProfile({});
     setProfileFormDisabled(true);
-    ["communityPostBody", "communityPostTags", "chatUsername", "chatMessageInput"].forEach(id => { if($(id)) $(id).value = ""; });
+    ["communityPostBody", "communityPostTags", "communitySearch", "chatUsername", "chatMessageInput"].forEach(id => { if($(id)) $(id).value = ""; });
+    document.querySelectorAll("[data-community-topic]").forEach(button => {
+      const active = button.dataset.communityTopic === "all";
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
     ["communityFeed", "conversationList", "chatMessages", "courseInsightChart"].forEach(id => $(id)?.replaceChildren());
     $("courseInsightScope").value = "same_major_year";
     $("courseInsightYear").value = "";
@@ -166,7 +186,7 @@
     $("schoolmateProfileConnections").replaceChildren();
     $("schoolmateProfileLinksSection").hidden = true;
     $("schoolmateProfileConnectionsSection").hidden = true;
-    ["communityComposerStatus", "chatStatus", "memberProfileStatus", "courseInsightStatus"].forEach(id => setStatus(id, ""));
+    ["communityComposerStatus", "chatStatus", "memberProfileStatus", "avatarUploadStatus", "courseInsightStatus"].forEach(id => setStatus(id, ""));
     setSocialConnectionStatus();
     renderSocialConnections();
     $("chatHeading").textContent = t("selectConversation");
@@ -191,9 +211,123 @@
     return parts.slice(0, 2).map(part => part[0]?.toLocaleUpperCase()).join("") || "CC";
   }
 
+  function revokeAvatarUrls(){
+    if(hubState.avatarPendingUrl) URL.revokeObjectURL(hubState.avatarPendingUrl);
+    hubState.avatarUrlCache.forEach(url => URL.revokeObjectURL(url));
+    hubState.avatarPendingUrl = "";
+    hubState.avatarUrlCache.clear();
+    hubState.avatarLoadCache.clear();
+  }
+
+  function avatarCacheKey(path, revision=0){
+    return `${path || ""}::${Number(revision || 0)}`;
+  }
+
+  async function getAvatarUrl(path, revision=0){
+    if(!path || !authClient || !currentUser) return "";
+    const key = avatarCacheKey(path, revision);
+    if(hubState.avatarUrlCache.has(key)) return hubState.avatarUrlCache.get(key);
+    if(hubState.avatarLoadCache.has(key)) return hubState.avatarLoadCache.get(key);
+    const context = requestContext();
+    const request = (async () => {
+      const { data, error } = await authClient.storage.from("member-avatars").download(path);
+      if(error || !data || !contextIsCurrent(context)) return "";
+      const url = URL.createObjectURL(data);
+      if(!contextIsCurrent(context)){
+        URL.revokeObjectURL(url);
+        return "";
+      }
+      hubState.avatarUrlCache.set(key, url);
+      return url;
+    })().finally(() => hubState.avatarLoadCache.delete(key));
+    hubState.avatarLoadCache.set(key, request);
+    return request;
+  }
+
+  function applyAvatarImage(image, initials, name, path, revision=0, directUrl=""){
+    if(!image || !initials) return;
+    const fallback = initialsFor(name);
+    initials.textContent = fallback;
+    initials.hidden = false;
+    image.hidden = true;
+    image.removeAttribute("src");
+    const requestKey = directUrl || avatarCacheKey(path, revision);
+    image.dataset.avatarRequest = requestKey;
+    if(!directUrl && !path) return;
+    const setImage = url => {
+      if(!url || image.dataset.avatarRequest !== requestKey || !image.isConnected) return;
+      image.onload = () => {
+        if(image.dataset.avatarRequest !== requestKey) return;
+        image.hidden = false;
+        initials.hidden = true;
+      };
+      image.onerror = () => {
+        image.hidden = true;
+        initials.hidden = false;
+      };
+      image.src = url;
+    };
+    if(directUrl) setImage(directUrl);
+    else void getAvatarUrl(path, revision).then(setImage);
+  }
+
+  function renderAvatarContainer(container, name, path, revision=0){
+    if(!container) return;
+    container.classList.remove("has-photo");
+    container.replaceChildren(document.createTextNode(initialsFor(name)));
+    const image = node("img", "hub-avatar-inline-image");
+    image.alt = "";
+    image.hidden = true;
+    container.append(image);
+    const requestKey = avatarCacheKey(path, revision);
+    image.dataset.avatarRequest = requestKey;
+    if(!path) return;
+    void getAvatarUrl(path, revision).then(url => {
+      if(!url || image.dataset.avatarRequest !== requestKey || !image.isConnected) return;
+      image.onload = () => { image.hidden = false; container.classList.add("has-photo"); };
+      image.onerror = () => { image.remove(); container.classList.remove("has-photo"); };
+      image.src = url;
+    });
+  }
+
+  function createAvatar(name, path, revision=0, extraClass=""){
+    const avatar = node("div", `hub-avatar${extraClass ? ` ${extraClass}` : ""}`, initialsFor(name));
+    avatar.setAttribute("aria-hidden", "true");
+    renderAvatarContainer(avatar, name, path, revision);
+    return avatar;
+  }
+
+  function renderOwnAvatars(){
+    if(!currentUser) return;
+    const username = currentUser.user_metadata?.username || currentUser.email?.split("@")[0] || "Student";
+    const name = hubState.profile?.display_name || username;
+    const path = hubState.avatarDeleteRequested ? null : hubState.profile?.avatar_path;
+    const revision = hubState.profile?.avatar_revision || 0;
+    applyAvatarImage($("hubUserAvatar"), $("hubUserInitials"), name, path, revision);
+    renderAvatarContainer($("hubComposerInitials"), name, path, revision);
+    renderAvatarContainer($("hubRailInitials"), name, path, revision);
+    applyAvatarImage(
+      $("profileAvatarPreview"),
+      $("profileAvatarInitials"),
+      name,
+      path,
+      revision,
+      hubState.avatarPendingUrl
+    );
+    $("removeProfileAvatar").disabled = hubState.avatarBusy || (!path && !hubState.avatarPendingBlob);
+  }
+
   function identityLabel(displayName, username){
     const handle = username ? `@${username}` : t("anonymousStudent");
     return displayName ? `${displayName} · ${handle}` : handle;
+  }
+
+  function renderHubHeader(){
+    const view = ["community", "messages", "overview", "profile"].includes(hubState.activeView) ? hubState.activeView : "community";
+    const prefix = view === "overview" ? "hubInsights" : view === "community" ? "hubCommunity" : view === "messages" ? "hubMessages" : "hubProfile";
+    $("hubPageKicker").textContent = t(`${prefix}Kicker`);
+    $("hubGreeting").textContent = t(`${prefix}Title`);
+    $("hubPageIntroduction").textContent = t(`${prefix}Intro`);
   }
 
   function renderIdentity(){
@@ -202,14 +336,19 @@
     const name = hubState.profile?.display_name?.trim() || `@${username}`;
     $("hubUserName").textContent = name;
     $("hubUserAcademic").textContent = academicLabel();
-    $("hubUserInitials").textContent = initialsFor(hubState.profile?.display_name || username);
+    $("hubRailName").textContent = name;
+    $("hubRailAcademic").textContent = academicLabel();
+    renderOwnAvatars();
     const membershipStatus = ["verified", "rejected", "revoked"].includes(hubState.membership?.status)
       ? hubState.membership.status
       : "pending";
     $("hubMembershipStatus").textContent = t(`membership${membershipStatus[0].toLocaleUpperCase()}${membershipStatus.slice(1)}`);
     $("hubMembershipStatus").className = `hub-membership-status ${membershipStatus}`;
-    $("hubGreeting").textContent = t("hubGreetingName", {name});
+    renderHubHeader();
     $("hubNetworkScope").textContent = getAcademicIdentity().school || "—";
+    const strength = profileStrength();
+    $("hubRailProfileStrength").textContent = `${strength}%`;
+    $("hubRailProfileStrengthBar").style.width = `${strength}%`;
   }
 
   function profileStrength(){
@@ -222,6 +361,8 @@
       profile.whatsapp_url,
       profile.linkedin_url,
       profile.website_url,
+      profile.avatar_path,
+      profile.wechat_id,
       hubState.socialIdentities.size > 0
     ];
     return Math.round(checks.filter(Boolean).length / checks.length * 100);
@@ -286,7 +427,7 @@
     showSchedulePage();
   }
 
-  function showHub(view="overview"){
+  function showHub(view="community"){
     if(!hubAccessAllowed()){
       if(currentUser) showSchedulePage();
       else openAuthModal();
@@ -303,15 +444,19 @@
   }
 
   async function switchView(view){
-    if(!["overview", "community", "messages", "profile"].includes(view)) view = "overview";
+    if(!["overview", "community", "messages", "profile"].includes(view)) view = "community";
     if(view !== "community") closeSchoolmateProfile({restoreFocus:false});
     hubState.activeView = view;
+    $("memberHub").dataset.activeView = view;
+    renderHubHeader();
     document.querySelectorAll("[data-hub-view]").forEach(element => { element.hidden = element.dataset.hubView !== view; });
     document.querySelectorAll("[data-hub-target]").forEach(button => {
       const active = button.dataset.hubTarget === view;
       button.classList.toggle("active", active);
-      if(active) button.setAttribute("aria-current", "page");
-      else button.removeAttribute("aria-current");
+      if(button.classList.contains("hub-nav-button")){
+        if(active) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      }
     });
     configureMessagePolling(view === "messages");
     if(view === "overview"){
@@ -322,7 +467,7 @@
         insightEmpty(t("courseInsightUnavailable"), hubState.membershipError || t("schoolVerificationRequired"));
       }
     } else if(view === "community"){
-      await loadCommunityFeed();
+      await Promise.all([loadCommunityFeed(), loadConversations()]);
     } else if(view === "messages"){
       await loadConversations();
     } else if(view === "profile"){
@@ -447,6 +592,13 @@
     };
     if(!allowed[provider]) throw new Error(t(`invalid${provider[0].toLocaleUpperCase()}${provider.slice(1)}Url`));
     return url.toString();
+  }
+
+  function validatedWechatId(value){
+    const input = String(value || "").trim();
+    if(!input) return null;
+    if(input.length > 64 || /[\u0000-\u001f\u007f]/.test(input)) throw new Error(t("invalidWechatId"));
+    return input;
   }
 
   function renderSocialConnections(){
@@ -729,16 +881,121 @@
     $("profileInstagram").value = profile.instagram_url || "";
     $("profileWhatsapp").value = profile.whatsapp_url || "";
     $("profileLinkedin").value = profile.linkedin_url || "";
+    $("profileWechat").value = profile.wechat_id || "";
+    $("profileShareWechat").checked = profile.share_wechat === true;
     $("profileWebsite").value = profile.website_url || "";
     $("profileVisibility").value = profile.profile_visibility === "private" ? "private" : "school";
     $("profileAllowMessages").checked = profile.allow_messages === true;
     $("profileAnalyticsConsent").checked = profile.analytics_consent === true;
+    renderOwnAvatars();
+  }
+
+  function switchConnectionTab(tab){
+    const activeTab = tab === "links" ? "links" : "verified";
+    document.querySelectorAll("[data-connection-tab]").forEach(button => {
+      const active = button.dataset.connectionTab === activeTab;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+      button.tabIndex = active ? 0 : -1;
+    });
+    $("verifiedConnectionsPanel").hidden = activeTab !== "verified";
+    $("profileLinksPanel").hidden = activeTab !== "links";
+  }
+
+  function handleConnectionTabKeydown(event){
+    if(!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    const tabs = [...document.querySelectorAll("[data-connection-tab]")];
+    if(!tabs.length) return;
+    event.preventDefault();
+    const currentIndex = Math.max(0, tabs.indexOf(event.currentTarget));
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? tabs.length - 1
+        : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    switchConnectionTab(tabs[nextIndex].dataset.connectionTab);
+    tabs[nextIndex].focus();
   }
 
   function setProfileFormDisabled(disabled){
     document.querySelectorAll('[data-hub-view="profile"] input, [data-hub-view="profile"] textarea, [data-hub-view="profile"] select')
       .forEach(control => { control.disabled = disabled; });
-    $("saveMemberProfile").disabled = disabled;
+    $("saveMemberProfile").disabled = disabled || hubState.profileLoading || hubState.avatarBusy;
+    $("chooseProfileAvatar").disabled = disabled || hubState.avatarBusy;
+    if(disabled || hubState.avatarBusy) $("removeProfileAvatar").disabled = true;
+    else renderOwnAvatars();
+  }
+
+  async function decodeAvatarFile(file){
+    if(typeof createImageBitmap === "function") return createImageBitmap(file);
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      return await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error(t("avatarInvalid")));
+        image.src = objectUrl;
+      });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
+  async function prepareProfileAvatar(file){
+    if(!file) return;
+    if(!["image/png", "image/jpeg", "image/webp"].includes(file.type)){
+      setStatus("avatarUploadStatus", t("avatarInvalid"), "error");
+      return;
+    }
+    if(file.size > 8 * 1024 * 1024){
+      setStatus("avatarUploadStatus", t("avatarTooLarge"), "error");
+      return;
+    }
+    hubState.avatarBusy = true;
+    setProfileFormDisabled(false);
+    setStatus("avatarUploadStatus", t("avatarPreparing"));
+    let source;
+    try {
+      source = await decodeAvatarFile(file);
+      const width = Number(source.width || source.naturalWidth || 0);
+      const height = Number(source.height || source.naturalHeight || 0);
+      if(width < 64 || height < 64 || width > 12000 || height > 12000) throw new Error(t("avatarInvalid"));
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+      const context = canvas.getContext("2d", {alpha:false});
+      if(!context) throw new Error(t("avatarInvalid"));
+      context.fillStyle = "#f5f5f7";
+      context.fillRect(0, 0, 512, 512);
+      const side = Math.min(width, height);
+      context.drawImage(source, (width - side) / 2, (height - side) / 2, side, side, 0, 0, 512, 512);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", .88));
+      if(!blob || blob.type !== "image/webp" || blob.size > 2 * 1024 * 1024) throw new Error(t("avatarInvalid"));
+      if(hubState.avatarPendingUrl) URL.revokeObjectURL(hubState.avatarPendingUrl);
+      hubState.avatarPendingBlob = blob;
+      hubState.avatarPendingUrl = URL.createObjectURL(blob);
+      hubState.avatarDeleteRequested = false;
+      hubState.profileDirty = true;
+      setStatus("avatarUploadStatus", t("avatarReady"), "success");
+    } catch(error){
+      setStatus("avatarUploadStatus", error?.message || t("avatarInvalid"), "error");
+    } finally {
+      if(typeof source?.close === "function") source.close();
+      hubState.avatarBusy = false;
+      setProfileFormDisabled(false);
+      renderOwnAvatars();
+      $("profileAvatarInput").value = "";
+    }
+  }
+
+  function markAvatarForRemoval(){
+    if(hubState.avatarPendingUrl) URL.revokeObjectURL(hubState.avatarPendingUrl);
+    hubState.avatarPendingUrl = "";
+    hubState.avatarPendingBlob = null;
+    hubState.avatarDeleteRequested = true;
+    hubState.profileDirty = true;
+    setStatus("avatarUploadStatus", t("avatarRemoved"));
+    renderOwnAvatars();
   }
 
   async function loadMemberProfile({force=false}={}){
@@ -758,7 +1015,7 @@
     setStatus("memberProfileStatus", t("profileLoading"));
     const { data, error } = await authClient
       .from("member_profiles")
-      .select("display_name, bio, phone_number, interests, instagram_url, whatsapp_url, linkedin_url, website_url, profile_visibility, allow_messages, analytics_consent")
+      .select("display_name, bio, phone_number, interests, avatar_path, avatar_revision, instagram_url, whatsapp_url, linkedin_url, wechat_id, share_wechat, website_url, profile_visibility, allow_messages, analytics_consent")
       .eq("user_id", context.userId)
       .maybeSingle();
     if(!contextIsCurrent(context) || request !== hubState.profileRequest) return;
@@ -783,9 +1040,9 @@
     if(!authClient || !currentUser || hubState.profileLoading || !hubState.profileHydrated) return false;
     const context = requestContext();
     const button = $("saveMemberProfile");
-    button.disabled = true;
-    setStatus("memberProfileStatus", t("saving"));
     let payload;
+    const previousAvatarPath = hubState.profile?.avatar_path || null;
+    const previousAvatarRevision = Number(hubState.profile?.avatar_revision || 0);
     try {
       payload = {
         user_id: context.userId,
@@ -793,9 +1050,13 @@
         phone_number: $("profilePhone").value.trim() || null,
         bio: $("profileBio").value.trim() || null,
         interests: parseInterests($("profileInterests").value),
+        avatar_path: previousAvatarPath,
+        avatar_revision: previousAvatarRevision,
         instagram_url: validatedUrl($("profileInstagram").value, "instagram"),
         whatsapp_url: validatedUrl($("profileWhatsapp").value, "whatsapp"),
         linkedin_url: validatedUrl($("profileLinkedin").value, "linkedin"),
+        wechat_id: validatedWechatId($("profileWechat").value),
+        share_wechat: $("profileShareWechat").checked,
         website_url: validatedUrl($("profileWebsite").value, "website"),
         profile_visibility: $("profileVisibility").value,
         allow_messages: $("profileAllowMessages").checked,
@@ -806,24 +1067,96 @@
       setStatus("memberProfileStatus", error.message, "error");
       return false;
     }
+
+    button.disabled = true;
+    hubState.avatarBusy = true;
+    setProfileFormDisabled(true);
+    setStatus("memberProfileStatus", t("saving"));
+    let uploadedAvatarPath = "";
+    if(hubState.avatarPendingBlob){
+      uploadedAvatarPath = `${context.userId}/avatar-${crypto.randomUUID()}.webp`;
+      const upload = await authClient.storage.from("member-avatars").upload(uploadedAvatarPath, hubState.avatarPendingBlob, {
+        upsert:false,
+        contentType:"image/webp",
+        cacheControl:"31536000"
+      });
+      if(!contextIsCurrent(context)) return false;
+      if(upload.error){
+        hubState.avatarBusy = false;
+        setProfileFormDisabled(false);
+        setStatus("memberProfileStatus", t("avatarUploadFailed"), "error");
+        setStatus("avatarUploadStatus", t("avatarUploadFailed"), "error");
+        return false;
+      }
+      payload.avatar_path = uploadedAvatarPath;
+      payload.avatar_revision = previousAvatarRevision + 1;
+    } else if(hubState.avatarDeleteRequested){
+      payload.avatar_path = null;
+      payload.avatar_revision = previousAvatarRevision + 1;
+    }
+
     const { data, error } = await authClient.from("member_profiles").upsert(payload, {onConflict:"user_id"}).select().single();
-    if(!contextIsCurrent(context)) return;
-    button.disabled = false;
+    if(!contextIsCurrent(context)) return false;
     if(error){
+      if(uploadedAvatarPath){
+        const rollback = await authClient.storage.from("member-avatars").remove([uploadedAvatarPath]);
+        if(rollback.error) console.warn("A failed profile save left an owner-private avatar object for later cleanup.", rollback.error);
+      }
+      hubState.avatarBusy = false;
+      setProfileFormDisabled(false);
+      button.disabled = false;
       setStatus("memberProfileStatus", featureError(error) || t("profileSaveFailed"), "error");
       return false;
     }
+    hubState.avatarBusy = false;
+    setProfileFormDisabled(false);
+    button.disabled = false;
+    const obsoleteAvatarPath = previousAvatarPath && previousAvatarPath !== data.avatar_path ? previousAvatarPath : "";
+    hubState.avatarPendingBlob = null;
+    hubState.avatarDeleteRequested = false;
+    revokeAvatarUrls();
     hubState.profile = data;
     hubState.profileUserId = context.userId;
     hubState.profileDirty = false;
+    setStatus("avatarUploadStatus", "");
     setStatus("memberProfileStatus", t("profileSaved"), "success");
     renderOverview();
+    if(obsoleteAvatarPath){
+      const removal = await authClient.storage.from("member-avatars").remove([obsoleteAvatarPath]);
+      if(removal.error) console.warn("The removed avatar is no longer referenced, but its private storage object could not be deleted.", removal.error);
+    }
     if(finalTimetable?.savedAt) await syncFinalSchedule(finalTimetable);
     return true;
   }
 
   function postAuthorName(post){
     return identityLabel(post.display_name, post.author_username);
+  }
+
+  function communityTopicMatches(post, topic){
+    if(!topic || topic === "all") return true;
+    const topicTerms = {
+      courses:["course", "courses", "class", "classes", "module", "modules", "timetable", "课程", "課程", "選科", "选课"],
+      campus:["campus", "school", "student", "students", "life", "校园", "校園", "学生", "學生"],
+      clubs:["club", "clubs", "society", "societies", "社团", "社團", "学会", "學會"],
+      housing:["housing", "dorm", "dormitory", "rent", "roommate", "住宿", "宿舍", "租房"],
+      careers:["career", "careers", "intern", "internship", "job", "jobs", "职业", "職涯", "实习", "實習"]
+    };
+    const haystack = [post.body, ...(Array.isArray(post.tags) ? post.tags : [])].join(" ").toLocaleLowerCase();
+    return (topicTerms[topic] || [topic]).some(term => haystack.includes(term.toLocaleLowerCase()));
+  }
+
+  function filteredCommunityPosts(posts){
+    const query = hubState.feedQuery.trim().toLocaleLowerCase();
+    return posts.filter(post => {
+      if(!communityTopicMatches(post, hubState.feedTopic)) return false;
+      if(!query) return true;
+      return [post.body, post.display_name, post.author_username, post.major_of_study, ...(Array.isArray(post.tags) ? post.tags : [])]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase()
+        .includes(query);
+    });
   }
 
   function closeHubAction(value=null, {restoreFocus=true}={}){
@@ -865,7 +1198,13 @@
   function renderSchoolmateProfile(profile=hubState.profilePreview){
     if(!profile) return;
     const label = identityLabel(profile.display_name, profile.username);
-    $("schoolmateProfileInitials").textContent = initialsFor(profile.display_name || profile.username);
+    applyAvatarImage(
+      $("schoolmateProfileAvatar"),
+      $("schoolmateProfileInitials"),
+      profile.display_name || profile.username,
+      profile.avatar_path,
+      profile.avatar_revision
+    );
     $("schoolmateProfileName").textContent = label;
     $("schoolmateProfileMeta").textContent = [profile.major_of_study, profile.degree_level ? t(`${profile.degree_level}Degree`) : "", profile.study_year ? t(`studyYear${profile.study_year}`) : ""].filter(Boolean).join(" · ");
     $("schoolmateProfileBio").textContent = profile.bio || t("notProvided");
@@ -898,7 +1237,23 @@
         links.append(anchor);
       } catch(_error){}
     });
+    if(profile.wechat_id){
+      const wechatButton = node("button", "hub-profile-wechat-copy", `${t("wechatId")}: ${profile.wechat_id}`);
+      wechatButton.type = "button";
+      wechatButton.title = t("copyWechat");
+      wechatButton.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(profile.wechat_id);
+          wechatButton.textContent = t("wechatCopied");
+          window.setTimeout(() => { if(wechatButton.isConnected) wechatButton.textContent = `${t("wechatId")}: ${profile.wechat_id}`; }, 1600);
+        } catch(_error){
+          wechatButton.textContent = profile.wechat_id;
+        }
+      };
+      links.append(wechatButton);
+    }
     $("schoolmateProfileLinksSection").hidden = !links.childElementCount;
+    $("schoolmateProfileMessage").hidden = profile.user_id === currentUser?.id || !profile.username;
   }
 
   const socialProviderListFrom = value => [...new Set(Array.isArray(value) ? value : [])]
@@ -933,12 +1288,22 @@
       setStatus("communityComposerStatus", profileResponse.error ? featureError(profileResponse.error) : t("profileUnavailable"), "error");
       return;
     }
+    profile.user_id = userId;
     profile.connected_providers = connectionResponse.error ? [] : connectionResponse.providers;
     if(connectionResponse.error) console.warn("Verified social connection badges are unavailable. Run the latest Supabase setup SQL.", connectionResponse.error);
     hubState.profilePreview = profile;
     renderSchoolmateProfile(profile);
     $("schoolmateProfileModal").hidden = false;
     $("closeSchoolmateProfile").focus();
+  }
+
+  async function messageProfileStudent(){
+    const username = hubState.profilePreview?.username;
+    if(!username || hubState.profilePreview?.user_id === currentUser?.id) return;
+    closeSchoolmateProfile({restoreFocus:false});
+    await switchView("messages");
+    $("chatUsername").value = username;
+    await startConversation();
   }
 
   async function togglePostLike(postId){
@@ -1067,11 +1432,14 @@
     const feed = $("communityFeed");
     feed.replaceChildren();
     if(!posts.length){ feed.append(node("div", "hub-feed-empty", t("communityEmpty"))); return; }
-    posts.forEach(post => {
+    const visiblePosts = filteredCommunityPosts(posts);
+    if(!visiblePosts.length){ feed.append(node("div", "hub-feed-empty", t("communityNoMatches"))); return; }
+    visiblePosts.forEach((post, index) => {
       const card = node("article", "hub-post-card");
+      card.dataset.postTone = String(index % 5);
       const author = node("div", "hub-post-author");
       const authorName = postAuthorName(post);
-      const avatar = node("div", "hub-avatar", initialsFor(post.display_name || post.author_username));
+      const avatar = createAvatar(post.display_name || post.author_username, post.avatar_path, post.avatar_revision);
       const authorCopy = node("div");
       authorCopy.append(node("b", "", authorName), node("span", "", [post.major_of_study, formatCompactDate(post.created_at)].filter(Boolean).join(" · ")));
       author.append(avatar, authorCopy);
@@ -1125,7 +1493,7 @@
     const request = ++hubState.feedRequest;
     hubState.loadingFeed = true;
     if(!hubState.feed.length || !force) $("communityFeed").replaceChildren(node("div", "hub-feed-empty", t("communityLoading")));
-    const { data, error } = await authClient.rpc("get_school_feed", {p_limit:40, p_offset:0});
+    const { data, error } = await authClient.rpc("get_school_feed", {p_limit:50, p_offset:0});
     if(!contextIsCurrent(context) || request !== hubState.feedRequest) return;
     hubState.loadingFeed = false;
     if(error){
@@ -1157,17 +1525,47 @@
   function renderConversations(conversations){
     const list = $("conversationList");
     list.replaceChildren();
-    if(!conversations.length){ list.append(node("div", "hub-feed-empty", t("noConversations"))); return; }
+    if(!conversations.length){
+      list.append(node("div", "hub-feed-empty", t("noConversations")));
+      renderConversationPreview();
+      return;
+    }
     conversations.forEach(conversation => {
       const button = node("button", "hub-conversation-button");
       button.type = "button";
       button.classList.toggle("active", conversation.conversation_id === hubState.activeConversationId);
-      const avatar = node("div", "hub-avatar", initialsFor(conversation.other_display_name || conversation.other_username));
+      const avatar = createAvatar(conversation.other_display_name || conversation.other_username, conversation.other_avatar_path, conversation.other_avatar_revision);
       const copy = node("div");
       copy.append(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)), node("span", "", conversation.last_message || t("messagesEmpty")));
       button.append(avatar, copy);
       button.onclick = () => openConversation(conversation);
       list.append(button);
+    });
+    renderConversationPreview();
+  }
+
+  function renderConversationPreview(){
+    const preview = $("communityConversationPreview");
+    if(!preview) return;
+    preview.replaceChildren();
+    const conversations = hubState.conversations.slice(0, 3);
+    if(!conversations.length){
+      preview.append(node("p", "hub-conversation-preview-empty", t("noRecentMessages")));
+      return;
+    }
+    conversations.forEach(conversation => {
+      const button = node("button", "hub-conversation-preview-button");
+      button.type = "button";
+      const avatar = createAvatar(conversation.other_display_name || conversation.other_username, conversation.other_avatar_path, conversation.other_avatar_revision, "hub-avatar-small");
+      const copy = node("span");
+      copy.append(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)), node("small", "", conversation.last_message || t("messagesEmpty")));
+      button.append(avatar, copy, node("i", "", "→"));
+      button.onclick = async () => {
+        await switchView("messages");
+        const current = hubState.conversations.find(item => item.conversation_id === conversation.conversation_id) || conversation;
+        await openConversation(current);
+      };
+      preview.append(button);
     });
   }
 
@@ -1363,6 +1761,7 @@
     if(!$("memberHub").hidden){
       if(hubState.activeView === "overview" && hubState.insightsLoaded) renderInsights(hubState.insightRows);
       if(hubState.activeView === "community") renderCommunityFeed(hubState.feed);
+      if(hubState.activeView === "community") renderConversationPreview();
       if(hubState.activeView === "messages"){
         renderConversations(hubState.conversations);
         renderActiveConversationHeader();
@@ -1373,14 +1772,21 @@
     }
   }
 
-  $("hubOpenBtn")?.addEventListener("click", () => showHub("overview"));
-  $("enterMemberHub")?.addEventListener("click", () => showHub("overview"));
+  $("hubOpenBtn")?.addEventListener("click", () => showHub("community"));
+  $("enterMemberHub")?.addEventListener("click", () => showHub("community"));
   $("hubBackToTimetable")?.addEventListener("click", showTimetable);
   $("overviewOpenTimetable")?.addEventListener("click", showTimetable);
   document.querySelectorAll("[data-hub-target]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.hubTarget)));
   $("loadCourseInsights")?.addEventListener("click", loadCourseInsights);
   $("courseInsightScope")?.addEventListener("change", syncInsightYearControl);
   $("saveMemberProfile")?.addEventListener("click", saveMemberProfile);
+  $("chooseProfileAvatar")?.addEventListener("click", () => $("profileAvatarInput").click());
+  $("profileAvatarInput")?.addEventListener("change", event => void prepareProfileAvatar(event.target.files?.[0]));
+  $("removeProfileAvatar")?.addEventListener("click", markAvatarForRemoval);
+  document.querySelectorAll("[data-connection-tab]").forEach(button => {
+    button.addEventListener("click", () => switchConnectionTab(button.dataset.connectionTab));
+    button.addEventListener("keydown", handleConnectionTabKeydown);
+  });
   $("providerConnections")?.addEventListener("click", event => {
     const button = event.target.closest("[data-social-action][data-provider]");
     if(!button || !$("providerConnections").contains(button)) return;
@@ -1394,11 +1800,30 @@
   });
   $("publishCommunityPost")?.addEventListener("click", publishCommunityPost);
   $("refreshCommunityFeed")?.addEventListener("click", () => loadCommunityFeed({force:true}));
+  $("communitySearch")?.addEventListener("input", event => {
+    hubState.feedQuery = event.target.value;
+    renderCommunityFeed(hubState.feed);
+  });
+  document.querySelectorAll("[data-community-topic]").forEach(button => button.addEventListener("click", () => {
+    hubState.feedTopic = button.dataset.communityTopic || "all";
+    document.querySelectorAll("[data-community-topic]").forEach(item => {
+      const active = item === button;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    renderCommunityFeed(hubState.feed);
+  }));
+  $("communityOpenMessages")?.addEventListener("click", () => switchView("messages"));
+  $("communityStartMessage")?.addEventListener("click", async () => {
+    await switchView("messages");
+    $("chatUsername").focus();
+  });
   $("startConversation")?.addEventListener("click", startConversation);
   $("refreshMessages")?.addEventListener("click", () => loadConversations({force:true}));
   $("reportConversation")?.addEventListener("click", reportConversation);
   $("blockConversationUser")?.addEventListener("click", blockConversationUser);
   $("closeSchoolmateProfile")?.addEventListener("click", closeSchoolmateProfile);
+  $("schoolmateProfileMessage")?.addEventListener("click", messageProfileStudent);
   $("schoolmateProfileModal")?.addEventListener("click", event => { if(event.target === $("schoolmateProfileModal")) closeSchoolmateProfile(); });
   $("hubActionCancel")?.addEventListener("click", () => closeHubAction());
   $("hubActionConfirm")?.addEventListener("click", () => {
@@ -1437,6 +1862,7 @@
   $("chatMessageInput")?.addEventListener("keydown", event => {
     if(event.key === "Enter" && !event.shiftKey && !event.isComposing && event.keyCode !== 229){ event.preventDefault(); sendMessage(); }
   });
+  window.addEventListener("beforeunload", revokeAvatarUrls, {once:true});
 
   window.ConCourseHub = {
     show: showHub,
@@ -1449,5 +1875,6 @@
   };
 
   syncInsightYearControl();
+  switchConnectionTab("verified");
   syncAccess();
 })();
