@@ -1711,6 +1711,7 @@
     .event { box-shadow: none !important; }
   }
 </style>
+<link rel="stylesheet" href="member-hub.css" />
 </head>
 <body>
 <header id="landingScreen">
@@ -1755,6 +1756,7 @@
     </div>
     <button class="btn-primary" id="authOpenBtn" data-i18n="signIn">Sign in</button>
     <button class="btn-ghost" id="saveAccountBtn" hidden data-i18n="saveNow">Save now</button>
+    <button class="btn-ghost" id="hubOpenBtn" hidden data-i18n="studentHub">Student hub</button>
     <button class="btn-ghost" id="signOutBtn" hidden data-i18n="signOut">Sign out</button>
     <label class="language-control" for="languageSelect">
       <span class="language-icon" aria-hidden="true">
@@ -1841,14 +1843,14 @@
 
       <label for="schoolName" data-i18n="school">School or university</label>
       <div class="school-search-wrap">
-        <input id="schoolName" type="text" autocomplete="organization" placeholder="Search for your institution" data-i18n-placeholder="schoolPlaceholder" aria-describedby="schoolStatus" aria-autocomplete="list" aria-controls="schoolResults" />
+        <input id="schoolName" type="text" maxlength="220" autocomplete="organization" placeholder="Search for your institution" data-i18n-placeholder="schoolPlaceholder" aria-describedby="schoolStatus" aria-autocomplete="list" aria-controls="schoolResults" />
         <span class="school-spinner" id="schoolSpinner" hidden aria-hidden="true"></span>
         <div class="school-results" id="schoolResults" role="listbox" hidden></div>
       </div>
       <div class="field-status" id="schoolStatus" aria-live="polite">Start typing to see institution suggestions.</div>
 
       <label for="majorStudy" data-i18n="major">Major or field of study</label>
-      <input id="majorStudy" type="text" list="majorOptions" autocomplete="off" placeholder="e.g. Computer Science" data-i18n-placeholder="majorPlaceholder" />
+      <input id="majorStudy" type="text" maxlength="160" list="majorOptions" autocomplete="off" placeholder="e.g. Computer Science" data-i18n-placeholder="majorPlaceholder" />
       <datalist id="majorOptions">
         <option value="Accounting"></option>
         <option value="Architecture"></option>
@@ -2101,7 +2103,10 @@
         <b data-i18n="finalTimetableTitle">Final semester timetable</b>
         <span id="finalTimetableStatus" data-i18n="finalTimetableNotSaved">No final timetable has been saved yet.</span>
       </div>
-      <button type="button" class="btn-primary" id="saveFinalTimetable" data-i18n="saveFinalTimetable">Save as final timetable</button>
+      <div class="final-timetable-actions">
+        <button type="button" class="btn-ghost" id="enterMemberHub" hidden data-i18n="enterStudentHub">Enter student hub</button>
+        <button type="button" class="btn-primary" id="saveFinalTimetable" data-i18n="saveFinalTimetable">Save as final timetable</button>
+      </div>
     </div>
     <div id="warnArea"></div>
     <div id="droppedArea"></div>
@@ -2116,6 +2121,190 @@
     </div>
   </div>
 </section>
+
+<!-- Post-timetable member experience -->
+<section id="memberHub" class="member-hub" hidden aria-label="ConCourse student hub" data-i18n-aria-label="studentHub">
+  <div class="hub-shell">
+    <aside class="hub-sidebar">
+      <div class="hub-member-card">
+        <div class="hub-avatar" id="hubUserInitials" aria-hidden="true">CC</div>
+        <div class="hub-member-copy">
+          <b id="hubUserName">ConCourse student</b>
+          <span id="hubUserAcademic">Your academic community</span>
+          <small class="hub-membership-status pending" id="hubMembershipStatus" data-i18n="membershipPending">School verification pending</small>
+        </div>
+      </div>
+      <nav class="hub-navigation" aria-label="Student hub sections" data-i18n-aria-label="hubNavigation">
+        <button type="button" class="hub-nav-button active" data-hub-target="overview" aria-current="page"><span>01</span><b data-i18n="hubOverview">Overview</b></button>
+        <button type="button" class="hub-nav-button" data-hub-target="community"><span>02</span><b data-i18n="hubCommunity">Campus community</b></button>
+        <button type="button" class="hub-nav-button" data-hub-target="messages"><span>03</span><b data-i18n="hubMessages">Messages</b></button>
+        <button type="button" class="hub-nav-button" data-hub-target="profile"><span>04</span><b data-i18n="hubProfile">Profile</b></button>
+      </nav>
+      <div class="hub-sidebar-note">
+        <b data-i18n="hubCommunityStandard">Built for trusted campus communities</b>
+        <span data-i18n="hubCommunityStandardText">Profiles, reports, privacy controls, and school-scoped access support a safer network.</span>
+      </div>
+      <button type="button" class="btn-ghost hub-back-button" id="hubBackToTimetable" data-i18n="backToTimetable">Back to timetable</button>
+    </aside>
+
+    <main class="hub-main">
+      <header class="hub-page-header">
+        <div>
+          <p class="hub-kicker" data-i18n="concourseNetwork">ConCourse Network</p>
+          <h1 id="hubGreeting">Your university, connected.</h1>
+          <p data-i18n="hubIntroduction">Turn a finalized timetable into course intelligence, useful campus conversations, and stronger academic connections.</p>
+        </div>
+        <div class="hub-live-badge"><span></span><b data-i18n="privateByDesign">Private by design</b></div>
+      </header>
+
+      <section class="hub-view" data-hub-view="overview">
+        <div class="hub-metric-grid">
+          <article class="hub-metric-card"><span data-i18n="finalCourses">Final courses</span><b id="hubCourseCount">0</b><small data-i18n="fromFinalTimetable">from your final timetable</small></article>
+          <article class="hub-metric-card"><span data-i18n="finalCredits">Final credits</span><b id="hubCreditCount">0</b><small data-i18n="semesterRecord">in this semester record</small></article>
+          <article class="hub-metric-card"><span data-i18n="profileStrength">Profile strength</span><b id="hubProfileStrength">0%</b><small data-i18n="completeProfilePrompt">Complete details to build trust</small></article>
+          <article class="hub-metric-card"><span data-i18n="networkScope">Network scope</span><b id="hubNetworkScope">—</b><small data-i18n="yourUniversityOnly">your university only</small></article>
+        </div>
+
+        <div class="hub-overview-grid">
+          <article class="hub-card hub-insight-card">
+            <div class="hub-card-heading">
+              <div><span class="hub-card-index">01</span><h2 data-i18n="courseChoiceIntelligence">Course choice intelligence</h2></div>
+              <p data-i18n="anonymousAggregate">Anonymous aggregate data; small cohorts are hidden for privacy.</p>
+            </div>
+            <div class="hub-filter-row">
+              <label><span data-i18n="compareStudents">Compare students</span>
+                <select id="courseInsightScope">
+                  <option value="same_major_year" data-i18n="sameMajorYear">Same major and year</option>
+                  <option value="same_major" data-i18n="sameMajorAllYears">Same major, all years</option>
+                  <option value="university_year" data-i18n="universityYear">Whole university, selected year</option>
+                  <option value="university" data-i18n="wholeUniversity">Whole university, all years</option>
+                </select>
+              </label>
+              <label><span data-i18n="studyYearFilter">Study year</span>
+                <select id="courseInsightYear">
+                  <option value="" data-i18n="allYears">All years</option>
+                  <option value="1" data-i18n="studyYear1">Year 1</option><option value="2" data-i18n="studyYear2">Year 2</option>
+                  <option value="3" data-i18n="studyYear3">Year 3</option><option value="4" data-i18n="studyYear4">Year 4</option>
+                  <option value="5" data-i18n="studyYear5">Year 5</option><option value="6" data-i18n="studyYear6">Year 6</option>
+                  <option value="7" data-i18n="studyYear7">Year 7</option><option value="8" data-i18n="studyYear8">Year 8</option>
+                </select>
+              </label>
+              <button type="button" class="btn-primary" id="loadCourseInsights" data-i18n="refreshInsights">Refresh</button>
+            </div>
+            <div class="hub-chart" id="courseInsightChart" aria-live="polite"></div>
+            <p class="hub-inline-status" id="courseInsightStatus"></p>
+          </article>
+
+          <article class="hub-card hub-final-card">
+            <div class="hub-card-heading">
+              <div><span class="hub-card-index">02</span><h2 data-i18n="finalScheduleRecord">Final schedule record</h2></div>
+              <p data-i18n="savedDecisionSummary">The academic decision that unlocks your ConCourse experience.</p>
+            </div>
+            <div class="hub-final-summary" id="hubFinalSummary"></div>
+            <div class="hub-final-courses" id="hubFinalCourses"></div>
+            <button type="button" class="btn-ghost" id="overviewOpenTimetable" data-i18n="viewFullTimetable">View full timetable</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="hub-view" data-hub-view="community" hidden>
+        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="campusLife">Campus life</p><h2 data-i18n="schoolCommunity">Your school community</h2></div><p data-i18n="communityDescription">Share useful experiences, ask questions, and discover student perspectives within your university.</p></div>
+        <article class="hub-card hub-compose-card">
+          <textarea id="communityPostBody" maxlength="1200" data-i18n-placeholder="shareCampusThought" placeholder="Share a course insight, campus tip, question, or experience..."></textarea>
+          <div class="hub-compose-actions">
+            <input id="communityPostTags" maxlength="100" data-i18n-placeholder="postTagsPlaceholder" placeholder="Tags: courses, clubs, housing" />
+            <button type="button" class="btn-primary" id="publishCommunityPost" data-i18n="publishPost">Publish post</button>
+          </div>
+          <p class="hub-inline-status" id="communityComposerStatus"></p>
+        </article>
+        <div class="hub-feed-toolbar"><b data-i18n="latestFromCampus">Latest from campus</b><button type="button" class="btn-ghost" id="refreshCommunityFeed" data-i18n="refresh">Refresh</button></div>
+        <div class="hub-feed" id="communityFeed" aria-live="polite"></div>
+      </section>
+
+      <section class="hub-view" data-hub-view="messages" hidden>
+        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="privateConversations">Private conversations</p><h2 data-i18n="campusMessages">Campus messages</h2></div><p data-i18n="messagesDescription">Start a private conversation with a schoolmate by username. Blocking and reporting controls protect both participants.</p></div>
+        <article class="hub-card hub-chat-card">
+          <div class="hub-chat-start">
+            <input id="chatUsername" maxlength="24" data-i18n-placeholder="usernameToMessage" placeholder="Enter a schoolmate's username" />
+            <button type="button" class="btn-primary" id="startConversation" data-i18n="startChat">Start chat</button>
+          </div>
+          <p class="hub-inline-status" id="chatStatus"></p>
+          <div class="hub-chat-layout">
+            <aside class="hub-conversation-list" id="conversationList"></aside>
+            <section class="hub-message-pane">
+              <div class="hub-message-heading"><div><b id="chatHeading" data-i18n="selectConversation">Select a conversation</b><span id="chatSubheading"></span></div><div class="hub-message-safety"><button type="button" class="btn-ghost" id="reportConversation" data-i18n="report" disabled>Report</button><button type="button" class="btn-ghost" id="blockConversationUser" data-i18n="block" disabled>Block</button><button type="button" class="btn-ghost" id="refreshMessages" data-i18n="refresh">Refresh</button></div></div>
+              <div class="hub-message-list" id="chatMessages" aria-live="polite"></div>
+              <div class="hub-message-compose">
+                <input id="chatMessageInput" maxlength="2000" data-i18n-placeholder="writePrivateMessage" placeholder="Write a private message..." disabled />
+                <button type="button" class="btn-primary" id="sendChatMessage" data-i18n="send" disabled>Send</button>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <section class="hub-view" data-hub-view="profile" hidden>
+        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="identityAndTrust">Identity and trust</p><h2 data-i18n="completeYourProfile">Complete your profile</h2></div><p data-i18n="profileDescription">Add optional details that help schoolmates recognize you. You control visibility and whether people may message you.</p></div>
+        <div class="hub-profile-grid">
+          <article class="hub-card">
+            <div class="hub-card-heading"><div><span class="hub-card-index">01</span><h2 data-i18n="personalDetails">Personal details</h2></div><p data-i18n="privateContactNote">Phone and WhatsApp details remain private in this release.</p></div>
+            <div class="hub-form-grid">
+              <label><span data-i18n="displayName">Display name</span><input id="profileDisplayName" maxlength="80" autocomplete="name" /></label>
+              <label><span data-i18n="phoneNumber">Phone number</span><input id="profilePhone" maxlength="32" autocomplete="tel" placeholder="+852 ..." /></label>
+              <label class="hub-form-wide"><span data-i18n="profileBio">Short bio</span><textarea id="profileBio" maxlength="500"></textarea></label>
+              <label class="hub-form-wide"><span data-i18n="interests">Interests</span><input id="profileInterests" maxlength="300" data-i18n-placeholder="interestsPlaceholder" placeholder="Finance, basketball, AI, volunteering" /></label>
+            </div>
+          </article>
+          <article class="hub-card">
+            <div class="hub-card-heading"><div><span class="hub-card-index">02</span><h2 data-i18n="socialConnections">Social connections</h2></div><p data-i18n="socialVerificationNote">Links are self-reported until verified through an official provider connection.</p></div>
+            <div class="hub-social-list">
+              <label><span>Instagram</span><input id="profileInstagram" type="url" placeholder="https://instagram.com/..." /><small data-i18n="verificationPending">Self-reported · verification pending</small></label>
+              <label><span>WhatsApp</span><input id="profileWhatsapp" type="url" placeholder="https://wa.me/..." /><small data-i18n="verificationPending">Self-reported · verification pending</small></label>
+              <label><span>LinkedIn</span><input id="profileLinkedin" type="url" placeholder="https://linkedin.com/in/..." /><small data-i18n="verificationPending">Self-reported · verification pending</small></label>
+              <label><span data-i18n="personalWebsite">Personal website</span><input id="profileWebsite" type="url" placeholder="https://..." /></label>
+            </div>
+          </article>
+          <article class="hub-card hub-profile-controls-card">
+            <div class="hub-card-heading"><div><span class="hub-card-index">03</span><h2 data-i18n="privacyAndSafety">Privacy and safety</h2></div></div>
+            <div class="hub-form-grid">
+              <label><span data-i18n="profileVisibility">Profile visibility</span><select id="profileVisibility"><option value="school" data-i18n="schoolmatesOnly">Schoolmates only</option><option value="private" data-i18n="privateProfile">Private</option></select></label>
+              <label class="hub-toggle-label"><input id="profileAllowMessages" type="checkbox" /><span data-i18n="allowMessages">Allow schoolmates to message me</span></label>
+              <label class="hub-toggle-label hub-form-wide"><input id="profileAnalyticsConsent" type="checkbox" /><span data-i18n="analyticsConsent">Share my finalized course choices in anonymous, privacy-protected trends</span></label>
+            </div>
+            <div class="hub-profile-save"><p class="hub-inline-status" id="memberProfileStatus"></p><button type="button" class="btn-primary" id="saveMemberProfile" data-i18n="saveProfile">Save profile</button></div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+</section>
+
+<div class="hub-profile-modal" id="schoolmateProfileModal" hidden>
+  <section class="hub-profile-preview" role="dialog" aria-modal="true" aria-labelledby="schoolmateProfileName">
+    <button type="button" class="btn-ghost hub-profile-preview-close" id="closeSchoolmateProfile" aria-label="Close profile" data-i18n-aria-label="closeProfile">×</button>
+    <div class="hub-profile-preview-avatar" id="schoolmateProfileInitials">CC</div>
+    <p class="hub-kicker" data-i18n="campusProfile">Campus profile</p>
+    <h2 id="schoolmateProfileName">Student</h2>
+    <p class="hub-profile-preview-meta" id="schoolmateProfileMeta"></p>
+    <p class="hub-profile-preview-bio" id="schoolmateProfileBio"></p>
+    <div class="hub-profile-preview-interests" id="schoolmateProfileInterests"></div>
+    <div class="hub-profile-preview-links" id="schoolmateProfileLinks"></div>
+    <p class="hub-profile-preview-note" data-i18n="selfReportedLinks">Social links are self-reported and do not verify identity or enrollment.</p>
+  </section>
+</div>
+
+<div class="hub-profile-modal" id="hubActionModal" hidden>
+  <section class="hub-action-dialog" role="dialog" aria-modal="true" aria-labelledby="hubActionTitle" aria-describedby="hubActionMessage">
+    <p class="hub-kicker" data-i18n="communitySafety">Community safety</p>
+    <h2 id="hubActionTitle">Confirm action</h2>
+    <p id="hubActionMessage"></p>
+    <textarea id="hubActionInput" maxlength="500" hidden></textarea>
+    <div class="hub-action-buttons">
+      <button type="button" class="btn-ghost" id="hubActionCancel" data-i18n="cancel">Cancel</button>
+      <button type="button" class="btn-primary" id="hubActionConfirm">Confirm</button>
+    </div>
+  </section>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -2209,7 +2398,23 @@ const TRANSLATIONS = {
     sessionOnce:"此课程每周上课一次。", sessionTwice:"此课程每周在不同日期上课两次。", multiSessionHint:"{base} 请先建立完整时间选项（共 {count} 个时段），按“保存时间选项”，再添加教师提供的其他选项。ConCourse 每次会保留一个完整选项。",
     fixedSessionHint:"{base} 添加全部 {count} 个时段，它们会作为固定课表保存在一起。", wishlistCountOne:"{count} 门课程", wishlistCountMany:"{count} 门课程", remove:"移除", mustTakeBadge:"必须修读", sessionsWeekly:"每周 {count} 次",
     chooseOption:"从 {count} 个选项中选 1 个", optionLabel:"选项 {option}", meetingLabel:"上课", creditsShort:"学分", noValidTimetable:"未找到有效课表。", tooManyTimetables:"有效课表过多，无法准确排名。",
-    supabaseRequired:"需要设置 Supabase", configureLogin:"设置登录", connectSupabase:"连接 Supabase 后即可启用登录并开始规划。"
+    supabaseRequired:"需要设置 Supabase", configureLogin:"设置登录", connectSupabase:"连接 Supabase 后即可启用登录并开始规划。",
+    studentHub:"学生中心", hubNavigation:"学生中心栏目", closeProfile:"关闭资料", communitySafety:"社区安全", cancel:"取消", enterStudentHub:"进入学生中心", hubOverview:"概览", hubCommunity:"校园社区", hubMessages:"私信", hubProfile:"个人资料", membershipPending:"学校身份待验证", membershipVerified:"学校身份已验证", membershipRejected:"学校身份验证未通过", membershipRevoked:"学校身份验证已撤销",
+    hubCommunityStandard:"为可信赖的校园社区而设计", hubCommunityStandardText:"个人资料、举报机制、隐私控制以及仅限校内的访问权限，共同构建更安全的网络。", backToTimetable:"返回课表",
+    concourseNetwork:"ConCourse 校园网络", hubIntroduction:"将最终课表转化为选课洞察、有价值的校园交流和更紧密的学术连接。", privateByDesign:"隐私优先",
+    finalCourses:"最终课程", fromFinalTimetable:"来自你的最终课表", finalCredits:"最终学分", semesterRecord:"本学期记录", profileStrength:"资料完整度", completeProfilePrompt:"完善资料，建立信任", networkScope:"社区范围", yourUniversityOnly:"仅限你的大学",
+    courseChoiceIntelligence:"选课趋势洞察", anonymousAggregate:"匿名汇总数据；为保护隐私，小规模群体不会显示。", compareStudents:"对比学生群体", sameMajorYear:"同专业、所选年级", sameMajorAllYears:"同专业、所有年级", universityYear:"全校、所选年级", wholeUniversity:"全校、所有年级", studyYearFilter:"就读年级", allYears:"所有年级", refreshInsights:"刷新数据",
+    finalScheduleRecord:"最终课表记录", savedDecisionSummary:"这份学业决定将解锁你的 ConCourse 校园体验。", viewFullTimetable:"查看完整课表",
+    campusLife:"校园生活", campusProfile:"校园资料", selfReportedLinks:"社交链接由用户自行提供，不能证明身份或在校资格。", viewProfile:"查看资料", schoolCommunity:"你的校园社区", communityDescription:"分享实用经历、提出问题，并探索同校学生的观点。", shareCampusThought:"分享选课心得、校园建议、问题或经历…", postTagsPlaceholder:"标签：课程、社团、住宿", publishPost:"发布动态", latestFromCampus:"校园最新动态", refresh:"刷新",
+    privateConversations:"私密对话", campusMessages:"校园私信", messagesDescription:"通过用户名与同校同学开启私密对话。拉黑和举报功能会保护双方。", usernameToMessage:"输入同校同学的用户名", startChat:"开始对话", selectConversation:"选择一个对话", writePrivateMessage:"输入私信…", send:"发送",
+    identityAndTrust:"身份与信任", completeYourProfile:"完善个人资料", profileDescription:"添加可选信息，帮助同学辨认你。你可以控制资料可见范围以及是否允许他人向你发送私信。", personalDetails:"个人信息", privateContactNote:"此版本中的电话和 WhatsApp 信息始终保持私密。", displayName:"显示名称", phoneNumber:"电话号码", profileBio:"个人简介", interests:"兴趣", interestsPlaceholder:"金融、篮球、人工智能、志愿服务",
+    socialConnections:"社交账号", socialVerificationNote:"在通过官方平台连接验证之前，这些链接仅为用户自行提供。", verificationPending:"用户自行提供 · 待验证", personalWebsite:"个人网站", privacyAndSafety:"隐私与安全", profileVisibility:"资料可见范围", schoolmatesOnly:"仅同校同学", privateProfile:"仅自己可见", allowMessages:"允许同校同学给我发私信", analyticsConsent:"将我的最终选课以匿名、隐私保护的方式加入趋势统计", saveProfile:"保存资料",
+    hubGreetingName:"欢迎回来，{name}。", hubNoFinalSchedule:"请先保存最终课表，再进入学生中心。", notProvided:"未提供",
+    courseInsightLoading:"正在载入匿名选课趋势…", courseInsightNoData:"目前分享最终课表的学生人数不足，暂时无法显示此视图。", courseInsightPrivacy:"至少有 {minimum} 名学生参与后才会显示结果。", courseInsightUnavailable:"选课趋势暂时不可用。", courseChosenBy:"约 {count} 名学生选择", courseChoiceParticipants:"基于约 {count} 名学生的隐私取整数据",
+    memberSetupRequired:"请运行最新的 Supabase 设置 SQL 以启用学生中心。", schoolVerificationRequired:"学校成员身份必须经过验证后才能使用此功能。", featureUnavailable:"此功能暂时无法使用，请稍后再试。", alreadyReported:"你已经提交过这项举报。", rateLimited:"操作过于频繁，请稍后再试。", messagingUnavailable:"该同学目前无法接收你的私信。", contentUnavailable:"此内容已不可用。",
+    communityLoading:"正在载入校园社区…", communityEmpty:"校园里还没有动态。来发起第一个有价值的讨论吧。", profileUnavailable:"此校园资料不可见。", postBodyRequired:"请先填写内容再发布。", publishing:"正在发布…", postPublished:"动态已发布。", postPublishFailed:"无法发布此动态。", postDeleted:"动态已删除。", deletePost:"删除", confirmDeletePost:"确定要删除这条动态吗？", deleteComment:"删除评论", confirmDeleteComment:"确定要删除这条评论吗？", commentDeleted:"评论已删除。", anonymousStudent:"学生", like:"点赞", unlike:"取消点赞", comment:"评论", writeComment:"写评论…", postComment:"发布评论", commentRequired:"请先填写评论。", report:"举报", reportReasonPrompt:"请简要说明举报原因。", reasonPlaceholder:"请输入举报原因…", reasonRequired:"请填写举报原因。", reported:"举报已提交。", block:"拉黑", blocked:"已拉黑该用户。", confirmBlock:"确定拉黑 @{username} 吗？你们将无法看到对方的动态或私信。",
+    messagesLoading:"正在载入对话…", noConversations:"还没有对话。请输入同校同学的用户名开始聊天。", startingConversation:"正在开启对话…", conversationStarted:"对话已打开。", conversationStartFailed:"无法开启此对话。", cannotMessageSelf:"不能给自己发私信。", messagesEmpty:"还没有消息。打个招呼吧。", messageRequired:"请先填写消息。", sendingMessage:"正在发送…", messageSendFailed:"消息无法发送。", directMessagePrivacy:"仅参与者可见；消息并非端到端加密。",
+    profileLoading:"正在载入个人资料…", profileSaved:"个人资料已保存。", profileSaveFailed:"无法保存个人资料。", invalidUrl:"请使用完整的 https:// 链接。", invalidInstagramUrl:"请使用 Instagram 的 https:// 链接。", invalidWhatsappUrl:"请使用 wa.me 的 https:// 链接。", invalidLinkedinUrl:"请使用 LinkedIn 的 https:// 链接。", invalidWebsiteUrl:"请使用完整的 https:// 链接。"
   },
   "zh-HK": {
     brandTag:"輕鬆規劃課程註冊", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
@@ -2270,7 +2475,23 @@ const TRANSLATIONS = {
     sessionOnce:"呢科每星期上堂一次。", sessionTwice:"呢科每星期喺唔同日子上堂兩次。", multiSessionHint:"{base} 請先建立完整時間選項（共 {count} 個時段），按「儲存時間選項」，再加入教授提供嘅其他選項。ConCourse 每次會保留一個完整選項。",
     fixedSessionHint:"{base} 加入全部 {count} 個時段，佢哋會一齊保留做固定時間表。", wishlistCountOne:"{count} 科", wishlistCountMany:"{count} 科", remove:"移除", mustTakeBadge:"必須修讀", sessionsWeekly:"每週 {count} 次",
     chooseOption:"由 {count} 個選項揀 1 個", optionLabel:"選項 {option}", meetingLabel:"上堂", creditsShort:"學分", noValidTimetable:"搵唔到有效時間表。", tooManyTimetables:"有效時間表太多，未能準確排序。",
-    supabaseRequired:"需要設定 Supabase", configureLogin:"設定登入", connectSupabase:"連接 Supabase 之後就可以登入同開始規劃。"
+    supabaseRequired:"需要設定 Supabase", configureLogin:"設定登入", connectSupabase:"連接 Supabase 之後就可以登入同開始規劃。",
+    studentHub:"學生中心", hubNavigation:"學生中心欄目", closeProfile:"關閉檔案", communitySafety:"社群安全", cancel:"取消", enterStudentHub:"進入學生中心", hubOverview:"總覽", hubCommunity:"校園社群", hubMessages:"私訊", hubProfile:"個人檔案", membershipPending:"學校身份等待驗證", membershipVerified:"學校身份已驗證", membershipRejected:"學校身份驗證未通過", membershipRevoked:"學校身份驗證已撤銷",
+    hubCommunityStandard:"為可信賴嘅校園社群而設", hubCommunityStandardText:"個人檔案、舉報機制、私隱控制同只限校內嘅存取權限，一齊建立更安全嘅網絡。", backToTimetable:"返回時間表",
+    concourseNetwork:"ConCourse 校園網絡", hubIntroduction:"將已確認嘅時間表變成選科趨勢、實用校園交流同更緊密嘅學術連繫。", privateByDesign:"私隱優先",
+    finalCourses:"最終課程", fromFinalTimetable:"來自你嘅最終時間表", finalCredits:"最終學分", semesterRecord:"今個學期記錄", profileStrength:"檔案完整度", completeProfilePrompt:"完善檔案，建立信任", networkScope:"社群範圍", yourUniversityOnly:"只限你嘅大學",
+    courseChoiceIntelligence:"選科趨勢分析", anonymousAggregate:"匿名匯總資料；為保障私隱，人數太少嘅群組唔會顯示。", compareStudents:"比較學生群組", sameMajorYear:"同主修、所選年級", sameMajorAllYears:"同主修、所有年級", universityYear:"全校、所選年級", wholeUniversity:"全校、所有年級", studyYearFilter:"就讀年級", allYears:"所有年級", refreshInsights:"更新數據",
+    finalScheduleRecord:"最終時間表記錄", savedDecisionSummary:"呢個學術決定會開啟你嘅 ConCourse 校園體驗。", viewFullTimetable:"查看完整時間表",
+    campusLife:"校園生活", campusProfile:"校園檔案", selfReportedLinks:"社交連結由用戶自行提供，唔代表身份或在校資格已獲驗證。", viewProfile:"查看檔案", schoolCommunity:"你嘅校園社群", communityDescription:"分享實用經驗、發問，同探索同校學生嘅觀點。", shareCampusThought:"分享選科心得、校園貼士、問題或經歷…", postTagsPlaceholder:"標籤：課程、學會、住宿", publishPost:"發佈貼文", latestFromCampus:"校園最新動態", refresh:"重新整理",
+    privateConversations:"私人對話", campusMessages:"校園私訊", messagesDescription:"用用戶名稱同同校同學開始私人對話。封鎖同舉報功能會保障雙方。", usernameToMessage:"輸入同校同學嘅用戶名稱", startChat:"開始對話", selectConversation:"揀一個對話", writePrivateMessage:"輸入私人訊息…", send:"傳送",
+    identityAndTrust:"身份與信任", completeYourProfile:"完善個人檔案", profileDescription:"加入選填資料，方便同學認出你。你可以控制檔案可見範圍，同埋其他人可唔可以私訊你。", personalDetails:"個人資料", privateContactNote:"呢個版本入面，電話同 WhatsApp 資料會一直保持私人。", displayName:"顯示名稱", phoneNumber:"電話號碼", profileBio:"簡短自我介紹", interests:"興趣", interestsPlaceholder:"金融、籃球、人工智能、義工服務",
+    socialConnections:"社交連結", socialVerificationNote:"正式連接官方平台驗證之前，呢啲連結只係由用戶自行提供。", verificationPending:"用戶自行提供 · 等待驗證", personalWebsite:"個人網站", privacyAndSafety:"私隱與安全", profileVisibility:"檔案可見範圍", schoolmatesOnly:"只限同校同學", privateProfile:"只限自己", allowMessages:"允許同校同學私訊我", analyticsConsent:"以匿名同保障私隱方式，將我嘅最終選科加入趨勢統計", saveProfile:"儲存檔案",
+    hubGreetingName:"歡迎返嚟，{name}。", hubNoFinalSchedule:"請先儲存最終時間表，再進入學生中心。", notProvided:"未提供",
+    courseInsightLoading:"正在載入匿名選科趨勢…", courseInsightNoData:"而家分享最終時間表嘅學生人數唔夠，暫時未能顯示。", courseInsightPrivacy:"最少有 {minimum} 位學生參與先會顯示結果。", courseInsightUnavailable:"選科趨勢暫時用唔到。", courseChosenBy:"約 {count} 位學生選擇", courseChoiceParticipants:"根據約 {count} 位學生、經私隱取整嘅資料",
+    memberSetupRequired:"請執行最新 Supabase 設定 SQL，以啟用學生中心。", schoolVerificationRequired:"學校成員身份要先通過驗證，先可以使用呢個功能。", featureUnavailable:"呢個功能暫時用唔到，請稍後再試。", alreadyReported:"你已經提交過呢項舉報。", rateLimited:"操作太頻密，請稍後再試。", messagingUnavailable:"呢位同學而家唔接受你嘅私訊。", contentUnavailable:"呢項內容已經唔再可用。",
+    communityLoading:"正在載入校園社群…", communityEmpty:"校園仲未有貼文。發起第一個有用嘅討論啦。", profileUnavailable:"呢個校園檔案唔公開。", postBodyRequired:"請先填寫內容再發佈。", publishing:"正在發佈…", postPublished:"貼文已發佈。", postPublishFailed:"未能發佈貼文。", postDeleted:"貼文已刪除。", deletePost:"刪除", confirmDeletePost:"確定要刪除呢篇貼文？", deleteComment:"刪除留言", confirmDeleteComment:"確定要刪除呢個留言？", commentDeleted:"留言已刪除。", anonymousStudent:"學生", like:"讚好", unlike:"取消讚好", comment:"留言", writeComment:"寫留言…", postComment:"發佈留言", commentRequired:"請先填寫留言。", report:"舉報", reportReasonPrompt:"請簡單講低舉報原因。", reasonPlaceholder:"請輸入舉報原因…", reasonRequired:"請填寫舉報原因。", reported:"舉報已提交。", block:"封鎖", blocked:"已封鎖呢位用戶。", confirmBlock:"確定封鎖 @{username}？你哋之後睇唔到對方嘅貼文或私訊。",
+    messagesLoading:"正在載入對話…", noConversations:"仲未有對話。輸入同校同學嘅用戶名稱開始傾偈。", startingConversation:"正在開始對話…", conversationStarted:"對話已開啟。", conversationStartFailed:"未能開始呢個對話。", cannotMessageSelf:"唔可以私訊自己。", messagesEmpty:"仲未有訊息。打個招呼啦。", messageRequired:"請先輸入訊息。", sendingMessage:"正在傳送…", messageSendFailed:"訊息未能傳送。", directMessagePrivacy:"只限參與者查看；訊息並非端對端加密。",
+    profileLoading:"正在載入個人檔案…", profileSaved:"個人檔案已儲存。", profileSaveFailed:"未能儲存個人檔案。", invalidUrl:"請使用完整嘅 https:// 連結。", invalidInstagramUrl:"請使用 Instagram 嘅 https:// 連結。", invalidWhatsappUrl:"請使用 wa.me 嘅 https:// 連結。", invalidLinkedinUrl:"請使用 LinkedIn 嘅 https:// 連結。", invalidWebsiteUrl:"請使用完整嘅 https:// 連結。"
   }
 };
 
@@ -2309,7 +2530,13 @@ function t(key, variables={}){
     emptySchedule:"Add courses, define your semester criteria, and generate ranked schedules to view your timetable.", sessionLabelOne:"Add the session (day + time)", sessionLabelTwo:"Add both sessions (day + time)",
     sessionOnce:"This course meets once a week.", sessionTwice:"This course meets on two different days.", multiSessionHint:"{base} Build one complete time option, save it, then add the professor's other options. ConCourse keeps each option together.",
     fixedSessionHint:"{base} Add the full weekly meeting pattern; it stays together as the fixed schedule.", wishlistCountOne:"{count} course", wishlistCountMany:"{count} courses", remove:"Remove", mustTakeBadge:"Must take", sessionsWeekly:"{count}× / week",
-    chooseOption:"pick 1 of {count} options", optionLabel:"Option {option}", meetingLabel:"Meeting", creditsShort:"cr", noValidTimetable:"No valid timetable found.", tooManyTimetables:"Too many valid timetables to rank accurately."
+    chooseOption:"pick 1 of {count} options", optionLabel:"Option {option}", meetingLabel:"Meeting", creditsShort:"cr", noValidTimetable:"No valid timetable found.", tooManyTimetables:"Too many valid timetables to rank accurately.",
+    hubGreetingName:"Welcome back, {name}.", hubNoFinalSchedule:"Save a final timetable to enter the student hub.", notProvided:"Not provided", selectConversation:"Select a conversation", membershipPending:"School verification pending", membershipVerified:"School verified", membershipRejected:"School verification rejected", membershipRevoked:"School verification revoked",
+    courseInsightLoading:"Loading anonymous course trends…", courseInsightNoData:"Not enough students have shared a final timetable for this view yet.", courseInsightPrivacy:"Results appear when at least {minimum} students are included.", courseInsightUnavailable:"Course insights are temporarily unavailable.", courseChosenBy:"Chosen by about {count} students", courseChoiceParticipants:"Based on a privacy-rounded group of about {count} students",
+    memberSetupRequired:"Run the latest Supabase setup SQL to enable the student hub.", schoolVerificationRequired:"Your school membership must be verified before you can use this feature.", featureUnavailable:"This feature is temporarily unavailable. Please try again.", alreadyReported:"You already submitted this report.", rateLimited:"Too many requests. Please try again shortly.", messagingUnavailable:"This schoolmate is not available for messaging.", contentUnavailable:"This content is no longer available.",
+    communityLoading:"Loading your campus community…", communityEmpty:"No posts yet. Start a useful campus conversation.", profileUnavailable:"This campus profile is not visible.", postBodyRequired:"Write something before publishing.", publishing:"Publishing…", postPublished:"Post published.", postPublishFailed:"The post could not be published.", postDeleted:"Post deleted.", deletePost:"Delete", confirmDeletePost:"Delete this post?", deleteComment:"Delete comment", confirmDeleteComment:"Delete this comment?", commentDeleted:"Comment deleted.", viewProfile:"View profile", personalWebsite:"Personal website", anonymousStudent:"Student", like:"Like", unlike:"Unlike", comment:"Comment", writeComment:"Write a comment…", postComment:"Post comment", commentRequired:"Write a comment first.", report:"Report", reportReasonPrompt:"Briefly explain why you are reporting this content.", reasonPlaceholder:"Enter the reason for this report…", reasonRequired:"Add a reason for this report.", reported:"Report submitted.", block:"Block", blocked:"User blocked.", confirmBlock:"Block @{username}? You will no longer see each other's posts or messages.",
+    messagesLoading:"Loading conversations…", noConversations:"No conversations yet. Start one with a schoolmate's username.", startingConversation:"Starting conversation…", conversationStarted:"Conversation opened.", conversationStartFailed:"The conversation could not be started.", cannotMessageSelf:"You cannot message yourself.", messagesEmpty:"No messages yet. Say hello.", messageRequired:"Write a message first.", sendingMessage:"Sending…", messageSendFailed:"The message could not be sent.", directMessagePrivacy:"Private between participants; messages are not end-to-end encrypted.",
+    profileLoading:"Loading your profile…", profileSaved:"Profile saved.", profileSaveFailed:"Your profile could not be saved.", invalidUrl:"Use a complete https:// link.", invalidInstagramUrl:"Use an Instagram https:// link.", invalidWhatsappUrl:"Use a wa.me https:// link.", invalidLinkedinUrl:"Use a LinkedIn https:// link.", invalidWebsiteUrl:"Use a complete https:// link."
   };
   let value = TRANSLATIONS[currentLanguage]?.[key] ?? english[key] ?? key;
   for(const [name,replacement] of Object.entries(variables)) value = value.replaceAll(`{${name}}`, replacement);
@@ -2334,6 +2561,10 @@ function applyLanguage(language, {persist=true}={}){
   document.querySelectorAll("[data-i18n-placeholder]").forEach(element => {
     if(!element.dataset.i18nEnglishPlaceholder) element.dataset.i18nEnglishPlaceholder = element.placeholder;
     element.placeholder = TRANSLATIONS[currentLanguage]?.[element.dataset.i18nPlaceholder] || element.dataset.i18nEnglishPlaceholder;
+  });
+  document.querySelectorAll("[data-i18n-aria-label]").forEach(element => {
+    if(!element.dataset.i18nEnglishAriaLabel) element.dataset.i18nEnglishAriaLabel = element.getAttribute("aria-label") || "";
+    element.setAttribute("aria-label", TRANSLATIONS[currentLanguage]?.[element.dataset.i18nAriaLabel] || element.dataset.i18nEnglishAriaLabel);
   });
   $("languageSelect").value = currentLanguage;
   if(persist){
@@ -2438,14 +2669,19 @@ function renderAccountIdentity(){
 function renderFinalTimetableStatus(){
   const status = $("finalTimetableStatus");
   if(!status) return;
+  const hubAvailable = !!(currentUser && finalTimetable?.savedAt);
+  if($("hubOpenBtn")) $("hubOpenBtn").hidden = !hubAvailable;
+  if($("enterMemberHub")) $("enterMemberHub").hidden = !hubAvailable;
   if(!finalTimetable?.savedAt){
     status.textContent = t("finalTimetableNotSaved");
+    window.ConCourseHub?.syncAccess();
     return;
   }
   const locale = currentLanguage === "zh-CN" ? "zh-CN" : currentLanguage === "zh-HK" ? "zh-HK" : "en-GB";
   const savedDate = new Date(finalTimetable.savedAt);
   const formatted = Number.isNaN(savedDate.getTime()) ? finalTimetable.savedAt : savedDate.toLocaleString(locale, {dateStyle:"medium", timeStyle:"short"});
   status.textContent = t("finalTimetableSaved", {date:formatted});
+  window.ConCourseHub?.syncAccess();
 }
 
 function setAuthMessage(message, isError=false){
@@ -2737,17 +2973,19 @@ function enterPlanner(){
   if(!currentUser){ openAuthModal(); return; }
   appStarted = true;
   document.body.classList.add("app-active");
-  document.body.classList.remove("schedule-active");
+  document.body.classList.remove("schedule-active", "hub-active");
   $("appWrap").hidden = false;
   $("schedulePage").hidden = true;
+  if($("memberHub")) $("memberHub").hidden = true;
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function leavePlanner(){
   appStarted = false;
-  document.body.classList.remove("app-active", "schedule-active");
+  document.body.classList.remove("app-active", "schedule-active", "hub-active");
   $("appWrap").hidden = true;
   $("schedulePage").hidden = true;
+  if($("memberHub")) $("memberHub").hidden = true;
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
@@ -2755,13 +2993,16 @@ function showSchedulePage(){
   $("plannerAlert").innerHTML = "";
   $("appWrap").hidden = true;
   $("schedulePage").hidden = false;
+  if($("memberHub")) $("memberHub").hidden = true;
   document.body.classList.add("schedule-active");
+  document.body.classList.remove("hub-active");
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function showPlannerEditor(){
-  document.body.classList.remove("schedule-active");
+  document.body.classList.remove("schedule-active", "hub-active");
   $("schedulePage").hidden = true;
+  if($("memberHub")) $("memberHub").hidden = true;
   $("appWrap").hidden = false;
   window.scrollTo({top:0, behavior:"smooth"});
 }
@@ -2872,7 +3113,7 @@ async function saveUserState({silent=false}={}){
   if(degreeLevel && studyYear){
     const { error: profileError } = await authClient
       .from("profiles")
-      .update({ degree_level:degreeLevel, study_year:studyYear, updated_at:new Date().toISOString() })
+      .update({ degree_level:degreeLevel, study_year:studyYear })
       .eq("user_id", currentUser.id);
     if(profileError){
       console.warn("Academic level was saved in planner state but could not be mirrored to the profile table:", profileError);
@@ -2955,7 +3196,8 @@ function applySession(session){
   if(!signedIn || !appStarted){
     $("appWrap").hidden = true;
     $("schedulePage").hidden = true;
-    document.body.classList.remove("schedule-active");
+    if($("memberHub")) $("memberHub").hidden = true;
+    document.body.classList.remove("schedule-active", "hub-active");
   }
 
   if(signedIn){
@@ -2968,6 +3210,7 @@ function applySession(session){
     loadedAcademicProfile = {};
     if(previousUserId) applyUserState({}, {});
   }
+  renderFinalTimetableStatus();
 }
 
 async function submitAuth(mode){
@@ -3040,7 +3283,9 @@ async function submitAuth(mode){
               school_country: selectedSchool?.country || null,
               school_domain: selectedSchool?.domains?.[0] || null,
               school_website: selectedSchool?.webPages?.[0] || null,
-              school_verification: selectedSchool ? "directory_match" : "unverified",
+              school_directory_match: !!selectedSchool,
+              school_directory_source: selectedSchool?.directorySource || null,
+              school_directory_id: selectedSchool?.directoryId || null,
               school_directory_available: schoolDirectoryAvailable,
               major_of_study: majorStudy
             }
@@ -3420,6 +3665,8 @@ $("saveFinalTimetable").addEventListener("click", async () => {
   if(!saved){
     finalTimetable = previousFinalTimetable;
     renderFinalTimetableStatus();
+  } else {
+    await window.ConCourseHub?.syncFinalSchedule(snapshot);
   }
   button.disabled = false;
   button.textContent = t("saveFinalTimetable");
@@ -3832,5 +4079,6 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
+<script src="member-hub.js"></script>
 </body>
 </html>

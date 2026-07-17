@@ -39,8 +39,8 @@ to authenticated
 using ((select auth.uid()) = user_id);
 
 -- Academic profiles captured during registration.
--- school_verification records the validation level. "directory_match" means
--- the institution name matched the online directory; it does not prove enrollment.
+-- school_verification is retained only for backwards compatibility and is not
+-- used for authorization. Trusted membership status is created later below.
 create table if not exists public.profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   username text,
@@ -48,6 +48,8 @@ create table if not exists public.profiles (
   school_country text,
   school_domain text,
   school_website text,
+  school_directory_id text,
+  school_directory_source text,
   school_verification text not null default 'unverified'
     check (school_verification in ('unverified', 'directory_match', 'email_domain', 'institution_sso')),
   major_of_study text,
@@ -59,6 +61,46 @@ create table if not exists public.profiles (
 alter table public.profiles add column if not exists username text;
 alter table public.profiles add column if not exists degree_level text;
 alter table public.profiles add column if not exists study_year smallint;
+alter table public.profiles add column if not exists school_directory_id text;
+alter table public.profiles add column if not exists school_directory_source text;
+
+update public.profiles set
+  school_name = case when char_length(trim(school_name)) >= 2 then left(trim(school_name), 220) else null end,
+  school_country = nullif(left(trim(school_country), 120), ''),
+  school_domain = nullif(left(trim(school_domain), 253), ''),
+  school_website = nullif(left(trim(school_website), 500), ''),
+  school_directory_id = nullif(left(trim(school_directory_id), 500), ''),
+  school_directory_source = nullif(left(trim(school_directory_source), 40), ''),
+  major_of_study = nullif(left(trim(major_of_study), 160), '')
+where (school_name is not null and (school_name <> trim(school_name) or char_length(trim(school_name)) not between 2 and 220))
+   or (school_country is not null and (school_country <> trim(school_country) or char_length(trim(school_country)) not between 1 and 120))
+   or (school_domain is not null and (school_domain <> trim(school_domain) or char_length(trim(school_domain)) not between 1 and 253))
+   or (school_website is not null and (school_website <> trim(school_website) or char_length(trim(school_website)) not between 1 and 500))
+   or (school_directory_id is not null and (school_directory_id <> trim(school_directory_id) or char_length(trim(school_directory_id)) not between 1 and 500))
+   or (school_directory_source is not null and (school_directory_source <> trim(school_directory_source) or char_length(trim(school_directory_source)) not between 1 and 40))
+   or (major_of_study is not null and (major_of_study <> trim(major_of_study) or char_length(trim(major_of_study)) not between 1 and 160));
+
+alter table public.profiles drop constraint if exists profiles_school_name_bounded;
+alter table public.profiles add constraint profiles_school_name_bounded
+  check (school_name is null or (school_name = trim(school_name) and char_length(school_name) between 2 and 220));
+alter table public.profiles drop constraint if exists profiles_school_country_bounded;
+alter table public.profiles add constraint profiles_school_country_bounded
+  check (school_country is null or (school_country = trim(school_country) and char_length(school_country) between 1 and 120));
+alter table public.profiles drop constraint if exists profiles_school_domain_bounded;
+alter table public.profiles add constraint profiles_school_domain_bounded
+  check (school_domain is null or (school_domain = trim(school_domain) and char_length(school_domain) between 1 and 253));
+alter table public.profiles drop constraint if exists profiles_school_website_bounded;
+alter table public.profiles add constraint profiles_school_website_bounded
+  check (school_website is null or (school_website = trim(school_website) and char_length(school_website) between 1 and 500));
+alter table public.profiles drop constraint if exists profiles_school_directory_id_bounded;
+alter table public.profiles add constraint profiles_school_directory_id_bounded
+  check (school_directory_id is null or (school_directory_id = trim(school_directory_id) and char_length(school_directory_id) between 1 and 500));
+alter table public.profiles drop constraint if exists profiles_school_directory_source_bounded;
+alter table public.profiles add constraint profiles_school_directory_source_bounded
+  check (school_directory_source is null or (school_directory_source = trim(school_directory_source) and char_length(school_directory_source) between 1 and 40));
+alter table public.profiles drop constraint if exists profiles_major_bounded;
+alter table public.profiles add constraint profiles_major_bounded
+  check (major_of_study is null or (major_of_study = trim(major_of_study) and char_length(major_of_study) between 1 and 160));
 
 -- Degree level and year are selected in the wishlist workspace. Keeping them
 -- as profile columns makes them visible and filterable in the Supabase dashboard,
@@ -156,6 +198,8 @@ begin
     school_country,
     school_domain,
     school_website,
+    school_directory_id,
+    school_directory_source,
     school_verification,
     major_of_study
   ) values (
@@ -165,12 +209,16 @@ begin
         then trim(new.raw_user_meta_data ->> 'username')
       else null
     end,
-    new.raw_user_meta_data ->> 'school_name',
-    new.raw_user_meta_data ->> 'school_country',
-    new.raw_user_meta_data ->> 'school_domain',
-    new.raw_user_meta_data ->> 'school_website',
-    coalesce(new.raw_user_meta_data ->> 'school_verification', 'unverified'),
-    new.raw_user_meta_data ->> 'major_of_study'
+    nullif(left(trim(new.raw_user_meta_data ->> 'school_name'), 220), ''),
+    nullif(left(trim(new.raw_user_meta_data ->> 'school_country'), 120), ''),
+    nullif(left(trim(new.raw_user_meta_data ->> 'school_domain'), 253), ''),
+    nullif(left(trim(new.raw_user_meta_data ->> 'school_website'), 500), ''),
+    nullif(left(trim(new.raw_user_meta_data ->> 'school_directory_id'), 500), ''),
+    nullif(left(trim(new.raw_user_meta_data ->> 'school_directory_source'), 40), ''),
+    -- Browser metadata is user-controlled. A directory match is useful for
+    -- suggestions, but it must never grant access to a university community.
+    'unverified',
+    nullif(left(trim(new.raw_user_meta_data ->> 'major_of_study'), 160), '')
   )
   on conflict (user_id) do update set
     username = excluded.username,
@@ -178,7 +226,8 @@ begin
     school_country = excluded.school_country,
     school_domain = excluded.school_domain,
     school_website = excluded.school_website,
-    school_verification = excluded.school_verification,
+    school_directory_id = excluded.school_directory_id,
+    school_directory_source = excluded.school_directory_source,
     major_of_study = excluded.major_of_study,
     updated_at = now();
 
@@ -207,6 +256,8 @@ create trigger on_auth_user_created_concourse
   after insert or update of raw_user_meta_data on auth.users
   for each row execute procedure public.handle_new_concourse_user();
 
+revoke all on function public.handle_new_concourse_user() from public, anon, authenticated;
+
 -- Backfill profile rows for accounts created before this migration.
 insert into public.profiles (
   user_id,
@@ -215,6 +266,8 @@ insert into public.profiles (
   school_country,
   school_domain,
   school_website,
+  school_directory_id,
+  school_directory_source,
   school_verification,
   major_of_study
 )
@@ -225,12 +278,14 @@ select
       then trim(raw_user_meta_data ->> 'username')
     else null
   end,
-  raw_user_meta_data ->> 'school_name',
-  raw_user_meta_data ->> 'school_country',
-  raw_user_meta_data ->> 'school_domain',
-  raw_user_meta_data ->> 'school_website',
-  coalesce(raw_user_meta_data ->> 'school_verification', 'unverified'),
-  raw_user_meta_data ->> 'major_of_study'
+  nullif(left(trim(raw_user_meta_data ->> 'school_name'), 220), ''),
+  nullif(left(trim(raw_user_meta_data ->> 'school_country'), 120), ''),
+  nullif(left(trim(raw_user_meta_data ->> 'school_domain'), 253), ''),
+  nullif(left(trim(raw_user_meta_data ->> 'school_website'), 500), ''),
+  nullif(left(trim(raw_user_meta_data ->> 'school_directory_id'), 500), ''),
+  nullif(left(trim(raw_user_meta_data ->> 'school_directory_source'), 40), ''),
+  'unverified',
+  nullif(left(trim(raw_user_meta_data ->> 'major_of_study'), 160), '')
 from auth.users
 on conflict (user_id) do nothing;
 
@@ -248,3 +303,1360 @@ select
   coalesce(nullif(trim(raw_user_meta_data ->> 'family_name'), ''), 'Not provided')
 from auth.users
 on conflict (user_id) do nothing;
+
+-- ============================================================================
+-- ConCourse Student Hub
+-- Run this same file again after deploying the member-hub website files.
+-- The hub intentionally separates private profile/contact data, anonymous
+-- timetable analytics, school-scoped discussions, and direct conversations.
+-- ============================================================================
+
+create extension if not exists pgcrypto;
+
+-- Users may edit only their non-authoritative academic fields. School identity
+-- and verification are controlled from the Supabase dashboard/trusted backend.
+revoke update on table public.profiles from authenticated;
+grant update (username, major_of_study, degree_level, study_year)
+  on table public.profiles to authenticated;
+
+-- Earlier versions accepted this value from signup metadata, so none of those
+-- legacy badges are authoritative. Trusted status now lives only in the
+-- school_memberships table created below.
+update public.profiles
+set school_verification = 'unverified', updated_at = now()
+where school_verification <> 'unverified';
+
+create or replace function public.normalized_school_key(value text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select nullif(
+    trim(both '-' from regexp_replace(lower(trim(coalesce(value, ''))), '[[:space:][:punct:]]+', '-', 'g')),
+    ''
+  );
+$$;
+
+revoke all on function public.normalized_school_key(text) from public;
+
+create or replace function public.candidate_institution_key(
+  school_name text,
+  school_country text,
+  school_domain text,
+  school_directory_id text
+)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when public.normalized_school_key(school_name) is null then null
+    when lower(trim(coalesce(school_directory_id, ''))) ~ '^https://ror\.org/[a-z0-9]+$'
+      then 'ror:' || regexp_replace(lower(trim(school_directory_id)), '^.*/', '')
+    when lower(trim(coalesce(school_domain, ''))) ~ '^[a-z0-9.-]+\.[a-z]{2,}$'
+      then 'domain:' || lower(trim(school_domain))
+    else concat(
+      'claimed:',
+      coalesce(public.normalized_school_key(school_country), 'unknown-country'),
+      ':',
+      public.normalized_school_key(school_name)
+    )
+  end;
+$$;
+
+revoke all on function public.candidate_institution_key(text, text, text, text) from public;
+
+-- A membership starts as pending even if the institution directory matched.
+-- The key prefers a ROR ID, then an institutional domain, and finally a
+-- country-qualified claim. These fields remain only candidates until the
+-- owner/service role confirms the institution and changes status to verified.
+create table if not exists public.school_memberships (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  school_name text not null check (char_length(trim(school_name)) between 2 and 220),
+  school_key text not null check (char_length(school_key) between 2 and 500),
+  status text not null default 'pending'
+    check (status in ('pending', 'verified', 'rejected', 'revoked')),
+  verification_method text check (verification_method is null or verification_method in ('academic_email', 'institution_sso', 'manual')),
+  verified_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- A verified row is authorization-bearing, so it must carry an auditable
+-- verification method and timestamp. Any legacy row without both is demoted.
+update public.school_memberships
+set status = 'pending', verification_method = null, verified_at = null, updated_at = now()
+where status = 'verified' and (verification_method is null or verified_at is null);
+alter table public.school_memberships drop constraint if exists school_memberships_school_key_check;
+alter table public.school_memberships add constraint school_memberships_school_key_check
+  check (char_length(school_key) between 2 and 500);
+alter table public.school_memberships drop constraint if exists school_memberships_verified_evidence;
+alter table public.school_memberships add constraint school_memberships_verified_evidence
+  check (status <> 'verified' or (verification_method is not null and verified_at is not null));
+
+create index if not exists school_memberships_school_status_idx
+  on public.school_memberships (school_key, status);
+
+alter table public.school_memberships enable row level security;
+drop policy if exists "Users can read their own school membership" on public.school_memberships;
+create policy "Users can read their own school membership"
+on public.school_memberships for select to authenticated
+using ((select auth.uid()) = user_id);
+
+revoke all on table public.school_memberships from anon, authenticated;
+grant select (user_id, school_name, school_key, status, verification_method, verified_at, created_at, updated_at)
+  on table public.school_memberships to authenticated;
+
+create or replace function public.sync_school_membership_from_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  next_key text := public.candidate_institution_key(
+    new.school_name,
+    new.school_country,
+    new.school_domain,
+    new.school_directory_id
+  );
+begin
+  if next_key is null then
+    update public.school_memberships
+    set status = 'revoked', verification_method = null, verified_at = null, updated_at = now()
+    where user_id = new.user_id;
+    return new;
+  end if;
+
+  insert into public.school_memberships (user_id, school_name, school_key, status)
+  values (new.user_id, trim(new.school_name), next_key, 'pending')
+  on conflict (user_id) do update set
+    school_name = case
+      when public.school_memberships.status = 'verified'
+       and public.school_memberships.school_key = excluded.school_key
+        then public.school_memberships.school_name
+      else excluded.school_name
+    end,
+    school_key = excluded.school_key,
+    status = case
+      when public.school_memberships.school_key = excluded.school_key
+        then public.school_memberships.status
+      else 'pending'
+    end,
+    verification_method = case
+      when public.school_memberships.school_key = excluded.school_key
+        then public.school_memberships.verification_method
+      else null
+    end,
+    verified_at = case
+      when public.school_memberships.school_key = excluded.school_key
+        then public.school_memberships.verified_at
+      else null
+    end,
+    updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_sync_school_membership on public.profiles;
+create trigger profiles_sync_school_membership
+  after insert or update of school_name, school_country, school_domain, school_directory_id on public.profiles
+  for each row execute procedure public.sync_school_membership_from_profile();
+
+revoke all on function public.sync_school_membership_from_profile() from public, anon, authenticated;
+
+insert into public.school_memberships (user_id, school_name, school_key, status)
+select
+  user_id,
+  trim(school_name),
+  public.candidate_institution_key(school_name, school_country, school_domain, school_directory_id),
+  'pending'
+from public.profiles
+where public.candidate_institution_key(school_name, school_country, school_domain, school_directory_id) is not null
+on conflict (user_id) do update set
+  school_name = excluded.school_name,
+  school_key = excluded.school_key,
+  updated_at = now()
+where public.school_memberships.status = 'pending';
+
+-- Extended member profile. All columns, including phone and pasted social URLs,
+-- are readable directly only by their owner. Feed/message RPCs expose a small
+-- safe subset (display name and messaging preference), never the phone number.
+create table if not exists public.member_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  display_name text check (display_name is null or (display_name = trim(display_name) and char_length(display_name) between 1 and 80)),
+  bio text check (bio is null or char_length(bio) <= 500),
+  phone_number text check (phone_number is null or char_length(phone_number) <= 32),
+  interests text[] not null default '{}'::text[] check (cardinality(interests) <= 20 and char_length(array_to_string(interests, ',')) <= 1000),
+  instagram_url text,
+  whatsapp_url text,
+  linkedin_url text,
+  website_url text,
+  profile_visibility text not null default 'school' check (profile_visibility in ('school', 'private')),
+  allow_messages boolean not null default false,
+  analytics_consent boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.member_profiles add column if not exists analytics_consent boolean not null default false;
+do $$
+begin
+  -- If this upgrades a draft schema whose default was opt-out-in-reverse,
+  -- withdraw those implicit permissions once before changing the default.
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'member_profiles'
+      and column_name = 'allow_messages'
+      and column_default in ('true', 'true::boolean')
+  ) then
+    update public.member_profiles set allow_messages = false where allow_messages = true;
+  end if;
+end;
+$$;
+alter table public.member_profiles alter column allow_messages set default false;
+update public.member_profiles
+set display_name = nullif(left(trim(display_name), 80), '')
+where display_name is not null and (display_name <> trim(display_name) or char_length(display_name) > 80);
+update public.member_profiles profile
+set interests = coalesce((
+  select array_agg(bounded.item order by bounded.position)
+  from (
+    select left(trim(source.item), 45) as item, source.position
+    from unnest(profile.interests) with ordinality as source(item, position)
+    where char_length(trim(source.item)) > 0
+    order by source.position
+    limit 20
+  ) bounded
+), '{}'::text[])
+where cardinality(interests) > 20
+   or char_length(array_to_string(interests, ',')) > 1000
+   or exists (select 1 from unnest(interests) item where char_length(trim(item)) not between 1 and 60);
+
+create or replace function public.bounded_profile_interests(value text[])
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select coalesce(cardinality(value), 0) <= 20
+    and char_length(array_to_string(coalesce(value, '{}'::text[]), ',')) <= 1000
+    and not exists (
+      select 1 from unnest(coalesce(value, '{}'::text[])) item
+      where char_length(trim(item)) not between 1 and 60
+    );
+$$;
+revoke all on function public.bounded_profile_interests(text[]) from public;
+grant execute on function public.bounded_profile_interests(text[]) to authenticated;
+alter table public.member_profiles drop constraint if exists member_profiles_display_name_bounded;
+alter table public.member_profiles add constraint member_profiles_display_name_bounded
+  check (display_name is null or (display_name = trim(display_name) and char_length(display_name) between 1 and 80));
+alter table public.member_profiles drop constraint if exists member_profiles_interests_bounded;
+alter table public.member_profiles add constraint member_profiles_interests_bounded
+  check (public.bounded_profile_interests(interests));
+alter table public.member_profiles drop constraint if exists member_profiles_instagram_https;
+alter table public.member_profiles add constraint member_profiles_instagram_https
+  check (instagram_url is null or instagram_url ~ '^https://([^/]+\.)?instagram\.com/');
+alter table public.member_profiles drop constraint if exists member_profiles_whatsapp_https;
+alter table public.member_profiles add constraint member_profiles_whatsapp_https
+  check (whatsapp_url is null or whatsapp_url ~ '^https://(wa\.me|api\.whatsapp\.com)/');
+alter table public.member_profiles drop constraint if exists member_profiles_linkedin_https;
+alter table public.member_profiles add constraint member_profiles_linkedin_https
+  check (linkedin_url is null or linkedin_url ~ '^https://([^/]+\.)?linkedin\.com/');
+alter table public.member_profiles drop constraint if exists member_profiles_website_https;
+alter table public.member_profiles add constraint member_profiles_website_https
+  check (website_url is null or website_url ~ '^https://');
+alter table public.member_profiles enable row level security;
+revoke all on table public.member_profiles from anon;
+grant select, insert, update on table public.member_profiles to authenticated;
+
+drop policy if exists "Users can read their own member profile" on public.member_profiles;
+create policy "Users can read their own member profile"
+on public.member_profiles for select to authenticated
+using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can create their own member profile" on public.member_profiles;
+create policy "Users can create their own member profile"
+on public.member_profiles for insert to authenticated
+with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can update their own member profile" on public.member_profiles;
+create policy "Users can update their own member profile"
+on public.member_profiles for update to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+create or replace function public.set_concourse_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists member_profiles_set_updated_at on public.member_profiles;
+create trigger member_profiles_set_updated_at
+  before update on public.member_profiles
+  for each row execute procedure public.set_concourse_updated_at();
+
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at
+  before update on public.profiles
+  for each row execute procedure public.set_concourse_updated_at();
+
+-- Normalized index of finalized schedules. The detailed planner state remains
+-- owner-private in user_state; this separate index is used only for aggregates.
+create table if not exists public.final_schedules (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  school_key text not null,
+  major_key text,
+  degree_level text check (degree_level in ('bachelor', 'master', 'phd')),
+  study_year smallint check (study_year between 1 and 8),
+  snapshot jsonb not null,
+  analytics_consent boolean not null default false,
+  finalized_at timestamptz not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.final_course_choices (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  course_key text not null,
+  course_name text not null,
+  course_code text,
+  credits numeric(6,2) not null default 0,
+  primary key (user_id, course_key)
+);
+
+create index if not exists final_schedules_cohort_idx
+  on public.final_schedules (school_key, major_key, study_year, analytics_consent);
+create index if not exists final_course_choices_course_idx
+  on public.final_course_choices (course_key, user_id);
+
+alter table public.final_schedules enable row level security;
+alter table public.final_course_choices enable row level security;
+grant select on table public.final_schedules to authenticated;
+grant select on table public.final_course_choices to authenticated;
+
+drop policy if exists "Users can read their own finalized schedule" on public.final_schedules;
+create policy "Users can read their own finalized schedule"
+on public.final_schedules for select to authenticated
+using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can read their own finalized course choices" on public.final_course_choices;
+create policy "Users can read their own finalized course choices"
+on public.final_course_choices for select to authenticated
+using ((select auth.uid()) = user_id);
+
+revoke insert, update, delete on table public.final_schedules from anon, authenticated;
+revoke insert, update, delete on table public.final_course_choices from anon, authenticated;
+
+create or replace function public.sync_final_schedule(p_snapshot jsonb)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text;
+  caller_major text;
+  consent boolean := false;
+  course_record jsonb;
+  normalized_course_key text;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if jsonb_typeof(p_snapshot) is distinct from 'object'
+     or jsonb_typeof(p_snapshot -> 'courses') is distinct from 'array' then
+    raise exception 'Invalid final timetable';
+  end if;
+  if jsonb_array_length(p_snapshot -> 'courses') > 40 then
+    raise exception 'A final timetable cannot contain more than 40 courses';
+  end if;
+
+  select m.school_key, public.normalized_school_key(p.major_of_study), coalesce(mp.analytics_consent, false)
+  into caller_school, caller_major, consent
+  from public.school_memberships m
+  left join public.profiles p on p.user_id = m.user_id
+  left join public.member_profiles mp on mp.user_id = m.user_id
+  where m.user_id = caller;
+
+  if caller_school is null then raise exception 'School membership setup required'; end if;
+
+  insert into public.final_schedules (
+    user_id, school_key, major_key, degree_level, study_year,
+    snapshot, analytics_consent, finalized_at, updated_at
+  ) values (
+    caller,
+    caller_school,
+    caller_major,
+    nullif(p_snapshot ->> 'degreeLevel', ''),
+    nullif(p_snapshot ->> 'studyYear', '')::smallint,
+    p_snapshot,
+    consent,
+    coalesce(nullif(p_snapshot ->> 'savedAt', '')::timestamptz, now()),
+    now()
+  )
+  on conflict (user_id) do update set
+    school_key = excluded.school_key,
+    major_key = excluded.major_key,
+    degree_level = excluded.degree_level,
+    study_year = excluded.study_year,
+    snapshot = excluded.snapshot,
+    analytics_consent = excluded.analytics_consent,
+    finalized_at = excluded.finalized_at,
+    updated_at = now();
+
+  delete from public.final_course_choices where user_id = caller;
+  for course_record in select value from jsonb_array_elements(p_snapshot -> 'courses')
+  loop
+    normalized_course_key := public.normalized_school_key(
+      concat(
+        coalesce(nullif(trim(course_record ->> 'code'), ''), 'no-code'),
+        '|',
+        trim(coalesce(course_record ->> 'name', ''))
+      )
+    );
+    if normalized_course_key is not null and char_length(trim(coalesce(course_record ->> 'name', ''))) > 0 then
+      insert into public.final_course_choices (user_id, course_key, course_name, course_code, credits)
+      values (
+        caller,
+        left(normalized_course_key, 220),
+        left(trim(course_record ->> 'name'), 220),
+        nullif(left(trim(coalesce(course_record ->> 'code', '')), 80), ''),
+        greatest(0, least(99, coalesce(nullif(course_record ->> 'credits', '')::numeric, 0)))
+      )
+      on conflict (user_id, course_key) do update set
+        course_name = excluded.course_name,
+        course_code = excluded.course_code,
+        credits = excluded.credits;
+    end if;
+  end loop;
+  return true;
+end;
+$$;
+
+revoke all on function public.sync_final_schedule(jsonb) from public;
+grant execute on function public.sync_final_schedule(jsonb) to authenticated;
+
+create or replace function public.get_course_choice_stats(
+  p_scope text default 'same_major_year',
+  p_study_year smallint default null
+)
+returns table (
+  course_key text,
+  course_name text,
+  course_code text,
+  selection_count bigint,
+  cohort_size bigint,
+  share_percent numeric
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text;
+  caller_major text;
+  caller_year smallint;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if p_scope not in ('same_major_year', 'same_major', 'university_year', 'university') then
+    raise exception 'Invalid analytics scope';
+  end if;
+  if p_study_year is not null and p_study_year not between 1 and 8 then
+    raise exception 'Invalid study year';
+  end if;
+
+  select m.school_key, public.normalized_school_key(p.major_of_study), p.study_year
+  into caller_school, caller_major, caller_year
+  from public.school_memberships m
+  left join public.profiles p on p.user_id = m.user_id
+  where m.user_id = caller and m.status = 'verified';
+
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+
+  return query
+  with eligible as (
+    select fs.user_id
+    from public.final_schedules fs
+    join public.school_memberships sm on sm.user_id = fs.user_id
+    join public.member_profiles mp on mp.user_id = fs.user_id
+    where fs.school_key = caller_school
+      and sm.school_key = caller_school
+      and sm.status = 'verified'
+      and fs.analytics_consent = true
+      and mp.analytics_consent = true
+      and (p_scope in ('university_year', 'university') or fs.major_key = caller_major)
+      and (
+        case
+          when p_scope = 'same_major_year' then fs.study_year = coalesce(p_study_year, caller_year)
+          when p_scope = 'university_year' then fs.study_year = coalesce(p_study_year, caller_year)
+          else true
+        end
+      )
+  ), cohort as (
+    select count(*)::bigint as size from eligible
+  ), aggregate_courses as (
+    select
+      fc.course_key,
+      max(fc.course_name) as course_name,
+      max(fc.course_code) as course_code,
+      count(distinct fc.user_id)::bigint as selection_count
+    from public.final_course_choices fc
+    join eligible e on e.user_id = fc.user_id
+    group by fc.course_key
+  )
+  select
+    ac.course_key,
+    ac.course_name,
+    ac.course_code,
+    greatest(5, (round(ac.selection_count::numeric / 5) * 5)::bigint),
+    greatest(5, (round(c.size::numeric / 5) * 5)::bigint),
+    round(round(((ac.selection_count::numeric / nullif(c.size, 0)::numeric) * 100) / 5) * 5, 0)
+  from aggregate_courses ac
+  cross join cohort c
+  where c.size >= 5 and ac.selection_count >= 5
+  order by ac.selection_count desc, ac.course_name
+  limit 12;
+end;
+$$;
+
+revoke all on function public.get_course_choice_stats(text, smallint) from public;
+grant execute on function public.get_course_choice_stats(text, smallint) to authenticated;
+
+-- School-scoped campus community. Browser clients use the narrow RPCs below;
+-- the underlying posts, likes, reports, and blocks are not directly readable.
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+
+create or replace function private.verified_school_key()
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select school_key
+  from public.school_memberships
+  where user_id = (select auth.uid()) and status = 'verified';
+$$;
+
+revoke all on function private.verified_school_key() from public, anon, authenticated;
+
+create table if not exists public.community_posts (
+  id uuid primary key default gen_random_uuid(),
+  school_key text not null,
+  author_id uuid not null references auth.users(id) on delete cascade,
+  body text not null check (char_length(trim(body)) between 1 and 1200),
+  tags text[] not null default '{}'::text[] check (cardinality(tags) <= 6),
+  status text not null default 'published' check (status in ('published', 'hidden', 'removed')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+
+create table if not exists public.community_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references public.community_posts(id) on delete cascade,
+  author_id uuid not null references auth.users(id) on delete cascade,
+  body text not null check (char_length(trim(body)) between 1 and 1000),
+  status text not null default 'published' check (status in ('published', 'hidden', 'removed')),
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+
+create table if not exists public.post_likes (
+  post_id uuid not null references public.community_posts(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+
+create table if not exists public.content_reports (
+  id uuid primary key default gen_random_uuid(),
+  reporter_id uuid not null references auth.users(id) on delete cascade,
+  target_type text not null check (target_type in ('post', 'comment', 'message', 'user')),
+  target_id uuid not null,
+  reason text not null check (char_length(trim(reason)) between 1 and 500),
+  status text not null default 'open' check (status in ('open', 'reviewing', 'resolved', 'dismissed')),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.user_blocks (
+  blocker_id uuid not null references auth.users(id) on delete cascade,
+  blocked_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_id),
+  check (blocker_id <> blocked_id)
+);
+
+create index if not exists community_posts_school_created_idx
+  on public.community_posts (school_key, created_at desc) where deleted_at is null;
+create index if not exists community_posts_author_created_idx
+  on public.community_posts (author_id, created_at desc);
+create index if not exists community_comments_post_created_idx
+  on public.community_comments (post_id, created_at) where deleted_at is null;
+create index if not exists community_comments_author_created_idx
+  on public.community_comments (author_id, created_at desc);
+create index if not exists user_blocks_blocked_idx
+  on public.user_blocks (blocked_id, blocker_id);
+create index if not exists content_reports_status_created_idx
+  on public.content_reports (status, created_at desc);
+
+alter table public.community_posts enable row level security;
+alter table public.community_comments enable row level security;
+alter table public.post_likes enable row level security;
+alter table public.content_reports enable row level security;
+alter table public.user_blocks enable row level security;
+
+revoke all on table public.community_posts from anon, authenticated;
+revoke all on table public.community_comments from anon, authenticated;
+revoke all on table public.post_likes from anon, authenticated;
+revoke all on table public.content_reports from anon, authenticated;
+revoke all on table public.user_blocks from anon, authenticated;
+
+create or replace function public.publish_community_post(p_body text, p_tags text[] default '{}'::text[])
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  new_id uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_body, ''))) not between 1 and 1200 then raise exception 'Post must contain 1 to 1200 characters'; end if;
+  if cardinality(coalesce(p_tags, '{}'::text[])) > 6
+     or exists (select 1 from unnest(coalesce(p_tags, '{}'::text[])) tag where char_length(trim(tag)) not between 1 and 30) then
+    raise exception 'Use up to 6 tags of 30 characters each';
+  end if;
+  if (select count(*) from public.community_posts where author_id = caller and created_at > now() - interval '1 minute') >= 3 then
+    raise exception 'Please wait before publishing another post';
+  end if;
+
+  insert into public.community_posts (school_key, author_id, body, tags)
+  values (caller_school, caller, trim(p_body), coalesce(p_tags, '{}'::text[]))
+  returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.publish_community_post(text, text[]) from public;
+grant execute on function public.publish_community_post(text, text[]) to authenticated;
+
+create or replace function public.get_school_feed(p_limit integer default 30, p_offset integer default 0)
+returns table (
+  post_id uuid,
+  author_id uuid,
+  author_username text,
+  display_name text,
+  major_of_study text,
+  body text,
+  tags text[],
+  created_at timestamptz,
+  like_count bigint,
+  comment_count bigint,
+  liked_by_me boolean
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+
+  return query
+  select
+    post.id,
+    post.author_id,
+    profile.username,
+    case when member.profile_visibility = 'school' then member.display_name else null end,
+    case when member.profile_visibility = 'school' then profile.major_of_study else null end,
+    post.body,
+    post.tags,
+    post.created_at,
+    (select count(*) from public.post_likes likes where likes.post_id = post.id),
+    (
+      select count(*)
+      from public.community_comments comments
+      join public.school_memberships comment_membership
+        on comment_membership.user_id = comments.author_id
+       and comment_membership.school_key = caller_school
+       and comment_membership.status = 'verified'
+      where comments.post_id = post.id
+        and comments.status = 'published'
+        and comments.deleted_at is null
+        and not exists (
+          select 1 from public.user_blocks comment_block
+          where (comment_block.blocker_id = caller and comment_block.blocked_id = comments.author_id)
+             or (comment_block.blocker_id = comments.author_id and comment_block.blocked_id = caller)
+        )
+    ),
+    exists (select 1 from public.post_likes mine where mine.post_id = post.id and mine.user_id = caller)
+  from public.community_posts post
+  join public.profiles profile on profile.user_id = post.author_id
+  join public.school_memberships author_membership
+    on author_membership.user_id = post.author_id
+   and author_membership.school_key = caller_school
+   and author_membership.status = 'verified'
+  left join public.member_profiles member on member.user_id = post.author_id
+  where post.school_key = caller_school
+    and post.status = 'published'
+    and post.deleted_at is null
+    and not exists (
+      select 1 from public.user_blocks block
+      where (block.blocker_id = caller and block.blocked_id = post.author_id)
+         or (block.blocker_id = post.author_id and block.blocked_id = caller)
+    )
+  order by post.created_at desc
+  limit least(greatest(coalesce(p_limit, 30), 1), 50)
+  offset greatest(coalesce(p_offset, 0), 0);
+end;
+$$;
+
+revoke all on function public.get_school_feed(integer, integer) from public;
+grant execute on function public.get_school_feed(integer, integer) to authenticated;
+
+create or replace function public.get_schoolmate_profile(p_user_id uuid)
+returns table (
+  username text,
+  display_name text,
+  major_of_study text,
+  degree_level text,
+  study_year smallint,
+  bio text,
+  interests text[],
+  instagram_url text,
+  linkedin_url text,
+  website_url text
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if not exists (
+    select 1 from public.school_memberships membership
+    where membership.user_id = p_user_id
+      and membership.school_key = caller_school
+      and membership.status = 'verified'
+  ) then raise exception 'Campus profile is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = p_user_id)
+       or (block.blocker_id = p_user_id and block.blocked_id = caller)
+  ) then raise exception 'Campus profile is unavailable'; end if;
+
+  return query
+  select
+    profile.username,
+    member.display_name,
+    profile.major_of_study,
+    profile.degree_level,
+    profile.study_year,
+    member.bio,
+    member.interests,
+    member.instagram_url,
+    member.linkedin_url,
+    member.website_url
+  from public.profiles profile
+  join public.member_profiles member on member.user_id = profile.user_id
+  where profile.user_id = p_user_id
+    and (p_user_id = caller or member.profile_visibility = 'school');
+end;
+$$;
+
+revoke all on function public.get_schoolmate_profile(uuid) from public;
+grant execute on function public.get_schoolmate_profile(uuid) to authenticated;
+
+create or replace function public.toggle_post_like(p_post_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  post_author uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  select author_id into post_author
+  from public.community_posts
+  where id = p_post_id and school_key = caller_school and status = 'published' and deleted_at is null;
+  if post_author is null then raise exception 'Post is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = post_author)
+       or (block.blocker_id = post_author and block.blocked_id = caller)
+  ) then raise exception 'Post is unavailable'; end if;
+
+  delete from public.post_likes where post_id = p_post_id and user_id = caller;
+  if found then return false; end if;
+  insert into public.post_likes (post_id, user_id) values (p_post_id, caller);
+  return true;
+end;
+$$;
+
+revoke all on function public.toggle_post_like(uuid) from public;
+grant execute on function public.toggle_post_like(uuid) to authenticated;
+
+create or replace function public.get_post_comments(p_post_id uuid)
+returns table (
+  comment_id uuid,
+  author_id uuid,
+  author_username text,
+  display_name text,
+  body text,
+  created_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  post_author uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  select author_id into post_author from public.community_posts
+  where id = p_post_id and school_key = caller_school and status = 'published' and deleted_at is null;
+  if post_author is null then raise exception 'Post is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = post_author)
+       or (block.blocker_id = post_author and block.blocked_id = caller)
+  ) then raise exception 'Post is unavailable'; end if;
+
+  return query
+  with recent_comments as (
+    select
+      comment.id,
+      comment.author_id,
+      profile.username,
+      case when member.profile_visibility = 'school' then member.display_name else null end as safe_display_name,
+      comment.body,
+      comment.created_at
+    from public.community_comments comment
+    join public.profiles profile on profile.user_id = comment.author_id
+    join public.school_memberships author_membership
+      on author_membership.user_id = comment.author_id
+     and author_membership.school_key = caller_school
+     and author_membership.status = 'verified'
+    left join public.member_profiles member on member.user_id = comment.author_id
+    where comment.post_id = p_post_id
+      and comment.status = 'published'
+      and comment.deleted_at is null
+      and not exists (
+        select 1 from public.user_blocks block
+        where (block.blocker_id = caller and block.blocked_id = comment.author_id)
+           or (block.blocker_id = comment.author_id and block.blocked_id = caller)
+      )
+    order by comment.created_at desc, comment.id desc
+    limit 100
+  )
+  select recent.id, recent.author_id, recent.username, recent.safe_display_name, recent.body, recent.created_at
+  from recent_comments recent
+  order by recent.created_at, recent.id;
+end;
+$$;
+
+revoke all on function public.get_post_comments(uuid) from public;
+grant execute on function public.get_post_comments(uuid) to authenticated;
+
+create or replace function public.add_post_comment(p_post_id uuid, p_body text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  post_author uuid;
+  new_id uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_body, ''))) not between 1 and 1000 then raise exception 'Comment must contain 1 to 1000 characters'; end if;
+  if (select count(*) from public.community_comments where author_id = caller and created_at > now() - interval '1 minute') >= 10 then
+    raise exception 'Please wait before adding another comment';
+  end if;
+  select author_id into post_author from public.community_posts
+  where id = p_post_id and school_key = caller_school and status = 'published' and deleted_at is null;
+  if post_author is null then raise exception 'Post is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = post_author)
+       or (block.blocker_id = post_author and block.blocked_id = caller)
+  ) then raise exception 'Post is unavailable'; end if;
+
+  insert into public.community_comments (post_id, author_id, body)
+  values (p_post_id, caller, trim(p_body)) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.add_post_comment(uuid, text) from public;
+grant execute on function public.add_post_comment(uuid, text) to authenticated;
+
+create or replace function public.report_community_post(p_post_id uuid, p_reason text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  new_id uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_reason, ''))) not between 1 and 500 then raise exception 'A report reason is required'; end if;
+  if not exists (select 1 from public.community_posts where id = p_post_id and school_key = caller_school) then
+    raise exception 'Post is unavailable';
+  end if;
+  if exists (
+    select 1 from public.content_reports
+    where reporter_id = caller and target_type = 'post' and target_id = p_post_id
+      and status in ('open', 'reviewing')
+  ) then raise exception 'You already reported this post'; end if;
+  if (select count(*) from public.content_reports where reporter_id = caller and created_at > now() - interval '1 hour') >= 20 then
+    raise exception 'Please wait before submitting another report';
+  end if;
+  insert into public.content_reports (reporter_id, target_type, target_id, reason)
+  values (caller, 'post', p_post_id, trim(p_reason)) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.report_community_post(uuid, text) from public;
+grant execute on function public.report_community_post(uuid, text) to authenticated;
+
+create or replace function public.report_community_comment(p_comment_id uuid, p_reason text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  new_id uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_reason, ''))) not between 1 and 500 then raise exception 'A report reason is required'; end if;
+  if not exists (
+    select 1
+    from public.community_comments comment
+    join public.community_posts post on post.id = comment.post_id
+    where comment.id = p_comment_id
+      and comment.status = 'published'
+      and comment.deleted_at is null
+      and post.school_key = caller_school
+      and post.status = 'published'
+      and post.deleted_at is null
+  ) then raise exception 'Comment is unavailable'; end if;
+  if exists (
+    select 1 from public.content_reports
+    where reporter_id = caller and target_type = 'comment' and target_id = p_comment_id
+      and status in ('open', 'reviewing')
+  ) then raise exception 'You already reported this comment'; end if;
+  if (select count(*) from public.content_reports where reporter_id = caller and created_at > now() - interval '1 hour') >= 20 then
+    raise exception 'Please wait before submitting another report';
+  end if;
+
+  insert into public.content_reports (reporter_id, target_type, target_id, reason)
+  values (caller, 'comment', p_comment_id, trim(p_reason)) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.report_community_comment(uuid, text) from public;
+grant execute on function public.report_community_comment(uuid, text) to authenticated;
+
+create or replace function public.delete_community_comment(p_comment_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+begin
+  update public.community_comments
+  set status = 'removed', deleted_at = now()
+  where id = p_comment_id and author_id = caller and deleted_at is null;
+  if not found then raise exception 'Comment is unavailable'; end if;
+  return true;
+end;
+$$;
+
+revoke all on function public.delete_community_comment(uuid) from public;
+grant execute on function public.delete_community_comment(uuid) to authenticated;
+
+create or replace function public.delete_community_post(p_post_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+begin
+  update public.community_posts
+  set status = 'removed', deleted_at = now(), updated_at = now()
+  where id = p_post_id and author_id = caller and deleted_at is null;
+  if not found then raise exception 'Post is unavailable'; end if;
+  return true;
+end;
+$$;
+
+revoke all on function public.delete_community_post(uuid) from public;
+grant execute on function public.delete_community_post(uuid) to authenticated;
+
+create or replace function public.block_community_user(p_user_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if p_user_id is null or p_user_id = caller then raise exception 'Invalid user'; end if;
+  if not exists (
+    select 1 from public.school_memberships
+    where user_id = p_user_id and school_key = caller_school and status = 'verified'
+  ) then raise exception 'User is not in your verified school community'; end if;
+  insert into public.user_blocks (blocker_id, blocked_id)
+  values (caller, p_user_id) on conflict do nothing;
+  return true;
+end;
+$$;
+
+revoke all on function public.block_community_user(uuid) from public;
+grant execute on function public.block_community_user(uuid) to authenticated;
+
+-- Direct campus conversations. These records are private through database RLS
+-- and participant checks, but are intentionally described as not end-to-end
+-- encrypted: trusted database administrators can still access them.
+create table if not exists public.direct_conversations (
+  id uuid primary key default gen_random_uuid(),
+  school_key text not null,
+  user_low uuid not null references auth.users(id) on delete cascade,
+  user_high uuid not null references auth.users(id) on delete cascade,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (school_key, user_low, user_high),
+  check (user_low <> user_high)
+);
+
+create table if not exists public.direct_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.direct_conversations(id) on delete cascade,
+  sender_id uuid not null references auth.users(id) on delete cascade,
+  client_nonce uuid not null,
+  body text not null check (char_length(trim(body)) between 1 and 2000),
+  created_at timestamptz not null default now(),
+  edited_at timestamptz,
+  deleted_at timestamptz,
+  unique (sender_id, client_nonce)
+);
+
+create index if not exists direct_conversations_low_idx
+  on public.direct_conversations (user_low, created_at desc);
+create index if not exists direct_conversations_high_idx
+  on public.direct_conversations (user_high, created_at desc);
+create index if not exists direct_messages_conversation_created_idx
+  on public.direct_messages (conversation_id, created_at);
+create index if not exists direct_messages_sender_created_idx
+  on public.direct_messages (sender_id, created_at desc);
+
+alter table public.direct_conversations enable row level security;
+alter table public.direct_messages enable row level security;
+revoke all on table public.direct_conversations from anon, authenticated;
+revoke all on table public.direct_messages from anon, authenticated;
+
+create or replace function public.start_direct_conversation(p_username text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  target_user uuid;
+  low_user uuid;
+  high_user uuid;
+  conversation uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  select profile.user_id into target_user
+  from public.profiles profile
+  join public.school_memberships membership on membership.user_id = profile.user_id
+  left join public.member_profiles member on member.user_id = profile.user_id
+  where profile.username = trim(p_username)
+    and membership.school_key = caller_school
+    and membership.status = 'verified'
+    and coalesce(member.allow_messages, false) = true;
+
+  if target_user is null then raise exception 'No messageable schoolmate has that username'; end if;
+  if target_user = caller then raise exception 'You cannot message yourself'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = target_user)
+       or (block.blocker_id = target_user and block.blocked_id = caller)
+  ) then raise exception 'Messaging is unavailable because one participant blocked the other'; end if;
+
+  if caller::text < target_user::text then low_user := caller; high_user := target_user;
+  else low_user := target_user; high_user := caller; end if;
+
+  insert into public.direct_conversations (school_key, user_low, user_high, created_by)
+  values (caller_school, low_user, high_user, caller)
+  on conflict (school_key, user_low, user_high) do update set school_key = excluded.school_key
+  returning id into conversation;
+  return conversation;
+end;
+$$;
+
+revoke all on function public.start_direct_conversation(text) from public;
+grant execute on function public.start_direct_conversation(text) to authenticated;
+
+create or replace function public.get_my_conversations()
+returns table (
+  conversation_id uuid,
+  other_user_id uuid,
+  other_username text,
+  other_display_name text,
+  last_message text,
+  last_message_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  return query
+  with mine as (
+    select
+      conversation.id,
+      case when conversation.user_low = caller then conversation.user_high else conversation.user_low end as other_id,
+      conversation.created_at
+    from public.direct_conversations conversation
+    where conversation.school_key = caller_school
+      and (conversation.user_low = caller or conversation.user_high = caller)
+  )
+  select
+    mine.id,
+    mine.other_id,
+    profile.username,
+    case when member.profile_visibility = 'school' then member.display_name else null end,
+    latest.body,
+    latest.created_at
+  from mine
+  join public.profiles profile on profile.user_id = mine.other_id
+  join public.school_memberships other_membership
+    on other_membership.user_id = mine.other_id
+   and other_membership.school_key = caller_school
+   and other_membership.status = 'verified'
+  left join public.member_profiles member on member.user_id = mine.other_id
+  left join lateral (
+    select message.body, message.created_at
+    from public.direct_messages message
+    where message.conversation_id = mine.id and message.deleted_at is null
+    order by message.created_at desc, message.id desc
+    limit 1
+  ) latest on true
+  where not exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = mine.other_id)
+       or (block.blocker_id = mine.other_id and block.blocked_id = caller)
+  )
+  order by coalesce(latest.created_at, mine.created_at) desc, mine.id desc;
+end;
+$$;
+
+revoke all on function public.get_my_conversations() from public;
+grant execute on function public.get_my_conversations() to authenticated;
+
+create or replace function public.get_conversation_messages(p_conversation_id uuid, p_limit integer default 100)
+returns table (
+  message_id uuid,
+  sender_id uuid,
+  body text,
+  created_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if not exists (
+    select 1 from public.direct_conversations conversation
+    where conversation.id = p_conversation_id
+      and conversation.school_key = caller_school
+      and (conversation.user_low = caller or conversation.user_high = caller)
+      and not exists (
+        select 1 from public.user_blocks block
+        where (
+          block.blocker_id = caller
+          and block.blocked_id = case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+        ) or (
+          block.blocked_id = caller
+          and block.blocker_id = case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+        )
+      )
+  ) then raise exception 'Conversation is unavailable'; end if;
+
+  return query
+  with recent_messages as (
+    select message.id, message.sender_id, message.body, message.created_at
+    from public.direct_messages message
+    where message.conversation_id = p_conversation_id and message.deleted_at is null
+    order by message.created_at desc, message.id desc
+    limit least(greatest(coalesce(p_limit, 100), 1), 200)
+  )
+  select recent.id, recent.sender_id, recent.body, recent.created_at
+  from recent_messages recent
+  order by recent.created_at, recent.id;
+end;
+$$;
+
+revoke all on function public.get_conversation_messages(uuid, integer) from public;
+grant execute on function public.get_conversation_messages(uuid, integer) to authenticated;
+
+create or replace function public.send_direct_message(
+  p_conversation_id uuid,
+  p_body text,
+  p_client_nonce uuid
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  other_user uuid;
+  new_id uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_body, ''))) not between 1 and 2000 then raise exception 'Message must contain 1 to 2000 characters'; end if;
+  if p_client_nonce is null then raise exception 'Message identifier is required'; end if;
+  if (select count(*) from public.direct_messages where sender_id = caller and created_at > now() - interval '1 minute') >= 30 then
+    raise exception 'Please wait before sending another message';
+  end if;
+
+  select case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+  into other_user
+  from public.direct_conversations conversation
+  where conversation.id = p_conversation_id
+    and conversation.school_key = caller_school
+    and (conversation.user_low = caller or conversation.user_high = caller);
+  if other_user is null then raise exception 'Conversation is unavailable'; end if;
+  if not exists (
+    select 1 from public.school_memberships membership
+    where membership.user_id = other_user
+      and membership.school_key = caller_school
+      and membership.status = 'verified'
+  ) then raise exception 'This schoolmate is no longer available for messaging'; end if;
+  if not exists (
+    select 1 from public.member_profiles member
+    where member.user_id = other_user and member.allow_messages = true
+  ) then raise exception 'This schoolmate is not accepting messages'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = other_user)
+       or (block.blocker_id = other_user and block.blocked_id = caller)
+  ) then raise exception 'Messaging is unavailable because one participant blocked the other'; end if;
+
+  insert into public.direct_messages (conversation_id, sender_id, client_nonce, body)
+  values (p_conversation_id, caller, p_client_nonce, trim(p_body))
+  on conflict (sender_id, client_nonce) do update set body = public.direct_messages.body
+  returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.send_direct_message(uuid, text, uuid) from public;
+grant execute on function public.send_direct_message(uuid, text, uuid) to authenticated;
+
+create or replace function public.report_conversation_user(p_conversation_id uuid, p_reason text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  other_user uuid;
+  new_id uuid;
+begin
+  if char_length(trim(coalesce(p_reason, ''))) not between 1 and 500 then raise exception 'A report reason is required'; end if;
+  select case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+  into other_user
+  from public.direct_conversations conversation
+  where conversation.id = p_conversation_id
+    and (conversation.user_low = caller or conversation.user_high = caller);
+  if other_user is null then raise exception 'Conversation is unavailable'; end if;
+
+  if exists (
+    select 1 from public.content_reports
+    where reporter_id = caller and target_type = 'user' and target_id = other_user
+      and status in ('open', 'reviewing')
+  ) then raise exception 'You already reported this user'; end if;
+  if (select count(*) from public.content_reports where reporter_id = caller and created_at > now() - interval '1 hour') >= 20 then
+    raise exception 'Please wait before submitting another report';
+  end if;
+
+  insert into public.content_reports (reporter_id, target_type, target_id, reason)
+  values (caller, 'user', other_user, trim(p_reason)) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.report_conversation_user(uuid, text) from public;
+grant execute on function public.report_conversation_user(uuid, text) to authenticated;
+
+-- Dashboard verification example (replace the email before running separately):
+-- update public.school_memberships m
+-- set status = 'verified', verification_method = 'manual', verified_at = now(), updated_at = now()
+-- from auth.users u
+-- where m.user_id = u.id and u.email = 'student@university.edu';
