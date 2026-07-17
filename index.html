@@ -1711,7 +1711,7 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260717-3" />
+<link rel="stylesheet" href="member-hub.css?v=20260717-5" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2144,10 +2144,6 @@
         <button type="button" class="hub-nav-button" data-hub-target="messages"><span>02</span><b data-i18n="hubMessages">Messages</b></button>
         <button type="button" class="hub-nav-button" data-hub-target="overview"><span>03</span><b data-i18n="hubInsights">Academic insights</b></button>
       </nav>
-      <div class="hub-sidebar-note">
-        <b data-i18n="hubCommunityStandard">Built for trusted campus communities</b>
-        <span data-i18n="hubCommunityStandardText">Profiles, reports, privacy controls, and school-scoped access support a safer network.</span>
-      </div>
       <button type="button" class="btn-ghost hub-back-button" id="hubBackToTimetable" data-i18n="backToTimetable">Back to timetable</button>
     </aside>
 
@@ -2155,7 +2151,7 @@
       <header class="hub-page-header">
         <div>
           <p class="hub-kicker" id="hubPageKicker">ConCourse Community</p>
-          <h1 id="hubGreeting">Campus conversations, made useful.</h1>
+          <h1 id="hubGreeting">Campus community</h1>
           <p id="hubPageIntroduction">Discover what students at your university are asking, sharing, and planning.</p>
         </div>
         <div class="hub-live-badge"><span></span><b data-i18n="privateByDesign">Private by design</b></div>
@@ -2226,36 +2222,59 @@
                 <button type="button" class="hub-topic-chip" data-community-topic="clubs" data-i18n="topicClubs" aria-pressed="false">Clubs</button>
                 <button type="button" class="hub-topic-chip" data-community-topic="housing" data-i18n="topicHousing" aria-pressed="false">Housing</button>
                 <button type="button" class="hub-topic-chip" data-community-topic="careers" data-i18n="topicCareers" aria-pressed="false">Careers</button>
+                <button type="button" class="hub-topic-chip" data-community-topic="saved" data-i18n="topicSaved" aria-pressed="false">Saved</button>
               </div>
             </div>
             <article class="hub-card hub-compose-card">
-              <div class="hub-compose-heading"><div class="hub-avatar hub-compose-avatar" id="hubComposerInitials" aria-hidden="true">CC</div><div><b data-i18n="startConversationPost">Start a campus conversation</b><span data-i18n="communityDescription">Share useful experiences, ask questions, and discover student perspectives within your university.</span></div></div>
-              <textarea id="communityPostBody" maxlength="1200" data-i18n-placeholder="shareCampusThought" placeholder="Share a course insight, campus tip, question, or experience..."></textarea>
-              <div class="hub-compose-actions">
-                <input id="communityPostTags" maxlength="100" data-i18n-placeholder="postTagsPlaceholder" placeholder="Tags: courses, clubs, housing" />
-                <button type="button" class="btn-primary" id="publishCommunityPost" data-i18n="publishPost">Publish post</button>
+              <div class="hub-compose-shell">
+                <div class="hub-avatar hub-compose-avatar" id="hubComposerInitials" aria-hidden="true">CC</div>
+                <div class="hub-compose-content">
+                  <label class="sr-only" for="communityPostBody" data-i18n="createPost">Create post</label>
+                  <textarea id="communityPostBody" maxlength="1200" data-i18n-placeholder="shareCampusThought" placeholder="What is happening on campus?"></textarea>
+                  <div class="hub-media-preview" id="communityMediaPreview" aria-live="polite"></div>
+                  <section class="hub-poll-builder" id="communityPollBuilder" aria-label="Create a poll" data-i18n-aria-label="createPoll" hidden>
+                    <div class="hub-poll-builder-heading"><b data-i18n="poll">Poll</b><button type="button" id="removeCommunityPoll" data-i18n="removePoll">Remove</button></div>
+                    <input id="communityPollQuestion" maxlength="180" data-i18n-placeholder="pollQuestionPlaceholder" data-i18n-aria-label="pollQuestionPlaceholder" placeholder="Ask a question" aria-label="Poll question" />
+                    <div class="hub-poll-option-list" id="communityPollOptions">
+                      <input class="hub-poll-option-input" maxlength="100" data-poll-option data-poll-number="1" data-i18n-placeholder="pollOptionPlaceholder" placeholder="Option 1" aria-label="Poll option 1" />
+                      <input class="hub-poll-option-input" maxlength="100" data-poll-option data-poll-number="2" data-i18n-placeholder="pollOptionPlaceholder" placeholder="Option 2" aria-label="Poll option 2" />
+                    </div>
+                    <button type="button" class="hub-poll-add-option" id="addCommunityPollOption" data-i18n="addPollOption">Add option</button>
+                  </section>
+                  <div class="hub-compose-meta">
+                    <input id="communityPostTags" maxlength="100" data-i18n-placeholder="postTagsPlaceholder" data-i18n-aria-label="postTagsPlaceholder" aria-label="Post topics" placeholder="Add topics" />
+                    <span id="communityPostCounter" aria-live="polite">0 / 1200</span>
+                  </div>
+                  <div class="hub-compose-toolbar">
+                    <div class="hub-compose-tools">
+                      <button type="button" class="hub-tool-button" id="addCommunityMedia" data-i18n="addMedia">Photo / video</button>
+                      <input id="communityMediaInput" type="file" accept="image/*,.heic,.heif,.heics,.heifs,.avif,.gif,.bmp,.tif,.tiff,.ico,.jxl,video/mp4,video/webm,video/quicktime,.mov" multiple hidden />
+                      <button type="button" class="hub-tool-button" id="addCommunityPoll" data-i18n="addPoll">Poll</button>
+                    </div>
+                    <button type="button" class="btn-primary" id="publishCommunityPost" data-i18n="publishPost">Post</button>
+                  </div>
+                  <p class="hub-inline-status" id="communityComposerStatus"></p>
+                </div>
               </div>
-              <p class="hub-inline-status" id="communityComposerStatus"></p>
             </article>
-            <div class="hub-feed-toolbar"><div><p class="hub-kicker" data-i18n="campusLife">Campus life</p><b data-i18n="latestFromCampus">Latest from campus</b></div><button type="button" class="btn-ghost" id="refreshCommunityFeed" data-i18n="refresh">Refresh</button></div>
+            <div class="hub-feed-toolbar"><b data-i18n="campusFeed">Campus feed</b><button type="button" class="btn-ghost" id="refreshCommunityFeed" data-i18n="refresh">Refresh</button></div>
             <div class="hub-feed" id="communityFeed" aria-live="polite"></div>
+            <button type="button" class="btn-ghost hub-feed-load-more" id="communityLoadMore" data-i18n="loadMore" hidden>Load more</button>
           </div>
           <aside class="hub-community-rail" aria-label="Community shortcuts" data-i18n-aria-label="communityShortcuts">
             <article class="hub-rail-card hub-rail-profile">
-              <p class="hub-kicker" data-i18n="yourCampusIdentity">Your campus identity</p>
               <div class="hub-rail-profile-row"><div class="hub-avatar" id="hubRailInitials" aria-hidden="true">CC</div><div><b id="hubRailName">ConCourse student</b><span id="hubRailAcademic">Your academic community</span></div></div>
               <div class="hub-profile-progress"><span><b data-i18n="profileStrength">Profile strength</b><strong id="hubRailProfileStrength">0%</strong></span><div><i id="hubRailProfileStrengthBar"></i></div></div>
               <button type="button" class="btn-ghost" data-hub-target="profile" data-i18n="editProfile">Edit profile</button>
             </article>
-            <article class="hub-rail-card">
-              <div class="hub-rail-heading"><div><p class="hub-kicker" data-i18n="privateConversations">Private conversations</p><h3 data-i18n="recentMessages">Recent messages</h3></div><button type="button" class="hub-rail-icon-button" id="communityOpenMessages" aria-label="Open messages" data-i18n-aria-label="openMessages">→</button></div>
+            <article class="hub-rail-card hub-rail-links">
+              <button type="button" class="hub-rail-link" id="communityShowSaved" aria-pressed="false"><span><b data-i18n="savedPosts">Saved posts</b><small data-i18n="savedPostsPrivate">Only visible to you</small></span><i aria-hidden="true">→</i></button>
+              <button type="button" class="hub-rail-link" id="communityOpenMessages"><span><b data-i18n="hubMessages">Messages</b><small data-i18n="privateConversations">Private conversations</small></span><i aria-hidden="true">→</i></button>
+            </article>
+            <article class="hub-rail-card hub-rail-messages">
+              <div class="hub-rail-heading"><h3 data-i18n="recentMessages">Recent messages</h3></div>
               <div class="hub-conversation-preview" id="communityConversationPreview"></div>
               <button type="button" class="btn-primary hub-rail-action" id="communityStartMessage" data-i18n="startChat">Start chat</button>
-            </article>
-            <article class="hub-rail-card hub-rail-safety">
-              <p class="hub-kicker" data-i18n="communitySafety">Community safety</p>
-              <h3 data-i18n="schoolScopedCommunity">A space for your verified school</h3>
-              <p data-i18n="schoolScopedCommunityText">Profiles, posts, and messages stay inside your university community, with reporting and blocking controls available throughout.</p>
             </article>
           </aside>
         </div>
@@ -2294,8 +2313,8 @@
                 <img id="profileAvatarPreview" alt="" hidden />
                 <span class="hub-avatar-preview-overlay" data-i18n="replacePhoto">Replace</span>
               </button>
-              <input id="profileAvatarInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
-              <div class="hub-avatar-editor-copy"><b data-i18n="profilePhoto">Profile photo</b><small data-i18n="profilePhotoHint">Choose a clear square photo. ConCourse removes image metadata and stores a private, optimized copy.</small><div class="hub-avatar-actions"><button type="button" class="btn-ghost" id="removeProfileAvatar" data-i18n="removePhoto">Remove photo</button></div></div>
+              <input id="profileAvatarInput" type="file" accept="image/*,.heic,.heif,.heics,.heifs,.avif,.gif,.bmp,.tif,.tiff,.ico,.jxl" hidden />
+              <div class="hub-avatar-editor-copy"><b data-i18n="profilePhoto">Profile photo</b><small data-i18n="profilePhotoHint">JPG, PNG, WebP, GIF, AVIF, HEIC/HEIF, and other safe raster images are accepted. ConCourse removes metadata and stores a private WebP copy; SVG is blocked.</small><div class="hub-avatar-actions"><button type="button" class="btn-ghost" id="removeProfileAvatar" data-i18n="removePhoto">Remove photo</button></div></div>
               <p class="hub-inline-status" id="avatarUploadStatus"></p>
             </div>
             <div class="hub-form-grid">
@@ -2405,7 +2424,6 @@
 
 <div class="hub-profile-modal" id="hubActionModal" hidden>
   <section class="hub-action-dialog" role="dialog" aria-modal="true" aria-labelledby="hubActionTitle" aria-describedby="hubActionMessage">
-    <p class="hub-kicker" data-i18n="communitySafety">Community safety</p>
     <h2 id="hubActionTitle">Confirm action</h2>
     <p id="hubActionMessage"></p>
     <textarea id="hubActionInput" maxlength="500" hidden></textarea>
@@ -2416,7 +2434,12 @@
   </section>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"
+  integrity="sha256-DuMHOPEzedO06xqfV3c99eVcC+pkOq13OC1HMzLfS3s="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
 <script>
 "use strict";
 const DAYS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -2526,7 +2549,8 @@ const TRANSLATIONS = {
     messagesLoading:"正在载入对话…", noConversations:"还没有对话。请输入同校同学的用户名开始聊天。", startingConversation:"正在开启对话…", conversationStarted:"对话已打开。", conversationStartFailed:"无法开启此对话。", cannotMessageSelf:"不能给自己发私信。", messagesEmpty:"还没有消息。打个招呼吧。", messageRequired:"请先填写消息。", sendingMessage:"正在发送…", messageSendFailed:"消息无法发送。", directMessagePrivacy:"仅参与者可见；消息并非端到端加密。",
     socialVerificationNote:"添加已授权的账号连接；手动粘贴的个人链接仍由用户自行提供。", socialConnectionDisclosure:"已连接标识只确认 ConCourse 获得了相应平台账号的授权；不能验证法定身份、在校资格、雇佣关系或任何手动粘贴的资料网址。当你的资料对同校同学可见时，这些标识也会显示。", socialAccount:"社交账号", socialConnectionsLoading:"正在检查账号连接…", socialConnectionsUnavailable:"暂时无法检查账号连接，请稍后重试。", providerNotConnected:"{provider} 尚未连接", providerConnectionHelp:"授权 {provider} 账号，以显示账号连接标识。", connectProvider:"连接 {provider}", providerConnected:"{provider} 已连接", providerConnectedDetail:"已于 {date} 通过 {provider} 授权", providerConnectedHelp:"{provider} 账号已经授权。", providerConnectionLoading:"正在检查 {provider} 连接…", providerConnecting:"正在打开 {provider} 授权页面…", providerConnectedSuccess:"{provider} 账号已连接。", providerConnectionFailed:"无法连接 {provider}，请重试。", providerSetupRequired:"{provider} 连接暂时不可用，请联系网站管理员。", disconnectProviderTitle:"断开 {provider}", confirmDisconnectProvider:"要从 ConCourse 断开 {provider} 账号吗？", providerDisconnected:"{provider} 已断开。", providerDisconnectFailed:"无法断开 {provider}。",
     hubInsights:"学业洞察", editProfile:"编辑资料", searchCommunity:"搜索最近的校园讨论", communityTopics:"社区话题", topicForYou:"为你推荐", topicCourses:"课程", topicCampusLife:"校园生活", topicClubs:"社团", topicHousing:"住宿", topicCareers:"职业发展", startConversationPost:"发起校园讨论", communityShortcuts:"社区快捷入口", yourCampusIdentity:"你的校园身份", recentMessages:"最近私信", openMessages:"打开私信", schoolScopedCommunity:"属于已验证学校成员的空间", schoolScopedCommunityText:"个人资料、动态和私信均限定在你的大学社区内，并全程提供举报与拉黑控制。",
-    chooseProfilePhoto:"选择个人头像", profilePhoto:"个人头像", profilePhotoHint:"请选择清晰的方形照片。ConCourse 会移除图片元数据，并保存私密的优化副本。", replacePhoto:"更换", removePhoto:"移除头像", connectionTypes:"连接类型", verifiedAccounts:"已授权账号", profileLinks:"资料链接", profileLinksDisclosure:"这些联系方式由你自行提供，未经 ConCourse 验证。电话和 WhatsApp 保持私密。", wechatId:"微信号", wechatIdPlaceholder:"你的微信号", wechatSelfReported:"用户自行提供 · 未验证", shareWechat:"向已验证的同校同学显示此微信号", invalidWechatId:"请输入不超过 64 个字符的有效微信号。", messageStudent:"发送私信", avatarPreparing:"正在安全处理头像…", avatarReady:"新头像已准备好；保存资料后生效。", avatarInvalid:"请选择有效的 PNG、JPEG 或 WebP 图片。", avatarTooLarge:"图片必须小于 8 MB。", avatarUploadFailed:"头像无法保存，请重试。", avatarRemoved:"保存资料后将移除头像。", communityNoMatches:"没有符合当前搜索或话题的动态。", wechatCopied:"微信号已复制。", copyWechat:"复制微信号", noRecentMessages:"还没有最近的私信。", hubCommunityKicker:"ConCourse 社区", hubCommunityTitle:"有价值的校园讨论", hubCommunityIntro:"发现你的大学同学正在提问、分享和计划什么。", hubMessagesKicker:"ConCourse 私信", hubMessagesTitle:"保持联系，不受干扰", hubMessagesIntro:"与已验证的同校同学进行私密的一对一交流。", hubInsightsKicker:"ConCourse 洞察", hubInsightsTitle:"用更清晰的数据规划学业", hubInsightsIntro:"查看匿名选课趋势，并保存你的最终学期决定。", hubProfileKicker:"ConCourse 个人资料", hubProfileTitle:"建立可信赖的校园身份", hubProfileIntro:"管理头像、个人资料、社交连接和隐私设置。",
+    chooseProfilePhoto:"选择个人头像", profilePhoto:"个人头像", profilePhotoHint:"支持 JPG、PNG、WebP、GIF、AVIF、HEIC/HEIF 及其他安全的栅格图片。ConCourse 会移除元数据并保存私密 WebP 副本；SVG 会被拦截。", replacePhoto:"更换", removePhoto:"移除头像", connectionTypes:"连接类型", verifiedAccounts:"已授权账号", profileLinks:"资料链接", profileLinksDisclosure:"这些联系方式由你自行提供，未经 ConCourse 验证。电话和 WhatsApp 保持私密。", wechatId:"微信号", wechatIdPlaceholder:"你的微信号", wechatSelfReported:"用户自行提供 · 未验证", shareWechat:"向已验证的同校同学显示此微信号", invalidWechatId:"请输入不超过 64 个字符的有效微信号。", messageStudent:"发送私信", avatarPreparing:"正在安全处理头像…", avatarReady:"新头像已准备好；保存资料后生效。", avatarInvalid:"无法解码该文件。请尝试 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", avatarTooLarge:"图片必须小于 20 MB。", avatarSvgUnsupported:"为保护安全，不支持 SVG 头像。请导出为 JPG、PNG、WebP 或其他栅格格式。", avatarUploadFailed:"头像无法保存，请重试。", avatarRemoved:"保存资料后将移除头像。", communityNoMatches:"没有符合当前搜索或话题的动态。", wechatCopied:"微信号已复制。", copyWechat:"复制微信号", noRecentMessages:"还没有最近的私信。", hubCommunityKicker:"ConCourse 社区", hubCommunityTitle:"校园社区", hubCommunityIntro:"发现你的大学同学正在提问、分享和计划什么。", hubMessagesKicker:"ConCourse 私信", hubMessagesTitle:"保持联系，不受干扰", hubMessagesIntro:"与已验证的同校同学进行私密的一对一交流。", hubInsightsKicker:"ConCourse 洞察", hubInsightsTitle:"用更清晰的数据规划学业", hubInsightsIntro:"查看匿名选课趋势，并保存你的最终学期决定。", hubProfileKicker:"ConCourse 个人资料", hubProfileTitle:"建立可信赖的校园身份", hubProfileIntro:"管理头像、个人资料、社交连接和隐私设置。",
+    topicSaved:"已收藏", createPost:"创建动态", createPoll:"创建投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"提出一个问题", pollOptionPlaceholder:"投票选项", addPollOption:"添加选项", addMedia:"照片 / 视频", addPoll:"投票", campusFeed:"校园动态", savedPosts:"已收藏动态", savedPostsPrivate:"仅自己可见", pollOptionLimit:"每个投票最多 6 个选项。", pollIncomplete:"请填写投票问题和至少两个选项。", pollDuplicateOptions:"投票选项不能重复。", removeMedia:"移除媒体", altTextPlaceholder:"图片说明（方便使用辅助技术的同学）", mediaPreparing:"正在处理媒体…", mediaLimit:"每条动态最多添加 4 个媒体文件。", videoTooLarge:"视频必须小于 40 MB。", imageTooLarge:"图片必须小于 25 MB。", mediaInvalid:"无法解码该图片。请尝试 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"为保护安全，不支持 SVG。请导出为栅格图片。", mediaReady:"媒体已准备好。", mediaLoading:"正在载入媒体…", mediaUnavailable:"媒体暂时无法显示。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"查看这条 ConCourse 校园动态", postLinkCopied:"链接已复制；打开时需要登录同校账号。", shareFailed:"无法分享这条动态。", postContentRequired:"请添加文字、媒体或投票后再发布。", loadMore:"加载更多", loadingMore:"正在加载更多…", pollOptionNumber:"投票选项 {number}", mediaDescriptionNumber:"第 {number} 个媒体文件的说明", videoDescriptionPlaceholder:"视频说明（方便使用辅助技术的同学）", postVideo:"动态中的视频", videoInvalid:"请选择有效的 MP4、WebM 或 MOV 视频。",
     profileLoading:"正在载入个人资料…", profileSaved:"个人资料已保存。", profileSaveFailed:"无法保存个人资料。", invalidUrl:"请使用完整的 https:// 链接。", invalidInstagramUrl:"请使用 Instagram 的 https:// 链接。", invalidWhatsappUrl:"请使用 wa.me 的 https:// 链接。", invalidLinkedinUrl:"请使用 LinkedIn 的 https:// 链接。", invalidWebsiteUrl:"请使用完整的 https:// 链接。"
   },
   "zh-HK": {
@@ -2606,7 +2630,8 @@ const TRANSLATIONS = {
     messagesLoading:"正在載入對話…", noConversations:"仲未有對話。輸入同校同學嘅用戶名稱開始傾偈。", startingConversation:"正在開始對話…", conversationStarted:"對話已開啟。", conversationStartFailed:"未能開始呢個對話。", cannotMessageSelf:"唔可以私訊自己。", messagesEmpty:"仲未有訊息。打個招呼啦。", messageRequired:"請先輸入訊息。", sendingMessage:"正在傳送…", messageSendFailed:"訊息未能傳送。", directMessagePrivacy:"只限參與者查看；訊息並非端對端加密。",
     socialVerificationNote:"新增已授權嘅帳戶連接；手動貼上嘅個人連結仍然由用戶自行提供。", socialConnectionDisclosure:"已連接標誌只確認 ConCourse 獲得咗相應平台帳戶嘅授權；唔代表法定身份、在校資格、僱傭關係或任何手動貼上嘅檔案網址已獲驗證。當你嘅檔案同校內同學分享時，呢啲標誌亦會顯示。", socialAccount:"社交帳戶", socialConnectionsLoading:"正在檢查帳戶連接…", socialConnectionsUnavailable:"暫時未能檢查帳戶連接，請稍後再試。", providerNotConnected:"{provider} 尚未連接", providerConnectionHelp:"授權 {provider} 帳戶，以顯示帳戶連接標誌。", connectProvider:"連接 {provider}", providerConnected:"{provider} 已連接", providerConnectedDetail:"已於 {date} 透過 {provider} 授權", providerConnectedHelp:"{provider} 帳戶已經授權。", providerConnectionLoading:"正在檢查 {provider} 連接…", providerConnecting:"正在開啟 {provider} 授權頁面…", providerConnectedSuccess:"{provider} 帳戶已連接。", providerConnectionFailed:"未能連接 {provider}，請再試。", providerSetupRequired:"{provider} 連接暫時用唔到，請聯絡網站管理員。", disconnectProviderTitle:"中斷 {provider} 連接", confirmDisconnectProvider:"要由 ConCourse 中斷 {provider} 帳戶連接嗎？", providerDisconnected:"{provider} 已中斷連接。", providerDisconnectFailed:"未能中斷 {provider} 連接。",
     hubInsights:"學業分析", editProfile:"編輯檔案", searchCommunity:"搜尋最近嘅校園討論", communityTopics:"社群話題", topicForYou:"為你推薦", topicCourses:"課程", topicCampusLife:"校園生活", topicClubs:"學會", topicHousing:"住宿", topicCareers:"職涯", startConversationPost:"開始校園討論", communityShortcuts:"社群捷徑", yourCampusIdentity:"你嘅校園身份", recentMessages:"最近私訊", openMessages:"開啟私訊", schoolScopedCommunity:"屬於已驗證學校成員嘅空間", schoolScopedCommunityText:"個人檔案、貼文同私訊都只限你嘅大學社群，並全程提供舉報同封鎖控制。",
-    chooseProfilePhoto:"選擇個人頭像", profilePhoto:"個人頭像", profilePhotoHint:"請揀清晰嘅正方形相片。ConCourse 會移除圖片元資料，並儲存私人、經優化嘅副本。", replacePhoto:"更換", removePhoto:"移除頭像", connectionTypes:"連接類型", verifiedAccounts:"已授權帳戶", profileLinks:"檔案連結", profileLinksDisclosure:"呢啲聯絡方式由你自行提供，未經 ConCourse 驗證。電話同 WhatsApp 保持私人。", wechatId:"微信號", wechatIdPlaceholder:"你嘅微信號", wechatSelfReported:"用戶自行提供 · 未驗證", shareWechat:"向已驗證嘅同校同學顯示呢個微信號", invalidWechatId:"請輸入唔多過 64 個字元嘅有效微信號。", messageStudent:"傳送私訊", avatarPreparing:"正在安全處理頭像…", avatarReady:"新頭像已準備好；儲存檔案後生效。", avatarInvalid:"請揀有效嘅 PNG、JPEG 或 WebP 圖片。", avatarTooLarge:"圖片必須細過 8 MB。", avatarUploadFailed:"未能儲存頭像，請再試。", avatarRemoved:"儲存檔案後會移除頭像。", communityNoMatches:"冇貼文符合目前嘅搜尋或話題。", wechatCopied:"微信號已複製。", copyWechat:"複製微信號", noRecentMessages:"仲未有最近私訊。", hubCommunityKicker:"ConCourse 社群", hubCommunityTitle:"有用嘅校園討論", hubCommunityIntro:"睇下你間大學嘅同學正在問、分享同計劃啲乜。", hubMessagesKicker:"ConCourse 私訊", hubMessagesTitle:"保持連繫，唔受打擾", hubMessagesIntro:"同已驗證嘅同校同學進行私人一對一交流。", hubInsightsKicker:"ConCourse 分析", hubInsightsTitle:"用更清晰嘅數據規劃學業", hubInsightsIntro:"查看匿名選科趨勢，同儲存你嘅最終學期決定。", hubProfileKicker:"ConCourse 個人檔案", hubProfileTitle:"建立可信賴嘅校園身份", hubProfileIntro:"管理頭像、個人資料、社交連接同私隱設定。",
+    chooseProfilePhoto:"選擇個人頭像", profilePhoto:"個人頭像", profilePhotoHint:"支援 JPG、PNG、WebP、GIF、AVIF、HEIC/HEIF 同其他安全點陣圖片。ConCourse 會移除元資料並儲存私人 WebP 副本；SVG 會被封鎖。", replacePhoto:"更換", removePhoto:"移除頭像", connectionTypes:"連接類型", verifiedAccounts:"已授權帳戶", profileLinks:"檔案連結", profileLinksDisclosure:"呢啲聯絡方式由你自行提供，未經 ConCourse 驗證。電話同 WhatsApp 保持私人。", wechatId:"微信號", wechatIdPlaceholder:"你嘅微信號", wechatSelfReported:"用戶自行提供 · 未驗證", shareWechat:"向已驗證嘅同校同學顯示呢個微信號", invalidWechatId:"請輸入唔多過 64 個字元嘅有效微信號。", messageStudent:"傳送私訊", avatarPreparing:"正在安全處理頭像…", avatarReady:"新頭像已準備好；儲存檔案後生效。", avatarInvalid:"未能解碼呢個檔案。請試 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", avatarTooLarge:"圖片必須細過 20 MB。", avatarSvgUnsupported:"為咗安全，唔支援 SVG 頭像。請匯出做 JPG、PNG、WebP 或其他點陣格式。", avatarUploadFailed:"未能儲存頭像，請再試。", avatarRemoved:"儲存檔案後會移除頭像。", communityNoMatches:"冇貼文符合目前嘅搜尋或話題。", wechatCopied:"微信號已複製。", copyWechat:"複製微信號", noRecentMessages:"仲未有最近私訊。", hubCommunityKicker:"ConCourse 社群", hubCommunityTitle:"校園社群", hubCommunityIntro:"睇下你間大學嘅同學正在問、分享同計劃啲乜。", hubMessagesKicker:"ConCourse 私訊", hubMessagesTitle:"保持連繫，唔受打擾", hubMessagesIntro:"同已驗證嘅同校同學進行私人一對一交流。", hubInsightsKicker:"ConCourse 分析", hubInsightsTitle:"用更清晰嘅數據規劃學業", hubInsightsIntro:"查看匿名選科趨勢，同儲存你嘅最終學期決定。", hubProfileKicker:"ConCourse 個人檔案", hubProfileTitle:"建立可信賴嘅校園身份", hubProfileIntro:"管理頭像、個人資料、社交連接同私隱設定。",
+    topicSaved:"已收藏", createPost:"建立貼文", createPoll:"建立投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"問一個問題", pollOptionPlaceholder:"投票選項", addPollOption:"加選項", addMedia:"相片 / 影片", addPoll:"投票", campusFeed:"校園動態", savedPosts:"已收藏貼文", savedPostsPrivate:"只有你睇到", pollOptionLimit:"每個投票最多 6 個選項。", pollIncomplete:"請填投票問題同最少兩個選項。", pollDuplicateOptions:"投票選項唔可以重複。", removeMedia:"移除媒體", altTextPlaceholder:"圖片說明（方便使用輔助技術嘅同學）", mediaPreparing:"正在處理媒體…", mediaLimit:"每篇貼文最多加 4 個媒體檔案。", videoTooLarge:"影片必須細過 40 MB。", imageTooLarge:"圖片必須細過 25 MB。", mediaInvalid:"未能解碼張圖片。請試 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"為咗安全，唔支援 SVG。請匯出做點陣圖片。", mediaReady:"媒體已準備好。", mediaLoading:"正在載入媒體…", mediaUnavailable:"媒體暫時顯示唔到。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"睇呢篇 ConCourse 校園貼文", postLinkCopied:"連結已複製；開啟時需要登入同校帳戶。", shareFailed:"未能分享呢篇貼文。", postContentRequired:"請加入文字、媒體或者投票先發佈。", loadMore:"載入更多", loadingMore:"正在載入更多…", pollOptionNumber:"投票選項 {number}", mediaDescriptionNumber:"第 {number} 個媒體檔案嘅說明", videoDescriptionPlaceholder:"影片說明（方便使用輔助技術嘅同學）", postVideo:"貼文入面嘅影片", videoInvalid:"請揀有效嘅 MP4、WebM 或 MOV 影片。",
     profileLoading:"正在載入個人檔案…", profileSaved:"個人檔案已儲存。", profileSaveFailed:"未能儲存個人檔案。", invalidUrl:"請使用完整嘅 https:// 連結。", invalidInstagramUrl:"請使用 Instagram 嘅 https:// 連結。", invalidWhatsappUrl:"請使用 wa.me 嘅 https:// 連結。", invalidLinkedinUrl:"請使用 LinkedIn 嘅 https:// 連結。", invalidWebsiteUrl:"請使用完整嘅 https:// 連結。"
   }
 };
@@ -2654,7 +2679,8 @@ function t(key, variables={}){
     messagesLoading:"Loading conversations…", noConversations:"No conversations yet. Start one with a schoolmate's username.", startingConversation:"Starting conversation…", conversationStarted:"Conversation opened.", conversationStartFailed:"The conversation could not be started.", cannotMessageSelf:"You cannot message yourself.", messagesEmpty:"No messages yet. Say hello.", messageRequired:"Write a message first.", sendingMessage:"Sending…", messageSendFailed:"The message could not be sent.", directMessagePrivacy:"Private between participants; messages are not end-to-end encrypted.",
     selfReportedLinks:"Provider badges show an authenticated account connection. Pasted social links remain self-reported and do not verify identity or enrollment.", disconnect:"Disconnect", linkedinPublicProfile:"LinkedIn public profile URL", publicLinkSelfReported:"Self-reported · separate from account connection", authenticatedConnections:"Authenticated connections", selfReportedProfiles:"Self-reported profiles", linkedinProfileSelfReported:"LinkedIn profile · self-reported",
     socialVerificationNote:"Add authenticated account connections. Pasted profile links remain self-reported.", socialConnectionDisclosure:"A connected badge confirms authorization from the named provider. It does not verify legal identity, university enrollment, employment, or any pasted profile URL. Badges are visible when your profile is shared with schoolmates.", socialAccount:"social account", socialConnectionsLoading:"Checking account connections…", socialConnectionsUnavailable:"Account connections are temporarily unavailable. Please try again.", providerNotConnected:"{provider} not connected", providerConnectionHelp:"Authorize a {provider} account to show an account-connection badge.", connectProvider:"Connect {provider}", providerConnected:"{provider} connected", providerConnectedDetail:"Authenticated with {provider} on {date}", providerConnectedHelp:"Your {provider} account is authorized.", providerConnectionLoading:"Checking your {provider} connection…", providerConnecting:"Opening {provider} authorization…", providerConnectedSuccess:"{provider} account connected.", providerConnectionFailed:"{provider} could not be connected. Please try again.", providerSetupRequired:"{provider} connection is temporarily unavailable. Please contact the site administrator.", disconnectProviderTitle:"Disconnect {provider}", confirmDisconnectProvider:"Disconnect your {provider} account from ConCourse?", providerDisconnected:"{provider} disconnected.", providerDisconnectFailed:"{provider} could not be disconnected.",
-    hubInsights:"Academic insights", editProfile:"Edit profile", communityNoMatches:"No recent posts match this search or topic.", noRecentMessages:"No recent messages yet.", hubCommunityKicker:"ConCourse Community", hubCommunityTitle:"Campus conversations, made useful.", hubCommunityIntro:"Discover what students at your university are asking, sharing, and planning.", hubMessagesKicker:"ConCourse Messages", hubMessagesTitle:"Stay connected, without the noise.", hubMessagesIntro:"Have focused, private conversations with verified schoolmates.", hubInsightsKicker:"ConCourse Insights", hubInsightsTitle:"Plan with a clearer academic picture.", hubInsightsIntro:"Explore anonymous course trends and keep your final semester decision close.", hubProfileKicker:"ConCourse Profile", hubProfileTitle:"Build a trusted campus identity.", hubProfileIntro:"Manage your photo, personal details, social connections, and privacy choices.", avatarPreparing:"Preparing your photo securely…", avatarReady:"Your new photo is ready. Save your profile to apply it.", avatarInvalid:"Choose a valid PNG, JPEG, or WebP image.", avatarTooLarge:"The image must be smaller than 8 MB.", avatarUploadFailed:"Your profile photo could not be saved. Try again.", avatarRemoved:"Your photo will be removed when you save.", wechatId:"WeChat ID", invalidWechatId:"Enter a valid WeChat ID of up to 64 characters.", wechatCopied:"WeChat ID copied.", copyWechat:"Copy WeChat ID",
+    hubInsights:"Academic insights", editProfile:"Edit profile", communityNoMatches:"No recent posts match this search or topic.", noRecentMessages:"No recent messages yet.", hubCommunityKicker:"ConCourse Community", hubCommunityTitle:"Campus community", hubCommunityIntro:"Discover what students at your university are asking, sharing, and planning.", hubMessagesKicker:"ConCourse Messages", hubMessagesTitle:"Stay connected, without the noise.", hubMessagesIntro:"Have focused, private conversations with verified schoolmates.", hubInsightsKicker:"ConCourse Insights", hubInsightsTitle:"Plan with a clearer academic picture.", hubInsightsIntro:"Explore anonymous course trends and keep your final semester decision close.", hubProfileKicker:"ConCourse Profile", hubProfileTitle:"Build a trusted campus identity.", hubProfileIntro:"Manage your photo, personal details, social connections, and privacy choices.", avatarPreparing:"Preparing your photo securely…", avatarReady:"Your new photo is ready. Save your profile to apply it.", avatarInvalid:"That file could not be decoded. Try JPG, PNG, WebP, GIF, AVIF, HEIC, or HEIF.", avatarTooLarge:"The image must be smaller than 20 MB.", avatarSvgUnsupported:"For safety, SVG profile photos are not supported. Export a JPG, PNG, WebP, or another raster format.", avatarUploadFailed:"Your profile photo could not be saved. Try again.", avatarRemoved:"Your photo will be removed when you save.", wechatId:"WeChat ID", invalidWechatId:"Enter a valid WeChat ID of up to 64 characters.", wechatCopied:"WeChat ID copied.", copyWechat:"Copy WeChat ID",
+    topicSaved:"Saved", createPost:"Create post", createPoll:"Create a poll", poll:"Poll", removePoll:"Remove", pollQuestionPlaceholder:"Ask a question", pollOptionPlaceholder:"Poll option", addPollOption:"Add option", addMedia:"Photo / video", addPoll:"Poll", campusFeed:"Campus feed", savedPosts:"Saved posts", savedPostsPrivate:"Only visible to you", pollOptionLimit:"A poll can have up to 6 options.", pollIncomplete:"Add a poll question and at least two options.", pollDuplicateOptions:"Poll options must be different.", removeMedia:"Remove media", altTextPlaceholder:"Image description for accessibility", mediaPreparing:"Preparing media…", mediaLimit:"A post can include up to 4 media files.", videoTooLarge:"Videos must be smaller than 40 MB.", imageTooLarge:"Images must be smaller than 25 MB.", mediaInvalid:"That image could not be decoded. Try JPG, PNG, WebP, GIF, AVIF, HEIC, or HEIF.", svgUnsupported:"For safety, SVG is not supported. Export a raster image instead.", mediaReady:"Media ready.", mediaLoading:"Loading media…", mediaUnavailable:"Media is temporarily unavailable.", oneVote:"{count} vote", votesCount:"{count} votes", saved:"Saved", savePost:"Save", share:"Share", moreActions:"More actions", sharedPostMessage:"View this ConCourse campus post", postLinkCopied:"Link copied. A school account is required to open it.", shareFailed:"This post could not be shared.", postContentRequired:"Add text, media, or a poll before posting.", loadMore:"Load more", loadingMore:"Loading more…", pollOptionNumber:"Poll option {number}", mediaDescriptionNumber:"Description for media item {number}", videoDescriptionPlaceholder:"Video description for accessibility", postVideo:"Post video", videoInvalid:"Choose a valid MP4, WebM, or MOV video.",
     profileLoading:"Loading your profile…", profileSaved:"Profile saved.", profileSaveFailed:"Your profile could not be saved.", invalidUrl:"Use a complete https:// link.", invalidInstagramUrl:"Use an Instagram https:// link.", invalidWhatsappUrl:"Use a wa.me https:// link.", invalidLinkedinUrl:"Use a LinkedIn https:// link.", invalidWebsiteUrl:"Use a complete https:// link."
   };
   let value = TRANSLATIONS[currentLanguage]?.[key] ?? english[key] ?? key;
@@ -2788,7 +2814,7 @@ function renderAccountIdentity(){
 function renderFinalTimetableStatus(){
   const status = $("finalTimetableStatus");
   if(!status) return;
-  const hubAvailable = !!(currentUser && finalTimetable?.savedAt);
+  const hubAvailable = !!(currentUser && loadedUserId === currentUser.id && finalTimetable?.savedAt);
   if($("hubOpenBtn")) $("hubOpenBtn").hidden = !hubAvailable;
   if($("enterMemberHub")) $("enterMemberHub").hidden = !hubAvailable;
   if(!finalTimetable?.savedAt){
@@ -3206,8 +3232,10 @@ function applyUserState(state={}, profile={}){
 }
 
 async function saveUserState({silent=false}={}){
-  if(!authClient || !currentUser || loadingUserState) return false;
+  if(!authClient || !currentUser || loadedUserId !== currentUser.id || loadingUserState) return false;
   clearTimeout(accountSaveTimer);
+  accountSaveTimer = null;
+  const userId = currentUser.id;
   const button = $("saveAccountBtn");
   if(!silent) button.textContent = t("saving");
   const userState = collectUserState();
@@ -3215,11 +3243,12 @@ async function saveUserState({silent=false}={}){
   const { error } = await authClient
     .from("user_state")
     .upsert({
-      user_id: currentUser.id,
+      user_id: userId,
       state: userState,
       updated_at: new Date().toISOString()
     }, { onConflict: "user_id" });
 
+  if(currentUser?.id !== userId || loadedUserId !== userId) return false;
   if(error){
     button.textContent = t("saveFailed");
     setAuthMessage(error.message, true);
@@ -3233,7 +3262,8 @@ async function saveUserState({silent=false}={}){
     const { error: profileError } = await authClient
       .from("profiles")
       .update({ degree_level:degreeLevel, study_year:studyYear })
-      .eq("user_id", currentUser.id);
+      .eq("user_id", userId);
+    if(currentUser?.id !== userId || loadedUserId !== userId) return false;
     if(profileError){
       console.warn("Academic level was saved in planner state but could not be mirrored to the profile table:", profileError);
     } else {
@@ -3242,12 +3272,14 @@ async function saveUserState({silent=false}={}){
   }
 
   button.textContent = t("saved");
-  setTimeout(() => { if(currentUser) button.textContent = t("saveNow"); }, 1300);
+  setTimeout(() => {
+    if(currentUser?.id === userId && loadedUserId === userId) button.textContent = t("saveNow");
+  }, 1300);
   return true;
 }
 
 function queueUserStateSave(){
-  if(!currentUser || loadingUserState) return;
+  if(!currentUser || loadedUserId !== currentUser.id || loadingUserState) return;
   clearTimeout(accountSaveTimer);
   $("saveAccountBtn").textContent = t("unsaved");
   accountSaveTimer = setTimeout(() => saveUserState({silent:true}), 700);
@@ -3284,6 +3316,7 @@ async function loadUserState(){
     renderAccountIdentity();
     applyUserState(data?.state || {}, loadedAcademicProfile);
     loadedUserId = userId;
+    renderFinalTimetableStatus();
     $("saveAccountBtn").textContent = t("saveNow");
     if(!data) await saveUserState({silent:true});
   } catch(error){
@@ -3301,7 +3334,18 @@ function applySession(session){
   const previousUserId = currentUser?.id || null;
   currentUser = session?.user || null;
   const signedIn = !!currentUser;
-  if(previousUserId !== currentUser?.id) loadedAcademicProfile = {};
+  if(previousUserId !== currentUser?.id){
+    clearTimeout(accountSaveTimer);
+    accountSaveTimer = null;
+    appStarted = false;
+    loadedUserId = null;
+    loadedAcademicProfile = {};
+    applyUserState({}, {});
+    if($("saveFinalTimetable")){
+      $("saveFinalTimetable").disabled = false;
+      $("saveFinalTimetable").textContent = t("saveFinalTimetable");
+    }
+  }
 
   renderAccountIdentity();
   $("authOpenBtn").hidden = signedIn;
@@ -3327,7 +3371,6 @@ function applySession(session){
     loadedUserId = null;
     loadingUserId = null;
     loadedAcademicProfile = {};
-    if(previousUserId) applyUserState({}, {});
   }
   renderFinalTimetableStatus();
 }
@@ -3778,6 +3821,8 @@ $("saveFinalTimetable").addEventListener("click", async () => {
   }
   const snapshot = buildFinalTimetableSnapshot();
   if(!snapshot) return;
+  const userId = currentUser?.id;
+  if(!userId || loadedUserId !== userId) return;
   const previousFinalTimetable = finalTimetable;
   finalTimetable = snapshot;
   renderFinalTimetableStatus();
@@ -3785,12 +3830,14 @@ $("saveFinalTimetable").addEventListener("click", async () => {
   button.disabled = true;
   button.textContent = t("saving");
   const saved = await saveUserState({silent:true});
+  if(currentUser?.id !== userId || loadedUserId !== userId) return;
   if(!saved){
     finalTimetable = previousFinalTimetable;
     renderFinalTimetableStatus();
   } else {
     await window.ConCourseHub?.syncFinalSchedule(snapshot);
   }
+  if(currentUser?.id !== userId || loadedUserId !== userId) return;
   button.disabled = false;
   button.textContent = t("saveFinalTimetable");
 });
@@ -4202,6 +4249,6 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260717-3"></script>
+<script src="member-hub.js?v=20260717-6"></script>
 </body>
 </html>

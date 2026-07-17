@@ -892,6 +892,15 @@ create table if not exists public.community_posts (
   deleted_at timestamptz
 );
 
+-- Rich posts may be media-only or poll-only. The legacy publisher below still
+-- requires body text, while the v2 publisher enforces that at least one content
+-- type is present before an empty body is stored.
+alter table public.community_posts
+  drop constraint if exists community_posts_body_check;
+alter table public.community_posts
+  add constraint community_posts_body_check
+  check (char_length(trim(body)) between 0 and 1200);
+
 create table if not exists public.community_comments (
   id uuid primary key default gen_random_uuid(),
   post_id uuid not null references public.community_posts(id) on delete cascade,
@@ -903,6 +912,76 @@ create table if not exists public.community_comments (
 );
 
 create table if not exists public.post_likes (
+  post_id uuid not null references public.community_posts(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+
+-- Community media metadata is kept in Postgres while the binary object stays
+-- in the private community-media Storage bucket. Object names are deliberately
+-- deterministic so a published row can reference exactly one uploaded object.
+create table if not exists public.community_post_media (
+  id uuid primary key,
+  post_id uuid not null references public.community_posts(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  draft_id uuid not null,
+  storage_path text not null unique,
+  media_type text not null check (media_type in ('image', 'video')),
+  mime_type text not null check (
+    (media_type = 'image' and mime_type = 'image/webp')
+    or (media_type = 'video' and mime_type in ('video/mp4', 'video/webm', 'video/quicktime'))
+  ),
+  width integer check (width between 1 and 8192),
+  height integer check (height between 1 and 8192),
+  duration_seconds numeric check (duration_seconds > 0 and duration_seconds <= 3600),
+  alt_text text check (char_length(alt_text) <= 300),
+  position smallint not null check (position between 0 and 3),
+  created_at timestamptz not null default now(),
+  unique (post_id, position),
+  check (
+    storage_path = owner_id::text || '/posts/' || draft_id::text || '/' || id::text ||
+      case mime_type
+        when 'image/webp' then '.webp'
+        when 'video/mp4' then '.mp4'
+        when 'video/webm' then '.webm'
+        when 'video/quicktime' then '.mov'
+      end
+  ),
+  check (
+    (media_type = 'image' and duration_seconds is null)
+    or media_type = 'video'
+  )
+);
+
+create table if not exists public.community_polls (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null unique references public.community_posts(id) on delete cascade,
+  question text not null check (char_length(trim(question)) between 1 and 240),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.community_poll_options (
+  id uuid primary key default gen_random_uuid(),
+  poll_id uuid not null references public.community_polls(id) on delete cascade,
+  label text not null check (char_length(trim(label)) between 1 and 120),
+  position smallint not null check (position between 0 and 9),
+  created_at timestamptz not null default now(),
+  unique (poll_id, position),
+  unique (poll_id, id)
+);
+
+create table if not exists public.community_poll_votes (
+  poll_id uuid not null,
+  option_id uuid not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (poll_id, user_id),
+  foreign key (poll_id, option_id)
+    references public.community_poll_options(poll_id, id) on delete cascade
+);
+
+create table if not exists public.post_bookmarks (
   post_id uuid not null references public.community_posts(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default now(),
@@ -935,6 +1014,16 @@ create index if not exists community_comments_post_created_idx
   on public.community_comments (post_id, created_at) where deleted_at is null;
 create index if not exists community_comments_author_created_idx
   on public.community_comments (author_id, created_at desc);
+create index if not exists community_post_media_post_position_idx
+  on public.community_post_media (post_id, position);
+create index if not exists community_post_media_owner_created_idx
+  on public.community_post_media (owner_id, created_at desc);
+create index if not exists community_poll_votes_user_created_idx
+  on public.community_poll_votes (user_id, created_at desc);
+create index if not exists community_poll_votes_option_idx
+  on public.community_poll_votes (poll_id, option_id);
+create index if not exists post_bookmarks_user_created_idx
+  on public.post_bookmarks (user_id, created_at desc);
 create index if not exists user_blocks_blocked_idx
   on public.user_blocks (blocked_id, blocker_id);
 create index if not exists content_reports_status_created_idx
@@ -943,12 +1032,22 @@ create index if not exists content_reports_status_created_idx
 alter table public.community_posts enable row level security;
 alter table public.community_comments enable row level security;
 alter table public.post_likes enable row level security;
+alter table public.community_post_media enable row level security;
+alter table public.community_polls enable row level security;
+alter table public.community_poll_options enable row level security;
+alter table public.community_poll_votes enable row level security;
+alter table public.post_bookmarks enable row level security;
 alter table public.content_reports enable row level security;
 alter table public.user_blocks enable row level security;
 
 revoke all on table public.community_posts from anon, authenticated;
 revoke all on table public.community_comments from anon, authenticated;
 revoke all on table public.post_likes from anon, authenticated;
+revoke all on table public.community_post_media from anon, authenticated;
+revoke all on table public.community_polls from anon, authenticated;
+revoke all on table public.community_poll_options from anon, authenticated;
+revoke all on table public.community_poll_votes from anon, authenticated;
+revoke all on table public.post_bookmarks from anon, authenticated;
 revoke all on table public.content_reports from anon, authenticated;
 revoke all on table public.user_blocks from anon, authenticated;
 
@@ -1013,6 +1112,72 @@ $$;
 revoke all on function public.can_view_member_avatar(text, text) from public, anon, authenticated;
 grant execute on function public.can_view_member_avatar(text, text) to authenticated;
 
+-- Never let an ambiguous client response remove the avatar that a committed
+-- profile row already references. Unreferenced and superseded owner objects
+-- remain removable, including after membership verification is revoked.
+create or replace function public.can_delete_member_avatar(p_owner_id text, p_object_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    coalesce(p_owner_id = (select auth.uid())::text, false)
+    and not exists (
+      select 1
+      from public.member_profiles member
+      where member.user_id::text = p_owner_id
+        and member.avatar_path = p_object_path
+    );
+$$;
+
+revoke all on function public.can_delete_member_avatar(text, text) from public, anon, authenticated;
+grant execute on function public.can_delete_member_avatar(text, text) to authenticated;
+
+-- Serialize and bound avatar uploads per account. This prevents a modified
+-- browser client from filling the private bucket with unlimited abandoned
+-- versions while still leaving enough room for safe replacement retries.
+create or replace function public.can_upload_member_avatar(p_owner_id text, p_object_path text)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  object_count integer := 0;
+  total_bytes bigint := 0;
+begin
+  if caller is null
+     or p_owner_id is distinct from caller::text
+     or p_object_path not like caller::text || '/%' then
+    return false;
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:avatar:' || caller::text, 0)
+  );
+
+  select
+    count(*)::integer,
+    coalesce(sum(
+      case when coalesce(object.metadata->>'size', '') ~ '^[0-9]+$'
+        then (object.metadata->>'size')::bigint else 0 end
+    ), 0)::bigint
+  into object_count, total_bytes
+  from storage.objects object
+  where object.bucket_id = 'member-avatars'
+    and object.owner_id = caller::text;
+
+  return object_count < 8 and total_bytes < 16777216;
+end;
+$$;
+
+revoke all on function public.can_upload_member_avatar(text, text) from public, anon, authenticated;
+grant execute on function public.can_upload_member_avatar(text, text) to authenticated;
+
 drop policy if exists "Avatar owners can upload" on storage.objects;
 create policy "Avatar owners can upload"
 on storage.objects for insert to authenticated
@@ -1022,6 +1187,7 @@ with check (
     name = (select auth.uid())::text || '/avatar.webp'
     or name ~ ('^' || (select auth.uid())::text || '/avatar-[0-9a-f-]{36}\.webp$')
   )
+  and public.can_upload_member_avatar((storage.foldername(name))[1], name)
 );
 
 -- Owner SELECT access is also required for upload RETURNING metadata and for
@@ -1068,6 +1234,7 @@ using (
     name = (select auth.uid())::text || '/avatar.webp'
     or name ~ ('^' || (select auth.uid())::text || '/avatar-[0-9a-f-]{36}\.webp$')
   )
+  and public.can_delete_member_avatar(owner_id, name)
 );
 
 -- Schoolmates may fetch an avatar but cannot list the bucket. The object must
@@ -1088,6 +1255,221 @@ using (
     'object.get_authenticated'
   ])
   and public.can_view_member_avatar(owner_id, name)
+);
+
+-- Community attachments are private objects. The client generates a media UUID
+-- before upload and must use the exact path
+-- <user-id>/posts/<draft-id>/<media-id>.<extension>.
+-- A 40 MiB object limit supports compressed WebP images and short campus videos.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'community-media',
+  'community-media',
+  false,
+  41943040,
+  array['image/webp', 'video/mp4', 'video/webm', 'video/quicktime']::text[]
+)
+on conflict (id) do update set
+  name = excluded.name,
+  public = false,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+-- Only an exact media row on a currently visible post may be downloaded by a
+-- schoolmate. This helper returns an authorization decision without exposing
+-- school keys, block rows, or unpublished media metadata.
+create or replace function public.can_view_community_media(p_owner_id text, p_object_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    coalesce(p_owner_id = (select auth.uid())::text, false)
+    or exists (
+      select 1
+      from public.community_post_media media
+      join public.community_posts post
+        on post.id = media.post_id
+       and post.status = 'published'
+       and post.deleted_at is null
+      join public.school_memberships viewer
+        on viewer.user_id = (select auth.uid())
+       and viewer.school_key = post.school_key
+       and viewer.status = 'verified'
+      join public.school_memberships author_membership
+        on author_membership.user_id = post.author_id
+       and author_membership.school_key = post.school_key
+       and author_membership.status = 'verified'
+      where media.owner_id::text = p_owner_id
+        and media.storage_path = p_object_path
+        and media.owner_id = post.author_id
+        and not exists (
+          select 1
+          from public.user_blocks block
+          where (block.blocker_id = viewer.user_id and block.blocked_id = post.author_id)
+             or (block.blocker_id = post.author_id and block.blocked_id = viewer.user_id)
+        )
+    );
+$$;
+
+revoke all on function public.can_view_community_media(text, text) from public, anon, authenticated;
+grant execute on function public.can_view_community_media(text, text) to authenticated;
+
+-- Failed uploads have no metadata row and may be removed immediately. Once an
+-- object is referenced, deletion is held until its owner soft-deletes the post;
+-- this avoids a timed-out publish response accidentally breaking a live post.
+create or replace function public.can_delete_community_media(p_owner_id text, p_object_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    coalesce(p_owner_id = (select auth.uid())::text, false)
+    and not exists (
+      select 1
+      from public.community_post_media media
+      join public.community_posts post on post.id = media.post_id
+      where media.owner_id::text = p_owner_id
+        and media.storage_path = p_object_path
+        and post.author_id = media.owner_id
+        and post.deleted_at is null
+    );
+$$;
+
+revoke all on function public.can_delete_community_media(text, text) from public, anon, authenticated;
+grant execute on function public.can_delete_community_media(text, text) to authenticated;
+
+-- Uploads are serialized and bounded before any Storage cost is incurred.
+-- Besides verified membership, each owner is limited to 40 objects/hour,
+-- eight unpublished objects, 500 total objects, and 2 GiB of stored media.
+-- Owner read/delete policies intentionally do not use this helper, so a member
+-- whose verification is later revoked can still clean old files.
+drop policy if exists "Community media owners can upload" on storage.objects;
+drop function if exists public.can_upload_community_media();
+create or replace function public.can_upload_community_media(p_owner_id text, p_object_path text)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  object_count integer := 0;
+  recent_count integer := 0;
+  unreferenced_count integer := 0;
+  total_bytes bigint := 0;
+begin
+  if caller is null
+     or p_owner_id is distinct from caller::text
+     or p_object_path not like caller::text || '/posts/%'
+     or not exists (
+       select 1
+       from public.school_memberships membership
+       where membership.user_id = caller
+         and membership.status = 'verified'
+     ) then
+    return false;
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:community-media:' || caller::text, 0)
+  );
+
+  select
+    count(*)::integer,
+    count(*) filter (where object.created_at >= now() - interval '1 hour')::integer,
+    count(*) filter (
+      where not exists (
+        select 1
+        from public.community_post_media media
+        where media.owner_id = caller
+          and media.storage_path = object.name
+      )
+    )::integer,
+    coalesce(sum(
+      case when coalesce(object.metadata->>'size', '') ~ '^[0-9]+$'
+        then (object.metadata->>'size')::bigint else 0 end
+    ), 0)::bigint
+  into object_count, recent_count, unreferenced_count, total_bytes
+  from storage.objects object
+  where object.bucket_id = 'community-media'
+    and object.owner_id = caller::text;
+
+  return object_count < 500
+    and recent_count < 40
+    and unreferenced_count < 8
+    and total_bytes < 2147483648;
+end;
+$$;
+
+revoke all on function public.can_upload_community_media(text, text) from public, anon, authenticated;
+grant execute on function public.can_upload_community_media(text, text) to authenticated;
+
+drop policy if exists "Community media owners can upload" on storage.objects;
+create policy "Community media owners can upload"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'community-media'
+  and public.can_upload_community_media((storage.foldername(name))[1], name)
+  and name ~ (
+    '^' || (select auth.uid())::text ||
+    '/posts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+);
+
+-- Owner reads cover upload RETURNING metadata and safe cleanup of an upload
+-- whose publish transaction failed before creating a media reference.
+drop policy if exists "Community media owners can read" on storage.objects;
+create policy "Community media owners can read"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'community-media'
+  and owner_id = (select auth.uid())::text
+  and name ~ (
+    '^' || (select auth.uid())::text ||
+    '/posts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+);
+
+drop policy if exists "Community media owners can replace" on storage.objects;
+-- Published objects are immutable. Failed drafts are retried with a new media
+-- UUID, while the owner delete policy below can always remove the old object.
+
+-- Storage cleanup remains possible for an unreferenced upload and after a post
+-- is soft-deleted or its database children cascade away.
+drop policy if exists "Community media owners can delete" on storage.objects;
+create policy "Community media owners can delete"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'community-media'
+  and owner_id = (select auth.uid())::text
+  and name ~ (
+    '^' || (select auth.uid())::text ||
+    '/posts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+  and public.can_delete_community_media(owner_id, name)
+);
+
+drop policy if exists "Verified schoolmates can read community media" on storage.objects;
+create policy "Verified schoolmates can read community media"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'community-media'
+  and owner_id is not null
+  and name ~ (
+    '^' || owner_id ||
+    '/posts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+  and storage.allow_any_operation(array[
+    'object.get_authenticated_info',
+    'object.get_authenticated'
+  ])
+  and public.can_view_community_media(owner_id, name)
 );
 
 create or replace function public.publish_community_post(p_body text, p_tags text[] default '{}'::text[])
@@ -1122,10 +1504,215 @@ $$;
 revoke all on function public.publish_community_post(text, text[]) from public;
 grant execute on function public.publish_community_post(text, text[]) to authenticated;
 
--- The avatar_path column changes this RPC's composite return type, so an
--- explicit drop is required when upgrading an already-configured project.
+-- Rich publisher used by the upgraded community composer. The original
+-- two-argument function above remains available to older clients.
+create or replace function public.publish_community_post_v2(
+  p_body text,
+  p_tags text[],
+  p_media jsonb,
+  p_poll_question text,
+  p_poll_options text[]
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  new_id uuid;
+  new_poll_id uuid;
+  media_item jsonb;
+  media_id uuid;
+  media_draft_id uuid;
+  post_draft_id uuid;
+  media_path text;
+  media_kind text;
+  media_mime text;
+  media_alt text;
+  media_position smallint;
+  expected_suffix text;
+  seen_media_ids uuid[] := '{}'::uuid[];
+  seen_positions smallint[] := '{}'::smallint[];
+  option_item record;
+  normalized_poll_options text[] := coalesce(p_poll_options, '{}'::text[]);
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_body, ''))) > 1200 then
+    raise exception 'Post must contain no more than 1200 characters';
+  end if;
+  if cardinality(coalesce(p_tags, '{}'::text[])) > 6
+     or exists (
+       select 1
+       from unnest(coalesce(p_tags, '{}'::text[])) tag
+       where tag is null or char_length(trim(tag)) not between 1 and 30
+     ) then
+    raise exception 'Use up to 6 tags of 30 characters each';
+  end if;
+  if (select count(*) from public.community_posts where author_id = caller and created_at > now() - interval '1 minute') >= 3 then
+    raise exception 'Please wait before publishing another post';
+  end if;
+
+  if p_media is not null and jsonb_typeof(p_media) <> 'array' then
+    raise exception 'Media must be a JSON array';
+  end if;
+  if jsonb_array_length(coalesce(p_media, '[]'::jsonb)) > 4 then
+    raise exception 'A post can contain up to 4 media items';
+  end if;
+  if char_length(trim(coalesce(p_body, ''))) = 0
+     and jsonb_array_length(coalesce(p_media, '[]'::jsonb)) = 0
+     and char_length(trim(coalesce(p_poll_question, ''))) = 0 then
+    raise exception 'Add text, media, or a poll before publishing';
+  end if;
+
+  if char_length(trim(coalesce(p_poll_question, ''))) = 0 then
+    if cardinality(normalized_poll_options) > 0 then
+      raise exception 'A poll question is required when options are supplied';
+    end if;
+  else
+    if char_length(trim(p_poll_question)) > 240 then
+      raise exception 'Poll question must contain no more than 240 characters';
+    end if;
+    if cardinality(normalized_poll_options) not between 2 and 10 then
+      raise exception 'A poll must contain 2 to 10 options';
+    end if;
+    if exists (
+      select 1
+      from unnest(normalized_poll_options) option_label
+      where option_label is null or char_length(trim(option_label)) not between 1 and 120
+    ) then
+      raise exception 'Poll options must contain 1 to 120 characters';
+    end if;
+    if (
+      select count(*) <> count(distinct lower(trim(option_label)))
+      from unnest(normalized_poll_options) option_label
+    ) then
+      raise exception 'Poll options must be unique';
+    end if;
+  end if;
+
+  insert into public.community_posts (school_key, author_id, body, tags)
+  values (caller_school, caller, trim(coalesce(p_body, '')), coalesce(p_tags, '{}'::text[]))
+  returning id into new_id;
+
+  for media_item in
+    select media_rows.value
+    from jsonb_array_elements(coalesce(p_media, '[]'::jsonb)) as media_rows(value)
+  loop
+    if jsonb_typeof(media_item) <> 'object' then
+      raise exception 'Each media item must be a JSON object';
+    end if;
+
+    media_path := nullif(trim(media_item ->> 'storage_path'), '');
+    media_kind := lower(nullif(trim(media_item ->> 'media_type'), ''));
+    media_mime := lower(nullif(trim(media_item ->> 'mime_type'), ''));
+    media_alt := nullif(trim(media_item ->> 'alt_text'), '');
+
+    begin
+      media_position := (media_item ->> 'position')::smallint;
+    exception when others then
+      raise exception 'Media position must be an integer from 0 to 3';
+    end;
+
+    if media_path is null or media_path !~ (
+      '^' || caller::text ||
+      '/posts/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+    ) then
+      raise exception 'Media path must use the signed-in user, draft, and media UUIDs';
+    end if;
+    if media_position is null or media_position not between 0 and 3 then
+      raise exception 'Media position must be an integer from 0 to 3';
+    end if;
+    if media_position = any(seen_positions) then
+      raise exception 'Media positions must be unique';
+    end if;
+    seen_positions := array_append(seen_positions, media_position);
+
+    if media_kind = 'image' and media_mime = 'image/webp' then
+      expected_suffix := '.webp';
+    elsif media_kind = 'video' and media_mime = 'video/mp4' then
+      expected_suffix := '.mp4';
+    elsif media_kind = 'video' and media_mime = 'video/webm' then
+      expected_suffix := '.webm';
+    elsif media_kind = 'video' and media_mime = 'video/quicktime' then
+      expected_suffix := '.mov';
+    else
+      raise exception 'Unsupported community media type';
+    end if;
+    if media_alt is not null and char_length(media_alt) > 300 then
+      raise exception 'Media description must contain no more than 300 characters';
+    end if;
+
+    begin
+      media_draft_id := split_part(media_path, '/', 3)::uuid;
+      media_id := split_part(split_part(media_path, '/', 4), '.', 1)::uuid;
+    exception when others then
+      raise exception 'Media path contains an invalid draft or media UUID';
+    end;
+    if post_draft_id is null then
+      post_draft_id := media_draft_id;
+    elsif post_draft_id <> media_draft_id then
+      raise exception 'All media items must belong to the same post draft';
+    end if;
+    if media_id = any(seen_media_ids) then
+      raise exception 'Media IDs must be unique';
+    end if;
+    seen_media_ids := array_append(seen_media_ids, media_id);
+    if media_path <> caller::text || '/posts/' || media_draft_id::text || '/' || media_id::text || expected_suffix then
+      raise exception 'Media path extension does not match its MIME type';
+    end if;
+    if not exists (
+      select 1
+      from storage.objects object
+      where object.bucket_id = 'community-media'
+        and object.name = media_path
+        and object.owner_id = caller::text
+    ) then
+      raise exception 'Upload each media object before publishing the post';
+    end if;
+
+    insert into public.community_post_media (
+      id, post_id, owner_id, draft_id, storage_path, media_type, mime_type, alt_text, position
+    )
+    values (
+      media_id, new_id, caller, media_draft_id, media_path, media_kind, media_mime, media_alt, media_position
+    );
+  end loop;
+
+  if char_length(trim(coalesce(p_poll_question, ''))) > 0 then
+    insert into public.community_polls (post_id, question)
+    values (new_id, trim(p_poll_question))
+    returning id into new_poll_id;
+
+    for option_item in
+      select trim(option_label) as label, (ordinality - 1)::smallint as position
+      from unnest(normalized_poll_options) with ordinality as option_rows(option_label, ordinality)
+    loop
+      insert into public.community_poll_options (poll_id, label, position)
+      values (new_poll_id, option_item.label, option_item.position);
+    end loop;
+  end if;
+
+  return new_id;
+end;
+$$;
+
+revoke all on function public.publish_community_post_v2(text, text[], jsonb, text, text[]) from public, anon, authenticated;
+grant execute on function public.publish_community_post_v2(text, text[], jsonb, text, text[]) to authenticated;
+
+-- Media, poll, bookmark, avatar, saved-feed, and deep-link fields change this
+-- RPC's contract. Drop both the legacy and current identities so the setup is
+-- safe to rerun after either database version.
 drop function if exists public.get_school_feed(integer, integer);
-create or replace function public.get_school_feed(p_limit integer default 30, p_offset integer default 0)
+drop function if exists public.get_school_feed(integer, integer, boolean, uuid);
+create or replace function public.get_school_feed(
+  p_limit integer default 30,
+  p_offset integer default 0,
+  p_bookmarked_only boolean default false,
+  p_post_id uuid default null
+)
 returns table (
   post_id uuid,
   author_id uuid,
@@ -1136,10 +1723,13 @@ returns table (
   major_of_study text,
   body text,
   tags text[],
+  media jsonb,
+  poll jsonb,
   created_at timestamptz,
   like_count bigint,
   comment_count bigint,
-  liked_by_me boolean
+  liked_by_me boolean,
+  bookmarked_by_me boolean
 )
 language plpgsql
 stable
@@ -1164,6 +1754,63 @@ begin
     case when member.profile_visibility = 'school' then profile.major_of_study else null end,
     post.body,
     post.tags,
+    coalesce(
+      (
+        select jsonb_agg(
+          jsonb_build_object(
+            'storage_path', attachment.storage_path,
+            'media_type', attachment.media_type,
+            'mime_type', attachment.mime_type,
+            'alt_text', attachment.alt_text,
+            'position', attachment.position
+          )
+          order by attachment.position
+        )
+        from public.community_post_media attachment
+        where attachment.post_id = post.id
+          and attachment.owner_id = post.author_id
+      ),
+      '[]'::jsonb
+    ),
+    (
+      select jsonb_build_object(
+        'poll_id', community_poll.id,
+        'question', community_poll.question,
+        'total_votes', (
+          select count(*)
+          from public.community_poll_votes poll_vote
+          where poll_vote.poll_id = community_poll.id
+        ),
+        'selected_option_id', (
+          select poll_vote.option_id
+          from public.community_poll_votes poll_vote
+          where poll_vote.poll_id = community_poll.id
+            and poll_vote.user_id = caller
+        ),
+        'options', coalesce(
+          (
+            select jsonb_agg(
+              jsonb_build_object(
+                'option_id', poll_option.id,
+                'label', poll_option.label,
+                'vote_count', (
+                  select count(*)
+                  from public.community_poll_votes option_vote
+                  where option_vote.poll_id = community_poll.id
+                    and option_vote.option_id = poll_option.id
+                )
+              )
+              order by poll_option.position
+            )
+            from public.community_poll_options poll_option
+            where poll_option.poll_id = community_poll.id
+          ),
+          '[]'::jsonb
+        )
+      )
+      from public.community_polls community_poll
+      where community_poll.post_id = post.id
+    ),
     post.created_at,
     (select count(*) from public.post_likes likes where likes.post_id = post.id),
     (
@@ -1182,7 +1829,8 @@ begin
              or (comment_block.blocker_id = comments.author_id and comment_block.blocked_id = caller)
         )
     ),
-    exists (select 1 from public.post_likes mine where mine.post_id = post.id and mine.user_id = caller)
+    exists (select 1 from public.post_likes mine where mine.post_id = post.id and mine.user_id = caller),
+    exists (select 1 from public.post_bookmarks saved where saved.post_id = post.id and saved.user_id = caller)
   from public.community_posts post
   join public.profiles profile on profile.user_id = post.author_id
   join public.school_memberships author_membership
@@ -1193,6 +1841,16 @@ begin
   where post.school_key = caller_school
     and post.status = 'published'
     and post.deleted_at is null
+    and (p_post_id is null or post.id = p_post_id)
+    and (
+      not coalesce(p_bookmarked_only, false)
+      or exists (
+        select 1
+        from public.post_bookmarks saved_filter
+        where saved_filter.post_id = post.id
+          and saved_filter.user_id = caller
+      )
+    )
     and not exists (
       select 1 from public.user_blocks block
       where (block.blocker_id = caller and block.blocked_id = post.author_id)
@@ -1204,8 +1862,8 @@ begin
 end;
 $$;
 
-revoke all on function public.get_school_feed(integer, integer) from public;
-grant execute on function public.get_school_feed(integer, integer) to authenticated;
+revoke all on function public.get_school_feed(integer, integer, boolean, uuid) from public, anon, authenticated;
+grant execute on function public.get_school_feed(integer, integer, boolean, uuid) to authenticated;
 
 -- avatar_path and the opt-in WeChat value extend the RPC return type.
 drop function if exists public.get_schoolmate_profile(uuid);
@@ -1418,6 +2076,100 @@ $$;
 
 revoke all on function public.toggle_post_like(uuid) from public;
 grant execute on function public.toggle_post_like(uuid) to authenticated;
+
+create or replace function public.toggle_post_bookmark(p_post_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  post_author uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+
+  select post.author_id into post_author
+  from public.community_posts post
+  join public.school_memberships author_membership
+    on author_membership.user_id = post.author_id
+   and author_membership.school_key = caller_school
+   and author_membership.status = 'verified'
+  where post.id = p_post_id
+    and post.school_key = caller_school
+    and post.status = 'published'
+    and post.deleted_at is null;
+  if post_author is null then raise exception 'Post is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = post_author)
+       or (block.blocker_id = post_author and block.blocked_id = caller)
+  ) then raise exception 'Post is unavailable'; end if;
+
+  delete from public.post_bookmarks
+  where post_id = p_post_id and user_id = caller;
+  if found then return false; end if;
+
+  insert into public.post_bookmarks (post_id, user_id)
+  values (p_post_id, caller);
+  return true;
+end;
+$$;
+
+revoke all on function public.toggle_post_bookmark(uuid) from public, anon, authenticated;
+grant execute on function public.toggle_post_bookmark(uuid) to authenticated;
+
+create or replace function public.vote_community_poll(p_poll_id uuid, p_option_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  post_author uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if p_poll_id is null or p_option_id is null then raise exception 'Choose a poll option'; end if;
+
+  select post.author_id into post_author
+  from public.community_polls poll
+  join public.community_posts post on post.id = poll.post_id
+  join public.school_memberships author_membership
+    on author_membership.user_id = post.author_id
+   and author_membership.school_key = caller_school
+   and author_membership.status = 'verified'
+  where poll.id = p_poll_id
+    and post.school_key = caller_school
+    and post.status = 'published'
+    and post.deleted_at is null;
+  if post_author is null then raise exception 'Poll is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = post_author)
+       or (block.blocker_id = post_author and block.blocked_id = caller)
+  ) then raise exception 'Poll is unavailable'; end if;
+  if not exists (
+    select 1
+    from public.community_poll_options poll_option
+    where poll_option.poll_id = p_poll_id and poll_option.id = p_option_id
+  ) then raise exception 'Poll option is unavailable'; end if;
+
+  insert into public.community_poll_votes (poll_id, option_id, user_id)
+  values (p_poll_id, p_option_id, caller)
+  on conflict (poll_id, user_id) do update set
+    option_id = excluded.option_id,
+    created_at = now();
+  return true;
+end;
+$$;
+
+revoke all on function public.vote_community_poll(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.vote_community_poll(uuid, uuid) to authenticated;
 
 create or replace function public.get_post_comments(p_post_id uuid)
 returns table (
