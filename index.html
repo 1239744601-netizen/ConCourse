@@ -1711,7 +1711,7 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css" />
+<link rel="stylesheet" href="member-hub.css?v=20260717-2" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2266,8 +2266,8 @@
                   <small id="googleConnectionDetail" data-provider-detail>Authorize a Google account to show an account-connection badge.</small>
                 </div>
                 <div class="hub-provider-actions">
-                  <button type="button" class="btn-primary hub-connect-button" data-provider="google" data-social-action="connect" aria-describedby="googleConnectionDetail socialConnectionDisclosure socialConnectionStatus">Connect Google</button>
-                  <button type="button" class="btn-ghost hub-connect-button" data-provider="google" data-social-action="disconnect" aria-describedby="googleConnectionDetail socialConnectionDisclosure socialConnectionStatus" hidden>Disconnect</button>
+                  <button type="button" class="btn-primary hub-connect-button" data-provider="google" data-social-action="connect" aria-describedby="googleConnectionDetail socialConnectionDisclosure socialConnectionStatus" disabled>Connect Google</button>
+                  <button type="button" class="btn-ghost hub-connect-button" data-provider="google" data-social-action="disconnect" aria-describedby="googleConnectionDetail socialConnectionDisclosure socialConnectionStatus" hidden disabled>Disconnect</button>
                 </div>
               </div>
               <div class="hub-provider-connection provider-github" data-social-provider="github" aria-busy="false">
@@ -2278,8 +2278,8 @@
                   <small id="githubConnectionDetail" data-provider-detail>Authorize a GitHub account to show an account-connection badge.</small>
                 </div>
                 <div class="hub-provider-actions">
-                  <button type="button" class="btn-primary hub-connect-button" data-provider="github" data-social-action="connect" aria-describedby="githubConnectionDetail socialConnectionDisclosure socialConnectionStatus">Connect GitHub</button>
-                  <button type="button" class="btn-ghost hub-connect-button" data-provider="github" data-social-action="disconnect" aria-describedby="githubConnectionDetail socialConnectionDisclosure socialConnectionStatus" hidden>Disconnect</button>
+                  <button type="button" class="btn-primary hub-connect-button" data-provider="github" data-social-action="connect" aria-describedby="githubConnectionDetail socialConnectionDisclosure socialConnectionStatus" disabled>Connect GitHub</button>
+                  <button type="button" class="btn-ghost hub-connect-button" data-provider="github" data-social-action="disconnect" aria-describedby="githubConnectionDetail socialConnectionDisclosure socialConnectionStatus" hidden disabled>Disconnect</button>
                 </div>
               </div>
               <div class="hub-provider-connection provider-linkedin" data-social-provider="linkedin_oidc" aria-busy="false">
@@ -2290,8 +2290,8 @@
                   <small id="linkedinConnectionDetail" data-provider-detail>Authorize a LinkedIn account to show an account-connection badge.</small>
                 </div>
                 <div class="hub-provider-actions">
-                  <button type="button" class="btn-primary hub-connect-button" data-provider="linkedin_oidc" data-social-action="connect" aria-describedby="linkedinConnectionDetail socialConnectionDisclosure socialConnectionStatus">Connect LinkedIn</button>
-                  <button type="button" class="btn-ghost hub-connect-button" data-provider="linkedin_oidc" data-social-action="disconnect" aria-describedby="linkedinConnectionDetail socialConnectionDisclosure socialConnectionStatus" hidden>Disconnect</button>
+                  <button type="button" class="btn-primary hub-connect-button" data-provider="linkedin_oidc" data-social-action="connect" aria-describedby="linkedinConnectionDetail socialConnectionDisclosure socialConnectionStatus" disabled>Connect LinkedIn</button>
+                  <button type="button" class="btn-ghost hub-connect-button" data-provider="linkedin_oidc" data-social-action="disconnect" aria-describedby="linkedinConnectionDetail socialConnectionDisclosure socialConnectionStatus" hidden disabled>Disconnect</button>
                 </div>
               </div>
             </div>
@@ -4134,6 +4134,6 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js"></script>
+<script src="member-hub.js?v=20260717-2"></script>
 </body>
 </html>

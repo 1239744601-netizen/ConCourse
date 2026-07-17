@@ -524,6 +524,15 @@ body.hub-active {
 .hub-provider-copy small { display: block; margin-top: 4px; color: #626975; font-size: 11px; line-height: 1.45; }
 .hub-provider-actions { position: relative; z-index: 1; display: flex; justify-content: flex-end; gap: 8px; }
 .hub-connect-button { min-height: 42px; padding: 9px 13px; font-size: 10.5px; white-space: nowrap; }
+.hub-connect-button:disabled {
+  cursor: wait;
+  opacity: .52;
+  filter: saturate(.45);
+  box-shadow: none;
+  transform: none;
+}
+.hub-connect-button:disabled:hover,
+.hub-connect-button:disabled:active { filter: saturate(.45); transform: none; box-shadow: none; }
 .hub-provider-disclosure { margin: 0 2px 12px !important; color: #666d78 !important; font-size: 11px !important; line-height: 1.55 !important; }
 #socialConnectionStatus { min-height: 0; margin: 0 2px 10px; }
 .hub-social-list { display: grid; gap: 10px; }

@@ -611,8 +611,20 @@
 
   async function connectSocialProvider(provider){
     const config = SOCIAL_PROVIDERS[provider];
-    if(!config || !authClient || !currentUser || hubState.socialConnectionLoading || hubState.socialIdentities.has(provider)) return;
-    if(hubState.profileDirty && !(await saveMemberProfile())) return;
+    if(!config) return;
+    if(!authClient || !currentUser){
+      setSocialConnectionStatus("providerConnectionFailed", {provider:config.label}, "error");
+      return;
+    }
+    if(hubState.socialConnectionLoading || hubState.socialIdentities.has(provider)) return;
+    if(typeof authClient.auth?.linkIdentity !== "function"){
+      setSocialConnectionStatus("providerSetupRequired", {provider:config.label}, "error");
+      return;
+    }
+    if(hubState.profileDirty && !(await saveMemberProfile())){
+      setSocialConnectionStatus("providerConnectionFailed", {provider:config.label}, "error");
+      return;
+    }
     const context = requestContext();
     const request = ++hubState.socialConnectionRequest;
     hubState.socialConnectionLoading = true;
@@ -644,7 +656,33 @@
       renderSocialConnections();
       const errorStatus = socialConnectionError(response.error, provider);
       setSocialConnectionStatus(errorStatus.key, errorStatus.variables, "error");
+      return;
     }
+    const oauthUrl = response?.data?.url;
+    if(oauthUrl){
+      window.location.assign(oauthUrl);
+      return;
+    }
+    clearSocialReturnIntent({provider, userId:context.userId, request});
+    hubState.socialConnectionLoading = false;
+    hubState.socialConnectionProvider = null;
+    renderSocialConnections();
+    setSocialConnectionStatus("providerConnectionFailed", {provider:config.label}, "error");
+  }
+
+  function handleUnexpectedSocialActionError(provider, action, error){
+    const config = SOCIAL_PROVIDERS[provider];
+    hubState.socialConnectionLoading = false;
+    hubState.socialConnectionProvider = null;
+    if(action === "connect") clearSocialReturnIntent();
+    renderSocialConnections();
+    if(action === "disconnect"){
+      setSocialConnectionStatus("providerDisconnectFailed", {provider:config?.label || t("socialAccount")}, "error");
+    } else {
+      const status = socialConnectionError(error, provider);
+      setSocialConnectionStatus(status.key, status.variables, "error");
+    }
+    console.error(`Unexpected ${action} account error:`, error);
   }
 
   async function disconnectSocialProvider(provider){
@@ -1348,8 +1386,11 @@
     if(!button || !$("providerConnections").contains(button)) return;
     const provider = button.dataset.provider;
     if(!SOCIAL_PROVIDERS[provider]) return;
-    if(button.dataset.socialAction === "connect") connectSocialProvider(provider);
-    else if(button.dataset.socialAction === "disconnect") disconnectSocialProvider(provider);
+    if(button.dataset.socialAction === "connect"){
+      void connectSocialProvider(provider).catch(error => handleUnexpectedSocialActionError(provider, "connect", error));
+    } else if(button.dataset.socialAction === "disconnect"){
+      void disconnectSocialProvider(provider).catch(error => handleUnexpectedSocialActionError(provider, "disconnect", error));
+    }
   });
   $("publishCommunityPost")?.addEventListener("click", publishCommunityPost);
   $("refreshCommunityFeed")?.addEventListener("click", () => loadCommunityFeed({force:true}));
