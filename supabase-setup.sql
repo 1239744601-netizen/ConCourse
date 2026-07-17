@@ -1090,6 +1090,121 @@ $$;
 revoke all on function public.get_schoolmate_profile(uuid) from public;
 grant execute on function public.get_schoolmate_profile(uuid) to authenticated;
 
+-- Provider connection badges are computed directly from Supabase Auth's
+-- trusted identity records. The browser cannot create or edit these records,
+-- and this RPC never reveals a provider subject, email address, or token.
+create or replace function public.get_schoolmate_connection_badges(p_user_id uuid)
+returns table (
+  linkedin_connected boolean
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller is null or caller_school is null then
+    raise exception 'Verified school membership required';
+  end if;
+  if not exists (
+    select 1
+    from public.school_memberships membership
+    where membership.user_id = p_user_id
+      and membership.school_key = caller_school
+      and membership.status = 'verified'
+  ) then
+    raise exception 'Campus profile is unavailable';
+  end if;
+  if exists (
+    select 1
+    from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = p_user_id)
+       or (block.blocker_id = p_user_id and block.blocked_id = caller)
+  ) then
+    raise exception 'Campus profile is unavailable';
+  end if;
+  return query
+  select
+    exists (
+      select 1
+      from auth.identities linked_identity
+      where linked_identity.user_id = p_user_id
+        and linked_identity.provider = 'linkedin_oidc'
+    )
+  from public.profiles profile
+  join public.member_profiles member on member.user_id = profile.user_id
+  where profile.user_id = p_user_id
+    and (p_user_id = caller or member.profile_visibility = 'school');
+end;
+$$;
+
+revoke all on function public.get_schoolmate_connection_badges(uuid) from public, anon, authenticated;
+grant execute on function public.get_schoolmate_connection_badges(uuid) to authenticated;
+
+-- New clients use an allowlisted provider array so additional authenticated
+-- connections do not require a new database column or a changing return type.
+-- This intentionally returns only provider names, never provider subjects,
+-- email addresses, identity metadata, access tokens, or timestamps.
+create or replace function public.get_schoolmate_connected_providers(p_user_id uuid)
+returns table (
+  connected_providers text[]
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller is null or caller_school is null then
+    raise exception 'Verified school membership required';
+  end if;
+  if not exists (
+    select 1
+    from public.school_memberships membership
+    where membership.user_id = p_user_id
+      and membership.school_key = caller_school
+      and membership.status = 'verified'
+  ) then
+    raise exception 'Campus profile is unavailable';
+  end if;
+  if exists (
+    select 1
+    from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = p_user_id)
+       or (block.blocker_id = p_user_id and block.blocked_id = caller)
+  ) then
+    raise exception 'Campus profile is unavailable';
+  end if;
+
+  return query
+  select coalesce(
+    array_agg(distinct linked_identity.provider::text order by linked_identity.provider::text)
+      filter (where linked_identity.provider is not null),
+    '{}'::text[]
+  )
+  from public.profiles profile
+  join public.member_profiles member on member.user_id = profile.user_id
+  left join auth.identities linked_identity
+    on linked_identity.user_id = profile.user_id
+   and linked_identity.provider in ('google', 'github', 'linkedin_oidc')
+  where profile.user_id = p_user_id
+    and (p_user_id = caller or member.profile_visibility = 'school')
+  group by profile.user_id;
+end;
+$$;
+
+revoke all on function public.get_schoolmate_connected_providers(uuid) from public, anon, authenticated;
+grant execute on function public.get_schoolmate_connected_providers(uuid) to authenticated;
+
+-- Website owners can audit connected providers in Authentication > Users in
+-- the Supabase dashboard. Keep auth.identities inaccessible to site clients.
+
 create or replace function public.toggle_post_like(p_post_id uuid)
 returns boolean
 language plpgsql

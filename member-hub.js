@@ -9,6 +9,7 @@
     feedRequest: 0,
     profileRequest: 0,
     profilePreviewRequest: 0,
+    socialConnectionRequest: 0,
     activeView: "overview",
     membership: null,
     membershipError: "",
@@ -19,6 +20,12 @@
     profileDirty: false,
     profilePreview: null,
     profilePreviewReturnFocus: null,
+    socialConnectionUserId: null,
+    socialIdentities: new Map(),
+    socialConnectionLoading: false,
+    socialConnectionProvider: null,
+    socialReturnHandled: false,
+    socialStatus: null,
     actionResolver: null,
     actionReturnFocus: null,
     actionInputRequired: false,
@@ -36,6 +43,14 @@
     loadingFeed: false,
     loadingConversations: false
   };
+
+  const SOCIAL_PROVIDERS = Object.freeze({
+    google: Object.freeze({provider:"google", label:"Google", mark:"G"}),
+    github: Object.freeze({provider:"github", label:"GitHub", mark:"GH"}),
+    linkedin_oidc: Object.freeze({provider:"linkedin_oidc", label:"LinkedIn", mark:"in"})
+  });
+  const SOCIAL_RETURN_KEY = "concourse_social_connection_return";
+  const SOCIAL_OAUTH_RETURN_URL = "https://1239744601-netizen.github.io/ConCourse/";
 
   const node = (tag, className="", content="") => {
     const element = document.createElement(tag);
@@ -72,6 +87,25 @@
     return t("featureUnavailable");
   };
 
+  const socialConnectionError = (error, provider) => {
+    const message = String(error?.message || "");
+    const label = SOCIAL_PROVIDERS[provider]?.label || t("socialAccount");
+    if(/manual.*link|identity.*link.*disabled|provider.*(disabled|not enabled)|unsupported provider|provider.*not found/i.test(message)){
+      return {key:"providerSetupRequired", variables:{provider:label}};
+    }
+    return {key:"providerConnectionFailed", variables:{provider:label}};
+  };
+
+  const renderSocialConnectionStatus = () => {
+    const status = hubState.socialStatus;
+    setStatus("socialConnectionStatus", status ? t(status.key, status.variables) : "", status?.kind || "");
+  };
+
+  const setSocialConnectionStatus = (key="", variables={}, kind="") => {
+    hubState.socialStatus = key ? {key, variables, kind} : null;
+    renderSocialConnectionStatus();
+  };
+
   const hubAccessAllowed = () => !!(currentUser && finalTimetable?.savedAt);
   const requestContext = () => ({generation:hubState.generation, userId:currentUser?.id || null});
   const contextIsCurrent = context => !!(
@@ -88,6 +122,7 @@
     hubState.feedRequest += 1;
     hubState.profileRequest += 1;
     hubState.profilePreviewRequest += 1;
+    hubState.socialConnectionRequest += 1;
     hubState.membership = null;
     hubState.membershipError = "";
     hubState.profile = null;
@@ -97,6 +132,12 @@
     hubState.profileDirty = false;
     hubState.profilePreview = null;
     hubState.profilePreviewReturnFocus = null;
+    hubState.socialConnectionUserId = null;
+    hubState.socialIdentities = new Map();
+    hubState.socialConnectionLoading = false;
+    hubState.socialConnectionProvider = null;
+    hubState.socialReturnHandled = false;
+    hubState.socialStatus = null;
     hubState.insightRows = [];
     hubState.insightsLoaded = false;
     hubState.feed = [];
@@ -122,7 +163,12 @@
     $("schoolmateProfileModal").hidden = true;
     $("schoolmateProfileLinks").replaceChildren();
     $("schoolmateProfileInterests").replaceChildren();
+    $("schoolmateProfileConnections").replaceChildren();
+    $("schoolmateProfileLinksSection").hidden = true;
+    $("schoolmateProfileConnectionsSection").hidden = true;
     ["communityComposerStatus", "chatStatus", "memberProfileStatus", "courseInsightStatus"].forEach(id => setStatus(id, ""));
+    setSocialConnectionStatus();
+    renderSocialConnections();
     $("chatHeading").textContent = t("selectConversation");
     $("chatSubheading").textContent = "";
     $("chatMessageInput").disabled = true;
@@ -175,7 +221,8 @@
       profile.instagram_url,
       profile.whatsapp_url,
       profile.linkedin_url,
-      profile.website_url
+      profile.website_url,
+      hubState.socialIdentities.size > 0
     ];
     return Math.round(checks.filter(Boolean).length / checks.length * 100);
   }
@@ -279,7 +326,7 @@
     } else if(view === "messages"){
       await loadConversations();
     } else if(view === "profile"){
-      await loadMemberProfile();
+      await Promise.all([loadMemberProfile(), loadSocialConnections({force:true})]);
     }
   }
 
@@ -402,6 +449,240 @@
     return url.toString();
   }
 
+  function renderSocialConnections(){
+    Object.values(SOCIAL_PROVIDERS).forEach(config => {
+      const card = document.querySelector(`[data-social-provider="${config.provider}"]`);
+      if(!card) return;
+      const identity = hubState.socialIdentities.get(config.provider) || null;
+      const connected = !!identity;
+      const loading = hubState.socialConnectionLoading
+        && (!hubState.socialConnectionProvider || hubState.socialConnectionProvider === config.provider);
+      const state = card.querySelector("[data-provider-state]");
+      const detail = card.querySelector("[data-provider-detail]");
+      const connectButton = card.querySelector('[data-social-action="connect"]');
+      const disconnectButton = card.querySelector('[data-social-action="disconnect"]');
+      card.classList.toggle("connected", connected);
+      card.setAttribute("aria-busy", loading ? "true" : "false");
+      if(state){
+        state.textContent = loading
+          ? t("providerConnectionLoading", {provider:config.label})
+          : t(connected ? "providerConnected" : "providerNotConnected", {provider:config.label});
+      }
+      const connectedAt = identity?.created_at || identity?.updated_at;
+      if(detail){
+        detail.textContent = connected
+          ? (connectedAt
+              ? t("providerConnectedDetail", {provider:config.label, date:formatDate(connectedAt)})
+              : t("providerConnectedHelp", {provider:config.label}))
+          : t("providerConnectionHelp", {provider:config.label});
+      }
+      if(connectButton){
+        connectButton.textContent = t("connectProvider", {provider:config.label});
+        connectButton.hidden = connected;
+        connectButton.disabled = hubState.socialConnectionLoading || !currentUser;
+      }
+      if(disconnectButton){
+        disconnectButton.textContent = t("disconnect");
+        disconnectButton.hidden = !connected;
+        disconnectButton.disabled = hubState.socialConnectionLoading || !currentUser;
+      }
+    });
+    renderSocialConnectionStatus();
+  }
+
+  function clearSocialReturnIntent(expected=null){
+    try {
+      if(expected){
+        const current = JSON.parse(sessionStorage.getItem(SOCIAL_RETURN_KEY) || "null");
+        if(
+          current?.userId !== expected.userId
+          || current?.request !== expected.request
+          || (expected.provider && current?.provider !== expected.provider)
+        ) return false;
+      }
+      sessionStorage.removeItem(SOCIAL_RETURN_KEY);
+      return true;
+    } catch(_error){
+      if(!expected){
+        try { sessionStorage.removeItem(SOCIAL_RETURN_KEY); } catch(_nestedError){}
+      }
+      return false;
+    }
+  }
+
+  function readSocialReturnIntent(){
+    try {
+      const raw = sessionStorage.getItem(SOCIAL_RETURN_KEY);
+      if(!raw) return null;
+      const intent = JSON.parse(raw);
+      const age = Date.now() - Number(intent?.createdAt || 0);
+      if(!SOCIAL_PROVIDERS[intent?.provider] || age < 0 || age > 20 * 60 * 1000){
+        clearSocialReturnIntent();
+        return null;
+      }
+      return intent;
+    } catch(_error){
+      clearSocialReturnIntent();
+      return null;
+    }
+  }
+
+  function finishSocialConnectionReturn(){
+    if(hubState.socialReturnHandled || !currentUser) return;
+    const intent = readSocialReturnIntent();
+    if(!intent) return;
+    if(intent.userId !== currentUser.id){
+      clearSocialReturnIntent();
+      return;
+    }
+    hubState.socialReturnHandled = true;
+    clearSocialReturnIntent();
+    const config = SOCIAL_PROVIDERS[intent.provider];
+    const connected = hubState.socialIdentities.has(intent.provider);
+    setSocialConnectionStatus(
+      connected ? "providerConnectedSuccess" : "providerConnectionFailed",
+      {provider:config.label},
+      connected ? "success" : "error"
+    );
+    if(hubAccessAllowed() && ($("memberHub").hidden || hubState.activeView !== "profile")){
+      window.setTimeout(() => showHub("profile"), 0);
+    }
+  }
+
+  async function loadSocialConnections({force=false}={}){
+    if(!authClient || !currentUser){
+      renderSocialConnections();
+      return hubState.socialIdentities;
+    }
+    const context = requestContext();
+    if(hubState.socialConnectionLoading) return hubState.socialIdentities;
+    if(!force && hubState.socialConnectionUserId === context.userId){
+      renderSocialConnections();
+      finishSocialConnectionReturn();
+      return hubState.socialIdentities;
+    }
+    const request = ++hubState.socialConnectionRequest;
+    hubState.socialConnectionLoading = true;
+    hubState.socialConnectionProvider = null;
+    renderSocialConnections();
+    setSocialConnectionStatus("socialConnectionsLoading");
+    let response;
+    try {
+      response = await authClient.auth.getUserIdentities();
+    } catch(error){
+      response = {data:null, error};
+    }
+    if(!contextIsCurrent(context) || request !== hubState.socialConnectionRequest) return null;
+    hubState.socialConnectionLoading = false;
+    hubState.socialConnectionProvider = null;
+    if(response.error){
+      hubState.socialConnectionUserId = null;
+      renderSocialConnections();
+      const intent = readSocialReturnIntent();
+      if(intent){
+        hubState.socialReturnHandled = true;
+        clearSocialReturnIntent();
+      }
+      const errorStatus = intent
+        ? socialConnectionError(response.error, intent.provider)
+        : {key:"socialConnectionsUnavailable", variables:{}};
+      setSocialConnectionStatus(errorStatus.key, errorStatus.variables, "error");
+      return hubState.socialIdentities;
+    }
+    const identities = Array.isArray(response.data?.identities) ? response.data.identities : [];
+    const allowedIdentities = identities
+      .filter(identity => !!SOCIAL_PROVIDERS[identity?.provider])
+      .sort((left, right) => {
+        const rightTime = new Date(right?.updated_at || right?.created_at || 0).getTime() || 0;
+        const leftTime = new Date(left?.updated_at || left?.created_at || 0).getTime() || 0;
+        return rightTime - leftTime;
+      });
+    hubState.socialIdentities = new Map();
+    allowedIdentities.forEach(identity => {
+      if(!hubState.socialIdentities.has(identity.provider)) hubState.socialIdentities.set(identity.provider, identity);
+    });
+    hubState.socialConnectionUserId = context.userId;
+    renderSocialConnections();
+    setSocialConnectionStatus();
+    renderOverview();
+    finishSocialConnectionReturn();
+    return hubState.socialIdentities;
+  }
+
+  async function connectSocialProvider(provider){
+    const config = SOCIAL_PROVIDERS[provider];
+    if(!config || !authClient || !currentUser || hubState.socialConnectionLoading || hubState.socialIdentities.has(provider)) return;
+    if(hubState.profileDirty && !(await saveMemberProfile())) return;
+    const context = requestContext();
+    const request = ++hubState.socialConnectionRequest;
+    hubState.socialConnectionLoading = true;
+    hubState.socialConnectionProvider = provider;
+    renderSocialConnections();
+    setSocialConnectionStatus("providerConnecting", {provider:config.label});
+    try {
+      sessionStorage.setItem(SOCIAL_RETURN_KEY, JSON.stringify({
+        provider,
+        userId: context.userId,
+        request,
+        createdAt: Date.now()
+      }));
+    } catch(_error){}
+    let response;
+    try {
+      response = await authClient.auth.linkIdentity({
+        provider,
+        options: {redirectTo:SOCIAL_OAUTH_RETURN_URL}
+      });
+    } catch(error){
+      response = {error};
+    }
+    if(!contextIsCurrent(context) || request !== hubState.socialConnectionRequest) return;
+    if(response?.error){
+      clearSocialReturnIntent({provider, userId:context.userId, request});
+      hubState.socialConnectionLoading = false;
+      hubState.socialConnectionProvider = null;
+      renderSocialConnections();
+      const errorStatus = socialConnectionError(response.error, provider);
+      setSocialConnectionStatus(errorStatus.key, errorStatus.variables, "error");
+    }
+  }
+
+  async function disconnectSocialProvider(provider){
+    const config = SOCIAL_PROVIDERS[provider];
+    const identity = hubState.socialIdentities.get(provider);
+    if(!config || !authClient || !currentUser || !identity || hubState.socialConnectionLoading) return;
+    const confirmed = await requestHubAction({
+      title:t("disconnectProviderTitle", {provider:config.label}),
+      message:t("confirmDisconnectProvider", {provider:config.label}),
+      confirmLabel:t("disconnect"),
+      danger:true
+    });
+    if(!confirmed) return;
+    const context = requestContext();
+    hubState.socialConnectionLoading = true;
+    hubState.socialConnectionProvider = provider;
+    renderSocialConnections();
+    let response;
+    try {
+      response = await authClient.auth.unlinkIdentity(identity);
+    } catch(error){
+      response = {error};
+    }
+    if(!contextIsCurrent(context)) return;
+    hubState.socialConnectionLoading = false;
+    hubState.socialConnectionProvider = null;
+    if(response.error){
+      renderSocialConnections();
+      setSocialConnectionStatus("providerDisconnectFailed", {provider:config.label}, "error");
+      return;
+    }
+    hubState.socialIdentities.delete(provider);
+    hubState.socialConnectionUserId = null;
+    await loadSocialConnections({force:true});
+    if(!contextIsCurrent(context)) return;
+    setSocialConnectionStatus("providerDisconnected", {provider:config.label}, "success");
+  }
+
   function fillMemberProfile(profile={}){
     $("profileDisplayName").value = profile.display_name || "";
     $("profilePhone").value = profile.phone_number || "";
@@ -461,7 +742,7 @@
   }
 
   async function saveMemberProfile(){
-    if(!authClient || !currentUser || hubState.profileLoading || !hubState.profileHydrated) return;
+    if(!authClient || !currentUser || hubState.profileLoading || !hubState.profileHydrated) return false;
     const context = requestContext();
     const button = $("saveMemberProfile");
     button.disabled = true;
@@ -485,14 +766,14 @@
     } catch(error){
       button.disabled = false;
       setStatus("memberProfileStatus", error.message, "error");
-      return;
+      return false;
     }
     const { data, error } = await authClient.from("member_profiles").upsert(payload, {onConflict:"user_id"}).select().single();
     if(!contextIsCurrent(context)) return;
     button.disabled = false;
     if(error){
       setStatus("memberProfileStatus", featureError(error) || t("profileSaveFailed"), "error");
-      return;
+      return false;
     }
     hubState.profile = data;
     hubState.profileUserId = context.userId;
@@ -500,6 +781,7 @@
     setStatus("memberProfileStatus", t("profileSaved"), "success");
     renderOverview();
     if(finalTimetable?.savedAt) await syncFinalSchedule(finalTimetable);
+    return true;
   }
 
   function postAuthorName(post){
@@ -552,9 +834,21 @@
     const interests = $("schoolmateProfileInterests");
     interests.replaceChildren();
     (Array.isArray(profile.interests) ? profile.interests : []).forEach(item => interests.append(node("span", "", item)));
+    const connections = $("schoolmateProfileConnections");
+    connections.replaceChildren();
+    const connectedProviders = [...new Set(Array.isArray(profile.connected_providers) ? profile.connected_providers : [])]
+      .filter(provider => !!SOCIAL_PROVIDERS[provider]);
+    connectedProviders.forEach(provider => {
+      const config = SOCIAL_PROVIDERS[provider];
+      const badge = node("span", "hub-profile-connection-badge", t("providerConnected", {provider:config.label}));
+      badge.dataset.provider = provider;
+      badge.dataset.mark = config.mark;
+      connections.append(badge);
+    });
+    $("schoolmateProfileConnectionsSection").hidden = connectedProviders.length === 0;
     const links = $("schoolmateProfileLinks");
     links.replaceChildren();
-    [["Instagram", profile.instagram_url], ["LinkedIn", profile.linkedin_url], [t("personalWebsite"), profile.website_url]].forEach(([name, href]) => {
+    [["Instagram", profile.instagram_url], [t("linkedinProfileSelfReported"), profile.linkedin_url], [t("personalWebsite"), profile.website_url]].forEach(([name, href]) => {
       if(!href) return;
       try {
         const url = new URL(href);
@@ -566,6 +860,24 @@
         links.append(anchor);
       } catch(_error){}
     });
+    $("schoolmateProfileLinksSection").hidden = !links.childElementCount;
+  }
+
+  const socialProviderListFrom = value => [...new Set(Array.isArray(value) ? value : [])]
+    .filter(provider => !!SOCIAL_PROVIDERS[provider]);
+
+  async function loadSchoolmateConnectedProviders(userId){
+    const response = await authClient.rpc("get_schoolmate_connected_providers", {p_user_id:userId});
+    if(!response.error){
+      const row = Array.isArray(response.data) ? response.data[0] : response.data;
+      return {providers:socialProviderListFrom(row?.connected_providers), error:null};
+    }
+    const missingFunction = /Could not find the function|schema cache|does not exist|PGRST202/i.test(String(response.error?.message || ""));
+    if(!missingFunction) return {providers:[], error:response.error};
+    const legacyResponse = await authClient.rpc("get_schoolmate_connection_badges", {p_user_id:userId});
+    if(legacyResponse.error) return {providers:[], error:response.error};
+    const legacyRow = Array.isArray(legacyResponse.data) ? legacyResponse.data[0] : legacyResponse.data;
+    return {providers:legacyRow?.linkedin_connected === true ? ["linkedin_oidc"] : [], error:null};
   }
 
   async function openSchoolmateProfile(userId, trigger=document.activeElement){
@@ -573,13 +885,18 @@
     const context = requestContext();
     const request = ++hubState.profilePreviewRequest;
     hubState.profilePreviewReturnFocus = trigger instanceof HTMLElement ? trigger : null;
-    const { data, error } = await authClient.rpc("get_schoolmate_profile", {p_user_id:userId});
+    const [profileResponse, connectionResponse] = await Promise.all([
+      authClient.rpc("get_schoolmate_profile", {p_user_id:userId}),
+      loadSchoolmateConnectedProviders(userId)
+    ]);
     if(!contextIsCurrent(context) || request !== hubState.profilePreviewRequest || hubState.activeView !== "community" || $("memberHub").hidden) return;
-    const profile = Array.isArray(data) ? data[0] : data;
-    if(error || !profile){
-      setStatus("communityComposerStatus", error ? featureError(error) : t("profileUnavailable"), "error");
+    const profile = Array.isArray(profileResponse.data) ? profileResponse.data[0] : profileResponse.data;
+    if(profileResponse.error || !profile){
+      setStatus("communityComposerStatus", profileResponse.error ? featureError(profileResponse.error) : t("profileUnavailable"), "error");
       return;
     }
+    profile.connected_providers = connectionResponse.error ? [] : connectionResponse.providers;
+    if(connectionResponse.error) console.warn("Verified social connection badges are unavailable. Run the latest Supabase setup SQL.", connectionResponse.error);
     hubState.profilePreview = profile;
     renderSchoolmateProfile(profile);
     $("schoolmateProfileModal").hidden = false;
@@ -1002,7 +1319,9 @@
     if(allowed){
       renderOverview();
       if(!hubState.profileUserId) loadMemberProfile().catch(console.warn);
+      if(!hubState.socialConnectionUserId && !hubState.socialConnectionLoading) loadSocialConnections().catch(console.warn);
     }
+    renderSocialConnections();
     if(!$("memberHub").hidden){
       if(hubState.activeView === "overview" && hubState.insightsLoaded) renderInsights(hubState.insightRows);
       if(hubState.activeView === "community") renderCommunityFeed(hubState.feed);
@@ -1024,6 +1343,14 @@
   $("loadCourseInsights")?.addEventListener("click", loadCourseInsights);
   $("courseInsightScope")?.addEventListener("change", syncInsightYearControl);
   $("saveMemberProfile")?.addEventListener("click", saveMemberProfile);
+  $("providerConnections")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-social-action][data-provider]");
+    if(!button || !$("providerConnections").contains(button)) return;
+    const provider = button.dataset.provider;
+    if(!SOCIAL_PROVIDERS[provider]) return;
+    if(button.dataset.socialAction === "connect") connectSocialProvider(provider);
+    else if(button.dataset.socialAction === "disconnect") disconnectSocialProvider(provider);
+  });
   $("publishCommunityPost")?.addEventListener("click", publishCommunityPost);
   $("refreshCommunityFeed")?.addEventListener("click", () => loadCommunityFeed({force:true}));
   $("startConversation")?.addEventListener("click", startConversation);
@@ -1076,6 +1403,7 @@
     syncAccess,
     syncFinalSchedule,
     reloadMembership: () => loadMembership(),
+    refreshSocialConnections: () => loadSocialConnections({force:true}),
     refreshLanguage: syncAccess
   };
 
