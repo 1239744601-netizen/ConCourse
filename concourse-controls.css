@@ -4388,3 +4388,45 @@ body.app-active #landingScreen .language-control {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Keep every Student Hub destination focused on one page title. The translated
+   eyebrow and explanatory caption remain available to the application state,
+   but no longer occupy visual space in any language. */
+.member-hub .hub-page-header .hub-kicker,
+.member-hub .hub-page-header .hub-page-header-copy > p:not(.hub-kicker) {
+  display: none !important;
+}
+
+.member-hub .hub-page-header-copy {
+  display: flex;
+  align-items: center;
+}
+
+/* Remove the small editorial captions highlighted by the user while keeping
+   actionable control values and safety disclosures intact. Filter captions
+   remain available to screen readers as accessible field names. */
+.member-hub .hub-card-heading > p,
+.member-hub .hub-section-heading > p,
+.member-hub .hub-section-heading .hub-kicker,
+.member-hub .hub-final-course-heading > span,
+.member-hub .hub-view[data-hub-view="overview"] .hub-metric-card > small,
+.member-hub .hub-view[data-hub-view="overview"] .hub-chart-empty > span {
+  display: none !important;
+}
+
+.member-hub .hub-insight-controls .hub-filter-row label > span {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-card-heading {
+  grid-template-columns: minmax(0, 1fr);
+}
