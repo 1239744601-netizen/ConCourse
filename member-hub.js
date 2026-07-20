@@ -53,6 +53,8 @@
     feedHasMore: false,
     avatarPendingBlob: null,
     avatarPendingUrl: "",
+    avatarPendingMimeType: "",
+    avatarPendingExtension: "",
     avatarDeleteRequested: false,
     avatarBusy: false,
     avatarOperation: 0,
@@ -127,6 +129,33 @@
     if(/No messageable schoolmate/i.test(message)) return t("conversationStartFailed");
     if(/Post is unavailable|Comment is unavailable|Conversation is unavailable|Campus profile is unavailable/i.test(message)) return t("contentUnavailable");
     return t("featureUnavailable");
+  };
+
+  const missingRpcError = error => /Could not find the function|schema cache|PGRST202/i.test(String(error?.message || ""));
+
+  const wrapMediaUploadError = (error, bucket) => {
+    const wrapped = new Error(String(error?.message || "Media upload failed"));
+    wrapped.name = "ConCourseMediaUploadError";
+    wrapped.mediaUpload = true;
+    wrapped.bucket = bucket;
+    wrapped.code = error?.code;
+    wrapped.status = error?.status || error?.statusCode;
+    wrapped.cause = error;
+    return wrapped;
+  };
+
+  const mediaUploadError = (error, {membershipRequired=false}={}) => {
+    const message = String(error?.message || error?.cause?.message || "");
+    const status = Number(error?.status || error?.statusCode || error?.cause?.status || error?.cause?.statusCode || 0);
+    console.warn("ConCourse media operation failed.", error?.cause || error);
+    if(/verified school membership|membership must be verified|school verification/i.test(message)) return t("schoolVerificationRequired");
+    if(/payload too large|maximum.*size|file.*size|entity too large/i.test(message) || status === 413) return t("mediaUploadRejected");
+    if(error?.mediaUpload && membershipRequired && (status === 401 || status === 403 || /row.level|policy|unauthori[sz]ed|permission/i.test(message))){
+      return hubState.membership?.status === "verified" ? t("mediaSetupRequired") : t("schoolVerificationRequired");
+    }
+    if(/bucket.*not found|not found.*bucket|row.level|policy|permission|mime|content.?type|schema cache|does not exist/i.test(message) || [400, 404, 409].includes(status)) return t("mediaSetupRequired");
+    if(/fetch|network|offline|timeout|connection/i.test(message)) return t("mediaUploadNetwork");
+    return t("mediaUploadFailed");
   };
 
   const socialConnectionError = (error, provider) => {
@@ -206,6 +235,8 @@
     hubState.feedHasMore = false;
     hubState.avatarPendingBlob = null;
     hubState.avatarPendingUrl = "";
+    hubState.avatarPendingMimeType = "";
+    hubState.avatarPendingExtension = "";
     hubState.avatarDeleteRequested = false;
     hubState.avatarBusy = false;
     hubState.avatarOperation += 1;
@@ -1100,25 +1131,30 @@
     if(heicDecoderPromise) return heicDecoderPromise;
     heicDecoderPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
+      let settled = false;
+      let timeout = 0;
+      const finish = (error, converter) => {
+        if(settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        if(error){
+          heicDecoderPromise = null;
+          script.remove();
+          reject(error);
+        } else resolve(converter);
+      };
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js";
       script.integrity = "sha512-VjmsArkf8Vv2yyvbXCyVxp+R3n4N2WyS1GEQ+YQxa7Hu0tx836WpY4nW9/T1W5JBmvuIsxkVH/DlHgp7NEMjDw==";
       script.async = true;
       script.crossOrigin = "anonymous";
       script.referrerPolicy = "no-referrer";
       script.dataset.heicDecoder = "";
+      timeout = window.setTimeout(() => finish(new Error(t("heicDecoderUnavailable"))), 15000);
       script.onload = () => {
-        if(typeof window.heic2any === "function") resolve(window.heic2any);
-        else {
-          heicDecoderPromise = null;
-          script.remove();
-          reject(new Error(invalidMessage));
-        }
+        if(typeof window.heic2any === "function") finish(null, window.heic2any);
+        else finish(new Error(invalidMessage));
       };
-      script.onerror = () => {
-        heicDecoderPromise = null;
-        script.remove();
-        reject(new Error(invalidMessage));
-      };
+      script.onerror = () => finish(new Error(t("heicDecoderUnavailable")));
       document.head.append(script);
     });
     return heicDecoderPromise;
@@ -1137,7 +1173,12 @@
       try {
         const bitmap = await createImageBitmap(file, {imageOrientation:"from-image"});
         return {source:bitmap, width:bitmap.width, height:bitmap.height, cleanup:() => bitmap.close()};
-      } catch(_bitmapError){}
+      } catch(_bitmapOptionsError){
+        try {
+          const bitmap = await createImageBitmap(file);
+          return {source:bitmap, width:bitmap.width, height:bitmap.height, cleanup:() => bitmap.close()};
+        } catch(_bitmapError){}
+      }
     }
     const objectUrl = URL.createObjectURL(file);
     try {
@@ -1163,7 +1204,59 @@
     }
   }
 
-  async function normalizeRasterToWebP(file, options={}){
+  function canvasBlob(canvas, mimeType, quality){
+    return new Promise(resolve => {
+      if(typeof canvas.toBlob === "function"){
+        try { canvas.toBlob(resolve, mimeType, quality); }
+        catch(_error){ resolve(null); }
+        return;
+      }
+      try {
+        const dataUrl = canvas.toDataURL(mimeType, quality);
+        const match = dataUrl.match(/^data:([^;,]+);base64,(.+)$/);
+        if(!match){ resolve(null); return; }
+        const binary = atob(match[2]);
+        const bytes = new Uint8Array(binary.length);
+        for(let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+        resolve(new Blob([bytes], {type:match[1]}));
+      } catch(_error){ resolve(null); }
+    });
+  }
+
+  async function encodeNormalizedCanvas(canvas, options={}){
+    const maxBytes = Number(options.maxOutputBytes || 8 * 1024 * 1024);
+    const quality = Math.max(.55, Math.min(.95, Number(options.quality || .86)));
+    const attempts = [
+      {canvas, mimeType:"image/webp", extension:"webp", quality},
+      {canvas, mimeType:"image/webp", extension:"webp", quality:Math.max(.62, quality - .12)},
+      {canvas, mimeType:"image/png", extension:"png"}
+    ];
+    for(const attempt of attempts){
+      const blob = await canvasBlob(attempt.canvas, attempt.mimeType, attempt.quality);
+      if(blob?.size && String(blob.type).toLocaleLowerCase() === attempt.mimeType && blob.size <= maxBytes){
+        return {blob, mimeType:attempt.mimeType, extension:attempt.extension};
+      }
+    }
+
+    const flattened = document.createElement("canvas");
+    flattened.width = canvas.width;
+    flattened.height = canvas.height;
+    const context = flattened.getContext("2d", {alpha:false});
+    if(context){
+      context.fillStyle = options.background || "#f7f7f5";
+      context.fillRect(0, 0, flattened.width, flattened.height);
+      context.drawImage(canvas, 0, 0);
+      for(const jpegQuality of [Math.min(.92, quality), Math.max(.68, quality - .12), .58]){
+        const blob = await canvasBlob(flattened, "image/jpeg", jpegQuality);
+        if(blob?.size && String(blob.type).toLocaleLowerCase() === "image/jpeg" && blob.size <= maxBytes){
+          return {blob, mimeType:"image/jpeg", extension:"jpg"};
+        }
+      }
+    }
+    throw new Error(options.outputTooLargeMessage || options.tooLargeMessage || options.invalidMessage || t("mediaInvalid"));
+  }
+
+  async function normalizeRasterUpload(file, options={}){
     const invalidMessage = options.invalidMessage || t("mediaInvalid");
     const tooLargeMessage = options.tooLargeMessage || t("imageTooLarge");
     if(!(file instanceof Blob) || !file.size) throw new Error(invalidMessage);
@@ -1191,13 +1284,14 @@
       } else {
         context.drawImage(decoded.source, 0, 0, width, height, 0, 0, canvas.width, canvas.height);
       }
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", Number(options.quality || .86)));
-      if(!blob || blob.type !== "image/webp" || blob.size > Number(options.maxOutputBytes || 8 * 1024 * 1024)) throw new Error(invalidMessage);
-      return {blob, width:canvas.width, height:canvas.height};
+      const encoded = await encodeNormalizedCanvas(canvas, {...options, invalidMessage});
+      return {...encoded, width:canvas.width, height:canvas.height};
     } finally {
       decoded.cleanup();
     }
   }
+
+  const normalizeRasterToWebP = normalizeRasterUpload;
 
   async function prepareProfileAvatar(file){
     if(!file || !currentUser) return;
@@ -1207,7 +1301,7 @@
     setProfileFormDisabled(false);
     setStatus("avatarUploadStatus", t("avatarPreparing"));
     try {
-      const normalized = await normalizeRasterToWebP(file, {
+      const normalized = await normalizeRasterUpload(file, {
         square:true,
         size:512,
         minDimension:16,
@@ -1222,6 +1316,8 @@
       if(hubState.avatarPendingUrl) URL.revokeObjectURL(hubState.avatarPendingUrl);
       hubState.avatarPendingBlob = normalized.blob;
       hubState.avatarPendingUrl = URL.createObjectURL(normalized.blob);
+      hubState.avatarPendingMimeType = normalized.mimeType;
+      hubState.avatarPendingExtension = normalized.extension;
       hubState.avatarDeleteRequested = false;
       hubState.profileDirty = true;
       setStatus("avatarUploadStatus", t("avatarReady"), "success");
@@ -1241,10 +1337,22 @@
     if(hubState.avatarPendingUrl) URL.revokeObjectURL(hubState.avatarPendingUrl);
     hubState.avatarPendingUrl = "";
     hubState.avatarPendingBlob = null;
+    hubState.avatarPendingMimeType = "";
+    hubState.avatarPendingExtension = "";
     hubState.avatarDeleteRequested = true;
     hubState.profileDirty = true;
     setStatus("avatarUploadStatus", t("avatarRemoved"));
     renderOwnAvatars();
+  }
+
+  async function removeAvatarObject(path, warning){
+    if(!path || !authClient) return;
+    try {
+      const removal = await authClient.storage.from("member-avatars").remove([path]);
+      if(removal.error) console.warn(warning, removal.error);
+    } catch(error){
+      console.warn(warning, error);
+    }
   }
 
   async function loadMemberProfile({force=false}={}){
@@ -1323,20 +1431,36 @@
     setStatus("memberProfileStatus", t("saving"));
     let uploadedAvatarPath = "";
     if(hubState.avatarPendingBlob){
-      uploadedAvatarPath = `${context.userId}/avatar-${crypto.randomUUID()}.webp`;
-      const upload = await authClient.storage.from("member-avatars").upload(uploadedAvatarPath, hubState.avatarPendingBlob, {
-        upsert:false,
-        contentType:"image/webp",
-        cacheControl:"31536000"
-      });
-      if(upload.error){
-        const cleanup = await authClient.storage.from("member-avatars").remove([uploadedAvatarPath]);
-        if(cleanup.error) console.warn("An ambiguous avatar upload left an owner-private object for later cleanup.", cleanup.error);
+      const avatarMimeType = hubState.avatarPendingMimeType || hubState.avatarPendingBlob.type || "image/webp";
+      const avatarExtension = hubState.avatarPendingExtension || ({"image/jpeg":"jpg", "image/png":"png", "image/webp":"webp"}[avatarMimeType] || "webp");
+      uploadedAvatarPath = `${context.userId}/avatar-${crypto.randomUUID()}.${avatarExtension}`;
+      let upload;
+      try {
+        upload = await authClient.storage.from("member-avatars").upload(uploadedAvatarPath, hubState.avatarPendingBlob, {
+          upsert:false,
+          contentType:avatarMimeType,
+          cacheControl:"31536000"
+        });
+      } catch(error){
+        await removeAvatarObject(uploadedAvatarPath, "An interrupted avatar upload left an owner-private object for later cleanup.");
         if(!contextIsCurrent(context)) return false;
         hubState.avatarBusy = false;
         setProfileFormDisabled(false);
-        setStatus("memberProfileStatus", t("avatarUploadFailed"), "error");
-        setStatus("avatarUploadStatus", t("avatarUploadFailed"), "error");
+        button.disabled = false;
+        const message = mediaUploadError(wrapMediaUploadError(error, "member-avatars"));
+        setStatus("memberProfileStatus", message, "error");
+        setStatus("avatarUploadStatus", message, "error");
+        return false;
+      }
+      if(upload.error){
+        await removeAvatarObject(uploadedAvatarPath, "An ambiguous avatar upload left an owner-private object for later cleanup.");
+        if(!contextIsCurrent(context)) return false;
+        hubState.avatarBusy = false;
+        setProfileFormDisabled(false);
+        button.disabled = false;
+        const message = mediaUploadError(wrapMediaUploadError(upload.error, "member-avatars"));
+        setStatus("memberProfileStatus", message, "error");
+        setStatus("avatarUploadStatus", message, "error");
         return false;
       }
       if(!contextIsCurrent(context)) return false;
@@ -1347,12 +1471,21 @@
       payload.avatar_revision = previousAvatarRevision + 1;
     }
 
-    const { data, error } = await authClient.from("member_profiles").upsert(payload, {onConflict:"user_id"}).select().single();
+    let data;
+    let error;
+    try {
+      ({data, error} = await authClient.from("member_profiles").upsert(payload, {onConflict:"user_id"}).select().single());
+    } catch(requestError){
+      await removeAvatarObject(uploadedAvatarPath, "A failed profile save left an owner-private avatar object for later cleanup.");
+      if(!contextIsCurrent(context)) return false;
+      hubState.avatarBusy = false;
+      setProfileFormDisabled(false);
+      button.disabled = false;
+      setStatus("memberProfileStatus", featureError(requestError) || t("profileSaveFailed"), "error");
+      return false;
+    }
     if(error){
-      if(uploadedAvatarPath){
-        const rollback = await authClient.storage.from("member-avatars").remove([uploadedAvatarPath]);
-        if(rollback.error) console.warn("A failed profile save left an owner-private avatar object for later cleanup.", rollback.error);
-      }
+      await removeAvatarObject(uploadedAvatarPath, "A failed profile save left an owner-private avatar object for later cleanup.");
       if(!contextIsCurrent(context)) return false;
       hubState.avatarBusy = false;
       setProfileFormDisabled(false);
@@ -1366,6 +1499,8 @@
     button.disabled = false;
     const obsoleteAvatarPath = previousAvatarPath && previousAvatarPath !== data.avatar_path ? previousAvatarPath : "";
     hubState.avatarPendingBlob = null;
+    hubState.avatarPendingMimeType = "";
+    hubState.avatarPendingExtension = "";
     hubState.avatarDeleteRequested = false;
     revokeAvatarUrls();
     hubState.profile = data;
@@ -1375,8 +1510,7 @@
     setStatus("memberProfileStatus", t("profileSaved"), "success");
     renderOverview();
     if(obsoleteAvatarPath){
-      const removal = await authClient.storage.from("member-avatars").remove([obsoleteAvatarPath]);
-      if(removal.error) console.warn("The removed avatar is no longer referenced, but its private storage object could not be deleted.", removal.error);
+      await removeAvatarObject(obsoleteAvatarPath, "The removed avatar is no longer referenced, but its private storage object could not be deleted.");
     }
     if(!contextIsCurrent(context)) return false;
     if(finalTimetable?.savedAt) await syncFinalSchedule(finalTimetable);
@@ -1533,7 +1667,7 @@
               extension:videoType.extension, previewUrl:URL.createObjectURL(file), altText:""
             });
           } else {
-            const normalized = await normalizeRasterToWebP(file, {
+            const normalized = await normalizeRasterUpload(file, {
               maxEdge:2048,
               maxInputBytes:25 * 1024 * 1024,
               maxOutputBytes:8 * 1024 * 1024,
@@ -1544,8 +1678,8 @@
             });
             if(!contextIsCurrent(context) || operation !== hubState.mediaPrepareOperation) return;
             prepared.push({
-              id:crypto.randomUUID(), kind:"image", blob:normalized.blob, mimeType:"image/webp",
-              extension:"webp", previewUrl:URL.createObjectURL(normalized.blob), altText:"",
+              id:crypto.randomUUID(), kind:"image", blob:normalized.blob, mimeType:normalized.mimeType,
+              extension:normalized.extension, previewUrl:URL.createObjectURL(normalized.blob), altText:"",
               width:normalized.width, height:normalized.height
             });
           }
@@ -1570,8 +1704,12 @@
 
   async function removeCommunityUploads(paths){
     if(!paths.length) return;
-    const removal = await authClient.storage.from("community-media").remove(paths);
-    if(removal.error) console.warn("Owner-private post media cleanup was deferred.", removal.error);
+    try {
+      const removal = await authClient.storage.from("community-media").remove(paths);
+      if(removal.error) console.warn("Owner-private post media cleanup was deferred.", removal.error);
+    } catch(error){
+      console.warn("Owner-private post media cleanup was deferred.", error);
+    }
   }
 
   async function uploadCommunityMedia(draftId, items, context, operation){
@@ -1580,14 +1718,20 @@
     for(const [position, item] of items.entries()){
       if(!contextIsCurrent(context) || operation !== hubState.publishOperation) throw new Error("Stale publish operation");
       const path = `${context.userId}/posts/${draftId}/${crypto.randomUUID()}.${item.extension}`;
-      const upload = await authClient.storage.from("community-media").upload(path, item.blob, {
-        upsert:false,
-        contentType:item.mimeType,
-        cacheControl:"31536000"
-      });
+      let upload;
+      try {
+        upload = await authClient.storage.from("community-media").upload(path, item.blob, {
+          upsert:false,
+          contentType:item.mimeType,
+          cacheControl:"31536000"
+        });
+      } catch(error){
+        await removeCommunityUploads([...paths, path]);
+        throw wrapMediaUploadError(error, "community-media");
+      }
       if(upload.error){
         await removeCommunityUploads([...paths, path]);
-        throw upload.error;
+        throw wrapMediaUploadError(upload.error, "community-media");
       }
       if(!contextIsCurrent(context) || operation !== hubState.publishOperation){
         await removeCommunityUploads([...paths, path]);
@@ -2430,6 +2574,14 @@
     button.textContent = t(hubState.loadingFeed ? "loadingMore" : "loadMore");
   }
 
+  async function requestCommunityFeed(parameters){
+    let response = await authClient.rpc("get_school_feed_v2", parameters);
+    if(response.error && missingRpcError(response.error)){
+      response = await authClient.rpc("get_school_feed", parameters);
+    }
+    return response;
+  }
+
   async function loadCommunityFeed({force=false, append=false}={}){
     if(!authClient || !currentUser) return;
     if(append && hubState.loadingFeed) return;
@@ -2445,7 +2597,7 @@
     hubState.loadingFeed = true;
     updateCommunityLoadMore();
     if(!append && (!hubState.feed.length || hubState.feedMode !== mode)) replaceCommunityFeed(node("div", "hub-feed-empty", t("communityLoading")));
-    const { data, error } = await authClient.rpc("get_school_feed_v2", {
+    const { data, error } = await requestCommunityFeed({
       p_limit:limit,
       p_offset:offset,
       p_bookmarked_only:mode === "saved",
@@ -2465,7 +2617,7 @@
       : null;
     const hashPostId = hashMatch?.[1] || "";
     if(hashPostId && !rows.some(post => post.post_id === hashPostId)){
-      const targeted = await authClient.rpc("get_school_feed_v2", {
+      const targeted = await requestCommunityFeed({
         p_limit:1,
         p_offset:0,
         p_bookmarked_only:false,
@@ -2526,7 +2678,7 @@
     try {
       uploaded = await uploadCommunityMedia(draftId, mediaSnapshot, context, operation);
       if(!contextIsCurrent(context) || operation !== hubState.publishOperation){ await removeCommunityUploads(uploaded.paths); return; }
-      const { error } = await authClient.rpc("publish_community_post_v3", {
+      let response = await authClient.rpc("publish_community_post_v3", {
         p_body:body || null,
         p_tags:tags,
         p_media:uploaded.descriptors,
@@ -2534,6 +2686,16 @@
         p_poll_options:pollSnapshot?.options || [],
         p_listing_id:linkedListingId
       });
+      if(response.error && !linkedListingId && missingRpcError(response.error)){
+        response = await authClient.rpc("publish_community_post_v2", {
+          p_body:body || null,
+          p_tags:tags,
+          p_media:uploaded.descriptors,
+          p_poll_question:pollSnapshot?.question || null,
+          p_poll_options:pollSnapshot?.options || []
+        });
+      }
+      const {error} = response;
       if(error){
         await removeCommunityUploads(uploaded.paths);
         if(!contextIsCurrent(context) || operation !== hubState.publishOperation) return;
@@ -2548,7 +2710,10 @@
       await loadCommunityFeed({force:true});
     } catch(error){
       await removeCommunityUploads(uploaded.paths);
-      if(contextIsCurrent(context) && operation === hubState.publishOperation) setStatus("communityComposerStatus", featureError(error) || t("postPublishFailed"), "error");
+      if(contextIsCurrent(context) && operation === hubState.publishOperation){
+        const message = error?.mediaUpload ? mediaUploadError(error, {membershipRequired:true}) : featureError(error) || t("postPublishFailed");
+        setStatus("communityComposerStatus", message, "error");
+      }
     } finally {
       if(contextIsCurrent(context) && operation === hubState.publishOperation) setCommunityComposerBusy(false);
     }
@@ -2924,7 +3089,7 @@
     syncFinalSchedule,
     requestAction: requestHubAction,
     openProfile: openSchoolmateProfile,
-    mediaTools: Object.freeze({normalizeRasterToWebP, videoUploadType, validateVideoSignature}),
+    mediaTools: Object.freeze({normalizeRasterUpload, normalizeRasterToWebP, videoUploadType, validateVideoSignature, wrapMediaUploadError, mediaUploadError}),
     reloadMembership: () => loadMembership(),
     refreshSocialConnections: () => loadSocialConnections({force:true}),
     refreshLanguage: () => {

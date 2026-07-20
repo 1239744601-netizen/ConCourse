@@ -7,7 +7,7 @@
   const UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
   const UUID_RE = new RegExp(`^${UUID_PATTERN}$`, "i");
   const LISTING_HASH_RE = new RegExp(`^#listing-(${UUID_PATTERN})$`, "i");
-  const MEDIA_PATH_RE = new RegExp(`^${UUID_PATTERN}/listings/${UUID_PATTERN}/${UUID_PATTERN}\\.(?:webp|mp4|webm|mov)$`, "i");
+  const MEDIA_PATH_RE = new RegExp(`^${UUID_PATTERN}/listings/${UUID_PATTERN}/${UUID_PATTERN}\\.(?:webp|jpg|png|mp4|webm|mov)$`, "i");
 
   const CATEGORY_VALUES = ["notes", "past_papers", "textbooks", "electronics", "furniture", "life_essentials", "services", "other"];
   const MODE_VALUES = ["sale", "free", "wanted"];
@@ -47,6 +47,7 @@
     marketplaceVideoTooLarge:"Videos must be smaller than 50 MB.",
     marketplaceMediaInvalid:"Choose a valid raster image, MP4, WebM, or MOV file.",
     marketplaceMediaReady:"Media is ready to upload.",
+    marketplaceMediaPartiallyReady:"Valid files were kept; {count} file(s) could not be added.",
     marketplaceSaving:"Saving listing…",
     marketplaceSaved:"Listing saved.",
     marketplaceSaveFailed:"The listing could not be saved.",
@@ -1161,36 +1162,46 @@
     setEditorBusy(true);
     setEditorStatus(tr("marketplacePreparingMedia"));
     const prepared = [];
+    let rejectedCount = 0;
+    let lastError = "";
     let committed = false;
     try {
       for(const file of candidates.slice(0, available)){
         if(!contextIsCurrent(context) || operation !== state.editorOperation) return;
-        const tools = hub().mediaTools || {};
-        const type = typeof tools.videoUploadType === "function" ? tools.videoUploadType(file) : null;
-        if(type){
-          if(file.size > 50 * 1024 * 1024) throw new Error(tr("marketplaceVideoTooLarge"));
-          if(typeof tools.validateVideoSignature !== "function") throw new Error(tr("marketplaceMediaInvalid"));
-          await tools.validateVideoSignature(file, type);
-          prepared.push({id:crypto.randomUUID(), kind:"video", blob:file, mimeType:type.mimeType, extension:type.extension, previewUrl:URL.createObjectURL(file), altText:""});
-        } else {
-          if(typeof tools.normalizeRasterToWebP !== "function") throw new Error(tr("marketplaceMediaInvalid"));
-          const normalized = await tools.normalizeRasterToWebP(file, {
-            maxEdge:2400,
-            maxInputBytes:25 * 1024 * 1024,
-            maxOutputBytes:8 * 1024 * 1024,
-            quality:.87,
-            invalidMessage:tr("marketplaceMediaInvalid"),
-            tooLargeMessage:tr("marketplaceImageTooLarge"),
-            svgMessage:tr("svgUnsupported")
-          });
-          prepared.push({id:crypto.randomUUID(), kind:"image", blob:normalized.blob, mimeType:"image/webp", extension:"webp", previewUrl:URL.createObjectURL(normalized.blob), altText:"", width:normalized.width, height:normalized.height});
+        try {
+          const tools = hub().mediaTools || {};
+          const type = typeof tools.videoUploadType === "function" ? tools.videoUploadType(file) : null;
+          if(type){
+            if(file.size > 50 * 1024 * 1024) throw new Error(tr("marketplaceVideoTooLarge"));
+            if(typeof tools.validateVideoSignature !== "function") throw new Error(tr("marketplaceMediaInvalid"));
+            await tools.validateVideoSignature(file, type);
+            prepared.push({id:crypto.randomUUID(), kind:"video", blob:file, mimeType:type.mimeType, extension:type.extension, previewUrl:URL.createObjectURL(file), altText:""});
+          } else {
+            const normalizeImage = tools.normalizeRasterUpload || tools.normalizeRasterToWebP;
+            if(typeof normalizeImage !== "function") throw new Error(tr("marketplaceMediaInvalid"));
+            const normalized = await normalizeImage(file, {
+              maxEdge:2400,
+              maxInputBytes:25 * 1024 * 1024,
+              maxOutputBytes:8 * 1024 * 1024,
+              quality:.87,
+              invalidMessage:tr("marketplaceMediaInvalid"),
+              tooLargeMessage:tr("marketplaceImageTooLarge"),
+              svgMessage:tr("svgUnsupported")
+            });
+            prepared.push({id:crypto.randomUUID(), kind:"image", blob:normalized.blob, mimeType:normalized.mimeType, extension:normalized.extension, previewUrl:URL.createObjectURL(normalized.blob), altText:"", width:normalized.width, height:normalized.height});
+          }
+        } catch(error){
+          rejectedCount += 1;
+          lastError = error?.message || tr("marketplaceMediaInvalid");
         }
       }
       if(!contextIsCurrent(context) || operation !== state.editorOperation) return;
       state.editorMedia.push(...prepared);
       committed = true;
       renderEditorMedia();
-      setEditorStatus(candidates.length > available ? tr("marketplaceMediaLimit") : tr("marketplaceMediaReady"), candidates.length > available ? "error" : "success");
+      if(candidates.length > available) setEditorStatus(tr("marketplaceMediaLimit"), "error");
+      else if(rejectedCount) setEditorStatus(prepared.length ? tr("marketplaceMediaPartiallyReady", {count:rejectedCount}) : lastError, "error");
+      else setEditorStatus(tr("marketplaceMediaReady"), "success");
     } catch(error){
       if(contextIsCurrent(context) && operation === state.editorOperation) setEditorStatus(error?.message || tr("marketplaceMediaInvalid"), "error");
     } finally {
@@ -1328,8 +1339,12 @@
 
   async function removeUploaded(paths){
     if(!paths.length || !authClient) return;
-    const {error} = await authClient.storage.from(MARKETPLACE_BUCKET).remove(paths);
-    if(error) console.warn("Marketplace media cleanup was deferred.", error);
+    try {
+      const {error} = await authClient.storage.from(MARKETPLACE_BUCKET).remove(paths);
+      if(error) console.warn("Marketplace media cleanup was deferred.", error);
+    } catch(error){
+      console.warn("Marketplace media cleanup was deferred.", error);
+    }
   }
 
   async function uploadEditorMedia(listingUuid, context, operation){
@@ -1339,8 +1354,19 @@
       if(!contextIsCurrent(context) || operation !== state.editorOperation) throw new Error("Stale marketplace editor");
       const mediaUuid = item.id && UUID_RE.test(item.id) ? item.id : crypto.randomUUID();
       const path = `${context.userId}/listings/${listingUuid}/${mediaUuid}.${item.extension}`;
-      const {error} = await authClient.storage.from(MARKETPLACE_BUCKET).upload(path, item.blob, {upsert:false, contentType:item.mimeType, cacheControl:"31536000"});
-      if(error){ await removeUploaded(paths); throw error; }
+      let error;
+      try {
+        ({error} = await authClient.storage.from(MARKETPLACE_BUCKET).upload(path, item.blob, {upsert:false, contentType:item.mimeType, cacheControl:"31536000"}));
+      } catch(uploadError){
+        await removeUploaded([...paths, path]);
+        const wrap = hub().mediaTools?.wrapMediaUploadError;
+        throw typeof wrap === "function" ? wrap(uploadError, MARKETPLACE_BUCKET) : uploadError;
+      }
+      if(error){
+        await removeUploaded(paths);
+        const wrap = hub().mediaTools?.wrapMediaUploadError;
+        throw typeof wrap === "function" ? wrap(error, MARKETPLACE_BUCKET) : error;
+      }
       paths.push(path);
       descriptors.push({
         id:mediaUuid,
@@ -1392,7 +1418,13 @@
       await openListing(id, byId("marketplaceSellButton"));
     } catch(error){
       await removeUploaded(uploaded);
-      if(contextIsCurrent(context) && operation === state.editorOperation) setEditorStatus(featureError(error) || tr("marketplaceSaveFailed"), "error");
+      if(contextIsCurrent(context) && operation === state.editorOperation){
+        const mapUploadError = hub().mediaTools?.mediaUploadError;
+        const message = error?.mediaUpload && typeof mapUploadError === "function"
+          ? mapUploadError(error, {membershipRequired:true})
+          : featureError(error) || tr("marketplaceSaveFailed");
+        setEditorStatus(message, "error");
+      }
     } finally {
       if(contextIsCurrent(context) && operation === state.editorOperation && !byId("marketplaceListingEditorModal").hidden) setEditorBusy(false);
     }

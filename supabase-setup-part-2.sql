@@ -77,7 +77,7 @@ create table if not exists public.marketplace_listing_media (
   storage_path text not null unique,
   media_type text not null check (media_type in ('image', 'video')),
   mime_type text not null check (
-    (media_type = 'image' and mime_type = 'image/webp')
+    (media_type = 'image' and mime_type in ('image/webp', 'image/jpeg', 'image/png'))
     or (media_type = 'video' and mime_type in ('video/mp4', 'video/webm', 'video/quicktime'))
   ),
   width integer check (width between 1 and 8192),
@@ -91,6 +91,8 @@ create table if not exists public.marketplace_listing_media (
     storage_path = owner_id::text || '/listings/' || listing_id::text || '/' || id::text ||
       case mime_type
         when 'image/webp' then '.webp'
+        when 'image/jpeg' then '.jpg'
+        when 'image/png' then '.png'
         when 'video/mp4' then '.mp4'
         when 'video/webm' then '.webm'
         when 'video/quicktime' then '.mov'
@@ -98,6 +100,47 @@ create table if not exists public.marketplace_listing_media (
   ),
   check ((media_type = 'image' and duration_seconds is null) or media_type = 'video')
 );
+
+-- Upgrade older installations whose inline media checks allowed WebP only.
+do $$
+declare
+  constraint_row record;
+begin
+  for constraint_row in
+    select constraint_record.conname
+    from pg_catalog.pg_constraint constraint_record
+    where constraint_record.conrelid = 'public.marketplace_listing_media'::regclass
+      and constraint_record.contype = 'c'
+      and (
+        pg_catalog.pg_get_constraintdef(constraint_record.oid) ilike '%storage_path%'
+        or (
+          pg_catalog.pg_get_constraintdef(constraint_record.oid) ilike '%mime_type%'
+          and pg_catalog.pg_get_constraintdef(constraint_record.oid) ilike '%media_type%'
+        )
+      )
+  loop
+    execute format('alter table public.marketplace_listing_media drop constraint %I', constraint_row.conname);
+  end loop;
+end;
+$$;
+
+alter table public.marketplace_listing_media
+  add constraint marketplace_listing_media_mime_supported check (
+    (media_type = 'image' and mime_type in ('image/webp', 'image/jpeg', 'image/png'))
+    or (media_type = 'video' and mime_type in ('video/mp4', 'video/webm', 'video/quicktime'))
+  );
+alter table public.marketplace_listing_media
+  add constraint marketplace_listing_media_storage_path_matches check (
+    storage_path = owner_id::text || '/listings/' || listing_id::text || '/' || id::text ||
+      case mime_type
+        when 'image/webp' then '.webp'
+        when 'image/jpeg' then '.jpg'
+        when 'image/png' then '.png'
+        when 'video/mp4' then '.mp4'
+        when 'video/webm' then '.webm'
+        when 'video/quicktime' then '.mov'
+      end
+  );
 
 -- Safe upgrade path for a project that briefly installed an earlier draft of
 -- the marketplace section before these discovery fields were added.
@@ -510,7 +553,7 @@ values (
   'marketplace-media',
   false,
   52428800,
-  array['image/webp', 'video/mp4', 'video/webm', 'video/quicktime']::text[]
+  array['image/webp', 'image/jpeg', 'image/png', 'video/mp4', 'video/webm', 'video/quicktime']::text[]
 )
 on conflict (id) do update set
   name = excluded.name,
@@ -667,7 +710,7 @@ with check (
   and public.can_upload_marketplace_media((storage.foldername(name))[1], name)
   and name ~ (
     '^' || (select auth.uid())::text ||
-    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|jpg|png|mp4|webm|mov)$'
   )
 );
 
@@ -679,7 +722,7 @@ using (
   and owner_id = (select auth.uid())::text
   and name ~ (
     '^' || (select auth.uid())::text ||
-    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|jpg|png|mp4|webm|mov)$'
   )
 );
 
@@ -693,7 +736,7 @@ using (
   and owner_id = (select auth.uid())::text
   and name ~ (
     '^' || (select auth.uid())::text ||
-    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|jpg|png|mp4|webm|mov)$'
   )
   and public.can_delete_marketplace_media(owner_id, name)
 );
@@ -706,11 +749,12 @@ using (
   and owner_id is not null
   and name ~ (
     '^' || owner_id ||
-    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|jpg|png|mp4|webm|mov)$'
   )
   and storage.allow_any_operation(array[
     'object.get_authenticated_info',
-    'object.get_authenticated'
+    'object.get_authenticated',
+    'storage.object.sign'
   ])
   and public.can_view_marketplace_media(owner_id, name)
 );
@@ -1299,6 +1343,8 @@ begin
     seen_media_ids := array_append(seen_media_ids, media_id);
     seen_positions := array_append(seen_positions, media_position);
     if media_kind = 'image' and media_mime = 'image/webp' then expected_suffix := '.webp';
+    elsif media_kind = 'image' and media_mime = 'image/jpeg' then expected_suffix := '.jpg';
+    elsif media_kind = 'image' and media_mime = 'image/png' then expected_suffix := '.png';
     elsif media_kind = 'video' and media_mime = 'video/mp4' then expected_suffix := '.mp4';
     elsif media_kind = 'video' and media_mime = 'video/webm' then expected_suffix := '.webm';
     elsif media_kind = 'video' and media_mime = 'video/quicktime' then expected_suffix := '.mov';
