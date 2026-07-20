@@ -1,4 +1,6 @@
 -- Run this entire file once in Supabase Dashboard > SQL Editor.
+-- If the editor reports that the request/entity is too large, run
+-- supabase-setup-part-1.sql first and supabase-setup-part-2.sql second instead.
 -- It creates one private JSON state record per authenticated ConCourse user.
 
 create table if not exists public.user_state (
