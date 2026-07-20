@@ -148,7 +148,11 @@
     renderSocialConnectionStatus();
   };
 
-  const hubAccessAllowed = () => !!currentUser;
+  const hubAccessAllowed = () => !!(
+    currentUser
+    && loadedUserId === currentUser.id
+    && finalTimetable?.savedAt
+  );
   const requestContext = () => ({generation:hubState.generation, userId:currentUser?.id || null});
   const contextIsCurrent = context => !!(
     context?.userId
@@ -555,16 +559,17 @@
     closeHubAction(null, {restoreFocus:false});
     $("memberHub").hidden = true;
     document.body.classList.remove("hub-active");
+    window.syncPrimaryNavigation?.();
   }
 
   function showTimetable(){
     hideHub();
-    showSchedulePage();
+    window.openTimetableDestination?.();
   }
 
   function showHub(view="community"){
     if(!hubAccessAllowed()){
-      if(currentUser) showSchedulePage();
+      if(currentUser) window.openTimetableDestination?.();
       else openAuthModal();
       return;
     }
@@ -574,6 +579,7 @@
     $("memberHub").hidden = false;
     document.body.classList.add("app-active", "hub-active");
     document.body.classList.remove("schedule-active");
+    window.syncPrimaryNavigation?.();
     switchView(view);
     window.scrollTo({top:0, behavior:"smooth"});
   }
@@ -2780,7 +2786,6 @@
     if(hubState.sessionUserId !== nextUserId) resetSensitiveState(nextUserId);
     const allowed = hubAccessAllowed();
     const fullHubAvailable = allowed && !!finalTimetable?.savedAt;
-    if($("hubOpenBtn")) $("hubOpenBtn").hidden = !fullHubAvailable;
     if($("enterMemberHub")) $("enterMemberHub").hidden = !fullHubAvailable;
     if(!allowed && !$("memberHub").hidden) hideHub();
     if(allowed){
@@ -2789,6 +2794,7 @@
       if(!hubState.socialConnectionUserId && !hubState.socialConnectionLoading) loadSocialConnections().catch(console.warn);
     }
     window.ConCourseMarketplace?.syncAccess();
+    window.syncPrimaryNavigation?.();
     renderSocialConnections();
     if(!$("memberHub").hidden){
       if(hubState.activeView === "overview" && hubState.insightsLoaded) renderInsights(hubState.insightRows);
@@ -2806,7 +2812,6 @@
 
   $("hubOpenBtn")?.addEventListener("click", () => showHub("community"));
   $("enterMemberHub")?.addEventListener("click", () => showHub("community"));
-  $("hubBackToTimetable")?.addEventListener("click", showTimetable);
   $("overviewOpenTimetable")?.addEventListener("click", showTimetable);
   document.querySelectorAll("[data-hub-target]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.hubTarget)));
   $("loadCourseInsights")?.addEventListener("click", loadCourseInsights);

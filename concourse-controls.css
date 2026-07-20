@@ -1932,3 +1932,588 @@ input.market-search::placeholder {
     display: none !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Soft architecture
+   A single rounded-island system ties the planner, timetable and Student Hub
+   together without turning every control into an oversized capsule.
+   -------------------------------------------------------------------------- */
+
+:root {
+  --cc-control-radius: 14px;
+  --cc-island-radius: 30px;
+  --cc-card-radius: 23px;
+  --cc-island-border: rgba(139, 216, 255, .14);
+  --cc-island-shadow: 0 22px 64px rgba(2, 13, 25, .17);
+}
+
+/* Only Timetable and Student Hub are primary destinations. Account and
+   language remain quiet utilities on the right. */
+
+.primary-navigation[hidden] {
+  display: none !important;
+}
+
+body:not(.app-active) .primary-navigation {
+  display: none !important;
+}
+
+body.app-active #landingScreen .header-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 8px 10px;
+  border: 1px solid rgba(139, 216, 255, .13);
+  border-radius: 22px;
+  background: rgba(5, 20, 37, .74);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .05);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+}
+
+.primary-navigation {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid rgba(139, 216, 255, .14);
+  border-radius: 18px;
+  background: #03101e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+
+.primary-navigation-button {
+  min-width: 132px;
+  min-height: 44px;
+  padding: 0 18px;
+  color: rgba(229, 239, 248, .67);
+  background: transparent;
+  border: 0;
+  border-radius: 13px;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 720;
+  letter-spacing: -.01em;
+}
+
+.primary-navigation-button:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255, 255, 255, .07);
+  transform: none;
+}
+
+.primary-navigation-button[aria-current="page"] {
+  color: var(--navy-950);
+  background: var(--cc-control-paper);
+  box-shadow: inset 0 -2px 0 var(--cc-control-gold), 0 3px 10px rgba(0, 0, 0, .16);
+}
+
+.primary-navigation-button:disabled {
+  color: rgba(225, 237, 247, .38);
+  opacity: 1;
+}
+
+body.app-active #landingScreen .auth-bar {
+  min-width: 0;
+  justify-self: end;
+  flex-wrap: nowrap;
+}
+
+body.app-active #landingScreen .auth-identity {
+  max-width: min(250px, 20vw);
+}
+
+body.app-active #landingScreen #signOutBtn {
+  min-height: 40px;
+  border-radius: 13px;
+}
+
+body.app-active #landingScreen .language-control {
+  border-radius: 14px;
+}
+
+/* Student Hub subcategories live together in one rounded command island. */
+
+.member-hub .hub-sidebar {
+  grid-template-columns: minmax(210px, 290px) minmax(0, 1fr);
+  padding: 12px 14px;
+  border-radius: var(--cc-island-radius);
+}
+
+.member-hub .hub-avatar,
+.member-hub .hub-avatar-button,
+.member-hub .hub-avatar-button .hub-avatar {
+  border-radius: 50%;
+}
+
+.member-hub .hub-navigation {
+  grid-template-columns: repeat(5, minmax(104px, 1fr));
+  gap: 5px;
+  padding: 5px;
+  border-radius: 20px;
+}
+
+.member-hub .hub-nav-button {
+  min-height: 52px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 14px;
+}
+
+.member-hub .hub-nav-button::after {
+  right: 14px;
+  bottom: 5px;
+  left: 14px;
+  border-radius: 999px;
+}
+
+.member-hub .hub-nav-button.active,
+.member-hub .hub-nav-button[aria-current="page"] {
+  color: var(--navy-950);
+  background: var(--cc-control-paper);
+  box-shadow: inset 0 -2px 0 var(--cc-control-gold), 0 4px 12px rgba(0, 0, 0, .15);
+}
+
+.member-hub .hub-nav-button.active span,
+.member-hub .hub-nav-button[aria-current="page"] span {
+  color: #8a641e;
+}
+
+.member-hub .hub-sidebar .hub-back-button {
+  border-radius: 14px;
+}
+
+/* Roomier headings line up with the content islands below them. */
+
+.panel-heading,
+.hub-card-heading,
+.market-results-heading {
+  margin-bottom: 24px;
+}
+
+:is(
+  .panel-heading h2,
+  .hub-card-heading h2,
+  .hub-section-heading h2,
+  .market-results-heading h2,
+  .marketplace-dialog-header h2
+) {
+  line-height: 1.08;
+  letter-spacing: -.028em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.hub-section-heading {
+  padding: 18px clamp(20px, 2.5vw, 32px) 28px;
+}
+
+.member-hub[data-active-view="community"] .hub-page-header,
+.member-hub[data-active-view="marketplace"] .hub-page-header {
+  min-height: 154px;
+  max-width: 1120px;
+  margin: 0 auto 26px;
+  padding: clamp(28px, 4vw, 44px);
+  overflow: hidden;
+  align-items: flex-end;
+  border: 1px solid rgba(139, 216, 255, .14);
+  border-radius: var(--cc-island-radius);
+}
+
+.member-hub[data-active-view="community"] .hub-page-header h1,
+.member-hub[data-active-view="marketplace"] .hub-page-header h1 {
+  max-width: 18ch;
+  margin: 0;
+  padding: 0;
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: .98;
+  letter-spacing: -.048em;
+}
+
+/* The community is one rounded navy canvas containing softly nested paper
+   surfaces. This fixes the square discovery and feed bands visible before. */
+
+.member-hub[data-active-view="community"] .hub-community-layout {
+  grid-template-columns: minmax(0, 760px) minmax(260px, 320px);
+  gap: 24px;
+  max-width: 1120px;
+  padding-inline: 0;
+}
+
+.member-hub[data-active-view="community"] .hub-community-stream {
+  min-width: 0;
+  display: grid;
+  gap: 15px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid var(--cc-island-border);
+  border-radius: 36px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(47, 109, 246, .16), transparent 22rem),
+    linear-gradient(155deg, rgba(12, 40, 71, .92), rgba(4, 17, 31, .78));
+  box-shadow: var(--cc-island-shadow), inset 0 1px 0 rgba(255, 255, 255, .045);
+}
+
+.member-hub[data-active-view="community"] .hub-community-discovery {
+  min-width: 0;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(7, 30, 52, .09);
+  border-radius: 27px;
+  background: rgba(252, 253, 254, .98);
+  box-shadow: 0 12px 32px rgba(1, 12, 24, .1), inset 0 1px 0 #fff;
+}
+
+.member-hub[data-active-view="community"] .hub-community-search {
+  min-height: 56px;
+  margin: 0;
+  padding: 7px 14px;
+  border-radius: 19px;
+}
+
+.member-hub[data-active-view="community"] .hub-topic-chips {
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 7px;
+  border: 1px solid rgba(7, 29, 58, .09);
+  border-radius: 19px;
+  background: #e9eef2;
+}
+
+.member-hub[data-active-view="community"] .hub-topic-chip {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+}
+
+.member-hub[data-active-view="community"] .hub-topic-chip::after {
+  display: none;
+}
+
+.member-hub[data-active-view="community"] .hub-topic-chip:hover {
+  color: var(--navy-950);
+  background: rgba(255, 255, 255, .72);
+  border-color: rgba(7, 29, 58, .08);
+}
+
+.member-hub[data-active-view="community"] .hub-topic-chip.active,
+.member-hub[data-active-view="community"] .hub-topic-chip[aria-pressed="true"] {
+  color: #fff;
+  background: var(--navy-900);
+  border-color: var(--navy-900);
+  box-shadow: inset 0 -2px 0 var(--cc-control-gold);
+}
+
+.member-hub[data-active-view="community"] .hub-compose-card {
+  position: relative;
+  margin: 0;
+  padding: clamp(20px, 2.4vw, 28px);
+  overflow: hidden;
+  border: 1px solid rgba(7, 30, 52, .1);
+  border-top: 0;
+  border-radius: 28px;
+  background: var(--cc-control-paper);
+  box-shadow: 0 16px 42px rgba(1, 12, 24, .13), inset 0 1px 0 #fff;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 28px;
+  left: 28px;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, var(--cc-control-gold), var(--cc-control-blue));
+}
+
+.member-hub[data-active-view="community"] .hub-compose-card textarea {
+  min-height: 108px;
+  padding: 14px 16px;
+  background: #f4f6f7;
+  border: 1px solid rgba(7, 29, 58, .12);
+  border-radius: 20px;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-card textarea:focus {
+  background: #fff;
+  border-color: rgba(47, 109, 246, .48);
+  box-shadow: 0 0 0 4px rgba(47, 109, 246, .08);
+}
+
+.member-hub[data-active-view="community"] .hub-compose-meta {
+  margin-top: 12px;
+  padding: 11px 0 4px;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-meta input {
+  min-height: 42px;
+  padding-inline: 14px;
+  border: 1px solid rgba(7, 29, 58, .08);
+  border-radius: 14px;
+}
+
+.member-hub[data-active-view="community"] :is(
+  .hub-tool-button,
+  .hub-compose-toolbar .btn-primary,
+  .hub-poll-add-option,
+  .hub-poll-builder-heading button
+) {
+  border-radius: 14px;
+}
+
+.member-hub[data-active-view="community"] .hub-feed-toolbar {
+  min-height: 58px;
+  margin: 0;
+  padding: 12px 17px 12px 20px;
+  border: 1px solid rgba(7, 30, 52, .09);
+  border-radius: 20px;
+  background: rgba(252, 253, 254, .98);
+  box-shadow: 0 10px 28px rgba(1, 12, 24, .1);
+}
+
+.member-hub[data-active-view="community"] .hub-feed-toolbar b {
+  padding-left: 1px;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.member-hub[data-active-view="community"] .hub-feed-toolbar button {
+  min-height: 38px;
+  padding-inline: 12px;
+  border: 1px solid rgba(7, 29, 58, .1);
+  border-radius: 12px;
+  background: #edf2f6;
+}
+
+.member-hub[data-active-view="community"] :is(
+  .hub-post-card,
+  .hub-feed-empty,
+  .hub-rail-card
+) {
+  border-radius: var(--cc-card-radius);
+}
+
+.member-hub[data-active-view="community"] .hub-post-card {
+  padding: clamp(18px, 2vw, 24px);
+}
+
+/* Apply the same softened geometry to the other product surfaces. */
+
+:is(
+  .configurator-column .panel,
+  #wishlistPanel,
+  #timetablePanel,
+  .hub-card,
+  .hub-metric-card,
+  .hub-rail-card,
+  .hub-post-card,
+  .hub-chat-card,
+  .hub-connections-shell,
+  .market-rail-card,
+  .marketplace-card,
+  .marketplace-dialog,
+  .auth-card
+) {
+  border-radius: var(--cc-card-radius);
+}
+
+:is(
+  .auth-mode-switch,
+  .configurator-nav,
+  .hub-connection-tabs,
+  .market-mode-tabs,
+  .wishlist-profile-controls,
+  .market-discovery-bar,
+  .market-catalogue-controls,
+  .final-timetable-actions
+) {
+  border-radius: 20px;
+}
+
+:is(
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  .choice,
+  .day-chip,
+  .market-search,
+  .marketplace-media-drop,
+  .market-media-uploader
+) {
+  border-radius: var(--cc-control-radius);
+}
+
+.marketplace-card {
+  border-radius: var(--cc-card-radius);
+}
+
+.market-discovery-bar {
+  padding: 12px;
+  border-radius: 26px;
+}
+
+.market-search {
+  border-radius: 17px;
+}
+
+.hub-profile-save-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 1180px) {
+  .member-hub[data-active-view="community"] .hub-community-layout {
+    grid-template-columns: minmax(0, 860px);
+    row-gap: 18px;
+    max-width: 900px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-stream {
+    display: grid;
+  }
+}
+
+@media (max-width: 1080px) {
+  body.app-active #landingScreen .header-row {
+    grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+    gap: 10px;
+  }
+
+  body.app-active #landingScreen .auth-identity {
+    display: none;
+  }
+
+  .primary-navigation-button {
+    min-width: 116px;
+    padding-inline: 14px;
+  }
+
+  .member-hub .hub-sidebar {
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    border-radius: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .member-hub .hub-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --app-bar-offset: 126px;
+    --cc-island-radius: 24px;
+    --cc-card-radius: 20px;
+  }
+
+  body.app-active #landingScreen .header-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px 10px;
+    padding: 8px;
+    border-radius: 20px;
+  }
+
+  body.app-active #landingScreen .brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  body.app-active #landingScreen .auth-bar {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  body.app-active #landingScreen .primary-navigation {
+    width: 100%;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+  }
+
+  .primary-navigation-button {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .member-hub[data-active-view="community"] .hub-page-header,
+  .member-hub[data-active-view="marketplace"] .hub-page-header {
+    min-height: 132px;
+    margin-bottom: 16px;
+    padding: 24px 22px;
+    border-radius: 24px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-page-header h1,
+  .member-hub[data-active-view="marketplace"] .hub-page-header h1 {
+    font-size: clamp(31px, 9vw, 42px);
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-layout {
+    row-gap: 14px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-stream {
+    gap: 12px;
+    padding: 10px;
+    border-radius: 26px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-discovery,
+  .member-hub[data-active-view="community"] .hub-compose-card {
+    padding: 14px;
+    border-radius: 21px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-feed-toolbar {
+    min-height: 54px;
+    padding: 10px 12px 10px 15px;
+    border-radius: 17px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-post-card {
+    padding: 17px;
+    border-radius: 20px;
+  }
+
+  .hub-profile-save-actions {
+    width: 100%;
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  :root { --app-bar-offset: 122px; }
+
+  body.app-active #landingScreen #signOutBtn {
+    min-width: 40px;
+    padding-inline: 9px;
+    font-size: 10px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-stream {
+    padding: 8px;
+    border-radius: 22px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-discovery,
+  .member-hub[data-active-view="community"] .hub-compose-card,
+  .member-hub[data-active-view="community"] .hub-post-card {
+    border-radius: 18px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-topic-chip {
+    min-height: 40px;
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-rail > .hub-rail-links {
+    grid-template-columns: 1fr;
+  }
+}

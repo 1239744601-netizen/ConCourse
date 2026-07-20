@@ -1730,7 +1730,7 @@
 <link rel="stylesheet" href="member-hub.css?v=20260720-1" />
 <link rel="stylesheet" href="marketplace.css?v=20260720-1" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260720-1" />
-<link rel="stylesheet" href="concourse-controls.css?v=20260720-2" />
+<link rel="stylesheet" href="concourse-controls.css?v=20260720-3" />
 </head>
 <body>
 <header id="landingScreen">
@@ -1742,15 +1742,16 @@
       <div class="brand-tag" data-i18n="brandTag">Conquer your course registrations</div>
     </div>
   </div>
+  <nav class="primary-navigation" id="primaryNavigation" hidden aria-label="Primary destinations" data-i18n-aria-label="primaryDestinations">
+    <button type="button" class="primary-navigation-button" id="topTimetableBtn" hidden data-i18n="timetableNav">Timetable</button>
+    <button type="button" class="primary-navigation-button" id="hubOpenBtn" hidden data-i18n="studentHub">Student hub</button>
+  </nav>
   <div class="auth-bar" aria-label="Account controls">
     <div class="auth-identity">
       <span class="auth-user" id="authUser">Not signed in</span>
       <span class="auth-academic" id="authAcademic" hidden></span>
     </div>
     <button class="btn-primary" id="authOpenBtn" data-i18n="signIn">Sign in</button>
-    <button class="btn-ghost" id="saveAccountBtn" hidden data-i18n="saveNow">Save now</button>
-    <button class="btn-ghost" id="marketplaceOpenBtn" hidden data-i18n="hubMarketplace">Campus market</button>
-    <button class="btn-ghost" id="hubOpenBtn" hidden data-i18n="studentHub">Student hub</button>
     <button class="btn-ghost" id="signOutBtn" hidden data-i18n="signOut">Sign out</button>
     <label class="language-control" for="languageSelect">
       <span class="language-icon" aria-hidden="true">
@@ -2149,8 +2150,8 @@
         <button type="button" class="hub-nav-button" data-hub-target="marketplace"><span>02</span><b data-i18n="hubMarketplace">Campus market</b></button>
         <button type="button" class="hub-nav-button" data-hub-target="messages"><span>03</span><b data-i18n="hubMessages">Messages</b></button>
         <button type="button" class="hub-nav-button" data-hub-target="overview"><span>04</span><b data-i18n="hubInsights">Academic insights</b></button>
+        <button type="button" class="hub-nav-button" data-hub-target="profile"><span>05</span><b data-i18n="hubProfile">Profile</b></button>
       </nav>
-      <button type="button" class="btn-ghost hub-back-button" id="hubBackToTimetable" data-i18n="backToTimetable">Back to timetable</button>
     </aside>
 
     <main class="hub-main">
@@ -2474,7 +2475,13 @@
               <label class="hub-toggle-label"><input id="profileAllowMessages" type="checkbox" /><span data-i18n="allowMessages">Allow schoolmates to message me</span></label>
               <label class="hub-toggle-label hub-form-wide"><input id="profileAnalyticsConsent" type="checkbox" /><span data-i18n="analyticsConsent">Share my finalized course choices in anonymous, privacy-protected trends</span></label>
             </div>
-            <div class="hub-profile-save"><p class="hub-inline-status" id="memberProfileStatus"></p><button type="button" class="btn-primary" id="saveMemberProfile" data-i18n="saveProfile">Save profile</button></div>
+            <div class="hub-profile-save">
+              <p class="hub-inline-status" id="memberProfileStatus"></p>
+              <div class="hub-profile-save-actions">
+                <button type="button" class="btn-ghost" id="saveAccountBtn" hidden data-i18n="saveNow">Save planner</button>
+                <button type="button" class="btn-primary" id="saveMemberProfile" data-i18n="saveProfile">Save profile</button>
+              </div>
+            </div>
           </article>
         </div>
       </section>
@@ -2643,7 +2650,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出价仅为非约束性的价格提议。请通过私信商定下一步；ConCourse 不会收取款项。",
     marketplaceMarkSoldConfirm:"仅在已完成线下交付后将商品标记为售出。此操作会关闭商品，但不能作为已付款的证明。",
     marketplaceMarkClaimed:"标记为已领取", marketplaceMarkClaimedConfirm:"仅在免费物品已完成交付后标记为已领取。", marketplaceCloseRequest:"关闭求购", marketplaceCloseRequestConfirm:"仅在你不再需要该物品时关闭这项求购。", marketplaceStatusClaimed:"已领取", marketplaceStatusRequestClosed:"求购已关闭",
-    brandTag:"轻松规划课程注册", returnWelcome:"返回欢迎页面", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
+    brandTag:"轻松规划课程注册", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
     intelligentPlanning:"智能课程规划", heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
     conflictFree:"无时间冲突", creditAware:"智能计算学分", builtAroundYou:"为你量身规划", startPlanning:"开始规划",
@@ -2735,7 +2742,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出價只係冇約束力嘅價錢建議。請用私訊商議下一步；ConCourse 唔會收取款項。",
     marketplaceMarkSoldConfirm:"只可以喺完成線下交收之後標記做已售出。呢個操作會關閉商品，但唔代表已經付款。",
     marketplaceMarkClaimed:"標記做已領取", marketplaceMarkClaimedConfirm:"只可以喺免費物品完成交收之後標記做已領取。", marketplaceCloseRequest:"關閉求購", marketplaceCloseRequestConfirm:"只可以喺你唔再需要件物品時關閉呢項求購。", marketplaceStatusClaimed:"已領取", marketplaceStatusRequestClosed:"求購已關閉",
-    brandTag:"輕鬆規劃課程註冊", returnWelcome:"返回歡迎頁面", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
+    brandTag:"輕鬆規劃課程註冊", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
     intelligentPlanning:"智能課程規劃", heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
     conflictFree:"唔撞時間", creditAware:"智能計學分", builtAroundYou:"為你度身規劃", startPlanning:"開始規劃",
@@ -2827,7 +2834,7 @@ const TRANSLATIONS = {
 
 function t(key, variables={}){
   const english = {
-    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
+    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
     signInSubtitle:"Sign in to continue to your planning workspace.", signUpSubtitle:"Create your academic profile and planning workspace.",
     signUpNote:"Institution matching confirms that a school exists; it does not verify current enrollment.",
     signInNote:"Your schedules are encrypted in transit and isolated by account-level database policies.",
@@ -2933,6 +2940,7 @@ function applyLanguage(language, {persist=true}={}){
   renderCourses();
   renderFinalTimetableStatus();
   if(solutions.length && solutions[activeSolution]) renderResults();
+  else if(finalTimetable?.savedAt && document.body.classList.contains("schedule-active")) renderSavedFinalTimetable(finalTimetable);
   updateBrandHomeState();
   window.ConCourseHub?.refreshLanguage();
 }
@@ -3007,12 +3015,39 @@ function renderAccountIdentity(){
   $("authAcademic").hidden = !currentUser || !academic;
 }
 
+function syncPrimaryNavigation(){
+  const signedIn = !!currentUser;
+  const stateReady = !!(signedIn && loadedUserId === currentUser.id);
+  const navigation = $("primaryNavigation");
+  const timetableButton = $("topTimetableBtn");
+  const hubButton = $("hubOpenBtn");
+  const hubAvailable = !!(stateReady && finalTimetable?.savedAt);
+  const hubActive = appStarted && document.body.classList.contains("hub-active");
+  const timetableActive = appStarted && !hubActive;
+
+  if(navigation) navigation.hidden = !signedIn;
+  if(timetableButton){
+    timetableButton.hidden = !signedIn;
+    timetableButton.disabled = signedIn && !stateReady;
+    timetableButton.toggleAttribute("aria-current", timetableActive);
+    if(timetableActive) timetableButton.setAttribute("aria-current", "page");
+  }
+  if(hubButton){
+    hubButton.hidden = !signedIn;
+    hubButton.disabled = !hubAvailable;
+    hubButton.setAttribute("aria-disabled", String(!hubAvailable));
+    hubButton.title = hubAvailable ? "" : t("hubNoFinalSchedule");
+    hubButton.toggleAttribute("aria-current", hubActive);
+    if(hubActive) hubButton.setAttribute("aria-current", "page");
+  }
+}
+
 function renderFinalTimetableStatus(){
   const status = $("finalTimetableStatus");
   if(!status) return;
   const hubAvailable = !!(currentUser && loadedUserId === currentUser.id && finalTimetable?.savedAt);
-  if($("hubOpenBtn")) $("hubOpenBtn").hidden = !hubAvailable;
   if($("enterMemberHub")) $("enterMemberHub").hidden = !hubAvailable;
+  syncPrimaryNavigation();
   if(!finalTimetable?.savedAt){
     status.textContent = t("finalTimetableNotSaved");
     window.ConCourseHub?.syncAccess();
@@ -3319,6 +3354,7 @@ function enterPlanner(){
   $("appWrap").hidden = false;
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
+  syncPrimaryNavigation();
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
@@ -3329,6 +3365,7 @@ function leavePlanner(){
   $("appWrap").hidden = true;
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
+  syncPrimaryNavigation();
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
@@ -3349,22 +3386,48 @@ function updateBrandHomeState(){
 }
 
 function showSchedulePage(){
+  appStarted = true;
+  updateBrandHomeState();
+  document.body.classList.add("app-active");
   $("plannerAlert").innerHTML = "";
   $("appWrap").hidden = true;
   $("schedulePage").hidden = false;
   if($("memberHub")) $("memberHub").hidden = true;
   document.body.classList.add("schedule-active");
   document.body.classList.remove("hub-active");
+  syncPrimaryNavigation();
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function showPlannerEditor(){
+  appStarted = true;
+  updateBrandHomeState();
+  document.body.classList.add("app-active");
   document.body.classList.remove("schedule-active", "hub-active");
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
   $("appWrap").hidden = false;
+  syncPrimaryNavigation();
   window.scrollTo({top:0, behavior:"smooth"});
 }
+
+function openTimetableDestination(){
+  if(!currentUser){ openAuthModal(); return; }
+  if(loadedUserId !== currentUser.id) return;
+  if(solutions.length && solutions[activeSolution]){
+    showSchedulePage();
+    renderResults();
+    return;
+  }
+  if(finalTimetable?.savedAt){
+    showSchedulePage();
+    renderSavedFinalTimetable(finalTimetable);
+    return;
+  }
+  showPlannerEditor();
+}
+
+window.openTimetableDestination = openTimetableDestination;
 
 function collectUserState(){
   return {
@@ -3562,7 +3625,6 @@ function applySession(session){
   renderAccountIdentity();
   $("authOpenBtn").hidden = signedIn;
   $("saveAccountBtn").hidden = !signedIn;
-  $("marketplaceOpenBtn").hidden = !signedIn;
   $("signOutBtn").hidden = !signedIn;
   $("startAppBtn").hidden = !signedIn;
   const academic = signedIn ? getAcademicIdentity().label : "";
@@ -3587,6 +3649,7 @@ function applySession(session){
   }
   updateBrandHomeState();
   renderFinalTimetableStatus();
+  syncPrimaryNavigation();
 }
 
 async function submitAuth(mode){
@@ -3689,7 +3752,7 @@ async function submitAuth(mode){
 function initializeAccount(){
   $("authOpenBtn").onclick = openAuthModal;
   $("startAppBtn").onclick = enterPlanner;
-  $("marketplaceOpenBtn").onclick = () => window.ConCourseHub?.show("marketplace");
+  $("topTimetableBtn").onclick = openTimetableDestination;
   $("editSelections").onclick = showPlannerEditor;
   const brandHome = $("landingScreen").querySelector(".brand");
   brandHome.onclick = () => { if(appStarted) leavePlanner(); };
@@ -4285,6 +4348,61 @@ function renderSearchLimit(limit){
   $("calArea").innerHTML = `<div class="empty-note">${escapeHtml(t("tooManyTimetables"))}</div>`;
 }
 
+function finalSnapshotCalendarData(snapshot){
+  const snapshotCourses = (Array.isArray(snapshot?.courses) ? snapshot.courses : []).map((course, index) => ({
+    id: course.courseId || `saved-course-${index}`,
+    name: course.name || course.code || t("notProvided"),
+    code: course.code || "",
+    prof: course.professor || "",
+    credits: Number(course.credits || 0),
+    required: !!course.required
+  }));
+  const picks = snapshotCourses.map((course, index) => ({
+    courseId: course.id,
+    slots: (snapshot.courses[index]?.slots || []).map(slot => ({
+      days: Array.isArray(slot.days) ? slot.days.map(Number).filter(day => day >= 1 && day <= 6) : [],
+      start: Number(slot.start),
+      end: Number(slot.end)
+    })).filter(slot => Number.isFinite(slot.start) && Number.isFinite(slot.end) && slot.end > slot.start && slot.days.length)
+  }));
+  return {courses:snapshotCourses, picks};
+}
+
+function renderSavedFinalTimetable(snapshot){
+  const {courses:snapshotCourses, picks} = finalSnapshotCalendarData(snapshot);
+  if(!snapshotCourses.length){ showPlannerEditor(); return; }
+
+  const summary = snapshot.summary || {};
+  const weekdays = new Set();
+  picks.forEach(pick => pick.slots.forEach(slot => slot.days.forEach(day => {
+    if(day >= 1 && day <= 5) weekdays.add(day);
+  })));
+  const freeWeekdays = 5 - weekdays.size;
+  const freeDayNames = [1,2,3,4,5].filter(day => !weekdays.has(day)).map(localizedDay).join(", ") || t("none");
+  const freeWeekdayLabel = t(freeWeekdays === 1 ? "freeWeekdayStat" : "freeWeekdaysStat", {days:freeDayNames});
+  const courseCount = Number(summary.courseCount ?? snapshotCourses.length);
+  const credits = Number(summary.credits ?? snapshotCourses.reduce((total, course) => total + course.credits, 0));
+  const daysOnCampus = Number(summary.daysOnCampus ?? weekdays.size);
+  const gapMinutes = Number(summary.gapMinutes || 0);
+  const savedDate = new Date(snapshot.savedAt);
+  const locale = currentLanguage === "zh-CN" ? "zh-CN" : currentLanguage === "zh-HK" ? "zh-HK" : "en-GB";
+  const formattedDate = Number.isNaN(savedDate.getTime()) ? snapshot.savedAt : savedDate.toLocaleString(locale, {dateStyle:"medium", timeStyle:"short"});
+
+  $("warnArea").innerHTML = "";
+  $("scoreArea").innerHTML = `<div class="badge">${escapeHtml(t("finalTimetableTitle"))}</div>`;
+  $("statArea").innerHTML = `<div class="stat-row">
+    <div class="stat"><b>${courseCount}</b>${escapeHtml(t("coursesTakenStat"))}</div>
+    <div class="stat"><b>${credits}</b>${escapeHtml(t("creditsStat"))}</div>
+    <div class="stat"><b>${daysOnCampus}</b>${escapeHtml(t("daysOnCampusStat"))}</div>
+    <div class="stat"><b>${freeWeekdays}</b>${escapeHtml(freeWeekdayLabel)}</div>
+    <div class="stat"><b>${(gapMinutes / 60).toFixed(1)}h</b>${escapeHtml(t("totalGapsStat"))}</div>
+  </div>`;
+  $("altArea").innerHTML = "";
+  $("droppedArea").innerHTML = `<div class="info-box"><b>${escapeHtml(t("finalTimetableTitle"))}</b> ${escapeHtml(t("finalTimetableSaved", {date:formattedDate}))}</div>`;
+  $("colorModeBar").style.display = "flex";
+  renderCalendar(picks, snapshotCourses, {savedSnapshot:snapshot});
+}
+
 function renderResults(){
   const sol = solutions[activeSolution];
   const s = sol.score;
@@ -4345,14 +4463,18 @@ let colorMode = "course";          // "course" = each course its own colour, "ty
 document.querySelectorAll('input[name="colorMode"]').forEach(r => r.addEventListener("change", () => {
   colorMode = (document.querySelector('input[name="colorMode"]:checked')||{}).value || "course";
   if(solutions[activeSolution]) renderCalendar(solutions[activeSolution].picks);
+  else if(finalTimetable?.savedAt && document.body.classList.contains("schedule-active")){
+    const snapshotData = finalSnapshotCalendarData(finalTimetable);
+    renderCalendar(snapshotData.picks, snapshotData.courses, {savedSnapshot:finalTimetable});
+  }
 }));
 
-function renderCalendar(picks){
+function renderCalendar(picks, courseSource=courses, options={}){
   let minT = 24*60, maxT = 0;
   const events = [];
   // colour per course id, depending on the chosen colour mode
   const colorFor = {};
-  courses.forEach((c,i)=> colorFor[c.id] = colorMode === "type"
+  courseSource.forEach((c,i)=> colorFor[c.id] = colorMode === "type"
     ? (c.required ? MUST_COLOR : ELECTIVE_COLOR)
     : COLORS[i % COLORS.length]);
   // legend (only meaningful in "type" mode)
@@ -4361,7 +4483,8 @@ function renderCalendar(picks){
     ? `<span class="lg"><span class="sw" style="background:${MUST_COLOR}"></span>${escapeHtml(t("mustTakeLegend"))}</span><span class="lg"><span class="sw" style="background:${ELECTIVE_COLOR}"></span>${escapeHtml(t("electiveLegend"))}</span>`
     : "";
   picks.forEach((p) => {
-    const course = courses.find(c=>c.id===p.courseId);
+    const course = courseSource.find(c=>c.id===p.courseId);
+    if(!course) return;
     for(const s of p.slots){
       for(const d of s.days){
         events.push({ day:d, start:s.start, end:s.end, course, color: colorFor[course.id] });
@@ -4400,7 +4523,15 @@ function renderCalendar(picks){
   const headers = `<div class="calendar-days" style="display:flex; margin-left:56px;">` +
     showDays.map(d=>`<div style="flex:1; text-align:center; font-size:12px; color:var(--muted); font-weight:600; padding-bottom:6px;">${escapeHtml(localizedDay(d))}</div>`).join("") + `</div>`;
 
-  const comparisonHint = solutions.length > 1 ? ` ${escapeHtml(t("compareAlternatives"))}` : "";
+  const comparisonHint = !options.savedSnapshot && solutions.length > 1 ? ` ${escapeHtml(t("compareAlternatives"))}` : "";
+  const savedDate = options.savedSnapshot ? new Date(options.savedSnapshot.savedAt) : null;
+  const locale = currentLanguage === "zh-CN" ? "zh-CN" : currentLanguage === "zh-HK" ? "zh-HK" : "en-GB";
+  const formattedSavedDate = savedDate && !Number.isNaN(savedDate.getTime())
+    ? savedDate.toLocaleString(locale, {dateStyle:"medium", timeStyle:"short"})
+    : options.savedSnapshot?.savedAt;
+  const calendarHint = options.savedSnapshot
+    ? t("finalTimetableSaved", {date:formattedSavedDate || "—"})
+    : `${t("showingRankedOption", {option:activeSolution+1})}${comparisonHint}`;
 
   $("calArea").innerHTML = `
     <div class="calendar-scroll">
@@ -4412,7 +4543,7 @@ function renderCalendar(picks){
         </div>
       </div>
     </div>
-    <div class="hint" style="margin-top:14px">${escapeHtml(t("showingRankedOption", {option:activeSolution+1}))}${comparisonHint} <button type="button" class="link print-action" id="printBtn">${escapeHtml(t("printPdf"))}</button></div>
+    <div class="hint" style="margin-top:14px">${escapeHtml(calendarHint)} <button type="button" class="link print-action" id="printBtn">${escapeHtml(t("printPdf"))}</button></div>
   `;
   // scale the grid so it fits a single landscape page when printed (header row + grid ≈ totalH + 30)
   const printScale = Math.min(1, 690 / (totalH + 30));
@@ -4477,7 +4608,7 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260720-1"></script>
+<script src="member-hub.js?v=20260720-2"></script>
 <script src="marketplace.js?v=20260720-1"></script>
 </body>
 </html>
