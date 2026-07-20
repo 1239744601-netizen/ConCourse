@@ -28,7 +28,11 @@
     socialStatus: null,
     actionResolver: null,
     actionReturnFocus: null,
+    actionHasInput: false,
     actionInputRequired: false,
+    actionRequiredMessage: "",
+    actionBackgroundModals: [],
+    profilePreviewBackgroundModals: [],
     insightRows: [],
     insightsLoaded: false,
     feed: [],
@@ -144,7 +148,7 @@
     renderSocialConnectionStatus();
   };
 
-  const hubAccessAllowed = () => !!(currentUser && loadedUserId === currentUser.id && finalTimetable?.savedAt);
+  const hubAccessAllowed = () => !!currentUser;
   const requestContext = () => ({generation:hubState.generation, userId:currentUser?.id || null});
   const contextIsCurrent = context => !!(
     context?.userId
@@ -155,6 +159,7 @@
   function resetSensitiveState(nextUserId){
     revokeAvatarUrls();
     revokeCommunityMediaUrls();
+    window.ConCourseMarketplace?.reset(nextUserId);
     hubState.sessionUserId = nextUserId;
     hubState.generation += 1;
     hubState.conversationRequest += 1;
@@ -229,7 +234,7 @@
     $("courseInsightScope").value = "same_major_year";
     $("courseInsightYear").value = "";
     syncInsightYearControl();
-    $("schoolmateProfileModal").hidden = true;
+    closeSchoolmateProfile({restoreFocus:false});
     $("schoolmateProfileLinks").replaceChildren();
     $("schoolmateProfileInterests").replaceChildren();
     $("schoolmateProfileConnections").replaceChildren();
@@ -444,8 +449,16 @@
   }
 
   function renderHubHeader(){
-    const view = ["community", "messages", "overview", "profile"].includes(hubState.activeView) ? hubState.activeView : "community";
-    const prefix = view === "overview" ? "hubInsights" : view === "community" ? "hubCommunity" : view === "messages" ? "hubMessages" : "hubProfile";
+    const view = ["community", "marketplace", "messages", "overview", "profile"].includes(hubState.activeView) ? hubState.activeView : "community";
+    const prefix = view === "overview"
+      ? "hubInsights"
+      : view === "community"
+        ? "hubCommunity"
+        : view === "marketplace"
+          ? "hubMarketplace"
+          : view === "messages"
+            ? "hubMessages"
+            : "hubProfile";
     $("hubPageKicker").textContent = t(`${prefix}Kicker`);
     $("hubGreeting").textContent = t(`${prefix}Title`);
     $("hubPageIntroduction").textContent = t(`${prefix}Intro`);
@@ -537,6 +550,7 @@
 
   function hideHub(){
     configureMessagePolling(false);
+    window.ConCourseMarketplace?.closeTransientUi?.();
     closeSchoolmateProfile({restoreFocus:false});
     closeHubAction(null, {restoreFocus:false});
     $("memberHub").hidden = true;
@@ -565,7 +579,7 @@
   }
 
   async function switchView(view){
-    if(!["overview", "community", "messages", "profile"].includes(view)) view = "community";
+    if(!["overview", "community", "marketplace", "messages", "profile"].includes(view)) view = "community";
     if(view !== "community") closeSchoolmateProfile({restoreFocus:false});
     hubState.activeView = view;
     $("memberHub").dataset.activeView = view;
@@ -589,6 +603,8 @@
       }
     } else if(view === "community"){
       await Promise.all([loadCommunityFeed(), loadConversations()]);
+    } else if(view === "marketplace"){
+      await window.ConCourseMarketplace?.activate();
     } else if(view === "messages"){
       await loadConversations();
     } else if(view === "profile"){
@@ -1871,6 +1887,7 @@
     $("communityPostTags").value = "";
     renderComposerMedia();
     resetCommunityPoll();
+    window.ConCourseMarketplace?.clearCommunityListing();
     updateCommunityPostCounter();
   }
 
@@ -1939,25 +1956,55 @@
     const returnFocus = hubState.actionReturnFocus;
     hubState.actionResolver = null;
     hubState.actionReturnFocus = null;
+    hubState.actionHasInput = false;
     hubState.actionInputRequired = false;
+    hubState.actionRequiredMessage = "";
     $("hubActionModal").hidden = true;
     $("hubActionInput").value = "";
+    restoreBackgroundModals(hubState.actionBackgroundModals);
+    hubState.actionBackgroundModals = [];
     if(resolver) resolver(value);
     if(restoreFocus && returnFocus?.isConnected) returnFocus.focus();
   }
 
-  function requestHubAction({title, message, input=false, confirmLabel, danger=false}){
+  function suspendBackgroundModals(exceptModal){
+    return [...document.querySelectorAll(".marketplace-modal:not([hidden]), .hub-profile-modal:not([hidden])")]
+      .filter(modal => modal !== exceptModal)
+      .map(modal => {
+        const previousAriaHidden = modal.getAttribute("aria-hidden");
+        modal.inert = true;
+        modal.setAttribute("aria-hidden", "true");
+        return {modal, previousAriaHidden};
+      });
+  }
+
+  function restoreBackgroundModals(records=[]){
+    records.forEach(({modal, previousAriaHidden}) => {
+      if(!modal?.isConnected) return;
+      modal.inert = false;
+      if(previousAriaHidden === null) modal.removeAttribute("aria-hidden");
+      else modal.setAttribute("aria-hidden", previousAriaHidden);
+    });
+  }
+
+  function requestHubAction({title, message, input=false, inputRequired=input, inputMode="text", maxLength=500, placeholder=null, requiredMessage=null, confirmLabel, danger=false}){
     closeHubAction(null, {restoreFocus:false});
     hubState.actionReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    hubState.actionInputRequired = input;
+    hubState.actionHasInput = input;
+    hubState.actionInputRequired = input && inputRequired;
+    hubState.actionRequiredMessage = requiredMessage || t("reasonRequired");
     $("hubActionTitle").textContent = title;
     $("hubActionMessage").textContent = message;
-    $("hubActionInput").hidden = !input;
-    $("hubActionInput").placeholder = t("reasonPlaceholder");
+    const actionInput = $("hubActionInput");
+    actionInput.hidden = !input;
+    actionInput.placeholder = input ? (placeholder ?? t("reasonPlaceholder")) : "";
+    actionInput.inputMode = input ? inputMode : "text";
+    actionInput.maxLength = Math.min(2000, Math.max(1, Number(maxLength) || 500));
     $("hubActionConfirm").textContent = confirmLabel;
     $("hubActionConfirm").className = `btn-primary${danger ? " danger" : ""}`;
     $("hubActionModal").hidden = false;
-    requestAnimationFrame(() => (input ? $("hubActionInput") : $("hubActionConfirm")).focus());
+    hubState.actionBackgroundModals = suspendBackgroundModals($("hubActionModal"));
+    requestAnimationFrame(() => (input ? actionInput : $("hubActionConfirm")).focus());
     return new Promise(resolve => { hubState.actionResolver = resolve; });
   }
 
@@ -1967,6 +2014,8 @@
     hubState.profilePreview = null;
     const returnFocus = hubState.profilePreviewReturnFocus;
     hubState.profilePreviewReturnFocus = null;
+    restoreBackgroundModals(hubState.profilePreviewBackgroundModals);
+    hubState.profilePreviewBackgroundModals = [];
     if(restoreFocus && returnFocus?.isConnected) returnFocus.focus();
   }
 
@@ -2057,10 +2106,11 @@
       authClient.rpc("get_schoolmate_profile", {p_user_id:userId}),
       loadSchoolmateConnectedProviders(userId)
     ]);
-    if(!contextIsCurrent(context) || request !== hubState.profilePreviewRequest || hubState.activeView !== "community" || $("memberHub").hidden) return;
+    if(!contextIsCurrent(context) || request !== hubState.profilePreviewRequest || !["community", "marketplace"].includes(hubState.activeView) || $("memberHub").hidden) return;
     const profile = Array.isArray(profileResponse.data) ? profileResponse.data[0] : profileResponse.data;
     if(profileResponse.error || !profile){
-      setStatus("communityComposerStatus", profileResponse.error ? featureError(profileResponse.error) : t("profileUnavailable"), "error");
+      const statusTarget = hubState.activeView === "marketplace" ? "marketplaceStatus" : "communityComposerStatus";
+      setStatus(statusTarget, profileResponse.error ? featureError(profileResponse.error) : t("profileUnavailable"), "error");
       return;
     }
     profile.user_id = userId;
@@ -2069,6 +2119,7 @@
     hubState.profilePreview = profile;
     renderSchoolmateProfile(profile);
     $("schoolmateProfileModal").hidden = false;
+    hubState.profilePreviewBackgroundModals = suspendBackgroundModals($("schoolmateProfileModal"));
     $("closeSchoolmateProfile").focus();
   }
 
@@ -2295,6 +2346,8 @@
       if(media) card.append(media);
       const poll = renderPostPoll(post);
       if(poll) card.append(poll);
+      const linkedListing = window.ConCourseMarketplace?.renderLinkedListing(post.linked_listing);
+      if(linkedListing) card.append(linkedListing);
 
       const actions = node("div", "hub-post-actions");
       const commentButton = node("button", "", `${t("comment")} · ${Number(post.comment_count || 0)}`);
@@ -2386,7 +2439,7 @@
     hubState.loadingFeed = true;
     updateCommunityLoadMore();
     if(!append && (!hubState.feed.length || hubState.feedMode !== mode)) replaceCommunityFeed(node("div", "hub-feed-empty", t("communityLoading")));
-    const { data, error } = await authClient.rpc("get_school_feed", {
+    const { data, error } = await authClient.rpc("get_school_feed_v2", {
       p_limit:limit,
       p_offset:offset,
       p_bookmarked_only:mode === "saved",
@@ -2406,7 +2459,7 @@
       : null;
     const hashPostId = hashMatch?.[1] || "";
     if(hashPostId && !rows.some(post => post.post_id === hashPostId)){
-      const targeted = await authClient.rpc("get_school_feed", {
+      const targeted = await authClient.rpc("get_school_feed_v2", {
         p_limit:1,
         p_offset:0,
         p_bookmarked_only:false,
@@ -2448,7 +2501,9 @@
 
   async function publishCommunityPost(){
     if(hubState.composerMediaBusy || !currentUser) return;
-    const body = $("communityPostBody").value.trim();
+    const linkedListingId = window.ConCourseMarketplace?.selectedCommunityListingId() || null;
+    const typedBody = $("communityPostBody").value.trim();
+    const body = typedBody || (linkedListingId ? t("marketplaceSharedPostDefault") : "");
     let poll;
     try { poll = communityPollPayload(); }
     catch(error){ setStatus("communityComposerStatus", error.message, "error"); return; }
@@ -2465,12 +2520,13 @@
     try {
       uploaded = await uploadCommunityMedia(draftId, mediaSnapshot, context, operation);
       if(!contextIsCurrent(context) || operation !== hubState.publishOperation){ await removeCommunityUploads(uploaded.paths); return; }
-      const { error } = await authClient.rpc("publish_community_post_v2", {
+      const { error } = await authClient.rpc("publish_community_post_v3", {
         p_body:body || null,
         p_tags:tags,
         p_media:uploaded.descriptors,
         p_poll_question:pollSnapshot?.question || null,
-        p_poll_options:pollSnapshot?.options || []
+        p_poll_options:pollSnapshot?.options || [],
+        p_listing_id:linkedListingId
       });
       if(error){
         await removeCommunityUploads(uploaded.paths);
@@ -2723,14 +2779,16 @@
     const nextUserId = currentUser?.id || null;
     if(hubState.sessionUserId !== nextUserId) resetSensitiveState(nextUserId);
     const allowed = hubAccessAllowed();
-    if($("hubOpenBtn")) $("hubOpenBtn").hidden = !allowed;
-    if($("enterMemberHub")) $("enterMemberHub").hidden = !allowed;
+    const fullHubAvailable = allowed && !!finalTimetable?.savedAt;
+    if($("hubOpenBtn")) $("hubOpenBtn").hidden = !fullHubAvailable;
+    if($("enterMemberHub")) $("enterMemberHub").hidden = !fullHubAvailable;
     if(!allowed && !$("memberHub").hidden) hideHub();
     if(allowed){
       renderOverview();
       if(!hubState.profileUserId) loadMemberProfile().catch(console.warn);
       if(!hubState.socialConnectionUserId && !hubState.socialConnectionLoading) loadSocialConnections().catch(console.warn);
     }
+    window.ConCourseMarketplace?.syncAccess();
     renderSocialConnections();
     if(!$("memberHub").hidden){
       if(hubState.activeView === "overview" && hubState.insightsLoaded) renderInsights(hubState.insightRows);
@@ -2805,9 +2863,9 @@
   $("hubActionCancel")?.addEventListener("click", () => closeHubAction());
   $("hubActionConfirm")?.addEventListener("click", () => {
     const input = $("hubActionInput");
-    if(hubState.actionInputRequired){
+    if(hubState.actionHasInput){
       const value = input.value.trim();
-      if(!value){ input.setCustomValidity(t("reasonRequired")); input.reportValidity(); input.setCustomValidity(""); return; }
+      if(hubState.actionInputRequired && !value){ input.setCustomValidity(hubState.actionRequiredMessage || t("reasonRequired")); input.reportValidity(); input.setCustomValidity(""); return; }
       closeHubAction(value);
     } else closeHubAction(true);
   });
@@ -2842,7 +2900,10 @@
   });
   window.addEventListener("hashchange", () => {
     hubState.highlightedPostId = "";
-    if(/^#post-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(window.location.hash)){
+    const listingMatch = String(window.location.hash || "").match(/^#listing-([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+    if(listingMatch){
+      return;
+    } else if(/^#post-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(window.location.hash)){
       hubState.feedTopic = "all";
       syncCommunityTopicControls();
       void loadCommunityFeed({force:true});
@@ -2853,8 +2914,12 @@
   window.ConCourseHub = {
     show: showHub,
     hide: hideHub,
+    switchView,
     syncAccess,
     syncFinalSchedule,
+    requestAction: requestHubAction,
+    openProfile: openSchoolmateProfile,
+    mediaTools: Object.freeze({normalizeRasterToWebP, videoUploadType, validateVideoSignature}),
     reloadMembership: () => loadMembership(),
     refreshSocialConnections: () => loadSocialConnections({force:true}),
     refreshLanguage: () => {
@@ -2866,6 +2931,7 @@
       renderComposerMedia();
       updateCommunityPostCounter();
       syncAccess();
+      window.ConCourseMarketplace?.refreshLanguage();
     }
   };
 

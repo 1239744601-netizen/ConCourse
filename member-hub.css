@@ -1129,7 +1129,7 @@ input.hub-community-search:focus { outline: none; border-color: rgba(0,113,227,.
 .hub-profile-modal {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: 4000;
   display: grid;
   place-items: center;
   padding: 20px;

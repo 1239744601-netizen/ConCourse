@@ -2716,3 +2716,2345 @@ grant execute on function public.report_conversation_user(uuid, text) to authent
 -- set status = 'verified', verification_method = 'manual', verified_at = now(), updated_at = now()
 -- from auth.users u
 -- where m.user_id = u.id and u.email = 'student@university.edu';
+
+-- ---------------------------------------------------------------------------
+-- Verified-campus marketplace
+-- ---------------------------------------------------------------------------
+-- Marketplace rows are deliberately RPC-only. Browser clients cannot query or
+-- mutate these tables directly; every RPC repeats verified-school and bilateral
+-- block checks. Money is stored as integer minor units with an ISO 4217-style
+-- three-letter currency code. A browser can create an awaiting-payment order,
+-- but only a trusted service-role payment webhook can record held, released,
+-- refunded, or failed provider money states.
+
+create table if not exists public.marketplace_listings (
+  id uuid primary key,
+  school_key text not null,
+  seller_id uuid not null references auth.users(id) on delete cascade,
+  title text not null check (title = trim(title) and char_length(title) between 3 and 120),
+  description text not null check (description = trim(description) and char_length(description) between 10 and 5000),
+  category text not null check (category in (
+    'notes', 'past_papers', 'textbooks', 'electronics', 'furniture',
+    'life_essentials', 'services', 'other'
+  )),
+  mode text not null check (mode in ('sale', 'free', 'wanted')),
+  item_condition text not null check (item_condition in (
+    'digital', 'new', 'like_new', 'good', 'fair', 'used', 'not_applicable'
+  )),
+  course_code text,
+  negotiable boolean not null default false,
+  price_minor bigint not null check (price_minor between 0 and 999999999999),
+  currency text not null check (currency ~ '^[A-Z]{3}$'),
+  delivery_methods text[] not null check (
+    cardinality(delivery_methods) between 1 and 3
+    and delivery_methods <@ array['digital', 'meetup', 'shipping']::text[]
+  ),
+  location_label text check (
+    location_label is null
+    or (location_label = trim(location_label) and char_length(location_label) between 1 and 120)
+  ),
+  status text not null default 'draft' check (status in (
+    'draft', 'active', 'reserved', 'sold', 'paused', 'deleted'
+  )),
+  rights_attestation text not null check (
+    rights_attestation = trim(rights_attestation)
+    and char_length(rights_attestation) between 20 and 600
+  ),
+  academic_rights_basis text not null check (academic_rights_basis in (
+    'original', 'licensed', 'public_domain', 'not_applicable'
+  )),
+  academic_rights_confirmed_at timestamptz,
+  version integer not null default 1 check (version > 0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz,
+  check (mode <> 'free' or price_minor = 0),
+  check (mode <> 'sale' or price_minor > 0),
+  check (
+    category not in ('notes', 'past_papers')
+    or (
+      academic_rights_basis <> 'not_applicable'
+      and academic_rights_confirmed_at is not null
+    )
+  ),
+  check (
+    category <> 'past_papers'
+    or academic_rights_basis in ('licensed', 'public_domain')
+  ),
+  check ((status = 'deleted') = (deleted_at is not null))
+);
+
+create table if not exists public.marketplace_listing_media (
+  id uuid primary key,
+  listing_id uuid not null references public.marketplace_listings(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  storage_path text not null unique,
+  media_type text not null check (media_type in ('image', 'video')),
+  mime_type text not null check (
+    (media_type = 'image' and mime_type = 'image/webp')
+    or (media_type = 'video' and mime_type in ('video/mp4', 'video/webm', 'video/quicktime'))
+  ),
+  width integer check (width between 1 and 8192),
+  height integer check (height between 1 and 8192),
+  duration_seconds numeric check (duration_seconds > 0 and duration_seconds <= 3600),
+  alt_text text check (alt_text is null or char_length(alt_text) <= 300),
+  position smallint not null check (position between 0 and 7),
+  created_at timestamptz not null default now(),
+  unique (listing_id, position),
+  check (
+    storage_path = owner_id::text || '/listings/' || listing_id::text || '/' || id::text ||
+      case mime_type
+        when 'image/webp' then '.webp'
+        when 'video/mp4' then '.mp4'
+        when 'video/webm' then '.webm'
+        when 'video/quicktime' then '.mov'
+      end
+  ),
+  check ((media_type = 'image' and duration_seconds is null) or media_type = 'video')
+);
+
+-- Safe upgrade path for a project that briefly installed an earlier draft of
+-- the marketplace section before these discovery fields were added.
+alter table public.marketplace_listings add column if not exists course_code text;
+alter table public.marketplace_listings add column if not exists negotiable boolean not null default false;
+alter table public.marketplace_listings drop constraint if exists marketplace_listings_course_code_bounded;
+alter table public.marketplace_listings add constraint marketplace_listings_course_code_bounded
+  check (
+    course_code is null
+    or (course_code = trim(course_code) and char_length(course_code) between 1 and 80)
+  );
+
+-- Replace every earlier academic-rights draft constraint by definition, not by
+-- an assumed generated name. This makes upgrades rerunnable and removes the
+-- ambiguous combined attestation value from projects that installed a preview.
+do $$
+declare
+  constraint_row record;
+begin
+  for constraint_row in
+    select constraint_record.conname
+    from pg_catalog.pg_constraint constraint_record
+    where constraint_record.conrelid = 'public.marketplace_listings'::regclass
+      and constraint_record.contype = 'c'
+      and pg_catalog.pg_get_constraintdef(constraint_record.oid) ilike '%academic_rights_basis%'
+  loop
+    execute pg_catalog.format(
+      'alter table public.marketplace_listings drop constraint %I',
+      constraint_row.conname
+    );
+  end loop;
+end;
+$$;
+
+-- Never guess whether a legacy combined claim meant original work or a real
+-- redistribution licence. Preserve the listing, move it out of an academic
+-- category, and pause it when possible until its seller supplies a precise
+-- basis through the editor.
+update public.marketplace_listings
+set category = 'other',
+    status = case when status in ('draft', 'active', 'paused') then 'paused' else status end,
+    academic_rights_basis = 'not_applicable',
+    academic_rights_confirmed_at = null,
+    version = version + 1,
+    updated_at = now()
+where academic_rights_basis = 'seller_created_or_authorized';
+
+alter table public.marketplace_listings
+  add constraint marketplace_listings_academic_rights_basis_check
+  check (academic_rights_basis in ('original', 'licensed', 'public_domain', 'not_applicable'));
+alter table public.marketplace_listings
+  add constraint marketplace_listings_academic_material_rights_check
+  check (
+    category not in ('notes', 'past_papers')
+    or (
+      academic_rights_basis <> 'not_applicable'
+      and academic_rights_confirmed_at is not null
+    )
+  );
+alter table public.marketplace_listings
+  add constraint marketplace_listings_past_paper_rights_check
+  check (category <> 'past_papers' or academic_rights_basis in ('licensed', 'public_domain'));
+
+create table if not exists public.marketplace_favorites (
+  listing_id uuid not null references public.marketplace_listings(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (listing_id, user_id)
+);
+
+create table if not exists public.marketplace_offers (
+  id uuid primary key default gen_random_uuid(),
+  listing_id uuid not null references public.marketplace_listings(id) on delete cascade,
+  buyer_id uuid not null references auth.users(id) on delete cascade,
+  amount_minor bigint not null check (amount_minor > 0 and amount_minor <= 999999999999),
+  message text check (message is null or char_length(message) <= 500),
+  status text not null default 'pending' check (status in (
+    'pending', 'accepted', 'declined', 'withdrawn', 'expired'
+  )),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.marketplace_orders (
+  id uuid primary key default gen_random_uuid(),
+  listing_id uuid not null references public.marketplace_listings(id),
+  school_key text not null,
+  seller_id uuid not null references auth.users(id),
+  buyer_id uuid not null references auth.users(id),
+  offer_id uuid unique references public.marketplace_offers(id),
+  amount_minor bigint not null check (amount_minor between 0 and 999999999999),
+  currency text not null check (currency ~ '^[A-Z]{3}$'),
+  delivery_method text not null check (delivery_method in ('digital', 'meetup', 'shipping')),
+  status text not null default 'awaiting_payment' check (status in (
+    'awaiting_payment', 'payment_held', 'fulfilled', 'accepted',
+    'disputed', 'cancelled', 'refunded'
+  )),
+  listing_snapshot jsonb not null,
+  idempotency_actor_id uuid not null references auth.users(id),
+  idempotency_key uuid not null,
+  version integer not null default 1 check (version > 0),
+  expires_at timestamptz not null default (now() + interval '30 minutes'),
+  fulfilled_note text check (fulfilled_note is null or char_length(fulfilled_note) <= 1000),
+  fulfilled_at timestamptz,
+  accepted_at timestamptz,
+  cancelled_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (idempotency_actor_id, idempotency_key),
+  check (seller_id <> buyer_id)
+);
+
+-- Append-only audit trail. The trigger below rejects UPDATE and DELETE even if
+-- a future privileged tool accidentally receives table-level write access.
+create table if not exists public.marketplace_order_events (
+  id bigint generated always as identity primary key,
+  order_id uuid not null references public.marketplace_orders(id) on delete restrict,
+  actor_id uuid references auth.users(id),
+  event_type text not null check (event_type in (
+    'created', 'payment_pending', 'payment_held', 'fulfilled', 'accepted',
+    'disputed', 'cancelled', 'payment_failed', 'released', 'refunded'
+  )),
+  from_status text,
+  to_status text,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.marketplace_disputes (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null unique references public.marketplace_orders(id),
+  opened_by uuid not null references auth.users(id),
+  opened_from_status text not null,
+  reason text not null check (reason = trim(reason) and char_length(reason) between 3 and 80),
+  details text not null check (details = trim(details) and char_length(details) between 10 and 2000),
+  status text not null default 'open' check (status in (
+    'open', 'under_review', 'resolved_buyer', 'resolved_seller', 'closed'
+  )),
+  resolution_note text check (resolution_note is null or char_length(resolution_note) <= 2000),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+
+create table if not exists public.marketplace_reviews (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null unique references public.marketplace_orders(id),
+  reviewer_id uuid not null references auth.users(id),
+  reviewee_id uuid not null references auth.users(id),
+  rating smallint not null check (rating between 1 and 5),
+  body text check (body is null or char_length(body) <= 1500),
+  status text not null default 'published' check (status in ('published', 'hidden', 'removed')),
+  created_at timestamptz not null default now(),
+  check (reviewer_id <> reviewee_id)
+);
+
+create table if not exists public.marketplace_reports (
+  id uuid primary key default gen_random_uuid(),
+  listing_id uuid not null references public.marketplace_listings(id),
+  reporter_id uuid not null references auth.users(id) on delete cascade,
+  reason text not null check (reason = trim(reason) and char_length(reason) between 3 and 500),
+  status text not null default 'open' check (status in ('open', 'reviewing', 'resolved', 'dismissed')),
+  created_at timestamptz not null default now()
+);
+
+-- Provider identifiers and payout calculations are intentionally isolated from
+-- browser-facing public tables. Browser RPCs expose only the coarse state and
+-- seller gross/fee/net projection required to explain an order.
+create table if not exists private.marketplace_payment_projections (
+  order_id uuid primary key references public.marketplace_orders(id) on delete restrict,
+  provider text,
+  provider_reference text,
+  payment_state text not null default 'provider_required' check (payment_state in (
+    'provider_required', 'pending', 'held', 'release_pending',
+    'released', 'refund_pending', 'refunded', 'failed'
+  )),
+  gross_minor bigint not null check (gross_minor between 0 and 999999999999),
+  fee_minor bigint not null default 0 check (fee_minor >= 0),
+  seller_receivable_minor bigint not null check (seller_receivable_minor >= 0),
+  currency text not null check (currency ~ '^[A-Z]{3}$'),
+  held_at timestamptz,
+  released_at timestamptz,
+  refunded_at timestamptz,
+  updated_at timestamptz not null default now(),
+  check (fee_minor <= gross_minor),
+  check (seller_receivable_minor = gross_minor - fee_minor)
+);
+
+create table if not exists private.marketplace_payment_provider_events (
+  provider_event_id text primary key check (char_length(provider_event_id) between 4 and 240),
+  order_id uuid not null references public.marketplace_orders(id) on delete restrict,
+  provider text not null check (char_length(provider) between 2 and 80),
+  provider_reference text not null check (char_length(provider_reference) between 2 and 240),
+  payment_state text not null,
+  fee_minor bigint not null check (fee_minor >= 0),
+  received_at timestamptz not null default now()
+);
+
+alter table private.marketplace_payment_provider_events
+  add column if not exists provider_reference text;
+alter table private.marketplace_payment_provider_events
+  add column if not exists fee_minor bigint;
+update private.marketplace_payment_provider_events provider_event
+set provider_reference = payment.provider_reference,
+    fee_minor = payment.fee_minor
+from private.marketplace_payment_projections payment
+where payment.order_id = provider_event.order_id
+  and (provider_event.provider_reference is null or provider_event.fee_minor is null);
+alter table private.marketplace_payment_provider_events
+  alter column provider_reference set not null;
+alter table private.marketplace_payment_provider_events
+  alter column fee_minor set not null;
+alter table private.marketplace_payment_provider_events
+  drop constraint if exists marketplace_payment_provider_events_provider_reference_check;
+alter table private.marketplace_payment_provider_events
+  add constraint marketplace_payment_provider_events_provider_reference_check
+  check (char_length(provider_reference) between 2 and 240);
+alter table private.marketplace_payment_provider_events
+  drop constraint if exists marketplace_payment_provider_events_fee_minor_check;
+alter table private.marketplace_payment_provider_events
+  add constraint marketplace_payment_provider_events_fee_minor_check
+  check (fee_minor >= 0);
+
+create unique index if not exists marketplace_payment_provider_reference_unique_idx
+  on private.marketplace_payment_projections (provider, provider_reference)
+  where provider is not null and provider_reference is not null;
+
+-- Fail closed until a real payment-provider webhook has been deployed and a
+-- service-role call explicitly enables checkout. Discovery, offers, favorites,
+-- post promotion, and messaging do not depend on this switch.
+create table if not exists private.marketplace_runtime_settings (
+  singleton boolean primary key default true check (singleton),
+  checkout_enabled boolean not null default false,
+  payment_provider text,
+  updated_at timestamptz not null default now()
+);
+
+insert into private.marketplace_runtime_settings (singleton, checkout_enabled)
+values (true, false)
+on conflict (singleton) do nothing;
+
+create table if not exists public.community_post_listing_links (
+  post_id uuid primary key references public.community_posts(id) on delete cascade,
+  listing_id uuid not null references public.marketplace_listings(id) on delete cascade,
+  seller_id uuid not null references auth.users(id) on delete cascade,
+  school_key text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists marketplace_listings_school_status_created_idx
+  on public.marketplace_listings (school_key, status, created_at desc);
+create index if not exists marketplace_listings_seller_updated_idx
+  on public.marketplace_listings (seller_id, updated_at desc);
+create index if not exists marketplace_listing_media_listing_position_idx
+  on public.marketplace_listing_media (listing_id, position);
+create index if not exists marketplace_listing_media_owner_created_idx
+  on public.marketplace_listing_media (owner_id, created_at desc);
+create index if not exists marketplace_favorites_user_created_idx
+  on public.marketplace_favorites (user_id, created_at desc);
+create index if not exists marketplace_offers_listing_status_created_idx
+  on public.marketplace_offers (listing_id, status, created_at desc);
+create index if not exists marketplace_offers_buyer_created_idx
+  on public.marketplace_offers (buyer_id, created_at desc);
+create unique index if not exists marketplace_offers_one_pending_per_buyer_idx
+  on public.marketplace_offers (listing_id, buyer_id) where status = 'pending';
+create index if not exists marketplace_orders_buyer_created_idx
+  on public.marketplace_orders (buyer_id, created_at desc);
+create index if not exists marketplace_orders_seller_created_idx
+  on public.marketplace_orders (seller_id, created_at desc);
+drop index if exists public.marketplace_orders_one_open_per_listing_idx;
+create unique index marketplace_orders_one_open_per_listing_idx
+  on public.marketplace_orders (listing_id)
+  where status in ('payment_held', 'fulfilled', 'disputed');
+create unique index if not exists marketplace_orders_one_pending_per_buyer_idx
+  on public.marketplace_orders (listing_id, buyer_id)
+  where status = 'awaiting_payment';
+create index if not exists marketplace_order_events_order_created_idx
+  on public.marketplace_order_events (order_id, created_at, id);
+create index if not exists marketplace_reports_status_created_idx
+  on public.marketplace_reports (status, created_at desc);
+create index if not exists community_post_listing_links_listing_idx
+  on public.community_post_listing_links (listing_id, created_at desc);
+
+alter table public.marketplace_listings enable row level security;
+alter table public.marketplace_listing_media enable row level security;
+alter table public.marketplace_favorites enable row level security;
+alter table public.marketplace_offers enable row level security;
+alter table public.marketplace_orders enable row level security;
+alter table public.marketplace_order_events enable row level security;
+alter table public.marketplace_disputes enable row level security;
+alter table public.marketplace_reviews enable row level security;
+alter table public.marketplace_reports enable row level security;
+alter table public.community_post_listing_links enable row level security;
+
+revoke all on table public.marketplace_listings from anon, authenticated;
+revoke all on table public.marketplace_listing_media from anon, authenticated;
+revoke all on table public.marketplace_favorites from anon, authenticated;
+revoke all on table public.marketplace_offers from anon, authenticated;
+revoke all on table public.marketplace_orders from anon, authenticated;
+revoke all on table public.marketplace_order_events from anon, authenticated;
+revoke all on table public.marketplace_disputes from anon, authenticated;
+revoke all on table public.marketplace_reviews from anon, authenticated;
+revoke all on table public.marketplace_reports from anon, authenticated;
+revoke all on table public.community_post_listing_links from anon, authenticated;
+revoke all on table private.marketplace_payment_projections from public, anon, authenticated;
+revoke all on table private.marketplace_payment_provider_events from public, anon, authenticated;
+revoke all on table private.marketplace_runtime_settings from public, anon, authenticated;
+
+drop trigger if exists marketplace_listings_set_updated_at on public.marketplace_listings;
+create trigger marketplace_listings_set_updated_at
+  before update on public.marketplace_listings
+  for each row execute procedure public.set_concourse_updated_at();
+drop trigger if exists marketplace_offers_set_updated_at on public.marketplace_offers;
+create trigger marketplace_offers_set_updated_at
+  before update on public.marketplace_offers
+  for each row execute procedure public.set_concourse_updated_at();
+drop trigger if exists marketplace_orders_set_updated_at on public.marketplace_orders;
+create trigger marketplace_orders_set_updated_at
+  before update on public.marketplace_orders
+  for each row execute procedure public.set_concourse_updated_at();
+drop trigger if exists marketplace_disputes_set_updated_at on public.marketplace_disputes;
+create trigger marketplace_disputes_set_updated_at
+  before update on public.marketplace_disputes
+  for each row execute procedure public.set_concourse_updated_at();
+
+create or replace function private.prevent_marketplace_order_event_mutation()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  raise exception 'Marketplace order events are immutable';
+end;
+$$;
+
+revoke all on function private.prevent_marketplace_order_event_mutation() from public, anon, authenticated;
+drop trigger if exists marketplace_order_events_immutable on public.marketplace_order_events;
+create trigger marketplace_order_events_immutable
+  before update or delete on public.marketplace_order_events
+  for each row execute procedure private.prevent_marketplace_order_event_mutation();
+
+create or replace function private.validate_community_listing_link()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (
+    select 1
+    from public.community_posts post
+    join public.marketplace_listings listing
+      on listing.id = new.listing_id
+     and listing.seller_id = new.seller_id
+     and listing.school_key = new.school_key
+     and listing.status = 'active'
+    where post.id = new.post_id
+      and post.author_id = new.seller_id
+      and post.school_key = new.school_key
+      and post.status = 'published'
+      and post.deleted_at is null
+  ) then
+    raise exception 'Community post listing link must join the seller own active school listing';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.validate_community_listing_link() from public, anon, authenticated;
+drop trigger if exists community_post_listing_links_validate on public.community_post_listing_links;
+create trigger community_post_listing_links_validate
+  before insert or update on public.community_post_listing_links
+  for each row execute procedure private.validate_community_listing_link();
+
+create or replace function private.append_marketplace_order_event(
+  p_order_id uuid,
+  p_actor_id uuid,
+  p_event_type text,
+  p_from_status text,
+  p_to_status text,
+  p_metadata jsonb default '{}'::jsonb
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  new_id bigint;
+begin
+  insert into public.marketplace_order_events (
+    order_id, actor_id, event_type, from_status, to_status, metadata
+  ) values (
+    p_order_id, p_actor_id, p_event_type, p_from_status, p_to_status,
+    coalesce(p_metadata, '{}'::jsonb)
+  ) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function private.append_marketplace_order_event(uuid, uuid, text, text, text, jsonb)
+  from public, anon, authenticated;
+
+-- Private object storage for marketplace listing previews. Product files are
+-- not themselves a payment-delivery channel; sellers should release purchased
+-- digital materials only after the trusted payment provider reports funds held.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'marketplace-media',
+  'marketplace-media',
+  false,
+  52428800,
+  array['image/webp', 'video/mp4', 'video/webm', 'video/quicktime']::text[]
+)
+on conflict (id) do update set
+  name = excluded.name,
+  public = false,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+create or replace function public.can_upload_marketplace_media(p_owner_id text, p_object_path text)
+returns boolean
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  object_count integer := 0;
+  recent_count integer := 0;
+  unreferenced_count integer := 0;
+  total_bytes bigint := 0;
+begin
+  if caller is null
+     or p_owner_id is distinct from caller::text
+     or p_object_path not like caller::text || '/listings/%'
+     or not exists (
+       select 1 from public.school_memberships membership
+       where membership.user_id = caller and membership.status = 'verified'
+     ) then
+    return false;
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:marketplace-media:' || caller::text, 0)
+  );
+
+  select
+    count(*)::integer,
+    count(*) filter (where object.created_at >= now() - interval '1 hour')::integer,
+    count(*) filter (
+      where not exists (
+        select 1 from public.marketplace_listing_media media
+        where media.owner_id = caller and media.storage_path = object.name
+      )
+    )::integer,
+    coalesce(sum(
+      case when coalesce(object.metadata->>'size', '') ~ '^[0-9]+$'
+        then (object.metadata->>'size')::bigint else 0 end
+    ), 0)::bigint
+  into object_count, recent_count, unreferenced_count, total_bytes
+  from storage.objects object
+  where object.bucket_id = 'marketplace-media'
+    and object.owner_id = caller::text;
+
+  return object_count < 300
+    and recent_count < 30
+    and unreferenced_count < 12
+    and total_bytes < 1073741824;
+end;
+$$;
+
+revoke all on function public.can_upload_marketplace_media(text, text) from public, anon, authenticated;
+grant execute on function public.can_upload_marketplace_media(text, text) to authenticated;
+
+create or replace function public.can_view_marketplace_media(p_owner_id text, p_object_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    coalesce(p_owner_id = (select auth.uid())::text, false)
+    or exists (
+      select 1
+      from public.marketplace_listing_media media
+      join public.marketplace_listings listing
+        on listing.id = media.listing_id
+       and listing.seller_id = media.owner_id
+      where media.owner_id::text = p_owner_id
+        and media.storage_path = p_object_path
+        and (
+          exists (
+            select 1 from public.marketplace_orders orders
+            where orders.listing_id = listing.id
+              and ((select auth.uid()) = orders.buyer_id or (select auth.uid()) = orders.seller_id)
+          )
+          or (
+            listing.status in ('active', 'reserved')
+            and exists (
+              select 1 from public.school_memberships viewer
+              where viewer.user_id = (select auth.uid())
+                and viewer.school_key = listing.school_key
+                and viewer.status = 'verified'
+            )
+            and exists (
+              select 1 from public.school_memberships seller_membership
+              where seller_membership.user_id = listing.seller_id
+                and seller_membership.school_key = listing.school_key
+                and seller_membership.status = 'verified'
+            )
+            and not exists (
+              select 1 from public.user_blocks block
+              where (block.blocker_id = (select auth.uid()) and block.blocked_id = listing.seller_id)
+                 or (block.blocker_id = listing.seller_id and block.blocked_id = (select auth.uid()))
+            )
+          )
+        )
+    );
+$$;
+
+revoke all on function public.can_view_marketplace_media(text, text) from public, anon, authenticated;
+grant execute on function public.can_view_marketplace_media(text, text) to authenticated;
+
+create or replace function public.can_delete_marketplace_media(p_owner_id text, p_object_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    coalesce(p_owner_id = (select auth.uid())::text, false)
+    and not exists (
+      select 1
+      from public.marketplace_listing_media media
+      join public.marketplace_listings listing on listing.id = media.listing_id
+      where media.owner_id::text = p_owner_id
+        and media.storage_path = p_object_path
+        and (
+          listing.status <> 'deleted'
+          or exists (
+            select 1 from public.marketplace_orders orders
+            where orders.listing_id = listing.id
+              and (
+                orders.status not in ('accepted', 'cancelled', 'refunded')
+                or (
+                  orders.status = 'accepted'
+                  and orders.accepted_at >= now() - interval '30 days'
+                )
+              )
+          )
+        )
+    );
+$$;
+
+revoke all on function public.can_delete_marketplace_media(text, text) from public, anon, authenticated;
+grant execute on function public.can_delete_marketplace_media(text, text) to authenticated;
+
+drop policy if exists "Marketplace media owners can upload" on storage.objects;
+create policy "Marketplace media owners can upload"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'marketplace-media'
+  and public.can_upload_marketplace_media((storage.foldername(name))[1], name)
+  and name ~ (
+    '^' || (select auth.uid())::text ||
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+);
+
+drop policy if exists "Marketplace media owners can read" on storage.objects;
+create policy "Marketplace media owners can read"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'marketplace-media'
+  and owner_id = (select auth.uid())::text
+  and name ~ (
+    '^' || (select auth.uid())::text ||
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+);
+
+drop policy if exists "Marketplace media owners can replace" on storage.objects;
+
+drop policy if exists "Marketplace media owners can delete" on storage.objects;
+create policy "Marketplace media owners can delete"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'marketplace-media'
+  and owner_id = (select auth.uid())::text
+  and name ~ (
+    '^' || (select auth.uid())::text ||
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+  and public.can_delete_marketplace_media(owner_id, name)
+);
+
+drop policy if exists "Verified schoolmates can read marketplace media" on storage.objects;
+create policy "Verified schoolmates can read marketplace media"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'marketplace-media'
+  and owner_id is not null
+  and name ~ (
+    '^' || owner_id ||
+    '/listings/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(webp|mp4|webm|mov)$'
+  )
+  and storage.allow_any_operation(array[
+    'object.get_authenticated_info',
+    'object.get_authenticated'
+  ])
+  and public.can_view_marketplace_media(owner_id, name)
+);
+
+-- Shared JSON builders keep feed, detail, post-link, and order responses
+-- consistent without granting direct access to the underlying tables.
+create or replace function private.marketplace_member_json(p_user_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'user_id', profile.user_id,
+    'username', profile.username,
+    'display_name', case when member.profile_visibility = 'school' then member.display_name else null end,
+    'avatar_path', case when member.profile_visibility = 'school' then member.avatar_path else null end,
+    'avatar_revision', case when member.profile_visibility = 'school' then member.avatar_revision else null end,
+    'major_of_study', case when member.profile_visibility = 'school' then profile.major_of_study else null end,
+    'seller_rating', coalesce((
+      select round(avg(review.rating)::numeric, 2)
+      from public.marketplace_reviews review
+      where review.reviewee_id = profile.user_id and review.status = 'published'
+    ), 0),
+    'seller_review_count', (
+      select count(*) from public.marketplace_reviews review
+      where review.reviewee_id = profile.user_id and review.status = 'published'
+    )
+  )
+  from public.profiles profile
+  left join public.member_profiles member on member.user_id = profile.user_id
+  where profile.user_id = p_user_id;
+$$;
+
+revoke all on function private.marketplace_member_json(uuid) from public, anon, authenticated;
+
+create or replace function private.marketplace_listing_json(p_listing_id uuid, p_viewer_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'id', listing.id,
+    'seller_id', listing.seller_id,
+    'seller', private.marketplace_member_json(listing.seller_id),
+    'title', listing.title,
+    'description', listing.description,
+    'category', listing.category,
+    'mode', listing.mode,
+    'condition', listing.item_condition,
+    'course_code', listing.course_code,
+    'negotiable', listing.negotiable,
+    'price_minor', listing.price_minor,
+    'currency', listing.currency,
+    'delivery_methods', listing.delivery_methods,
+    'location_label', listing.location_label,
+    'status', listing.status,
+    'rights_attestation', case when p_viewer_id = listing.seller_id then listing.rights_attestation else null end,
+    'academic_rights_basis', listing.academic_rights_basis,
+    'version', listing.version,
+    'created_at', listing.created_at,
+    'updated_at', listing.updated_at,
+    'media', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', media.id,
+        'storage_path', media.storage_path,
+        'media_type', media.media_type,
+        'mime_type', media.mime_type,
+        'width', media.width,
+        'height', media.height,
+        'duration_seconds', media.duration_seconds,
+        'alt_text', media.alt_text,
+        'position', media.position
+      ) order by media.position)
+      from public.marketplace_listing_media media
+      where media.listing_id = listing.id
+    ), '[]'::jsonb),
+    'favorite_count', (
+      select count(*) from public.marketplace_favorites favorite where favorite.listing_id = listing.id
+    ),
+    'favorited_by_me', exists (
+      select 1 from public.marketplace_favorites favorite
+      where favorite.listing_id = listing.id and favorite.user_id = p_viewer_id
+    ),
+    'offer_count', (
+      select count(*) from public.marketplace_offers offer
+      where offer.listing_id = listing.id and offer.status = 'pending'
+    ),
+    'linked_post_count', (
+      select count(*) from public.community_post_listing_links link
+      join public.community_posts post on post.id = link.post_id
+      where link.listing_id = listing.id and post.status = 'published' and post.deleted_at is null
+    )
+  )
+  from public.marketplace_listings listing
+  where listing.id = p_listing_id;
+$$;
+
+revoke all on function private.marketplace_listing_json(uuid, uuid) from public, anon, authenticated;
+
+create or replace function private.marketplace_payment_json(p_order_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'payment_state', payment.payment_state,
+    'gross_minor', payment.gross_minor,
+    'fee_minor', payment.fee_minor,
+    'seller_receivable_minor', payment.seller_receivable_minor,
+    'currency', payment.currency,
+    'held_at', payment.held_at,
+    'released_at', payment.released_at,
+    'refunded_at', payment.refunded_at
+  )
+  from private.marketplace_payment_projections payment
+  where payment.order_id = p_order_id;
+$$;
+
+revoke all on function private.marketplace_payment_json(uuid) from public, anon, authenticated;
+
+create or replace function private.marketplace_order_json(p_order_id uuid, p_viewer_id uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'id', orders.id,
+    'listing_id', orders.listing_id,
+    'role', case when p_viewer_id = orders.seller_id then 'seller' else 'buyer' end,
+    'seller', private.marketplace_member_json(orders.seller_id),
+    'buyer', private.marketplace_member_json(orders.buyer_id),
+    'amount_minor', orders.amount_minor,
+    'currency', orders.currency,
+    'delivery_method', orders.delivery_method,
+    'status', orders.status,
+    'listing_snapshot', orders.listing_snapshot,
+    'payment', private.marketplace_payment_json(orders.id),
+    'expires_at', orders.expires_at,
+    'fulfilled_note', orders.fulfilled_note,
+    'fulfilled_at', orders.fulfilled_at,
+    'accepted_at', orders.accepted_at,
+    'cancelled_at', orders.cancelled_at,
+    'created_at', orders.created_at,
+    'updated_at', orders.updated_at
+  )
+  from public.marketplace_orders orders
+  where orders.id = p_order_id
+    and (p_viewer_id = orders.seller_id or p_viewer_id = orders.buyer_id);
+$$;
+
+revoke all on function private.marketplace_order_json(uuid, uuid) from public, anon, authenticated;
+
+create or replace function public.get_marketplace_feed(
+  p_limit integer default 24,
+  p_offset integer default 0,
+  p_query text default null,
+  p_category text default null,
+  p_mode text default null,
+  p_sort text default 'recent'
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  safe_limit integer := least(greatest(coalesce(p_limit, 24), 1), 50);
+  safe_offset integer := greatest(coalesce(p_offset, 0), 0);
+  safe_query text := nullif(left(trim(coalesce(p_query, '')), 120), '');
+  safe_category text := nullif(lower(trim(coalesce(p_category, ''))), '');
+  safe_mode text := nullif(lower(trim(coalesce(p_mode, ''))), '');
+  safe_sort text := lower(trim(coalesce(p_sort, 'recent')));
+  item_rows jsonb;
+  row_count integer;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if safe_category is not null and safe_category <> 'all' and safe_category not in (
+    'notes', 'past_papers', 'textbooks', 'electronics', 'furniture',
+    'life_essentials', 'services', 'other'
+  ) then raise exception 'Unsupported marketplace category'; end if;
+  if safe_mode is not null and safe_mode <> 'all' and safe_mode not in ('sale', 'free', 'wanted', 'saved') then
+    raise exception 'Unsupported marketplace mode';
+  end if;
+  if safe_sort not in ('recent', 'price_asc', 'price_desc', 'popular') then
+    raise exception 'Unsupported marketplace sort';
+  end if;
+
+  with ranked as (
+    select listing.id, listing.price_minor, listing.created_at,
+      (select count(*) from public.marketplace_favorites favorite where favorite.listing_id = listing.id) as popularity
+    from public.marketplace_listings listing
+    join public.school_memberships seller_membership
+      on seller_membership.user_id = listing.seller_id
+     and seller_membership.school_key = caller_school
+     and seller_membership.status = 'verified'
+    where listing.school_key = caller_school
+      and listing.status = 'active'
+      and (safe_category is null or safe_category = 'all' or listing.category = safe_category)
+      and (
+        safe_mode is null
+        or safe_mode = 'all'
+        or (safe_mode in ('sale', 'free', 'wanted') and listing.mode = safe_mode)
+        or (
+          safe_mode = 'saved'
+          and exists (
+            select 1 from public.marketplace_favorites saved
+            where saved.listing_id = listing.id and saved.user_id = caller
+          )
+        )
+      )
+      and (
+        safe_query is null
+        or listing.title ilike '%' || safe_query || '%'
+        or listing.description ilike '%' || safe_query || '%'
+        or coalesce(listing.course_code, '') ilike '%' || safe_query || '%'
+        or coalesce(listing.location_label, '') ilike '%' || safe_query || '%'
+      )
+      and not exists (
+        select 1 from public.user_blocks block
+        where (block.blocker_id = caller and block.blocked_id = listing.seller_id)
+           or (block.blocker_id = listing.seller_id and block.blocked_id = caller)
+      )
+    order by
+      case when safe_sort = 'price_asc' then listing.price_minor end asc nulls last,
+      case when safe_sort = 'price_desc' then listing.price_minor end desc nulls last,
+      case when safe_sort = 'popular' then
+        (select count(*) from public.marketplace_favorites favorite where favorite.listing_id = listing.id)
+      end desc nulls last,
+      listing.created_at desc,
+      listing.id desc
+    limit safe_limit + 1 offset safe_offset
+  ), visible as (
+    select ranked.id, row_number() over (
+      order by
+        case when safe_sort = 'price_asc' then ranked.price_minor end asc nulls last,
+        case when safe_sort = 'price_desc' then ranked.price_minor end desc nulls last,
+        case when safe_sort = 'popular' then ranked.popularity end desc nulls last,
+        ranked.created_at desc,
+        ranked.id desc
+    ) as position
+    from ranked
+    limit safe_limit
+  )
+  select
+    coalesce(jsonb_agg(private.marketplace_listing_json(visible.id, caller) order by visible.position), '[]'::jsonb),
+    (select count(*)::integer from ranked)
+  into item_rows, row_count
+  from visible;
+
+  return jsonb_build_object(
+    'items', coalesce(item_rows, '[]'::jsonb),
+    'limit', safe_limit,
+    'offset', safe_offset,
+    'has_more', coalesce(row_count, 0) > safe_limit,
+    'checkout_enabled', coalesce((
+      select setting.checkout_enabled
+      from private.marketplace_runtime_settings setting
+      where setting.singleton = true
+    ), false)
+  );
+end;
+$$;
+
+revoke all on function public.get_marketplace_feed(integer, integer, text, text, text, text)
+  from public, anon, authenticated;
+grant execute on function public.get_marketplace_feed(integer, integer, text, text, text, text)
+  to authenticated;
+
+create or replace function public.get_marketplace_listing(p_listing_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  listing_row public.marketplace_listings%rowtype;
+  result jsonb;
+  offer_rows jsonb;
+  is_transaction_participant boolean := false;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  select * into listing_row from public.marketplace_listings where id = p_listing_id;
+  if not found then raise exception 'Listing is unavailable'; end if;
+  is_transaction_participant := listing_row.seller_id = caller or exists (
+    select 1 from public.marketplace_orders orders
+    where orders.listing_id = p_listing_id and orders.buyer_id = caller
+  );
+  if not is_transaction_participant then
+    if caller_school is null
+       or listing_row.school_key <> caller_school
+       or listing_row.status not in ('active', 'reserved') then
+      raise exception 'Listing is unavailable';
+    end if;
+    if not exists (
+      select 1 from public.school_memberships seller_membership
+      where seller_membership.user_id = listing_row.seller_id
+        and seller_membership.school_key = listing_row.school_key
+        and seller_membership.status = 'verified'
+    ) then raise exception 'Listing is unavailable'; end if;
+    if exists (
+      select 1 from public.user_blocks block
+      where (block.blocker_id = caller and block.blocked_id = listing_row.seller_id)
+         or (block.blocker_id = listing_row.seller_id and block.blocked_id = caller)
+    ) then raise exception 'Listing is unavailable'; end if;
+  end if;
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', offer.id,
+    'buyer', private.marketplace_member_json(offer.buyer_id),
+    'amount_minor', offer.amount_minor,
+    'message', offer.message,
+    'status', offer.status,
+    'created_at', offer.created_at,
+    'updated_at', offer.updated_at
+  ) order by offer.created_at desc), '[]'::jsonb)
+  into offer_rows
+  from public.marketplace_offers offer
+  where offer.listing_id = p_listing_id
+    and (listing_row.seller_id = caller or offer.buyer_id = caller);
+
+  result := private.marketplace_listing_json(p_listing_id, caller);
+  return result || jsonb_build_object(
+    'is_seller', listing_row.seller_id = caller,
+    'offers', coalesce(offer_rows, '[]'::jsonb),
+    'checkout_enabled', coalesce((
+      select setting.checkout_enabled
+      from private.marketplace_runtime_settings setting
+      where setting.singleton = true
+    ), false)
+  );
+end;
+$$;
+
+revoke all on function public.get_marketplace_listing(uuid) from public, anon, authenticated;
+grant execute on function public.get_marketplace_listing(uuid) to authenticated;
+
+create or replace function public.get_my_marketplace_listings()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  items jsonb;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  select coalesce(jsonb_agg(
+    private.marketplace_listing_json(listing.id, caller)
+    order by listing.updated_at desc, listing.id desc
+  ), '[]'::jsonb)
+  into items
+  from public.marketplace_listings listing
+  where listing.seller_id = caller;
+  return jsonb_build_object('items', items);
+end;
+$$;
+
+revoke all on function public.get_my_marketplace_listings() from public, anon, authenticated;
+grant execute on function public.get_my_marketplace_listings() to authenticated;
+
+create or replace function public.get_my_marketplace_orders()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  items jsonb;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  select coalesce(jsonb_agg(
+    private.marketplace_order_json(orders.id, caller)
+    order by orders.updated_at desc, orders.id desc
+  ), '[]'::jsonb)
+  into items
+  from public.marketplace_orders orders
+  where orders.seller_id = caller or orders.buyer_id = caller;
+  return jsonb_build_object('items', items);
+end;
+$$;
+
+revoke all on function public.get_my_marketplace_orders() from public, anon, authenticated;
+grant execute on function public.get_my_marketplace_orders() to authenticated;
+
+create or replace function public.get_marketplace_order(p_order_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  order_row public.marketplace_orders%rowtype;
+  event_rows jsonb;
+  dispute_row jsonb;
+  review_row jsonb;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  select * into order_row from public.marketplace_orders where id = p_order_id;
+  if not found or (caller <> order_row.seller_id and caller <> order_row.buyer_id) then
+    raise exception 'Order is unavailable';
+  end if;
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id', event.id,
+    'event_type', event.event_type,
+    'from_status', event.from_status,
+    'to_status', event.to_status,
+    'metadata', event.metadata,
+    'created_at', event.created_at
+  ) order by event.id), '[]'::jsonb)
+  into event_rows
+  from public.marketplace_order_events event where event.order_id = p_order_id;
+
+  select jsonb_build_object(
+    'id', dispute.id, 'opened_by', dispute.opened_by, 'reason', dispute.reason,
+    'details', dispute.details, 'status', dispute.status,
+    'resolution_note', dispute.resolution_note, 'created_at', dispute.created_at,
+    'resolved_at', dispute.resolved_at
+  ) into dispute_row
+  from public.marketplace_disputes dispute where dispute.order_id = p_order_id;
+
+  select jsonb_build_object(
+    'id', review.id, 'reviewer_id', review.reviewer_id,
+    'reviewee_id', review.reviewee_id, 'rating', review.rating,
+    'body', review.body, 'created_at', review.created_at
+  ) into review_row
+  from public.marketplace_reviews review
+  where review.order_id = p_order_id and review.status = 'published';
+
+  return jsonb_build_object(
+    'order', private.marketplace_order_json(p_order_id, caller),
+    'events', event_rows,
+    'dispute', dispute_row,
+    'review', review_row
+  );
+end;
+$$;
+
+revoke all on function public.get_marketplace_order(uuid) from public, anon, authenticated;
+grant execute on function public.get_marketplace_order(uuid) to authenticated;
+
+create or replace function public.create_marketplace_listing(
+  p_listing_id uuid,
+  p_payload jsonb,
+  p_media jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  new_title text;
+  new_description text;
+  new_category text;
+  new_mode text;
+  new_condition text;
+  new_course_code text;
+  new_negotiable boolean;
+  new_price bigint;
+  new_currency text;
+  new_delivery text[];
+  new_location text;
+  new_status text;
+  new_attestation text;
+  new_basis text;
+  new_academic_confirmed boolean;
+  media_item jsonb;
+  media_id uuid;
+  media_path text;
+  media_kind text;
+  media_mime text;
+  media_alt text;
+  media_position smallint;
+  expected_suffix text;
+  seen_media_ids uuid[] := '{}'::uuid[];
+  seen_positions smallint[] := '{}'::smallint[];
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if p_listing_id is null then raise exception 'Listing identifier is required'; end if;
+  if jsonb_typeof(p_payload) <> 'object' then raise exception 'Listing payload must be a JSON object'; end if;
+  if p_media is not null and jsonb_typeof(p_media) <> 'array' then raise exception 'Media must be a JSON array'; end if;
+  if jsonb_array_length(coalesce(p_media, '[]'::jsonb)) > 8 then raise exception 'A listing can contain up to 8 media items'; end if;
+  if exists (select 1 from public.marketplace_listings where id = p_listing_id) then
+    raise exception 'Listing identifier is already in use';
+  end if;
+  if (select count(*) from public.marketplace_listings where seller_id = caller and created_at > now() - interval '1 day') >= 20 then
+    raise exception 'Daily listing limit reached';
+  end if;
+
+  new_title := trim(coalesce(p_payload ->> 'title', ''));
+  new_description := trim(coalesce(p_payload ->> 'description', ''));
+  new_category := lower(trim(coalesce(p_payload ->> 'category', '')));
+  new_mode := lower(trim(coalesce(p_payload ->> 'mode', '')));
+  new_condition := lower(trim(coalesce(p_payload ->> 'condition', '')));
+  new_course_code := nullif(trim(p_payload ->> 'course_code'), '');
+  new_currency := upper(trim(coalesce(p_payload ->> 'currency', '')));
+  new_location := nullif(trim(p_payload ->> 'location_label'), '');
+  new_status := lower(trim(coalesce(p_payload ->> 'status', 'active')));
+  new_attestation := trim(coalesce(p_payload ->> 'rights_attestation', ''));
+  new_basis := lower(trim(coalesce(p_payload ->> 'academic_rights_basis', 'not_applicable')));
+  begin
+    new_price := (p_payload ->> 'price_minor')::bigint;
+  exception when others then raise exception 'Price must be an integer in minor currency units'; end;
+  begin
+    new_academic_confirmed := coalesce((p_payload ->> 'academic_rights_confirmed')::boolean, false);
+  exception when others then raise exception 'Academic-rights confirmation must be true or false'; end;
+  begin
+    new_negotiable := coalesce((p_payload ->> 'negotiable')::boolean, false);
+  exception when others then raise exception 'Negotiable must be true or false'; end;
+
+  if jsonb_typeof(p_payload -> 'delivery_methods') <> 'array' then
+    raise exception 'Delivery methods must be a JSON array';
+  end if;
+  select array_agg(method order by first_position)
+  into new_delivery
+  from (
+    select lower(trim(value)) as method, min(ordinality) as first_position
+    from jsonb_array_elements_text(p_payload -> 'delivery_methods') with ordinality as methods(value, ordinality)
+    group by lower(trim(value))
+  ) normalized_methods;
+
+  if char_length(new_title) not between 3 and 120 then raise exception 'Title must contain 3 to 120 characters'; end if;
+  if char_length(new_description) not between 10 and 5000 then raise exception 'Description must contain 10 to 5000 characters'; end if;
+  if new_category not in ('notes', 'past_papers', 'textbooks', 'electronics', 'furniture', 'life_essentials', 'services', 'other') then raise exception 'Unsupported marketplace category'; end if;
+  if new_mode not in ('sale', 'free', 'wanted') then raise exception 'Unsupported marketplace mode'; end if;
+  if new_condition not in ('digital', 'new', 'like_new', 'good', 'fair', 'used', 'not_applicable') then raise exception 'Unsupported item condition'; end if;
+  if new_course_code is not null and char_length(new_course_code) > 80 then raise exception 'Course code must contain no more than 80 characters'; end if;
+  if new_price < 0 or new_price > 999999999999 or (new_mode = 'free' and new_price <> 0) or (new_mode = 'sale' and new_price = 0) then raise exception 'Price does not match the listing mode'; end if;
+  if new_currency !~ '^[A-Z]{3}$' then raise exception 'Currency must be a three-letter ISO code'; end if;
+  if cardinality(coalesce(new_delivery, '{}'::text[])) not between 1 and 3 or not (new_delivery <@ array['digital', 'meetup', 'shipping']::text[]) then raise exception 'Choose one or more supported delivery methods'; end if;
+  if new_location is not null and char_length(new_location) > 120 then raise exception 'Location must contain no more than 120 characters'; end if;
+  if new_status not in ('draft', 'active') then raise exception 'A new listing must be a draft or active'; end if;
+  if char_length(new_attestation) not between 20 and 600 then raise exception 'A complete seller rights attestation is required'; end if;
+  if new_basis not in ('original', 'licensed', 'public_domain', 'not_applicable') then raise exception 'Unsupported academic-rights basis'; end if;
+  if new_category in ('notes', 'past_papers') and (not new_academic_confirmed or new_basis = 'not_applicable') then raise exception 'Confirm the right to distribute this academic material'; end if;
+  if new_category = 'past_papers' and new_basis not in ('licensed', 'public_domain') then raise exception 'Past papers require a licensed or public-domain distribution basis'; end if;
+
+  insert into public.marketplace_listings (
+    id, school_key, seller_id, title, description, category, mode,
+    item_condition, course_code, negotiable, price_minor, currency, delivery_methods, location_label,
+    status, rights_attestation, academic_rights_basis, academic_rights_confirmed_at
+  ) values (
+    p_listing_id, caller_school, caller, new_title, new_description, new_category, new_mode,
+    new_condition, new_course_code, new_negotiable, new_price, new_currency, new_delivery, new_location,
+    new_status, new_attestation, new_basis,
+    case when new_category in ('notes', 'past_papers') then now() else null end
+  );
+
+  for media_item in select value from jsonb_array_elements(coalesce(p_media, '[]'::jsonb))
+  loop
+    if jsonb_typeof(media_item) <> 'object' then raise exception 'Each media item must be a JSON object'; end if;
+    begin media_id := (media_item ->> 'id')::uuid;
+    exception when others then raise exception 'Media identifier must be a UUID'; end;
+    media_path := nullif(trim(media_item ->> 'storage_path'), '');
+    media_kind := lower(nullif(trim(media_item ->> 'media_type'), ''));
+    media_mime := lower(nullif(trim(media_item ->> 'mime_type'), ''));
+    media_alt := nullif(trim(media_item ->> 'alt_text'), '');
+    begin media_position := (media_item ->> 'position')::smallint;
+    exception when others then raise exception 'Media position must be an integer from 0 to 7'; end;
+    if media_id is null or media_id = any(seen_media_ids) then raise exception 'Media IDs must be present and unique'; end if;
+    if media_position is null or media_position not between 0 and 7 or media_position = any(seen_positions) then raise exception 'Media positions must be unique integers from 0 to 7'; end if;
+    seen_media_ids := array_append(seen_media_ids, media_id);
+    seen_positions := array_append(seen_positions, media_position);
+    if media_kind = 'image' and media_mime = 'image/webp' then expected_suffix := '.webp';
+    elsif media_kind = 'video' and media_mime = 'video/mp4' then expected_suffix := '.mp4';
+    elsif media_kind = 'video' and media_mime = 'video/webm' then expected_suffix := '.webm';
+    elsif media_kind = 'video' and media_mime = 'video/quicktime' then expected_suffix := '.mov';
+    else raise exception 'Unsupported marketplace media type'; end if;
+    if media_path <> caller::text || '/listings/' || p_listing_id::text || '/' || media_id::text || expected_suffix then raise exception 'Media path must match its owner, listing, identifier, and MIME type'; end if;
+    if media_alt is not null and char_length(media_alt) > 300 then raise exception 'Media description must contain no more than 300 characters'; end if;
+    if not exists (
+      select 1 from storage.objects object
+      where object.bucket_id = 'marketplace-media'
+        and object.name = media_path and object.owner_id = caller::text
+    ) then raise exception 'Upload each marketplace media object before publishing'; end if;
+
+    insert into public.marketplace_listing_media (
+      id, listing_id, owner_id, storage_path, media_type, mime_type,
+      width, height, duration_seconds, alt_text, position
+    ) values (
+      media_id, p_listing_id, caller, media_path, media_kind, media_mime,
+      case when coalesce(media_item ->> 'width', '') ~ '^[0-9]+$' then (media_item ->> 'width')::integer else null end,
+      case when coalesce(media_item ->> 'height', '') ~ '^[0-9]+$' then (media_item ->> 'height')::integer else null end,
+      case when coalesce(media_item ->> 'duration_seconds', '') ~ '^[0-9]+([.][0-9]+)?$' then (media_item ->> 'duration_seconds')::numeric else null end,
+      media_alt, media_position
+    );
+  end loop;
+
+  return private.marketplace_listing_json(p_listing_id, caller);
+end;
+$$;
+
+revoke all on function public.create_marketplace_listing(uuid, jsonb, jsonb) from public, anon, authenticated;
+grant execute on function public.create_marketplace_listing(uuid, jsonb, jsonb) to authenticated;
+
+create or replace function public.update_marketplace_listing(
+  p_listing_id uuid,
+  p_expected_version integer,
+  p_payload jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  old_row public.marketplace_listings%rowtype;
+  next_title text;
+  next_description text;
+  next_category text;
+  next_mode text;
+  next_condition text;
+  next_course_code text;
+  next_negotiable boolean;
+  next_price bigint;
+  next_currency text;
+  next_delivery text[];
+  next_location text;
+  next_attestation text;
+  next_basis text;
+  next_academic_confirmed boolean;
+  pending_order public.marketplace_orders%rowtype;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if jsonb_typeof(p_payload) <> 'object' then raise exception 'Listing payload must be a JSON object'; end if;
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:marketplace-order:' || p_listing_id::text, 0)
+  );
+  select * into old_row from public.marketplace_listings where id = p_listing_id for update;
+  if not found or old_row.seller_id <> caller or old_row.school_key <> caller_school then raise exception 'Listing is unavailable'; end if;
+  if old_row.version is distinct from p_expected_version then raise exception 'Listing changed; refresh before saving again'; end if;
+  if old_row.status not in ('draft', 'active', 'paused') then raise exception 'This listing can no longer be edited'; end if;
+
+  next_title := case when p_payload ? 'title' then trim(coalesce(p_payload ->> 'title', '')) else old_row.title end;
+  next_description := case when p_payload ? 'description' then trim(coalesce(p_payload ->> 'description', '')) else old_row.description end;
+  next_category := case when p_payload ? 'category' then lower(trim(coalesce(p_payload ->> 'category', ''))) else old_row.category end;
+  next_mode := case when p_payload ? 'mode' then lower(trim(coalesce(p_payload ->> 'mode', ''))) else old_row.mode end;
+  next_condition := case when p_payload ? 'condition' then lower(trim(coalesce(p_payload ->> 'condition', ''))) else old_row.item_condition end;
+  next_course_code := case when p_payload ? 'course_code' then nullif(trim(p_payload ->> 'course_code'), '') else old_row.course_code end;
+  next_currency := case when p_payload ? 'currency' then upper(trim(coalesce(p_payload ->> 'currency', ''))) else old_row.currency end;
+  next_location := case when p_payload ? 'location_label' then nullif(trim(p_payload ->> 'location_label'), '') else old_row.location_label end;
+  next_attestation := case when p_payload ? 'rights_attestation' then trim(coalesce(p_payload ->> 'rights_attestation', '')) else old_row.rights_attestation end;
+  next_basis := case when p_payload ? 'academic_rights_basis' then lower(trim(coalesce(p_payload ->> 'academic_rights_basis', ''))) else old_row.academic_rights_basis end;
+  begin
+    next_price := case when p_payload ? 'price_minor' then (p_payload ->> 'price_minor')::bigint else old_row.price_minor end;
+  exception when others then raise exception 'Price must be an integer in minor currency units'; end;
+  begin
+    next_academic_confirmed := case
+      when p_payload ? 'academic_rights_confirmed' then coalesce((p_payload ->> 'academic_rights_confirmed')::boolean, false)
+      else old_row.academic_rights_confirmed_at is not null
+    end;
+  exception when others then raise exception 'Academic-rights confirmation must be true or false'; end;
+  begin
+    next_negotiable := case when p_payload ? 'negotiable' then coalesce((p_payload ->> 'negotiable')::boolean, false) else old_row.negotiable end;
+  exception when others then raise exception 'Negotiable must be true or false'; end;
+
+  if p_payload ? 'delivery_methods' then
+    if jsonb_typeof(p_payload -> 'delivery_methods') <> 'array' then raise exception 'Delivery methods must be a JSON array'; end if;
+    select array_agg(method order by first_position) into next_delivery
+    from (
+      select lower(trim(value)) as method, min(ordinality) as first_position
+      from jsonb_array_elements_text(p_payload -> 'delivery_methods') with ordinality as methods(value, ordinality)
+      group by lower(trim(value))
+    ) normalized_methods;
+  else next_delivery := old_row.delivery_methods;
+  end if;
+
+  if char_length(next_title) not between 3 and 120 then raise exception 'Title must contain 3 to 120 characters'; end if;
+  if char_length(next_description) not between 10 and 5000 then raise exception 'Description must contain 10 to 5000 characters'; end if;
+  if next_category not in ('notes', 'past_papers', 'textbooks', 'electronics', 'furniture', 'life_essentials', 'services', 'other') then raise exception 'Unsupported marketplace category'; end if;
+  if next_mode not in ('sale', 'free', 'wanted') then raise exception 'Unsupported marketplace mode'; end if;
+  if next_condition not in ('digital', 'new', 'like_new', 'good', 'fair', 'used', 'not_applicable') then raise exception 'Unsupported item condition'; end if;
+  if next_course_code is not null and char_length(next_course_code) > 80 then raise exception 'Course code must contain no more than 80 characters'; end if;
+  if next_price < 0 or next_price > 999999999999 or (next_mode = 'free' and next_price <> 0) or (next_mode = 'sale' and next_price = 0) then raise exception 'Price does not match the listing mode'; end if;
+  if next_currency !~ '^[A-Z]{3}$' then raise exception 'Currency must be a three-letter ISO code'; end if;
+  if cardinality(coalesce(next_delivery, '{}'::text[])) not between 1 and 3 or not (next_delivery <@ array['digital', 'meetup', 'shipping']::text[]) then raise exception 'Choose one or more supported delivery methods'; end if;
+  if next_location is not null and char_length(next_location) > 120 then raise exception 'Location must contain no more than 120 characters'; end if;
+  if char_length(next_attestation) not between 20 and 600 then raise exception 'A complete seller rights attestation is required'; end if;
+  if next_basis not in ('original', 'licensed', 'public_domain', 'not_applicable') then raise exception 'Unsupported academic-rights basis'; end if;
+  if next_category in ('notes', 'past_papers') and (not next_academic_confirmed or next_basis = 'not_applicable') then raise exception 'Confirm the right to distribute this academic material'; end if;
+  if next_category = 'past_papers' and next_basis not in ('licensed', 'public_domain') then raise exception 'Past papers require a licensed or public-domain distribution basis'; end if;
+
+  update public.marketplace_listings set
+    title = next_title, description = next_description, category = next_category,
+    mode = next_mode, item_condition = next_condition, course_code = next_course_code,
+    negotiable = next_negotiable, price_minor = next_price,
+    currency = next_currency, delivery_methods = next_delivery,
+    location_label = next_location, rights_attestation = next_attestation,
+    academic_rights_basis = next_basis,
+    academic_rights_confirmed_at = case when next_category in ('notes', 'past_papers') and next_academic_confirmed then now() else null end,
+    version = version + 1
+  where id = p_listing_id;
+
+  -- An awaiting checkout is only a provider setup attempt, not a reservation.
+  -- Any seller edit invalidates its immutable listing snapshot before funds can
+  -- be held, preventing a stale price, delivery method, or rights claim.
+  for pending_order in
+    select * from public.marketplace_orders orders
+    where orders.listing_id = p_listing_id and orders.status = 'awaiting_payment'
+    for update
+  loop
+    update public.marketplace_orders set
+      status = 'cancelled', cancelled_at = now(), version = version + 1
+    where id = pending_order.id;
+    update private.marketplace_payment_projections set
+      payment_state = 'failed', updated_at = now()
+    where order_id = pending_order.id and payment_state in ('provider_required', 'pending');
+    update public.marketplace_offers set status = 'declined'
+    where id = pending_order.offer_id and status = 'accepted';
+    perform private.append_marketplace_order_event(
+      pending_order.id, caller, 'cancelled', 'awaiting_payment', 'cancelled',
+      jsonb_build_object('reason', 'listing_updated')
+    );
+  end loop;
+
+  if old_row.price_minor <> next_price or old_row.currency <> next_currency or old_row.mode <> next_mode then
+    update public.marketplace_offers set status = 'declined'
+    where listing_id = p_listing_id and status = 'pending';
+  end if;
+  return private.marketplace_listing_json(p_listing_id, caller);
+end;
+$$;
+
+revoke all on function public.update_marketplace_listing(uuid, integer, jsonb) from public, anon, authenticated;
+grant execute on function public.update_marketplace_listing(uuid, integer, jsonb) to authenticated;
+
+create or replace function public.set_marketplace_listing_status(p_listing_id uuid, p_status text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  listing_row public.marketplace_listings%rowtype;
+  pending_order public.marketplace_orders%rowtype;
+  next_status text := lower(trim(coalesce(p_status, '')));
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:marketplace-order:' || p_listing_id::text, 0)
+  );
+  select * into listing_row from public.marketplace_listings where id = p_listing_id for update;
+  if not found or listing_row.seller_id <> caller then raise exception 'Listing is unavailable'; end if;
+  if next_status not in ('active', 'paused', 'sold', 'deleted') then raise exception 'Unsupported seller-controlled listing status'; end if;
+  if listing_row.status not in ('draft', 'active', 'paused')
+     and not (listing_row.status = 'sold' and next_status = 'deleted') then
+    raise exception 'This listing status is managed by its order';
+  end if;
+  if next_status = 'active' and (caller_school is null or caller_school <> listing_row.school_key) then
+    raise exception 'Verified school membership is required to activate a listing';
+  end if;
+  if next_status in ('active', 'sold') and exists (
+    select 1 from public.marketplace_orders orders
+    where orders.listing_id = p_listing_id and orders.status in ('payment_held', 'fulfilled', 'disputed')
+  ) then raise exception 'This listing has an open order'; end if;
+
+  if next_status in ('paused', 'sold', 'deleted') then
+    for pending_order in
+      select * from public.marketplace_orders orders
+      where orders.listing_id = p_listing_id and orders.status = 'awaiting_payment'
+      for update
+    loop
+      update public.marketplace_orders set
+        status = 'cancelled', cancelled_at = now(), version = version + 1
+      where id = pending_order.id;
+      update private.marketplace_payment_projections set
+        payment_state = 'failed', updated_at = now()
+      where order_id = pending_order.id and payment_state in ('provider_required', 'pending');
+      update public.marketplace_offers set status = 'declined'
+      where id = pending_order.offer_id and status = 'accepted';
+      perform private.append_marketplace_order_event(
+        pending_order.id, caller, 'cancelled', 'awaiting_payment', 'cancelled',
+        jsonb_build_object('reason', 'listing_' || next_status)
+      );
+    end loop;
+  end if;
+
+  update public.marketplace_listings set
+    status = next_status,
+    deleted_at = case when next_status = 'deleted' then now() else null end,
+    version = version + 1
+  where id = p_listing_id;
+  if next_status in ('paused', 'sold', 'deleted') then
+    update public.marketplace_offers set status = 'declined'
+    where listing_id = p_listing_id and status = 'pending';
+  end if;
+  return private.marketplace_listing_json(p_listing_id, caller);
+end;
+$$;
+
+revoke all on function public.set_marketplace_listing_status(uuid, text) from public, anon, authenticated;
+grant execute on function public.set_marketplace_listing_status(uuid, text) to authenticated;
+
+create or replace function public.toggle_marketplace_favorite(p_listing_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  seller uuid;
+  is_favorite boolean;
+  total bigint;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  select seller_id into seller from public.marketplace_listings
+  where id = p_listing_id and school_key = caller_school and status in ('active', 'reserved');
+  if seller is null then raise exception 'Listing is unavailable'; end if;
+  if not exists (
+    select 1 from public.school_memberships seller_membership
+    where seller_membership.user_id = seller
+      and seller_membership.school_key = caller_school
+      and seller_membership.status = 'verified'
+  ) then raise exception 'Listing is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = seller)
+       or (block.blocker_id = seller and block.blocked_id = caller)
+  ) then raise exception 'Listing is unavailable'; end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(
+      'concourse:marketplace-favorite:' || caller::text || ':' || p_listing_id::text,
+      0
+    )
+  );
+
+  delete from public.marketplace_favorites where listing_id = p_listing_id and user_id = caller;
+  if found then is_favorite := false;
+  else
+    insert into public.marketplace_favorites (listing_id, user_id) values (p_listing_id, caller);
+    is_favorite := true;
+  end if;
+  select count(*) into total from public.marketplace_favorites where listing_id = p_listing_id;
+  return jsonb_build_object('listing_id', p_listing_id, 'favorited', is_favorite, 'favorite_count', total);
+end;
+$$;
+
+revoke all on function public.toggle_marketplace_favorite(uuid) from public, anon, authenticated;
+grant execute on function public.toggle_marketplace_favorite(uuid) to authenticated;
+
+create or replace function public.make_marketplace_offer(
+  p_listing_id uuid,
+  p_amount_minor bigint,
+  p_message text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  listing_row public.marketplace_listings%rowtype;
+  offer_row public.marketplace_offers%rowtype;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  select * into listing_row from public.marketplace_listings where id = p_listing_id for update;
+  if not found
+     or listing_row.school_key <> caller_school
+     or listing_row.status <> 'active'
+     or listing_row.mode <> 'sale'
+     or not listing_row.negotiable then
+    raise exception 'Listing is not accepting offers';
+  end if;
+  if not exists (
+    select 1 from public.school_memberships seller_membership
+    where seller_membership.user_id = listing_row.seller_id
+      and seller_membership.school_key = caller_school
+      and seller_membership.status = 'verified'
+  ) then raise exception 'Listing is not accepting offers'; end if;
+  if listing_row.seller_id = caller then raise exception 'You cannot offer on your own listing'; end if;
+  if p_amount_minor is null or p_amount_minor <= 0 or p_amount_minor > listing_row.price_minor then raise exception 'Offer must be positive and no greater than the listing price'; end if;
+  if char_length(coalesce(p_message, '')) > 500 then raise exception 'Offer message must contain no more than 500 characters'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = listing_row.seller_id)
+       or (block.blocker_id = listing_row.seller_id and block.blocked_id = caller)
+  ) then raise exception 'Listing is unavailable'; end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended(
+      'concourse:marketplace-offer:' || caller::text || ':' || p_listing_id::text,
+      0
+    )
+  );
+  if (select count(*) from public.marketplace_offers where buyer_id = caller and created_at > now() - interval '1 hour') >= 30 then raise exception 'Please wait before making another offer'; end if;
+
+  select * into offer_row from public.marketplace_offers
+  where listing_id = p_listing_id and buyer_id = caller and status = 'pending' for update;
+  if found then
+    update public.marketplace_offers set amount_minor = p_amount_minor, message = nullif(trim(p_message), '')
+    where id = offer_row.id returning * into offer_row;
+  else
+    insert into public.marketplace_offers (listing_id, buyer_id, amount_minor, message)
+    values (p_listing_id, caller, p_amount_minor, nullif(trim(p_message), '')) returning * into offer_row;
+  end if;
+  return jsonb_build_object(
+    'offer_id', offer_row.id, 'listing_id', p_listing_id,
+    'amount_minor', offer_row.amount_minor, 'currency', listing_row.currency,
+    'status', offer_row.status, 'created_at', offer_row.created_at
+  );
+end;
+$$;
+
+revoke all on function public.make_marketplace_offer(uuid, bigint, text) from public, anon, authenticated;
+grant execute on function public.make_marketplace_offer(uuid, bigint, text) to authenticated;
+
+create or replace function public.create_marketplace_order(
+  p_listing_id uuid,
+  p_offer_id uuid,
+  p_delivery_method text,
+  p_idempotency_key uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  listing_row public.marketplace_listings%rowtype;
+  offer_row public.marketplace_offers%rowtype;
+  existing_order public.marketplace_orders%rowtype;
+  expired_order public.marketplace_orders%rowtype;
+  buyer uuid;
+  order_amount bigint;
+  order_id uuid;
+  delivery text := lower(trim(coalesce(p_delivery_method, '')));
+  snapshot jsonb;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if p_listing_id is null or p_idempotency_key is null then raise exception 'Listing and idempotency identifiers are required'; end if;
+
+  select * into existing_order from public.marketplace_orders
+  where idempotency_actor_id = caller and idempotency_key = p_idempotency_key;
+  if found then
+    if existing_order.listing_id <> p_listing_id then
+      raise exception 'Idempotency key was already used for a different listing';
+    end if;
+    return jsonb_build_object(
+      'order_id', existing_order.id, 'status', existing_order.status,
+      'payment_state', (private.marketplace_payment_json(existing_order.id) ->> 'payment_state'),
+      'amount_minor', existing_order.amount_minor, 'currency', existing_order.currency,
+      'expires_at', existing_order.expires_at, 'idempotent_replay', true
+    );
+  end if;
+
+  if not coalesce((
+    select setting.checkout_enabled
+    from private.marketplace_runtime_settings setting
+    where setting.singleton = true
+  ), false) then
+    raise exception 'Secure checkout is not available until the payment provider is activated';
+  end if;
+  if (select count(*) from public.marketplace_orders
+      where idempotency_actor_id = caller and created_at > now() - interval '1 hour') >= 12 then
+    raise exception 'Please wait before starting another checkout';
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:marketplace-order:' || p_listing_id::text, 0)
+  );
+  select * into listing_row from public.marketplace_listings where id = p_listing_id for update;
+  if not found or listing_row.school_key <> caller_school then raise exception 'Listing is unavailable'; end if;
+  if not exists (
+    select 1 from public.school_memberships seller_membership
+    where seller_membership.user_id = listing_row.seller_id
+      and seller_membership.school_key = caller_school
+      and seller_membership.status = 'verified'
+  ) then raise exception 'Listing is unavailable'; end if;
+
+  for expired_order in
+    select * from public.marketplace_orders
+    where listing_id = p_listing_id and status = 'awaiting_payment' and expires_at <= now()
+    for update
+  loop
+    update public.marketplace_orders set status = 'cancelled', cancelled_at = now(), version = version + 1
+    where id = expired_order.id;
+    update private.marketplace_payment_projections set payment_state = 'failed', updated_at = now()
+    where order_id = expired_order.id and payment_state in ('provider_required', 'pending');
+    update public.marketplace_offers set status = 'expired'
+    where id = expired_order.offer_id and status = 'accepted';
+    perform private.append_marketplace_order_event(
+      expired_order.id, null, 'cancelled', 'awaiting_payment', 'cancelled',
+      jsonb_build_object('reason', 'payment_window_expired')
+    );
+  end loop;
+  if listing_row.status <> 'active' or listing_row.mode = 'wanted' then raise exception 'Listing is not available for checkout'; end if;
+  if not (delivery = any(listing_row.delivery_methods)) then raise exception 'Choose one of the listing delivery methods'; end if;
+
+  if p_offer_id is null then
+    if listing_row.seller_id = caller then raise exception 'You cannot buy your own listing'; end if;
+    buyer := caller;
+    order_amount := listing_row.price_minor;
+  else
+    if listing_row.seller_id <> caller then raise exception 'Only the seller can accept this offer'; end if;
+    select * into offer_row from public.marketplace_offers
+    where id = p_offer_id and listing_id = p_listing_id and status = 'pending' for update;
+    if not found then raise exception 'Offer is unavailable'; end if;
+    buyer := offer_row.buyer_id;
+    order_amount := offer_row.amount_minor;
+  end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = buyer and block.blocked_id = listing_row.seller_id)
+       or (block.blocker_id = listing_row.seller_id and block.blocked_id = buyer)
+  ) then raise exception 'Checkout is unavailable'; end if;
+  if not exists (
+    select 1 from public.school_memberships membership
+    where membership.user_id = buyer and membership.school_key = caller_school and membership.status = 'verified'
+  ) then raise exception 'Buyer is no longer a verified school member'; end if;
+
+  select * into existing_order from public.marketplace_orders orders
+  where orders.listing_id = p_listing_id
+    and orders.buyer_id = buyer
+    and orders.status = 'awaiting_payment'
+  for update;
+  if found then
+    if p_offer_id is null then
+      raise exception 'You already have an awaiting-payment checkout for this listing';
+    end if;
+    update public.marketplace_orders set status = 'cancelled', cancelled_at = now(), version = version + 1
+    where id = existing_order.id;
+    update private.marketplace_payment_projections set payment_state = 'failed', updated_at = now()
+    where order_id = existing_order.id and payment_state in ('provider_required', 'pending');
+    update public.marketplace_offers set status = 'declined'
+    where id = existing_order.offer_id and status = 'accepted';
+    perform private.append_marketplace_order_event(
+      existing_order.id, caller, 'cancelled', 'awaiting_payment', 'cancelled',
+      jsonb_build_object('reason', 'superseded_by_accepted_offer')
+    );
+  end if;
+  if exists (
+    select 1 from public.marketplace_orders orders where orders.listing_id = p_listing_id
+      and orders.status in ('payment_held', 'fulfilled', 'disputed')
+  ) then raise exception 'Listing already has an open order'; end if;
+
+  snapshot := jsonb_build_object(
+    'listing_id', listing_row.id, 'title', listing_row.title,
+    'description', listing_row.description, 'category', listing_row.category,
+    'mode', listing_row.mode, 'condition', listing_row.item_condition,
+    'course_code', listing_row.course_code, 'negotiable', listing_row.negotiable,
+    'price_minor', order_amount, 'currency', listing_row.currency,
+    'delivery_method', delivery,
+    'media', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', media.id, 'storage_path', media.storage_path,
+        'media_type', media.media_type, 'mime_type', media.mime_type,
+        'alt_text', media.alt_text, 'position', media.position
+      ) order by media.position)
+      from public.marketplace_listing_media media where media.listing_id = p_listing_id
+    ), '[]'::jsonb)
+  );
+
+  insert into public.marketplace_orders (
+    listing_id, school_key, seller_id, buyer_id, offer_id, amount_minor,
+    currency, delivery_method, status, listing_snapshot,
+    idempotency_actor_id, idempotency_key
+  ) values (
+    p_listing_id, caller_school, listing_row.seller_id, buyer, p_offer_id,
+    order_amount, listing_row.currency, delivery, 'awaiting_payment', snapshot,
+    caller, p_idempotency_key
+  ) returning id into order_id;
+
+  insert into private.marketplace_payment_projections (
+    order_id, payment_state, gross_minor, fee_minor, seller_receivable_minor, currency
+  ) values (order_id, 'provider_required', order_amount, 0, order_amount, listing_row.currency);
+  if p_offer_id is not null then
+    update public.marketplace_offers set status = 'accepted' where id = p_offer_id;
+  end if;
+  perform private.append_marketplace_order_event(
+    order_id, caller, 'created', null, 'awaiting_payment',
+    jsonb_build_object('delivery_method', delivery, 'payment_state', 'provider_required')
+  );
+
+  return jsonb_build_object(
+    'order_id', order_id, 'status', 'awaiting_payment',
+    'payment_state', 'provider_required', 'amount_minor', order_amount,
+    'currency', listing_row.currency, 'expires_at', now() + interval '30 minutes',
+    'idempotent_replay', false
+  );
+end;
+$$;
+
+revoke all on function public.create_marketplace_order(uuid, uuid, text, uuid) from public, anon, authenticated;
+grant execute on function public.create_marketplace_order(uuid, uuid, text, uuid) to authenticated;
+
+create or replace function public.mark_marketplace_order_fulfilled(p_order_id uuid, p_note text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  order_row public.marketplace_orders%rowtype;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  select * into order_row from public.marketplace_orders where id = p_order_id for update;
+  if not found or order_row.seller_id <> caller then raise exception 'Order is unavailable'; end if;
+  if order_row.status <> 'payment_held' then raise exception 'The payment provider must confirm held funds before fulfillment'; end if;
+  if char_length(coalesce(p_note, '')) > 1000 then raise exception 'Fulfillment note must contain no more than 1000 characters'; end if;
+  if (private.marketplace_payment_json(p_order_id) ->> 'payment_state') <> 'held' then raise exception 'Held payment confirmation is required'; end if;
+  update public.marketplace_orders set
+    status = 'fulfilled', fulfilled_note = nullif(trim(p_note), ''),
+    fulfilled_at = now(), version = version + 1
+  where id = p_order_id;
+  perform private.append_marketplace_order_event(
+    p_order_id, caller, 'fulfilled', 'payment_held', 'fulfilled',
+    jsonb_build_object('note_supplied', nullif(trim(p_note), '') is not null)
+  );
+  return jsonb_build_object('order_id', p_order_id, 'status', 'fulfilled', 'fulfilled_at', now());
+end;
+$$;
+
+revoke all on function public.mark_marketplace_order_fulfilled(uuid, text) from public, anon, authenticated;
+grant execute on function public.mark_marketplace_order_fulfilled(uuid, text) to authenticated;
+
+create or replace function public.accept_marketplace_order(
+  p_order_id uuid,
+  p_rating integer,
+  p_review text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  order_row public.marketplace_orders%rowtype;
+  order_listing_id uuid;
+  review_id uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  select orders.listing_id into order_listing_id
+  from public.marketplace_orders orders
+  where orders.id = p_order_id and orders.buyer_id = caller;
+  if order_listing_id is null then raise exception 'Order is unavailable'; end if;
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:marketplace-order:' || order_listing_id::text, 0)
+  );
+  select * into order_row from public.marketplace_orders where id = p_order_id for update;
+  if not found or order_row.buyer_id <> caller then raise exception 'Order is unavailable'; end if;
+  if order_row.status <> 'fulfilled' then raise exception 'The seller must mark this order fulfilled before acceptance'; end if;
+  if p_rating is not null and p_rating not between 1 and 5 then raise exception 'Rating must be between 1 and 5'; end if;
+  if p_rating is null and nullif(trim(p_review), '') is not null then raise exception 'Choose a rating before writing a review'; end if;
+  if char_length(coalesce(p_review, '')) > 1500 then raise exception 'Review must contain no more than 1500 characters'; end if;
+  if (private.marketplace_payment_json(p_order_id) ->> 'payment_state') <> 'held' then raise exception 'Held payment confirmation is required'; end if;
+  if exists (
+    select 1 from public.marketplace_disputes dispute
+    where dispute.order_id = p_order_id and dispute.status in ('open', 'under_review')
+  ) then raise exception 'Resolve the open dispute before accepting the order'; end if;
+
+  update public.marketplace_orders set status = 'accepted', accepted_at = now(), version = version + 1
+  where id = p_order_id;
+  update public.marketplace_listings set status = 'sold', version = version + 1
+  where id = order_row.listing_id;
+  if p_rating is not null then
+    insert into public.marketplace_reviews (order_id, reviewer_id, reviewee_id, rating, body)
+    values (p_order_id, caller, order_row.seller_id, p_rating::smallint, nullif(trim(p_review), ''))
+    returning id into review_id;
+  end if;
+  perform private.append_marketplace_order_event(
+    p_order_id, caller, 'accepted', 'fulfilled', 'accepted',
+    jsonb_build_object('rating_supplied', p_rating is not null)
+  );
+  return jsonb_build_object(
+    'order_id', p_order_id, 'status', 'accepted',
+    'payment_state', 'held', 'accepted_at', now(), 'review_id', review_id
+  );
+end;
+$$;
+
+revoke all on function public.accept_marketplace_order(uuid, integer, text) from public, anon, authenticated;
+grant execute on function public.accept_marketplace_order(uuid, integer, text) to authenticated;
+
+create or replace function public.open_marketplace_dispute(
+  p_order_id uuid,
+  p_reason text,
+  p_details text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  order_row public.marketplace_orders%rowtype;
+  dispute_id uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  select * into order_row from public.marketplace_orders where id = p_order_id for update;
+  if not found or (caller <> order_row.buyer_id and caller <> order_row.seller_id) then raise exception 'Order is unavailable'; end if;
+  if order_row.status not in ('payment_held', 'fulfilled') then raise exception 'This order cannot enter dispute review'; end if;
+  if (private.marketplace_payment_json(p_order_id) ->> 'payment_state') not in ('held', 'release_pending') then
+    raise exception 'The protected-payment dispute window has ended';
+  end if;
+  if char_length(trim(coalesce(p_reason, ''))) not between 3 and 80 then raise exception 'Dispute reason must contain 3 to 80 characters'; end if;
+  if char_length(trim(coalesce(p_details, ''))) not between 10 and 2000 then raise exception 'Dispute details must contain 10 to 2000 characters'; end if;
+  if exists (select 1 from public.marketplace_disputes where order_id = p_order_id) then raise exception 'This order already has a dispute record'; end if;
+  if (select count(*) from public.marketplace_disputes where opened_by = caller and created_at > now() - interval '1 day') >= 10 then raise exception 'Daily dispute limit reached'; end if;
+
+  insert into public.marketplace_disputes (
+    order_id, opened_by, opened_from_status, reason, details
+  ) values (
+    p_order_id, caller, order_row.status, trim(p_reason), trim(p_details)
+  ) returning id into dispute_id;
+  update public.marketplace_orders set status = 'disputed', version = version + 1 where id = p_order_id;
+  perform private.append_marketplace_order_event(
+    p_order_id, caller, 'disputed', order_row.status, 'disputed',
+    jsonb_build_object('dispute_id', dispute_id, 'reason', trim(p_reason))
+  );
+  return jsonb_build_object('dispute_id', dispute_id, 'order_id', p_order_id, 'status', 'open');
+end;
+$$;
+
+revoke all on function public.open_marketplace_dispute(uuid, text, text) from public, anon, authenticated;
+grant execute on function public.open_marketplace_dispute(uuid, text, text) to authenticated;
+
+create or replace function public.report_marketplace_listing(p_listing_id uuid, p_reason text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  seller uuid;
+  report_id uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_reason, ''))) not between 3 and 500 then raise exception 'Report reason must contain 3 to 500 characters'; end if;
+  select seller_id into seller from public.marketplace_listings
+  where id = p_listing_id and school_key = caller_school and status <> 'deleted';
+  if seller is null or seller = caller then raise exception 'Listing is unavailable for reporting'; end if;
+  if exists (
+    select 1 from public.marketplace_reports report
+    where report.listing_id = p_listing_id and report.reporter_id = caller
+      and report.status in ('open', 'reviewing')
+  ) then raise exception 'You already reported this listing'; end if;
+  if (select count(*) from public.marketplace_reports where reporter_id = caller and created_at > now() - interval '1 hour') >= 20 then raise exception 'Please wait before submitting another report'; end if;
+  insert into public.marketplace_reports (listing_id, reporter_id, reason)
+  values (p_listing_id, caller, trim(p_reason)) returning id into report_id;
+  return jsonb_build_object('report_id', report_id, 'listing_id', p_listing_id, 'status', 'open');
+end;
+$$;
+
+revoke all on function public.report_marketplace_listing(uuid, text) from public, anon, authenticated;
+grant execute on function public.report_marketplace_listing(uuid, text) to authenticated;
+
+create or replace function public.configure_marketplace_checkout(
+  p_enabled boolean,
+  p_payment_provider text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  provider_name text := nullif(trim(p_payment_provider), '');
+begin
+  if auth.role() is distinct from 'service_role' then raise exception 'Service role required'; end if;
+  if coalesce(p_enabled, false)
+     and char_length(coalesce(provider_name, '')) not between 2 and 80 then
+    raise exception 'A configured payment provider is required before enabling checkout';
+  end if;
+  insert into private.marketplace_runtime_settings (
+    singleton, checkout_enabled, payment_provider, updated_at
+  ) values (
+    true, coalesce(p_enabled, false), provider_name, now()
+  ) on conflict (singleton) do update set
+    checkout_enabled = excluded.checkout_enabled,
+    payment_provider = excluded.payment_provider,
+    updated_at = excluded.updated_at;
+  return jsonb_build_object(
+    'checkout_enabled', coalesce(p_enabled, false),
+    'payment_provider', provider_name
+  );
+end;
+$$;
+
+revoke all on function public.configure_marketplace_checkout(boolean, text)
+  from public, anon, authenticated;
+grant execute on function public.configure_marketplace_checkout(boolean, text)
+  to service_role;
+
+-- Trusted webhook-only state transition. Never grant this function to browser
+-- roles. It is idempotent on the provider event ID and maintains the public
+-- order state, private seller projection, immutable audit trail, and listing.
+create or replace function public.apply_marketplace_payment_event(
+  p_order_id uuid,
+  p_provider text,
+  p_provider_reference text,
+  p_provider_event_id text,
+  p_state text,
+  p_fee_minor bigint default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  order_row public.marketplace_orders%rowtype;
+  payment_row private.marketplace_payment_projections%rowtype;
+  existing_provider_event private.marketplace_payment_provider_events%rowtype;
+  next_state text := lower(trim(coalesce(p_state, '')));
+  old_order_status text;
+  effective_fee bigint;
+  configured_provider text;
+  superseded_order public.marketplace_orders%rowtype;
+  order_listing_id uuid;
+begin
+  if auth.role() is distinct from 'service_role' then raise exception 'Service role required'; end if;
+  if char_length(trim(coalesce(p_provider, ''))) not between 2 and 80
+     or char_length(trim(coalesce(p_provider_reference, ''))) not between 2 and 240
+     or char_length(trim(coalesce(p_provider_event_id, ''))) not between 4 and 240 then
+    raise exception 'Complete provider identifiers are required';
+  end if;
+  if next_state not in ('pending', 'held', 'released', 'refunded', 'failed') then raise exception 'Unsupported provider payment state'; end if;
+
+  select orders.listing_id into order_listing_id
+  from public.marketplace_orders orders where orders.id = p_order_id;
+  if order_listing_id is null then raise exception 'Order is unavailable'; end if;
+  perform pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('concourse:marketplace-order:' || order_listing_id::text, 0)
+  );
+  select * into order_row from public.marketplace_orders where id = p_order_id for update;
+  if not found then raise exception 'Order is unavailable'; end if;
+  select * into payment_row from private.marketplace_payment_projections where order_id = p_order_id for update;
+  if not found then raise exception 'Payment projection is unavailable'; end if;
+  select setting.payment_provider into configured_provider
+  from private.marketplace_runtime_settings setting where setting.singleton = true;
+  if configured_provider is not null and configured_provider <> trim(p_provider) then
+    raise exception 'Payment event provider does not match the configured provider';
+  end if;
+  effective_fee := coalesce(p_fee_minor, payment_row.fee_minor);
+  if effective_fee < 0 or effective_fee > payment_row.gross_minor then raise exception 'Invalid provider fee'; end if;
+
+  insert into private.marketplace_payment_provider_events (
+    provider_event_id, order_id, provider, provider_reference, payment_state, fee_minor
+  ) values (
+    trim(p_provider_event_id), p_order_id, trim(p_provider), trim(p_provider_reference),
+    next_state, effective_fee
+  ) on conflict (provider_event_id) do nothing;
+  if not found then
+    select * into existing_provider_event
+    from private.marketplace_payment_provider_events provider_event
+    where provider_event.provider_event_id = trim(p_provider_event_id);
+    if not found
+       or existing_provider_event.order_id <> p_order_id
+       or existing_provider_event.provider <> trim(p_provider)
+       or existing_provider_event.provider_reference is distinct from trim(p_provider_reference)
+       or existing_provider_event.payment_state <> next_state
+       or existing_provider_event.fee_minor is distinct from effective_fee then
+      raise exception 'Provider event replay payload does not match its original event';
+    end if;
+    return jsonb_build_object(
+      'order_id', p_order_id, 'order_status', order_row.status,
+      'payment_state', payment_row.payment_state, 'idempotent_replay', true
+    );
+  end if;
+
+  if next_state = 'pending' and payment_row.payment_state not in ('provider_required', 'pending') then raise exception 'Invalid transition to pending payment'; end if;
+  if next_state = 'held' and (
+    payment_row.payment_state not in ('provider_required', 'pending')
+    or order_row.status <> 'awaiting_payment'
+    or order_row.expires_at <= now()
+  ) then raise exception 'Invalid transition to held payment'; end if;
+  if next_state = 'released' and (
+    payment_row.payment_state not in ('held', 'release_pending')
+    or order_row.status not in ('accepted', 'disputed')
+  ) then raise exception 'Only an accepted or adjudicated held order may be released'; end if;
+  if next_state = 'refunded' and payment_row.payment_state not in ('held', 'release_pending', 'refund_pending') then raise exception 'Invalid transition to refunded payment'; end if;
+  if next_state = 'failed' and payment_row.payment_state not in ('provider_required', 'pending') then raise exception 'Invalid transition to failed payment'; end if;
+
+  old_order_status := order_row.status;
+  update private.marketplace_payment_projections set
+    provider = trim(p_provider), provider_reference = trim(p_provider_reference),
+    payment_state = next_state, fee_minor = effective_fee,
+    seller_receivable_minor = gross_minor - effective_fee,
+    held_at = case when next_state = 'held' then coalesce(held_at, now()) else held_at end,
+    released_at = case when next_state = 'released' then now() else released_at end,
+    refunded_at = case when next_state = 'refunded' then now() else refunded_at end,
+    updated_at = now()
+  where order_id = p_order_id;
+
+  if next_state = 'pending' then
+    perform private.append_marketplace_order_event(p_order_id, null, 'payment_pending', order_row.status, order_row.status, '{}'::jsonb);
+  elsif next_state = 'held' then
+    perform 1 from public.marketplace_listings listing
+    where listing.id = order_row.listing_id and listing.status = 'active'
+    for update;
+    if not found then raise exception 'Listing is no longer available; provider must void or refund this payment'; end if;
+    if exists (
+      select 1 from public.marketplace_orders other_order
+      where other_order.listing_id = order_row.listing_id
+        and other_order.id <> p_order_id
+        and other_order.status in ('payment_held', 'fulfilled', 'disputed')
+    ) then raise exception 'Another payment already secured this listing; provider must void or refund this payment'; end if;
+    update public.marketplace_orders set status = 'payment_held', version = version + 1 where id = p_order_id;
+    update public.marketplace_listings set status = 'reserved', version = version + 1
+    where id = order_row.listing_id;
+    for superseded_order in
+      select * from public.marketplace_orders other_order
+      where other_order.listing_id = order_row.listing_id
+        and other_order.id <> p_order_id
+        and other_order.status = 'awaiting_payment'
+      for update
+    loop
+      update public.marketplace_orders set
+        status = 'cancelled', cancelled_at = now(), version = version + 1
+      where id = superseded_order.id;
+      update private.marketplace_payment_projections set
+        payment_state = 'failed', updated_at = now()
+      where order_id = superseded_order.id and payment_state in ('provider_required', 'pending');
+      update public.marketplace_offers set status = 'declined'
+      where id = superseded_order.offer_id and status = 'accepted';
+      perform private.append_marketplace_order_event(
+        superseded_order.id, null, 'cancelled', 'awaiting_payment', 'cancelled',
+        jsonb_build_object('reason', 'another_payment_secured_listing')
+      );
+    end loop;
+    update public.marketplace_offers set status = 'declined'
+    where listing_id = order_row.listing_id and status = 'pending';
+    perform private.append_marketplace_order_event(p_order_id, null, 'payment_held', old_order_status, 'payment_held', '{}'::jsonb);
+  elsif next_state = 'released' then
+    if old_order_status = 'disputed' then
+      update public.marketplace_orders set
+        status = 'accepted', accepted_at = coalesce(accepted_at, now()), version = version + 1
+      where id = p_order_id;
+      update public.marketplace_listings set status = 'sold', version = version + 1
+      where id = order_row.listing_id and status = 'reserved';
+    end if;
+    perform private.append_marketplace_order_event(
+      p_order_id, null, 'released', old_order_status,
+      case when old_order_status = 'disputed' then 'accepted' else old_order_status end,
+      '{}'::jsonb
+    );
+    update public.marketplace_disputes set status = 'resolved_seller', resolved_at = now()
+    where order_id = p_order_id and status in ('open', 'under_review');
+  elsif next_state = 'refunded' then
+    update public.marketplace_orders set status = 'refunded', version = version + 1 where id = p_order_id;
+    update public.marketplace_disputes set status = 'resolved_buyer', resolved_at = now()
+    where order_id = p_order_id and status in ('open', 'under_review');
+    if old_order_status in ('awaiting_payment', 'payment_held') then
+      update public.marketplace_listings set status = 'active', version = version + 1
+      where id = order_row.listing_id and status = 'reserved';
+    else
+      -- A fulfilled, accepted, or disputed return needs seller inspection before
+      -- it can be offered again; never auto-resell it after a refund.
+      update public.marketplace_listings set status = 'paused', version = version + 1
+      where id = order_row.listing_id and status in ('reserved', 'sold');
+    end if;
+    perform private.append_marketplace_order_event(p_order_id, null, 'refunded', old_order_status, 'refunded', '{}'::jsonb);
+  elsif next_state = 'failed' then
+    update public.marketplace_orders set status = 'cancelled', cancelled_at = now(), version = version + 1 where id = p_order_id;
+    update public.marketplace_offers set status = 'expired'
+    where id = order_row.offer_id and status = 'accepted';
+    update public.marketplace_listings set status = 'active', version = version + 1
+    where id = order_row.listing_id and status = 'reserved';
+    perform private.append_marketplace_order_event(p_order_id, null, 'payment_failed', old_order_status, 'cancelled', '{}'::jsonb);
+  end if;
+
+  return jsonb_build_object(
+    'order_id', p_order_id,
+    'order_status', (select status from public.marketplace_orders where id = p_order_id),
+    'payment_state', next_state,
+    'idempotent_replay', false
+  );
+end;
+$$;
+
+revoke all on function public.apply_marketplace_payment_event(uuid, text, text, text, text, bigint)
+  from public, anon, authenticated;
+grant execute on function public.apply_marketplace_payment_event(uuid, text, text, text, text, bigint)
+  to service_role;
+
+-- A seller may promote only their own active listing in their own verified
+-- school community. The existing v2 publisher performs all post/media/poll
+-- validation first; any failed link validation rolls the entire transaction
+-- back, so an orphan post cannot remain.
+create or replace function public.publish_community_post_v3(
+  p_body text,
+  p_tags text[],
+  p_media jsonb,
+  p_poll_question text,
+  p_poll_options text[],
+  p_listing_id uuid
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  new_post_id uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if p_listing_id is not null and not exists (
+    select 1 from public.marketplace_listings listing
+    where listing.id = p_listing_id
+      and listing.seller_id = caller
+      and listing.school_key = caller_school
+      and listing.status = 'active'
+  ) then raise exception 'Only your own active school listing can be linked'; end if;
+
+  new_post_id := public.publish_community_post_v2(
+    p_body, p_tags, p_media, p_poll_question, p_poll_options
+  );
+  if p_listing_id is not null then
+    insert into public.community_post_listing_links (post_id, listing_id, seller_id, school_key)
+    values (new_post_id, p_listing_id, caller, caller_school);
+  end if;
+  return new_post_id;
+end;
+$$;
+
+revoke all on function public.publish_community_post_v3(text, text[], jsonb, text, text[], uuid)
+  from public, anon, authenticated;
+grant execute on function public.publish_community_post_v3(text, text[], jsonb, text, text[], uuid)
+  to authenticated;
+
+create or replace function public.get_school_feed_v2(
+  p_limit integer default 30,
+  p_offset integer default 0,
+  p_bookmarked_only boolean default false,
+  p_post_id uuid default null
+)
+returns table (
+  post_id uuid,
+  author_id uuid,
+  author_username text,
+  display_name text,
+  avatar_path text,
+  avatar_revision bigint,
+  major_of_study text,
+  body text,
+  tags text[],
+  media jsonb,
+  poll jsonb,
+  created_at timestamptz,
+  like_count bigint,
+  comment_count bigint,
+  liked_by_me boolean,
+  bookmarked_by_me boolean,
+  linked_listing jsonb
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  return query
+  select
+    feed.post_id, feed.author_id, feed.author_username, feed.display_name,
+    feed.avatar_path, feed.avatar_revision, feed.major_of_study, feed.body,
+    feed.tags, feed.media, feed.poll, feed.created_at, feed.like_count,
+    feed.comment_count, feed.liked_by_me, feed.bookmarked_by_me,
+    case
+      when listing.id is null then null
+      when listing.school_key <> caller_school then null
+      when listing.seller_id <> feed.author_id then null
+      when listing.status = 'deleted' then null
+      when listing.status not in ('active', 'reserved') then jsonb_build_object(
+        'id', listing.id, 'title', listing.title, 'status', listing.status
+      )
+      else private.marketplace_listing_json(listing.id, caller)
+    end
+  from public.get_school_feed(p_limit, p_offset, p_bookmarked_only, p_post_id) feed
+  left join public.community_post_listing_links link on link.post_id = feed.post_id
+  left join public.marketplace_listings listing
+    on listing.id = link.listing_id
+   and listing.school_key = link.school_key
+   and listing.seller_id = link.seller_id;
+end;
+$$;
+
+revoke all on function public.get_school_feed_v2(integer, integer, boolean, uuid)
+  from public, anon, authenticated;
+grant execute on function public.get_school_feed_v2(integer, integer, boolean, uuid)
+  to authenticated;

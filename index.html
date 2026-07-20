@@ -4,6 +4,20 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ConCourse — Conquer your course registrations</title>
+<meta name="description" content="Plan your semester, meet your campus community, and exchange study materials and campus essentials on ConCourse." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="ConCourse Campus Market" />
+<meta property="og:description" content="Discover notes, textbooks, and campus essentials from your university community." />
+<meta property="og:url" content="https://1239744601-netizen.github.io/ConCourse/" />
+<meta property="og:image" content="https://1239744601-netizen.github.io/ConCourse/concourse-marketplace-og.png" />
+<meta property="og:image:width" content="1734" />
+<meta property="og:image:height" content="907" />
+<meta property="og:image:alt" content="ConCourse Campus Market — notes, textbooks, tech, and campus essentials" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ConCourse Campus Market" />
+<meta name="twitter:description" content="Discover notes, textbooks, and campus essentials from your university community." />
+<meta name="twitter:image" content="https://1239744601-netizen.github.io/ConCourse/concourse-marketplace-og.png" />
+<meta name="twitter:image:alt" content="ConCourse Campus Market — notes, textbooks, tech, and campus essentials" />
 <link rel="icon" type="image/svg+xml" href="concourse-icon.svg" />
 <style>
   :root {
@@ -1711,7 +1725,8 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260717-5" />
+<link rel="stylesheet" href="member-hub.css?v=20260720-1" />
+<link rel="stylesheet" href="marketplace.css?v=20260720-1" />
 </head>
 <body>
 <header id="landingScreen">
@@ -1756,6 +1771,7 @@
     </div>
     <button class="btn-primary" id="authOpenBtn" data-i18n="signIn">Sign in</button>
     <button class="btn-ghost" id="saveAccountBtn" hidden data-i18n="saveNow">Save now</button>
+    <button class="btn-ghost" id="marketplaceOpenBtn" hidden data-i18n="hubMarketplace">Campus market</button>
     <button class="btn-ghost" id="hubOpenBtn" hidden data-i18n="studentHub">Student hub</button>
     <button class="btn-ghost" id="signOutBtn" hidden data-i18n="signOut">Sign out</button>
     <label class="language-control" for="languageSelect">
@@ -2141,8 +2157,9 @@
       </div>
       <nav class="hub-navigation" aria-label="Student hub sections" data-i18n-aria-label="hubNavigation">
         <button type="button" class="hub-nav-button active" data-hub-target="community" aria-current="page"><span>01</span><b data-i18n="hubCommunity">Campus community</b></button>
-        <button type="button" class="hub-nav-button" data-hub-target="messages"><span>02</span><b data-i18n="hubMessages">Messages</b></button>
-        <button type="button" class="hub-nav-button" data-hub-target="overview"><span>03</span><b data-i18n="hubInsights">Academic insights</b></button>
+        <button type="button" class="hub-nav-button" data-hub-target="marketplace"><span>02</span><b data-i18n="hubMarketplace">Campus market</b></button>
+        <button type="button" class="hub-nav-button" data-hub-target="messages"><span>03</span><b data-i18n="hubMessages">Messages</b></button>
+        <button type="button" class="hub-nav-button" data-hub-target="overview"><span>04</span><b data-i18n="hubInsights">Academic insights</b></button>
       </nav>
       <button type="button" class="btn-ghost hub-back-button" id="hubBackToTimetable" data-i18n="backToTimetable">Back to timetable</button>
     </aside>
@@ -2241,6 +2258,14 @@
                     </div>
                     <button type="button" class="hub-poll-add-option" id="addCommunityPollOption" data-i18n="addPollOption">Add option</button>
                   </section>
+                  <div class="community-listing-picker" id="communityListingPicker" hidden>
+                    <label for="communityListingSelect" data-i18n="attachMarketplaceListing">Attach a market listing</label>
+                    <div>
+                      <select id="communityListingSelect" aria-label="Attach a market listing" data-i18n-aria-label="attachMarketplaceListing"></select>
+                      <button type="button" id="removeCommunityListing" data-i18n="removeListingAttachment">Remove</button>
+                    </div>
+                  </div>
+                  <div id="communityListingAttachment" class="community-listing-attachment" aria-live="polite"></div>
                   <div class="hub-compose-meta">
                     <input id="communityPostTags" maxlength="100" data-i18n-placeholder="postTagsPlaceholder" data-i18n-aria-label="postTagsPlaceholder" aria-label="Post topics" placeholder="Add topics" />
                     <span id="communityPostCounter" aria-live="polite">0 / 1200</span>
@@ -2275,6 +2300,74 @@
               <div class="hub-rail-heading"><h3 data-i18n="recentMessages">Recent messages</h3></div>
               <div class="hub-conversation-preview" id="communityConversationPreview"></div>
               <button type="button" class="btn-primary hub-rail-action" id="communityStartMessage" data-i18n="startChat">Start chat</button>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="hub-view marketplace-view" data-hub-view="marketplace" hidden>
+        <div class="market-discovery-bar">
+          <label class="market-search" for="marketplaceSearch">
+            <span aria-hidden="true">⌕</span>
+            <input id="marketplaceSearch" type="search" maxlength="100" placeholder="Search notes, textbooks, furniture..." data-i18n-placeholder="marketplaceSearchPlaceholder" />
+          </label>
+          <label class="market-filter-select"><span class="sr-only" data-i18n="marketplaceCategory">Category</span>
+            <select id="marketplaceCategory" aria-label="Category" data-i18n-aria-label="marketplaceCategory">
+              <option value="all" data-i18n="marketplaceAllCategories">All categories</option>
+              <option value="notes" data-i18n="marketplaceNotes">Notes</option>
+              <option value="past_papers" data-i18n="marketplacePastPapers">Past papers</option>
+              <option value="textbooks" data-i18n="marketplaceTextbooks">Textbooks</option>
+              <option value="electronics" data-i18n="marketplaceElectronics">Electronics</option>
+              <option value="furniture" data-i18n="marketplaceFurniture">Furniture</option>
+              <option value="life_essentials" data-i18n="marketplaceLifeEssentials">Daily essentials</option>
+              <option value="services" data-i18n="marketplaceServices">Student services</option>
+              <option value="other" data-i18n="marketplaceOther">Other</option>
+            </select>
+          </label>
+          <label class="market-filter-select"><span class="sr-only" data-i18n="marketplaceSort">Sort</span>
+            <select id="marketplaceSort" aria-label="Sort listings" data-i18n-aria-label="marketplaceSort">
+              <option value="recent" data-i18n="marketplaceNewest">Newest</option>
+              <option value="price_asc" data-i18n="marketplacePriceLow">Price: low to high</option>
+              <option value="price_desc" data-i18n="marketplacePriceHigh">Price: high to low</option>
+              <option value="popular" data-i18n="marketplacePopular">Most saved</option>
+            </select>
+          </label>
+          <button type="button" class="btn-primary market-sell-button" id="marketplaceSellButton" data-i18n="marketplaceSell">Sell</button>
+        </div>
+
+        <div class="market-mode-tabs" id="marketplaceModes" role="tablist" aria-label="Marketplace views" data-i18n-aria-label="marketplaceViews">
+          <button type="button" class="active" id="marketplaceTabDiscover" data-market-mode="discover" role="tab" aria-controls="marketplaceCatalogue" aria-selected="true" data-i18n="marketplaceDiscover">Discover</button>
+          <button type="button" id="marketplaceTabSaved" data-market-mode="saved" role="tab" aria-controls="marketplaceCatalogue" aria-selected="false" data-i18n="marketplaceSaved">Saved</button>
+          <button type="button" id="marketplaceTabMine" data-market-mode="mine" role="tab" aria-controls="marketplaceCatalogue" aria-selected="false" data-i18n="marketplaceMyListings">My listings</button>
+          <button type="button" id="marketplaceTabOrders" data-market-mode="orders" role="tab" aria-controls="marketplaceCatalogue" aria-selected="false" data-i18n="marketplaceOrders">Orders</button>
+        </div>
+
+        <div class="market-trust-strip" role="note">
+          <b data-i18n="marketplaceCampusOnly">Verified campus members only</b>
+          <span data-i18n="marketplacePaymentBoundary">Listings, offers, and private messages are active. Protected online checkout will activate only after a licensed payment provider is connected.</span>
+        </div>
+
+        <div class="market-layout">
+          <div class="market-catalogue" id="marketplaceCatalogue" role="tabpanel" aria-labelledby="marketplaceTabDiscover" aria-busy="false" tabindex="0">
+            <div class="market-results-heading">
+              <b id="marketplaceResultsLabel" data-i18n="marketplaceRecentListings">Recent listings</b>
+              <span id="marketplaceStatus" role="status" aria-live="polite"></span>
+            </div>
+            <div class="market-grid" id="marketplaceGrid" aria-live="polite"></div>
+            <button type="button" class="btn-ghost market-load-more" id="marketplaceLoadMore" data-i18n="loadMore" hidden>Load more</button>
+          </div>
+          <aside class="market-rail">
+            <article class="market-rail-card">
+              <span class="market-rail-eyebrow" data-i18n="marketplaceTransactionFlow">Transaction flow</span>
+              <ol class="market-protection-steps">
+                <li><b data-i18n="marketplaceStepAgree">Agree</b><span data-i18n="marketplaceStepAgreeText">Confirm the item, price, and delivery method.</span></li>
+                <li><b data-i18n="marketplaceStepReview">Review</b><span data-i18n="marketplaceStepReviewText">Inspect the item or material after delivery.</span></li>
+                <li><b data-i18n="marketplaceStepRelease">Release</b><span data-i18n="marketplaceStepReleaseText">A future payment provider releases funds only after acceptance.</span></li>
+              </ol>
+            </article>
+            <article class="market-rail-card market-policy-card">
+              <b data-i18n="marketplaceRightsTitle">Trade responsibly</b>
+              <p data-i18n="marketplaceRightsSummary">Sell only original or authorised materials. Leaked exams, active assessment answers, personal data, and pirated copies are prohibited.</p>
             </article>
           </aside>
         </div>
@@ -2400,6 +2493,91 @@
   </div>
 </section>
 
+<div class="marketplace-modal" id="marketplaceListingEditorModal" hidden>
+  <section class="marketplace-dialog marketplace-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="marketplaceListingEditorTitle">
+    <header class="marketplace-dialog-header">
+      <div><span data-i18n="marketplaceSellerStudio">Seller studio</span><h2 id="marketplaceListingEditorTitle" data-i18n="marketplaceCreateListing">Create a listing</h2></div>
+      <button type="button" class="marketplace-dialog-close" id="marketplaceEditorCancel" aria-label="Close listing editor" data-i18n-aria-label="marketplaceCloseEditor">×</button>
+    </header>
+    <form id="marketplaceListingEditorForm" class="marketplace-editor-form">
+      <div class="marketplace-editor-media">
+        <button type="button" class="marketplace-media-drop" id="marketplaceAddMediaButton">
+          <b data-i18n="marketplaceAddMedia">Add photos or video</b>
+          <span data-i18n="marketplaceMediaHint">Up to 8 clear previews. The first image becomes the cover.</span>
+        </button>
+        <input id="marketplaceMediaInput" type="file" accept="image/*,.heic,.heif,.heics,.heifs,.avif,.gif,.bmp,.tif,.tiff,.ico,.jxl,video/mp4,video/webm,video/quicktime,.mov" multiple hidden />
+        <div class="marketplace-media-preview" id="marketplaceMediaPreview" aria-live="polite"></div>
+      </div>
+      <div class="marketplace-editor-grid">
+        <label class="marketplace-field-wide"><span data-i18n="marketplaceListingTitle">Title</span><input id="marketplaceTitleInput" maxlength="120" required placeholder="What are you offering?" data-i18n-placeholder="marketplaceTitlePlaceholder" /></label>
+        <label class="marketplace-field-wide"><span data-i18n="marketplaceDescription">Description</span><textarea id="marketplaceDescriptionInput" maxlength="2400" required placeholder="Describe contents, condition, missing pages, edition, and delivery." data-i18n-placeholder="marketplaceDescriptionPlaceholder"></textarea></label>
+        <label><span data-i18n="marketplaceCategory">Category</span><select id="marketplaceCategoryInput" required>
+          <option value="notes" data-i18n="marketplaceNotes">Notes</option>
+          <option value="past_papers" data-i18n="marketplacePastPapers">Past papers</option>
+          <option value="textbooks" data-i18n="marketplaceTextbooks">Textbooks</option>
+          <option value="electronics" data-i18n="marketplaceElectronics">Electronics</option>
+          <option value="furniture" data-i18n="marketplaceFurniture">Furniture</option>
+          <option value="life_essentials" data-i18n="marketplaceLifeEssentials">Daily essentials</option>
+          <option value="services" data-i18n="marketplaceServices">Student services</option>
+          <option value="other" data-i18n="marketplaceOther">Other</option>
+        </select></label>
+        <label><span data-i18n="marketplaceListingMode">Listing type</span><select id="marketplaceTypeInput" required>
+          <option value="sale" data-i18n="marketplaceModeSale">For sale</option>
+          <option value="free" data-i18n="marketplaceModeFree">Give away</option>
+          <option value="wanted" data-i18n="marketplaceModeWanted">Wanted</option>
+        </select></label>
+        <label><span data-i18n="marketplaceCondition">Condition</span><select id="marketplaceConditionInput" required>
+          <option value="new" data-i18n="marketplaceConditionNew">New</option>
+          <option value="like_new" data-i18n="marketplaceConditionLikeNew">Like new</option>
+          <option value="good" data-i18n="marketplaceConditionGood">Good</option>
+          <option value="fair" data-i18n="marketplaceConditionFair">Fair</option>
+          <option value="used" data-i18n="marketplaceConditionUsed">Used</option>
+          <option value="digital" data-i18n="marketplaceConditionDigital">Digital</option>
+          <option value="not_applicable" data-i18n="marketplaceConditionNotApplicable">Not applicable</option>
+        </select></label>
+        <label id="marketplaceRightsBasisField"><span data-i18n="marketplaceRightsBasis">Distribution rights</span><select id="marketplaceRightsBasisInput" required>
+          <option value="" data-i18n="marketplaceChooseRightsBasis">Choose a rights basis</option>
+          <option value="original" data-i18n="marketplaceRightsOriginal">My original work</option>
+          <option value="licensed" data-i18n="marketplaceRightsLicensed">Licensed or authorised</option>
+          <option value="public_domain" data-i18n="marketplaceRightsPublicDomain">Public domain</option>
+        </select></label>
+        <label><span data-i18n="marketplaceCourseCode">Course code</span><input id="marketplaceCourseInput" maxlength="30" placeholder="Optional, e.g. ECON 2101" data-i18n-placeholder="marketplaceCoursePlaceholder" /></label>
+        <label><span data-i18n="marketplacePrice">Price</span><input id="marketplacePriceInput" type="number" min="0" max="1000000" step="0.01" required inputmode="decimal" value="0" /></label>
+        <label><span data-i18n="marketplaceCurrency">Currency</span><select id="marketplaceCurrencyInput" required>
+          <option value="HKD">HKD</option><option value="CNY">CNY</option><option value="USD">USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="AUD">AUD</option><option value="CAD">CAD</option><option value="SGD">SGD</option><option value="JPY">JPY</option><option value="KRW">KRW</option>
+        </select></label>
+      </div>
+      <fieldset class="marketplace-delivery-fieldset" id="marketplaceDeliveryInputs">
+        <legend data-i18n="marketplaceDeliveryMethods">Delivery methods</legend>
+        <label><input type="checkbox" name="marketplaceDelivery" value="meetup" checked /><span data-i18n="marketplaceCampusMeetup">Campus meetup</span></label>
+        <label><input type="checkbox" name="marketplaceDelivery" value="shipping" /><span data-i18n="marketplaceShipping">Shipping</span></label>
+        <label><input type="checkbox" name="marketplaceDelivery" value="digital" /><span data-i18n="marketplaceDigitalDelivery">Digital delivery</span></label>
+      </fieldset>
+      <label class="marketplace-check-row"><input id="marketplaceNegotiableInput" type="checkbox" /><span data-i18n="marketplaceNegotiable">Price is negotiable</span></label>
+      <label class="marketplace-check-row marketplace-rights-check"><input id="marketplaceRightsInput" type="checkbox" required /><span data-i18n="marketplaceRightsAttestation">I own this item or have permission to distribute it. It is not a leaked/current exam, assessment answer, pirated material, or personal data.</span></label>
+      <p class="marketplace-editor-status" id="marketplaceEditorStatus" role="status" aria-live="polite"></p>
+      <div class="marketplace-editor-actions">
+        <button type="button" class="btn-ghost" id="marketplaceEditorCancelButton" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn-primary" id="marketplaceEditorSubmit" data-i18n="marketplacePublishListing">Publish listing</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<div class="marketplace-modal" id="marketplaceDetailModal" hidden>
+  <section class="marketplace-dialog marketplace-detail-dialog" role="dialog" aria-modal="true" aria-label="Listing details" data-i18n-aria-label="marketplaceListingDetails">
+    <button type="button" class="marketplace-dialog-close marketplace-detail-close" id="marketplaceDetailClose" aria-label="Close listing details" data-i18n-aria-label="marketplaceCloseDetails">×</button>
+    <div id="marketplaceDetailContent"></div>
+  </section>
+</div>
+
+<div class="marketplace-modal" id="marketplaceOrderModal" hidden>
+  <section class="marketplace-dialog marketplace-order-dialog" role="dialog" aria-modal="true" aria-label="Order details" data-i18n-aria-label="marketplaceOrderDetails">
+    <button type="button" class="marketplace-dialog-close marketplace-detail-close" id="marketplaceOrderClose" aria-label="Close order details" data-i18n-aria-label="marketplaceCloseOrder">×</button>
+    <div id="marketplaceOrderContent"></div>
+  </section>
+</div>
+
 <div class="hub-profile-modal" id="schoolmateProfileModal" hidden>
   <section class="hub-profile-preview" role="dialog" aria-modal="true" aria-labelledby="schoolmateProfileName">
     <button type="button" class="btn-ghost hub-profile-preview-close" id="closeSchoolmateProfile" aria-label="Close profile" data-i18n-aria-label="closeProfile">×</button>
@@ -2426,7 +2604,7 @@
   <section class="hub-action-dialog" role="dialog" aria-modal="true" aria-labelledby="hubActionTitle" aria-describedby="hubActionMessage">
     <h2 id="hubActionTitle">Confirm action</h2>
     <p id="hubActionMessage"></p>
-    <textarea id="hubActionInput" maxlength="500" hidden></textarea>
+    <textarea id="hubActionInput" maxlength="500" aria-labelledby="hubActionMessage" hidden></textarea>
     <div class="hub-action-buttons">
       <button type="button" class="btn-ghost" id="hubActionCancel" data-i18n="cancel">Cancel</button>
       <button type="button" class="btn-primary" id="hubActionConfirm">Confirm</button>
@@ -2473,6 +2651,9 @@ function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"
 let currentLanguage = "en";
 const TRANSLATIONS = {
   "zh-CN": {
+    marketplaceOfferDisclaimer:"出价仅为非约束性的价格提议。请通过私信商定下一步；ConCourse 不会收取款项。",
+    marketplaceMarkSoldConfirm:"仅在已完成线下交付后将商品标记为售出。此操作会关闭商品，但不能作为已付款的证明。",
+    marketplaceMarkClaimed:"标记为已领取", marketplaceMarkClaimedConfirm:"仅在免费物品已完成交付后标记为已领取。", marketplaceCloseRequest:"关闭求购", marketplaceCloseRequestConfirm:"仅在你不再需要该物品时关闭这项求购。", marketplaceStatusClaimed:"已领取", marketplaceStatusRequestClosed:"求购已关闭",
     brandTag:"轻松规划课程注册", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
     intelligentPlanning:"智能课程规划", heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
@@ -2551,9 +2732,20 @@ const TRANSLATIONS = {
     hubInsights:"学业洞察", editProfile:"编辑资料", searchCommunity:"搜索最近的校园讨论", communityTopics:"社区话题", topicForYou:"为你推荐", topicCourses:"课程", topicCampusLife:"校园生活", topicClubs:"社团", topicHousing:"住宿", topicCareers:"职业发展", startConversationPost:"发起校园讨论", communityShortcuts:"社区快捷入口", yourCampusIdentity:"你的校园身份", recentMessages:"最近私信", openMessages:"打开私信", schoolScopedCommunity:"属于已验证学校成员的空间", schoolScopedCommunityText:"个人资料、动态和私信均限定在你的大学社区内，并全程提供举报与拉黑控制。",
     chooseProfilePhoto:"选择个人头像", profilePhoto:"个人头像", profilePhotoHint:"支持 JPG、PNG、WebP、GIF、AVIF、HEIC/HEIF 及其他安全的栅格图片。ConCourse 会移除元数据并保存私密 WebP 副本；SVG 会被拦截。", replacePhoto:"更换", removePhoto:"移除头像", connectionTypes:"连接类型", verifiedAccounts:"已授权账号", profileLinks:"资料链接", profileLinksDisclosure:"这些联系方式由你自行提供，未经 ConCourse 验证。电话和 WhatsApp 保持私密。", wechatId:"微信号", wechatIdPlaceholder:"你的微信号", wechatSelfReported:"用户自行提供 · 未验证", shareWechat:"向已验证的同校同学显示此微信号", invalidWechatId:"请输入不超过 64 个字符的有效微信号。", messageStudent:"发送私信", avatarPreparing:"正在安全处理头像…", avatarReady:"新头像已准备好；保存资料后生效。", avatarInvalid:"无法解码该文件。请尝试 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", avatarTooLarge:"图片必须小于 20 MB。", avatarSvgUnsupported:"为保护安全，不支持 SVG 头像。请导出为 JPG、PNG、WebP 或其他栅格格式。", avatarUploadFailed:"头像无法保存，请重试。", avatarRemoved:"保存资料后将移除头像。", communityNoMatches:"没有符合当前搜索或话题的动态。", wechatCopied:"微信号已复制。", copyWechat:"复制微信号", noRecentMessages:"还没有最近的私信。", hubCommunityKicker:"ConCourse 社区", hubCommunityTitle:"校园社区", hubCommunityIntro:"发现你的大学同学正在提问、分享和计划什么。", hubMessagesKicker:"ConCourse 私信", hubMessagesTitle:"保持联系，不受干扰", hubMessagesIntro:"与已验证的同校同学进行私密的一对一交流。", hubInsightsKicker:"ConCourse 洞察", hubInsightsTitle:"用更清晰的数据规划学业", hubInsightsIntro:"查看匿名选课趋势，并保存你的最终学期决定。", hubProfileKicker:"ConCourse 个人资料", hubProfileTitle:"建立可信赖的校园身份", hubProfileIntro:"管理头像、个人资料、社交连接和隐私设置。",
     topicSaved:"已收藏", createPost:"创建动态", createPoll:"创建投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"提出一个问题", pollOptionPlaceholder:"投票选项", addPollOption:"添加选项", addMedia:"照片 / 视频", addPoll:"投票", campusFeed:"校园动态", savedPosts:"已收藏动态", savedPostsPrivate:"仅自己可见", pollOptionLimit:"每个投票最多 6 个选项。", pollIncomplete:"请填写投票问题和至少两个选项。", pollDuplicateOptions:"投票选项不能重复。", removeMedia:"移除媒体", altTextPlaceholder:"图片说明（方便使用辅助技术的同学）", mediaPreparing:"正在处理媒体…", mediaLimit:"每条动态最多添加 4 个媒体文件。", videoTooLarge:"视频必须小于 40 MB。", imageTooLarge:"图片必须小于 25 MB。", mediaInvalid:"无法解码该图片。请尝试 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"为保护安全，不支持 SVG。请导出为栅格图片。", mediaReady:"媒体已准备好。", mediaLoading:"正在载入媒体…", mediaUnavailable:"媒体暂时无法显示。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"查看这条 ConCourse 校园动态", postLinkCopied:"链接已复制；打开时需要登录同校账号。", shareFailed:"无法分享这条动态。", postContentRequired:"请添加文字、媒体或投票后再发布。", loadMore:"加载更多", loadingMore:"正在加载更多…", pollOptionNumber:"投票选项 {number}", mediaDescriptionNumber:"第 {number} 个媒体文件的说明", videoDescriptionPlaceholder:"视频说明（方便使用辅助技术的同学）", postVideo:"动态中的视频", videoInvalid:"请选择有效的 MP4、WebM 或 MOV 视频。",
-    profileLoading:"正在载入个人资料…", profileSaved:"个人资料已保存。", profileSaveFailed:"无法保存个人资料。", invalidUrl:"请使用完整的 https:// 链接。", invalidInstagramUrl:"请使用 Instagram 的 https:// 链接。", invalidWhatsappUrl:"请使用 wa.me 的 https:// 链接。", invalidLinkedinUrl:"请使用 LinkedIn 的 https:// 链接。", invalidWebsiteUrl:"请使用完整的 https:// 链接。"
+    profileLoading:"正在载入个人资料…", profileSaved:"个人资料已保存。", profileSaveFailed:"无法保存个人资料。", invalidUrl:"请使用完整的 https:// 链接。", invalidInstagramUrl:"请使用 Instagram 的 https:// 链接。", invalidWhatsappUrl:"请使用 wa.me 的 https:// 链接。", invalidLinkedinUrl:"请使用 LinkedIn 的 https:// 链接。", invalidWebsiteUrl:"请使用完整的 https:// 链接。",
+    hubMarketplace:"校园市集", hubMarketplaceKicker:"ConCourse 校园市集", hubMarketplaceTitle:"在校园里发现真正有用的物品", hubMarketplaceIntro:"购买和出售学习资料、课本、宿舍用品及同学真正需要的物品。",
+    attachMarketplaceListing:"附加市集商品", removeListingAttachment:"移除", marketplaceSharedPostDefault:"我刚刚在 ConCourse 校园市集发布了这个商品。",
+    marketplaceSearchPlaceholder:"搜索笔记、课本、家具…", marketplaceCategory:"分类", marketplaceAllCategories:"全部分类", marketplaceStudyMaterials:"学习资料", marketplaceTextbooks:"课本", marketplaceElectronics:"电子产品", marketplaceDormFurniture:"宿舍与家具", marketplaceEssentials:"生活必需品", marketplaceFreeItems:"免费物品", marketplaceOther:"其他", marketplaceSort:"排序", marketplaceNewest:"最新发布", marketplacePriceLow:"价格：从低到高", marketplacePriceHigh:"价格：从高到低", marketplacePopular:"最多收藏", marketplaceSell:"发布商品", marketplaceViews:"市集页面", marketplaceDiscover:"发现", marketplaceSaved:"已收藏", marketplaceMyListings:"我的商品", marketplaceOrders:"订单", marketplaceCampusOnly:"仅限已验证校园成员", marketplacePaymentBoundary:"商品、出价与私信功能已经启用。只有连接持牌支付服务商后，受保护的在线结账才会开放。", marketplaceRecentListings:"最新商品", marketplaceTransactionFlow:"交易流程", marketplaceStepAgree:"确认", marketplaceStepAgreeText:"确认商品、价格及交付方式。", marketplaceStepReview:"验收", marketplaceStepReviewText:"交付后检查商品或学习资料。", marketplaceStepRelease:"放款", marketplaceStepReleaseText:"未来将由支付服务商在买家确认后向卖家放款。", marketplaceRightsTitle:"负责任地交易", marketplaceRightsSummary:"仅可出售原创或获得授权的资料。严禁泄露试卷、进行中的测验答案、个人资料及盗版内容。",
+    marketplaceSellerStudio:"卖家工作室", marketplaceCreateListing:"发布商品", marketplaceCloseEditor:"关闭商品编辑器", marketplaceAddMedia:"添加照片或视频", marketplaceMediaHint:"最多 8 个清晰预览；第一张图片会成为封面。", marketplaceListingTitle:"标题", marketplaceTitlePlaceholder:"你想出售什么？", marketplaceDescription:"描述", marketplaceDescriptionPlaceholder:"说明内容、成色、缺页、版本及交付方式。", marketplaceItemType:"商品类型", marketplacePhysical:"实体物品", marketplaceDigital:"电子资料", marketplaceCondition:"成色", marketplaceConditionNew:"全新", marketplaceConditionLikeNew:"几乎全新", marketplaceConditionGood:"良好", marketplaceConditionFair:"一般", marketplaceConditionDigital:"电子版", marketplaceCourseCode:"课程编号", marketplaceCoursePlaceholder:"选填，例如 ECON 2101", marketplacePrice:"价格", marketplaceCurrency:"货币", marketplaceDeliveryMethods:"交付方式", marketplaceCampusMeetup:"校内面交", marketplaceLocalPickup:"本地自取", marketplaceShipping:"邮寄", marketplaceDigitalDelivery:"电子交付", marketplaceNegotiable:"价格可商议", marketplaceRightsAttestation:"我拥有该物品或已获授权发布。内容不属于泄露或正在进行的考试、测验答案、盗版资料或个人数据。", marketplacePublishListing:"发布商品", marketplaceListingDetails:"商品详情", marketplaceCloseDetails:"关闭商品详情", marketplaceOrderDetails:"订单详情", marketplaceCloseOrder:"关闭订单详情",
+    marketplaceNotes:"笔记", marketplacePastPapers:"历年试卷", marketplaceFurniture:"家具", marketplaceLifeEssentials:"生活必需品", marketplaceServices:"学生服务", marketplaceListingMode:"发布类型", marketplaceModeSale:"出售", marketplaceModeFree:"免费赠送", marketplaceModeWanted:"求购", marketplaceConditionUsed:"已使用", marketplaceConditionNotApplicable:"不适用", marketplaceRightsBasis:"分发权利", marketplaceChooseRightsBasis:"选择权利依据", marketplaceRightsOriginal:"我的原创作品", marketplaceRightsLicensed:"已获许可或授权", marketplaceRightsPublicDomain:"公共领域",
+    edit:"编辑", marketplaceAcceptOrder:"确认收货并评价", marketplaceActionFailed:"操作未能完成。", marketplaceActivate:"重新上架", marketplaceAwaitingPayment:"等待支付服务商", marketplaceCheckoutComingSoon:"安全结账即将开放", marketplaceCheckoutWarning:"安全结账与资金托管尚未启用。ConCourse 目前不会收取、持有或转移资金。请勿把商品或平台状态视为付款或托管证明。", marketplaceCourse:"课程", marketplaceCreateOrder:"安全结账", marketplaceDelete:"删除", marketplaceDeleteConfirm:"确定从市集移除此商品吗？此操作无法撤销。", marketplaceDelivery:"交付", marketplaceDeliveryRequired:"至少选择一种交付方式。", marketplaceDescriptionRequired:"请准确描述商品。", marketplaceDisputeDetails:"说明问题并保留证据。请勿包含银行卡或银行资料。", marketplaceDisputeReason:"选择简短原因，例如未收到商品或与描述不符。", marketplaceEditMediaLocked:"已发布商品暂不支持更换媒体。如需更换，请新建商品。", marketplaceEmpty:"暂无符合筛选条件的商品。", marketplaceFavorite:"收藏", marketplaceFree:"免费", marketplaceFulfilmentNote:"添加给买家的交付或面交说明。", marketplaceImageTooLarge:"图片必须小于 25 MB。", marketplaceLinkCopied:"商品链接已复制。查看者必须使用符合条件的校园账户登录。", marketplaceListingUnavailable:"商品已不可用。", marketplaceLoadFailed:"无法加载市集。", marketplaceLoading:"正在加载校园市集…", marketplaceMakeOffer:"出价", marketplaceMarkFulfilled:"标记为已交付", marketplaceMarkSold:"标记为已售出", marketplaceMediaDescription:"媒体 {number} 的说明", marketplaceMediaInvalid:"请选择有效的栅格图片、MP4、WebM 或 MOV 文件。", marketplaceMediaLimit:"最多添加 8 张图片或视频。", marketplaceMediaLoading:"正在加载媒体…", marketplaceMediaReady:"媒体已准备好上传。", marketplaceMediaUnavailable:"此私密媒体暂不可用。", marketplaceMessageSeller:"联系卖家", marketplaceNoMedia:"尚未添加媒体", marketplaceNoOffers:"暂无出价。", marketplaceNoOrders:"暂无市集订单。", marketplaceNoOwnListings:"你尚未发布商品。",
+    marketplaceOffer:"{price} 出价", marketplaceOfferAmount:"输入出价金额。", marketplaceOfferFailed:"无法提交出价。", marketplaceOfferMessage:"给卖家的选填留言", marketplaceOfferSent:"出价已提交。", marketplaceOffers:"出价", marketplaceOpenDispute:"报告订单问题", marketplaceOrder:"订单", marketplaceOrderRoleBuyer:"买入", marketplaceOrderRoleSeller:"卖出", marketplaceOrderUnavailable:"此订单不可用。", marketplacePastPaperRightsRequired:"历年试卷必须获准再分发或属于公共领域。", marketplacePause:"暂停", marketplacePollInvalid:"请输入有效数值。", marketplacePosted:"发布于 {date}", marketplacePreparingMedia:"正在安全处理私密媒体…", marketplacePriceRequired:"请输入有效价格。", marketplaceRatingPrompt:"请以 1 至 5 分评价此次交易。", marketplaceRemoveMedia:"移除媒体", marketplaceReport:"举报商品", marketplaceReportReason:"说明商品存在的不安全、误导、违规或侵权问题。", marketplaceReported:"举报已提交。", marketplaceReviewPrompt:"写一段简短、真实的评价。", marketplaceRightsBasisRequired:"请选择允许你分发此学习资料的法律依据。", marketplaceRightsRequired:"请确认你拥有此资料或已获分发许可。", marketplaceRightsStudy:"只上传你创作或依法获准分发的笔记与资料。不得出售泄露、受限制或受版权保护的试卷。", marketplaceSaveFailed:"无法保存商品。", marketplaceSaving:"正在保存商品…", marketplaceSelectListing:"关联你的一个在售商品", marketplaceSeller:"卖家", marketplaceSellerProfile:"查看卖家资料", marketplaceShare:"分享", marketplaceShareFailed:"无法分享商品链接。", marketplaceStatusUpdated:"商品状态已更新。", marketplaceTitleRequired:"请输入商品标题。", marketplaceUnavailable:"市集暂不可用。请运行最新 Supabase 设置 SQL 后重试。", marketplaceUnfavorite:"已收藏", marketplaceVerificationRequired:"使用校园市集需要已验证大学成员身份。", marketplaceVideoTooLarge:"视频必须小于 50 MB。", marketplaceViewListing:"查看商品", marketplaceViewOrder:"查看订单", marketplaceWanted:"求购",
+    marketplaceResults:"{count} 件商品", marketplaceSavedResults:"已收藏 {count} 件商品", marketplaceMineResults:"我的 {count} 件商品", marketplaceOrderResults:"{count} 个订单", marketplaceNewListing:"发布商品", marketplaceEditListing:"编辑商品", marketplaceCategoryNotes:"笔记", marketplaceCategoryPastPapers:"历年试卷", marketplaceCategoryTextbooks:"课本", marketplaceCategoryElectronics:"电子产品", marketplaceCategoryFurniture:"家具", marketplaceCategoryLifeEssentials:"生活必需品", marketplaceCategoryServices:"学生服务", marketplaceCategoryOther:"其他", marketplaceDeliveryDigital:"电子交付", marketplaceDeliveryMeetup:"校内面交", marketplaceDeliveryShipping:"邮寄", marketplaceStatusDraft:"草稿", marketplaceStatusActive:"在售", marketplaceStatusReserved:"已预留", marketplaceStatusSold:"已售出", marketplaceStatusPaused:"已暂停", marketplaceStatusDeleted:"已删除", marketplaceStatusOpen:"待处理", marketplaceStatusUnderReview:"审核中", marketplaceStatusResolvedBuyer:"已为买家解决", marketplaceStatusResolvedSeller:"已为卖家解决", marketplaceStatusClosed:"已关闭", marketplaceCreated:"订单已创建", marketplacePaymentPending:"等待支付确认", marketplacePaymentHeld:"款项已由支付服务商确认持有", marketplacePaymentFailed:"支付未完成", marketplaceFulfilled:"卖家已交付", marketplaceAccepted:"买家已验收", marketplaceDisputed:"争议处理中", marketplaceReleased:"款项已放行", marketplaceCancelled:"已取消", marketplaceRefunded:"已退款", marketplaceMessageBuyer:"联系买家", marketplaceDisputeRecord:"争议记录", marketplaceReview:"交易评价", marketplaceRating:"评分：{rating} / 5"
   },
   "zh-HK": {
+    marketplaceOfferDisclaimer:"出價只係冇約束力嘅價錢建議。請用私訊商議下一步；ConCourse 唔會收取款項。",
+    marketplaceMarkSoldConfirm:"只可以喺完成線下交收之後標記做已售出。呢個操作會關閉商品，但唔代表已經付款。",
+    marketplaceMarkClaimed:"標記做已領取", marketplaceMarkClaimedConfirm:"只可以喺免費物品完成交收之後標記做已領取。", marketplaceCloseRequest:"關閉求購", marketplaceCloseRequestConfirm:"只可以喺你唔再需要件物品時關閉呢項求購。", marketplaceStatusClaimed:"已領取", marketplaceStatusRequestClosed:"求購已關閉",
     brandTag:"輕鬆規劃課程註冊", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
     intelligentPlanning:"智能課程規劃", heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
@@ -2632,7 +2824,15 @@ const TRANSLATIONS = {
     hubInsights:"學業分析", editProfile:"編輯檔案", searchCommunity:"搜尋最近嘅校園討論", communityTopics:"社群話題", topicForYou:"為你推薦", topicCourses:"課程", topicCampusLife:"校園生活", topicClubs:"學會", topicHousing:"住宿", topicCareers:"職涯", startConversationPost:"開始校園討論", communityShortcuts:"社群捷徑", yourCampusIdentity:"你嘅校園身份", recentMessages:"最近私訊", openMessages:"開啟私訊", schoolScopedCommunity:"屬於已驗證學校成員嘅空間", schoolScopedCommunityText:"個人檔案、貼文同私訊都只限你嘅大學社群，並全程提供舉報同封鎖控制。",
     chooseProfilePhoto:"選擇個人頭像", profilePhoto:"個人頭像", profilePhotoHint:"支援 JPG、PNG、WebP、GIF、AVIF、HEIC/HEIF 同其他安全點陣圖片。ConCourse 會移除元資料並儲存私人 WebP 副本；SVG 會被封鎖。", replacePhoto:"更換", removePhoto:"移除頭像", connectionTypes:"連接類型", verifiedAccounts:"已授權帳戶", profileLinks:"檔案連結", profileLinksDisclosure:"呢啲聯絡方式由你自行提供，未經 ConCourse 驗證。電話同 WhatsApp 保持私人。", wechatId:"微信號", wechatIdPlaceholder:"你嘅微信號", wechatSelfReported:"用戶自行提供 · 未驗證", shareWechat:"向已驗證嘅同校同學顯示呢個微信號", invalidWechatId:"請輸入唔多過 64 個字元嘅有效微信號。", messageStudent:"傳送私訊", avatarPreparing:"正在安全處理頭像…", avatarReady:"新頭像已準備好；儲存檔案後生效。", avatarInvalid:"未能解碼呢個檔案。請試 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", avatarTooLarge:"圖片必須細過 20 MB。", avatarSvgUnsupported:"為咗安全，唔支援 SVG 頭像。請匯出做 JPG、PNG、WebP 或其他點陣格式。", avatarUploadFailed:"未能儲存頭像，請再試。", avatarRemoved:"儲存檔案後會移除頭像。", communityNoMatches:"冇貼文符合目前嘅搜尋或話題。", wechatCopied:"微信號已複製。", copyWechat:"複製微信號", noRecentMessages:"仲未有最近私訊。", hubCommunityKicker:"ConCourse 社群", hubCommunityTitle:"校園社群", hubCommunityIntro:"睇下你間大學嘅同學正在問、分享同計劃啲乜。", hubMessagesKicker:"ConCourse 私訊", hubMessagesTitle:"保持連繫，唔受打擾", hubMessagesIntro:"同已驗證嘅同校同學進行私人一對一交流。", hubInsightsKicker:"ConCourse 分析", hubInsightsTitle:"用更清晰嘅數據規劃學業", hubInsightsIntro:"查看匿名選科趨勢，同儲存你嘅最終學期決定。", hubProfileKicker:"ConCourse 個人檔案", hubProfileTitle:"建立可信賴嘅校園身份", hubProfileIntro:"管理頭像、個人資料、社交連接同私隱設定。",
     topicSaved:"已收藏", createPost:"建立貼文", createPoll:"建立投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"問一個問題", pollOptionPlaceholder:"投票選項", addPollOption:"加選項", addMedia:"相片 / 影片", addPoll:"投票", campusFeed:"校園動態", savedPosts:"已收藏貼文", savedPostsPrivate:"只有你睇到", pollOptionLimit:"每個投票最多 6 個選項。", pollIncomplete:"請填投票問題同最少兩個選項。", pollDuplicateOptions:"投票選項唔可以重複。", removeMedia:"移除媒體", altTextPlaceholder:"圖片說明（方便使用輔助技術嘅同學）", mediaPreparing:"正在處理媒體…", mediaLimit:"每篇貼文最多加 4 個媒體檔案。", videoTooLarge:"影片必須細過 40 MB。", imageTooLarge:"圖片必須細過 25 MB。", mediaInvalid:"未能解碼張圖片。請試 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"為咗安全，唔支援 SVG。請匯出做點陣圖片。", mediaReady:"媒體已準備好。", mediaLoading:"正在載入媒體…", mediaUnavailable:"媒體暫時顯示唔到。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"睇呢篇 ConCourse 校園貼文", postLinkCopied:"連結已複製；開啟時需要登入同校帳戶。", shareFailed:"未能分享呢篇貼文。", postContentRequired:"請加入文字、媒體或者投票先發佈。", loadMore:"載入更多", loadingMore:"正在載入更多…", pollOptionNumber:"投票選項 {number}", mediaDescriptionNumber:"第 {number} 個媒體檔案嘅說明", videoDescriptionPlaceholder:"影片說明（方便使用輔助技術嘅同學）", postVideo:"貼文入面嘅影片", videoInvalid:"請揀有效嘅 MP4、WebM 或 MOV 影片。",
-    profileLoading:"正在載入個人檔案…", profileSaved:"個人檔案已儲存。", profileSaveFailed:"未能儲存個人檔案。", invalidUrl:"請使用完整嘅 https:// 連結。", invalidInstagramUrl:"請使用 Instagram 嘅 https:// 連結。", invalidWhatsappUrl:"請使用 wa.me 嘅 https:// 連結。", invalidLinkedinUrl:"請使用 LinkedIn 嘅 https:// 連結。", invalidWebsiteUrl:"請使用完整嘅 https:// 連結。"
+    profileLoading:"正在載入個人檔案…", profileSaved:"個人檔案已儲存。", profileSaveFailed:"未能儲存個人檔案。", invalidUrl:"請使用完整嘅 https:// 連結。", invalidInstagramUrl:"請使用 Instagram 嘅 https:// 連結。", invalidWhatsappUrl:"請使用 wa.me 嘅 https:// 連結。", invalidLinkedinUrl:"請使用 LinkedIn 嘅 https:// 連結。", invalidWebsiteUrl:"請使用完整嘅 https:// 連結。",
+    hubMarketplace:"校園市集", hubMarketplaceKicker:"ConCourse 校園市集", hubMarketplaceTitle:"喺校園發現真正有用嘅物品", hubMarketplaceIntro:"買賣溫習資料、教科書、宿舍用品同同學真正需要嘅物品。",
+    attachMarketplaceListing:"附上市集商品", removeListingAttachment:"移除", marketplaceSharedPostDefault:"我啱啱喺 ConCourse 校園市集發佈咗呢件商品。",
+    marketplaceSearchPlaceholder:"搜尋筆記、教科書、傢俬…", marketplaceCategory:"分類", marketplaceAllCategories:"全部分類", marketplaceStudyMaterials:"學習資料", marketplaceTextbooks:"教科書", marketplaceElectronics:"電子產品", marketplaceDormFurniture:"宿舍同傢俬", marketplaceEssentials:"生活必需品", marketplaceFreeItems:"免費物品", marketplaceOther:"其他", marketplaceSort:"排序", marketplaceNewest:"最新發佈", marketplacePriceLow:"價錢：由低至高", marketplacePriceHigh:"價錢：由高至低", marketplacePopular:"最多收藏", marketplaceSell:"放售", marketplaceViews:"市集頁面", marketplaceDiscover:"發現", marketplaceSaved:"已收藏", marketplaceMyListings:"我嘅商品", marketplaceOrders:"訂單", marketplaceCampusOnly:"只限已驗證校園成員", marketplacePaymentBoundary:"商品、出價同私訊功能已經啟用。只有連接持牌支付服務商之後，受保護網上結帳先會開放。", marketplaceRecentListings:"最新商品", marketplaceTransactionFlow:"交易流程", marketplaceStepAgree:"確認", marketplaceStepAgreeText:"確認商品、價錢同交付方式。", marketplaceStepReview:"驗收", marketplaceStepReviewText:"交付後檢查商品或者學習資料。", marketplaceStepRelease:"放款", marketplaceStepReleaseText:"日後會由支付服務商喺買家確認後向賣家放款。", marketplaceRightsTitle:"負責任噉交易", marketplaceRightsSummary:"只可以出售原創或者獲授權嘅資料。嚴禁洩漏試卷、進行中嘅測驗答案、個人資料同盜版內容。",
+    marketplaceSellerStudio:"賣家工作室", marketplaceCreateListing:"發佈商品", marketplaceCloseEditor:"關閉商品編輯器", marketplaceAddMedia:"加入相片或影片", marketplaceMediaHint:"最多 8 個清晰預覽；第一張相會成為封面。", marketplaceListingTitle:"標題", marketplaceTitlePlaceholder:"你想出售乜嘢？", marketplaceDescription:"描述", marketplaceDescriptionPlaceholder:"講清楚內容、成色、缺頁、版本同交付方式。", marketplaceItemType:"商品類型", marketplacePhysical:"實體物品", marketplaceDigital:"電子資料", marketplaceCondition:"成色", marketplaceConditionNew:"全新", marketplaceConditionLikeNew:"幾乎全新", marketplaceConditionGood:"良好", marketplaceConditionFair:"一般", marketplaceConditionDigital:"電子版", marketplaceCourseCode:"課程編號", marketplaceCoursePlaceholder:"選填，例如 ECON 2101", marketplacePrice:"價錢", marketplaceCurrency:"貨幣", marketplaceDeliveryMethods:"交付方式", marketplaceCampusMeetup:"校內面交", marketplaceLocalPickup:"本地自取", marketplaceShipping:"郵寄", marketplaceDigitalDelivery:"電子交付", marketplaceNegotiable:"價錢可商議", marketplaceRightsAttestation:"我擁有呢件物品或者已獲授權發佈。內容唔屬於洩漏或正在進行嘅考試、測驗答案、盜版資料或個人數據。", marketplacePublishListing:"發佈商品", marketplaceListingDetails:"商品詳情", marketplaceCloseDetails:"關閉商品詳情", marketplaceOrderDetails:"訂單詳情", marketplaceCloseOrder:"關閉訂單詳情",
+    marketplaceNotes:"筆記", marketplacePastPapers:"歷屆試卷", marketplaceFurniture:"傢俬", marketplaceLifeEssentials:"生活必需品", marketplaceServices:"學生服務", marketplaceListingMode:"發佈類型", marketplaceModeSale:"出售", marketplaceModeFree:"免費送出", marketplaceModeWanted:"求購", marketplaceConditionUsed:"用過", marketplaceConditionNotApplicable:"不適用", marketplaceRightsBasis:"分發權利", marketplaceChooseRightsBasis:"揀選權利依據", marketplaceRightsOriginal:"我嘅原創作品", marketplaceRightsLicensed:"已獲許可或授權", marketplaceRightsPublicDomain:"公共領域",
+    edit:"編輯", marketplaceAcceptOrder:"確認收貨同評價", marketplaceActionFailed:"未能完成呢個操作。", marketplaceActivate:"重新上架", marketplaceAwaitingPayment:"等候支付服務商", marketplaceCheckoutComingSoon:"安全結帳即將開放", marketplaceCheckoutWarning:"安全結帳同資金保管仲未啟用。ConCourse 而家唔會收取、持有或者轉移資金。請勿將商品或平台狀態當作付款或託管證明。", marketplaceCourse:"課程", marketplaceCreateOrder:"安全結帳", marketplaceDelete:"刪除", marketplaceDeleteConfirm:"確定要由市集移除呢件商品？呢個操作無法復原。", marketplaceDelivery:"交付", marketplaceDeliveryRequired:"請揀最少一種交付方式。", marketplaceDescriptionRequired:"請準確描述商品。", marketplaceDisputeDetails:"講清楚問題並保留證據。請勿加入銀行卡或銀行資料。", marketplaceDisputeReason:"揀一個簡短原因，例如未收到商品或者同描述不符。", marketplaceEditMediaLocked:"已發佈商品暫時唔支援更換媒體。如要更換，請建立新商品。", marketplaceEmpty:"暫時冇符合篩選條件嘅商品。", marketplaceFavorite:"收藏", marketplaceFree:"免費", marketplaceFulfilmentNote:"加入俾買家嘅交付或者面交說明。", marketplaceImageTooLarge:"圖片必須細過 25 MB。", marketplaceLinkCopied:"商品連結已複製。查看者必須用符合資格嘅校園帳戶登入。", marketplaceListingUnavailable:"呢件商品已經唔可用。", marketplaceLoadFailed:"未能載入市集。", marketplaceLoading:"正在載入校園市集…", marketplaceMakeOffer:"出價", marketplaceMarkFulfilled:"標記做已交付", marketplaceMarkSold:"標記做已售出", marketplaceMediaDescription:"媒體 {number} 嘅說明", marketplaceMediaInvalid:"請揀有效嘅點陣圖片、MP4、WebM 或 MOV 檔案。", marketplaceMediaLimit:"最多可以加入 8 張圖片或者影片。", marketplaceMediaLoading:"正在載入媒體…", marketplaceMediaReady:"媒體已準備好上載。", marketplaceMediaUnavailable:"呢個私人媒體暫時用唔到。", marketplaceMessageSeller:"聯絡賣家", marketplaceNoMedia:"仲未加入媒體", marketplaceNoOffers:"仲未有出價。", marketplaceNoOrders:"仲未有市集訂單。", marketplaceNoOwnListings:"你仲未發佈商品。",
+    marketplaceOffer:"{price} 出價", marketplaceOfferAmount:"輸入出價金額。", marketplaceOfferFailed:"未能提交出價。", marketplaceOfferMessage:"俾賣家嘅選填留言", marketplaceOfferSent:"出價已提交。", marketplaceOffers:"出價", marketplaceOpenDispute:"報告訂單問題", marketplaceOrder:"訂單", marketplaceOrderRoleBuyer:"買入", marketplaceOrderRoleSeller:"賣出", marketplaceOrderUnavailable:"呢張訂單唔可用。", marketplacePastPaperRightsRequired:"歷屆試卷必須獲准再分發或者屬於公共領域。", marketplacePause:"暫停", marketplacePollInvalid:"請輸入有效數值。", marketplacePosted:"發佈於 {date}", marketplacePreparingMedia:"正在安全處理私人媒體…", marketplacePriceRequired:"請輸入有效價錢。", marketplaceRatingPrompt:"請用 1 至 5 分評價今次交易。", marketplaceRemoveMedia:"移除媒體", marketplaceReport:"舉報商品", marketplaceReportReason:"講清楚商品有咩不安全、誤導、違規或者侵權問題。", marketplaceReported:"舉報已提交。", marketplaceReviewPrompt:"寫一段簡短、真實嘅評價。", marketplaceRightsBasisRequired:"請揀容許你分發呢份學習資料嘅法律依據。", marketplaceRightsRequired:"請確認你擁有呢份資料或者已獲分發許可。", marketplaceRightsStudy:"只可以上載你創作或者依法獲准分發嘅筆記同資料。唔可以出售洩露、受限制或者受版權保護嘅試卷。", marketplaceSaveFailed:"未能儲存商品。", marketplaceSaving:"正在儲存商品…", marketplaceSelectListing:"連結你其中一件放售中商品", marketplaceSeller:"賣家", marketplaceSellerProfile:"查看賣家檔案", marketplaceShare:"分享", marketplaceShareFailed:"未能分享商品連結。", marketplaceStatusUpdated:"商品狀態已更新。", marketplaceTitleRequired:"請輸入商品標題。", marketplaceUnavailable:"市集暫時用唔到。請執行最新 Supabase 設定 SQL 後再試。", marketplaceUnfavorite:"已收藏", marketplaceVerificationRequired:"使用校園市集需要已驗證大學成員身份。", marketplaceVideoTooLarge:"影片必須細過 50 MB。", marketplaceViewListing:"查看商品", marketplaceViewOrder:"查看訂單", marketplaceWanted:"求購",
+    marketplaceResults:"{count} 件商品", marketplaceSavedResults:"已收藏 {count} 件商品", marketplaceMineResults:"我嘅 {count} 件商品", marketplaceOrderResults:"{count} 張訂單", marketplaceNewListing:"發佈商品", marketplaceEditListing:"編輯商品", marketplaceCategoryNotes:"筆記", marketplaceCategoryPastPapers:"歷屆試卷", marketplaceCategoryTextbooks:"教科書", marketplaceCategoryElectronics:"電子產品", marketplaceCategoryFurniture:"傢俬", marketplaceCategoryLifeEssentials:"生活必需品", marketplaceCategoryServices:"學生服務", marketplaceCategoryOther:"其他", marketplaceDeliveryDigital:"電子交付", marketplaceDeliveryMeetup:"校內面交", marketplaceDeliveryShipping:"郵寄", marketplaceStatusDraft:"草稿", marketplaceStatusActive:"放售中", marketplaceStatusReserved:"已預留", marketplaceStatusSold:"已售出", marketplaceStatusPaused:"已暫停", marketplaceStatusDeleted:"已刪除", marketplaceStatusOpen:"待處理", marketplaceStatusUnderReview:"審核中", marketplaceStatusResolvedBuyer:"已為買家解決", marketplaceStatusResolvedSeller:"已為賣家解決", marketplaceStatusClosed:"已關閉", marketplaceCreated:"訂單已建立", marketplacePaymentPending:"等候支付確認", marketplacePaymentHeld:"款項已由支付服務商確認持有", marketplacePaymentFailed:"支付未完成", marketplaceFulfilled:"賣家已交付", marketplaceAccepted:"買家已驗收", marketplaceDisputed:"爭議處理中", marketplaceReleased:"款項已放行", marketplaceCancelled:"已取消", marketplaceRefunded:"已退款", marketplaceMessageBuyer:"聯絡買家", marketplaceDisputeRecord:"爭議記錄", marketplaceReview:"交易評價", marketplaceRating:"評分：{rating} / 5"
   }
 };
 
@@ -2681,7 +2881,12 @@ function t(key, variables={}){
     socialVerificationNote:"Add authenticated account connections. Pasted profile links remain self-reported.", socialConnectionDisclosure:"A connected badge confirms authorization from the named provider. It does not verify legal identity, university enrollment, employment, or any pasted profile URL. Badges are visible when your profile is shared with schoolmates.", socialAccount:"social account", socialConnectionsLoading:"Checking account connections…", socialConnectionsUnavailable:"Account connections are temporarily unavailable. Please try again.", providerNotConnected:"{provider} not connected", providerConnectionHelp:"Authorize a {provider} account to show an account-connection badge.", connectProvider:"Connect {provider}", providerConnected:"{provider} connected", providerConnectedDetail:"Authenticated with {provider} on {date}", providerConnectedHelp:"Your {provider} account is authorized.", providerConnectionLoading:"Checking your {provider} connection…", providerConnecting:"Opening {provider} authorization…", providerConnectedSuccess:"{provider} account connected.", providerConnectionFailed:"{provider} could not be connected. Please try again.", providerSetupRequired:"{provider} connection is temporarily unavailable. Please contact the site administrator.", disconnectProviderTitle:"Disconnect {provider}", confirmDisconnectProvider:"Disconnect your {provider} account from ConCourse?", providerDisconnected:"{provider} disconnected.", providerDisconnectFailed:"{provider} could not be disconnected.",
     hubInsights:"Academic insights", editProfile:"Edit profile", communityNoMatches:"No recent posts match this search or topic.", noRecentMessages:"No recent messages yet.", hubCommunityKicker:"ConCourse Community", hubCommunityTitle:"Campus community", hubCommunityIntro:"Discover what students at your university are asking, sharing, and planning.", hubMessagesKicker:"ConCourse Messages", hubMessagesTitle:"Stay connected, without the noise.", hubMessagesIntro:"Have focused, private conversations with verified schoolmates.", hubInsightsKicker:"ConCourse Insights", hubInsightsTitle:"Plan with a clearer academic picture.", hubInsightsIntro:"Explore anonymous course trends and keep your final semester decision close.", hubProfileKicker:"ConCourse Profile", hubProfileTitle:"Build a trusted campus identity.", hubProfileIntro:"Manage your photo, personal details, social connections, and privacy choices.", avatarPreparing:"Preparing your photo securely…", avatarReady:"Your new photo is ready. Save your profile to apply it.", avatarInvalid:"That file could not be decoded. Try JPG, PNG, WebP, GIF, AVIF, HEIC, or HEIF.", avatarTooLarge:"The image must be smaller than 20 MB.", avatarSvgUnsupported:"For safety, SVG profile photos are not supported. Export a JPG, PNG, WebP, or another raster format.", avatarUploadFailed:"Your profile photo could not be saved. Try again.", avatarRemoved:"Your photo will be removed when you save.", wechatId:"WeChat ID", invalidWechatId:"Enter a valid WeChat ID of up to 64 characters.", wechatCopied:"WeChat ID copied.", copyWechat:"Copy WeChat ID",
     topicSaved:"Saved", createPost:"Create post", createPoll:"Create a poll", poll:"Poll", removePoll:"Remove", pollQuestionPlaceholder:"Ask a question", pollOptionPlaceholder:"Poll option", addPollOption:"Add option", addMedia:"Photo / video", addPoll:"Poll", campusFeed:"Campus feed", savedPosts:"Saved posts", savedPostsPrivate:"Only visible to you", pollOptionLimit:"A poll can have up to 6 options.", pollIncomplete:"Add a poll question and at least two options.", pollDuplicateOptions:"Poll options must be different.", removeMedia:"Remove media", altTextPlaceholder:"Image description for accessibility", mediaPreparing:"Preparing media…", mediaLimit:"A post can include up to 4 media files.", videoTooLarge:"Videos must be smaller than 40 MB.", imageTooLarge:"Images must be smaller than 25 MB.", mediaInvalid:"That image could not be decoded. Try JPG, PNG, WebP, GIF, AVIF, HEIC, or HEIF.", svgUnsupported:"For safety, SVG is not supported. Export a raster image instead.", mediaReady:"Media ready.", mediaLoading:"Loading media…", mediaUnavailable:"Media is temporarily unavailable.", oneVote:"{count} vote", votesCount:"{count} votes", saved:"Saved", savePost:"Save", share:"Share", moreActions:"More actions", sharedPostMessage:"View this ConCourse campus post", postLinkCopied:"Link copied. A school account is required to open it.", shareFailed:"This post could not be shared.", postContentRequired:"Add text, media, or a poll before posting.", loadMore:"Load more", loadingMore:"Loading more…", pollOptionNumber:"Poll option {number}", mediaDescriptionNumber:"Description for media item {number}", videoDescriptionPlaceholder:"Video description for accessibility", postVideo:"Post video", videoInvalid:"Choose a valid MP4, WebM, or MOV video.",
-    profileLoading:"Loading your profile…", profileSaved:"Profile saved.", profileSaveFailed:"Your profile could not be saved.", invalidUrl:"Use a complete https:// link.", invalidInstagramUrl:"Use an Instagram https:// link.", invalidWhatsappUrl:"Use a wa.me https:// link.", invalidLinkedinUrl:"Use a LinkedIn https:// link.", invalidWebsiteUrl:"Use a complete https:// link."
+    profileLoading:"Loading your profile…", profileSaved:"Profile saved.", profileSaveFailed:"Your profile could not be saved.", invalidUrl:"Use a complete https:// link.", invalidInstagramUrl:"Use an Instagram https:// link.", invalidWhatsappUrl:"Use a wa.me https:// link.", invalidLinkedinUrl:"Use a LinkedIn https:// link.", invalidWebsiteUrl:"Use a complete https:// link.",
+    hubMarketplace:"Campus market", hubMarketplaceKicker:"ConCourse Campus Market", hubMarketplaceTitle:"Useful things, already on your campus.", hubMarketplaceIntro:"Buy and sell study materials, textbooks, dorm essentials, and the things students actually need.",
+    attachMarketplaceListing:"Attach a market listing", removeListingAttachment:"Remove", marketplaceSharedPostDefault:"I just listed this in the ConCourse campus market.",
+    marketplaceSearchPlaceholder:"Search notes, textbooks, furniture…", marketplaceCategory:"Category", marketplaceAllCategories:"All categories", marketplaceStudyMaterials:"Study materials", marketplaceTextbooks:"Textbooks", marketplaceElectronics:"Electronics", marketplaceDormFurniture:"Dorm & furniture", marketplaceEssentials:"Daily essentials", marketplaceFreeItems:"Free items", marketplaceOther:"Other", marketplaceSort:"Sort", marketplaceNewest:"Newest", marketplacePriceLow:"Price: low to high", marketplacePriceHigh:"Price: high to low", marketplacePopular:"Most saved", marketplaceSell:"Sell", marketplaceViews:"Marketplace views", marketplaceDiscover:"Discover", marketplaceSaved:"Saved", marketplaceMyListings:"My listings", marketplaceOrders:"Orders", marketplaceCampusOnly:"Verified campus members only", marketplacePaymentBoundary:"Listings, offers, and private messages are active. Protected online checkout will activate only after a licensed payment provider is connected.", marketplaceRecentListings:"Recent listings", marketplaceTransactionFlow:"Transaction flow", marketplaceStepAgree:"Agree", marketplaceStepAgreeText:"Confirm the item, price, and delivery method.", marketplaceStepReview:"Review", marketplaceStepReviewText:"Inspect the item or material after delivery.", marketplaceStepRelease:"Release", marketplaceStepReleaseText:"A future payment provider releases funds only after acceptance.", marketplaceRightsTitle:"Trade responsibly", marketplaceRightsSummary:"Sell only original or authorised materials. Leaked exams, active assessment answers, personal data, and pirated copies are prohibited.",
+    marketplaceSellerStudio:"Seller studio", marketplaceCreateListing:"Create a listing", marketplaceCloseEditor:"Close listing editor", marketplaceAddMedia:"Add photos or video", marketplaceMediaHint:"Up to 8 clear previews. The first image becomes the cover.", marketplaceListingTitle:"Title", marketplaceTitlePlaceholder:"What are you offering?", marketplaceDescription:"Description", marketplaceDescriptionPlaceholder:"Describe contents, condition, missing pages, edition, and delivery.", marketplaceItemType:"Item type", marketplacePhysical:"Physical item", marketplaceDigital:"Digital material", marketplaceCondition:"Condition", marketplaceConditionNew:"New", marketplaceConditionLikeNew:"Like new", marketplaceConditionGood:"Good", marketplaceConditionFair:"Fair", marketplaceConditionDigital:"Digital", marketplaceCourseCode:"Course code", marketplaceCoursePlaceholder:"Optional, e.g. ECON 2101", marketplacePrice:"Price", marketplaceCurrency:"Currency", marketplaceDeliveryMethods:"Delivery methods", marketplaceCampusMeetup:"Campus meetup", marketplaceLocalPickup:"Local pickup", marketplaceShipping:"Shipping", marketplaceDigitalDelivery:"Digital delivery", marketplaceNegotiable:"Price is negotiable", marketplaceRightsAttestation:"I own this item or have permission to distribute it. It is not a leaked/current exam, assessment answer, pirated material, or personal data.", marketplacePublishListing:"Publish listing", marketplaceListingDetails:"Listing details", marketplaceCloseDetails:"Close listing details", marketplaceOrderDetails:"Order details", marketplaceCloseOrder:"Close order details",
+    marketplaceNotes:"Notes", marketplacePastPapers:"Past papers", marketplaceFurniture:"Furniture", marketplaceLifeEssentials:"Daily essentials", marketplaceServices:"Student services", marketplaceListingMode:"Listing type", marketplaceModeSale:"For sale", marketplaceModeFree:"Give away", marketplaceModeWanted:"Wanted", marketplaceConditionUsed:"Used", marketplaceConditionNotApplicable:"Not applicable", marketplaceRightsBasis:"Distribution rights", marketplaceChooseRightsBasis:"Choose a rights basis", marketplaceRightsOriginal:"My original work", marketplaceRightsLicensed:"Licensed or authorised", marketplaceRightsPublicDomain:"Public domain"
   };
   let value = TRANSLATIONS[currentLanguage]?.[key] ?? english[key] ?? key;
   for(const [name,replacement] of Object.entries(variables)) value = value.replaceAll(`{${name}}`, replacement);
@@ -2739,6 +2944,7 @@ function applyLanguage(language, {persist=true}={}){
   renderCourses();
   renderFinalTimetableStatus();
   if(solutions.length && solutions[activeSolution]) renderResults();
+  window.ConCourseHub?.refreshLanguage();
 }
 
 function initializeLanguage(){
@@ -3350,6 +3556,7 @@ function applySession(session){
   renderAccountIdentity();
   $("authOpenBtn").hidden = signedIn;
   $("saveAccountBtn").hidden = !signedIn;
+  $("marketplaceOpenBtn").hidden = !signedIn;
   $("signOutBtn").hidden = !signedIn;
   $("startAppBtn").hidden = !signedIn;
   const academic = signedIn ? getAcademicIdentity().label : "";
@@ -3475,6 +3682,7 @@ async function submitAuth(mode){
 function initializeAccount(){
   $("authOpenBtn").onclick = openAuthModal;
   $("startAppBtn").onclick = enterPlanner;
+  $("marketplaceOpenBtn").onclick = () => window.ConCourseHub?.show("marketplace");
   $("editSelections").onclick = showPlannerEditor;
   const brandHome = $("landingScreen").querySelector(".brand");
   brandHome.setAttribute("role", "button");
@@ -4249,6 +4457,7 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260717-6"></script>
+<script src="member-hub.js?v=20260720-1"></script>
+<script src="marketplace.js?v=20260720-1"></script>
 </body>
 </html>
