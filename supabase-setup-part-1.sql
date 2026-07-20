@@ -2082,7 +2082,7 @@ begin
   join public.member_profiles member on member.user_id = profile.user_id
   left join auth.identities linked_identity
     on linked_identity.user_id = profile.user_id
-   and linked_identity.provider in ('google', 'github', 'linkedin_oidc')
+   and linked_identity.provider in ('google', 'github')
   where profile.user_id = p_user_id
     and (p_user_id = caller or member.profile_visibility = 'school')
   group by profile.user_id;

@@ -87,8 +87,7 @@
 
   const SOCIAL_PROVIDERS = Object.freeze({
     google: Object.freeze({provider:"google", label:"Google", mark:"G"}),
-    github: Object.freeze({provider:"github", label:"GitHub", mark:"GH"}),
-    linkedin_oidc: Object.freeze({provider:"linkedin_oidc", label:"LinkedIn", mark:"in"})
+    github: Object.freeze({provider:"github", label:"GitHub", mark:"GH"})
   });
   const SOCIAL_RETURN_KEY = "concourse_social_connection_return";
   const SOCIAL_OAUTH_RETURN_URL = "https://1239744601-netizen.github.io/ConCourse/";
@@ -2241,10 +2240,7 @@
     }
     const missingFunction = /Could not find the function|schema cache|does not exist|PGRST202/i.test(String(response.error?.message || ""));
     if(!missingFunction) return {providers:[], error:response.error};
-    const legacyResponse = await authClient.rpc("get_schoolmate_connection_badges", {p_user_id:userId});
-    if(legacyResponse.error) return {providers:[], error:response.error};
-    const legacyRow = Array.isArray(legacyResponse.data) ? legacyResponse.data[0] : legacyResponse.data;
-    return {providers:legacyRow?.linkedin_connected === true ? ["linkedin_oidc"] : [], error:null};
+    return {providers:[], error:null};
   }
 
   async function openSchoolmateProfile(userId, trigger=document.activeElement){
@@ -2352,11 +2348,23 @@
   async function loadPostComments(postId, container){
     const context = requestContext();
     container.replaceChildren(node("div", "hub-comment", t("loading")));
-    const { data, error } = await authClient.rpc("get_post_comments", {p_post_id:postId});
+    let data = [];
+    let error = null;
+    try {
+      const response = await authClient.rpc("get_post_comments", {p_post_id:postId});
+      data = response.data || [];
+      error = response.error || null;
+    } catch(requestError){
+      error = requestError;
+    }
     if(!contextIsCurrent(context) || !container.isConnected) return;
     container.replaceChildren();
-    if(error){ container.append(node("div", "hub-comment", featureError(error))); return; }
-    (data || []).forEach(comment => {
+    if(error){
+      const loadStatus = node("p", "hub-comment-status error", missingRpcError(error) ? t("memberSetupRequired") : t("commentsUnavailable"));
+      loadStatus.setAttribute("role", "status");
+      container.append(loadStatus);
+    }
+    data.forEach(comment => {
       const item = node("div", "hub-comment");
       const copy = node("div", "hub-comment-copy");
       copy.append(
@@ -2386,24 +2394,66 @@
       item.append(copy, actions);
       container.append(item);
     });
-    const form = node("div", "hub-comment-form");
+    const form = node("form", "hub-comment-form");
+    form.noValidate = true;
     const input = node("input");
+    input.type = "text";
+    input.name = "comment";
     input.maxLength = 1000;
+    input.autocomplete = "off";
     input.placeholder = t("writeComment");
+    input.setAttribute("aria-label", t("writeComment"));
     const button = node("button", "btn-primary", t("postComment"));
-    button.type = "button";
-    button.onclick = async () => {
+    button.type = "submit";
+    const submitStatus = node("p", "hub-comment-status");
+    submitStatus.setAttribute("role", "status");
+    submitStatus.setAttribute("aria-live", "polite");
+    form.onsubmit = async event => {
+      event.preventDefault();
       const commentContext = requestContext();
       const body = input.value.trim();
       if(!body){ input.setCustomValidity(t("commentRequired")); input.reportValidity(); input.setCustomValidity(""); return; }
       button.disabled = true;
-      const response = await authClient.rpc("add_post_comment", {p_post_id:postId, p_body:body});
-      if(!contextIsCurrent(commentContext) || !container.isConnected) return;
-      button.disabled = false;
-      if(response.error){ input.setCustomValidity(featureError(response.error)); input.reportValidity(); input.setCustomValidity(""); return; }
-      await loadPostComments(postId, container);
+      input.disabled = true;
+      submitStatus.className = "hub-comment-status";
+      submitStatus.textContent = t("commentPosting");
+      try {
+        const response = await authClient.rpc("add_post_comment", {p_post_id:postId, p_body:body});
+        if(!contextIsCurrent(commentContext) || !container.isConnected) return;
+        if(response.error){
+          submitStatus.className = "hub-comment-status error";
+          submitStatus.textContent = missingRpcError(response.error) ? t("memberSetupRequired") : featureError(response.error);
+          return;
+        }
+        input.value = "";
+        submitStatus.className = "hub-comment-status success";
+        submitStatus.textContent = t("commentPosted");
+        const feedPost = hubState.feed.find(post => post.post_id === postId);
+        if(feedPost){
+          feedPost.comment_count = Number(feedPost.comment_count || 0) + 1;
+          const toggle = document.querySelector(`[data-post-id="${postId}"] .hub-post-actions > button[aria-expanded]`);
+          if(toggle) toggle.textContent = `${t("comment")} · ${feedPost.comment_count}`;
+        }
+        await loadPostComments(postId, container);
+      } catch(requestError){
+        if(contextIsCurrent(commentContext) && container.isConnected){
+          submitStatus.className = "hub-comment-status error";
+          submitStatus.textContent = featureError(requestError);
+        }
+      } finally {
+        if(contextIsCurrent(commentContext) && container.isConnected){
+          button.disabled = false;
+          input.disabled = false;
+        }
+      }
     };
-    form.append(input, button);
+    input.addEventListener("keydown", event => {
+      if(event.key === "Enter" && !event.shiftKey && !event.isComposing){
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    form.append(input, button, submitStatus);
     container.append(form);
   }
 
@@ -2465,6 +2515,17 @@
     return feed;
   }
 
+  function communityMediaItems(post){
+    const media = parseJsonValue(post?.media, []);
+    return Array.isArray(media) ? media.filter(item => item?.storage_path) : [];
+  }
+
+  function communityPopularityScore(post){
+    const engagement = Number(post?.like_count || 0) * 2 + Number(post?.comment_count || 0) * 3;
+    const ageHours = Math.max(0, (Date.now() - new Date(post?.created_at || 0).getTime()) / 3_600_000);
+    return (engagement + 1) / (1 + ageHours / 48);
+  }
+
   function renderCommunityFeed(posts){
     const feed = replaceCommunityFeed();
     if(!feed) return;
@@ -2472,10 +2533,19 @@
     if(!posts.length){ feed.append(node("div", "hub-feed-empty", t("communityEmpty"))); return; }
     const visiblePosts = filteredCommunityPosts(posts);
     if(!visiblePosts.length){ feed.append(node("div", "hub-feed-empty", t("communityNoMatches"))); return; }
-    visiblePosts.forEach(post => {
-      const card = node("article", "hub-post-card");
+    const featuredPost = visiblePosts
+      .filter(post => communityMediaItems(post).some(item => item.media_type !== "video"))
+      .sort((left, right) => communityPopularityScore(right) - communityPopularityScore(left))[0] || null;
+    const orderedPosts = featuredPost
+      ? [featuredPost, ...visiblePosts.filter(post => post.post_id !== featuredPost.post_id)]
+      : visiblePosts;
+    orderedPosts.forEach(post => {
+      const mediaItems = communityMediaItems(post);
+      const featured = post.post_id === featuredPost?.post_id;
+      const card = node("article", `hub-post-card${mediaItems.length ? " hub-post-card--media" : " hub-post-card--text"}${featured ? " hub-post-card--featured" : ""}`);
       card.id = `post-${post.post_id}`;
       card.dataset.postId = post.post_id;
+      if(featured) card.append(node("span", "hub-post-popular-label", t("popularOnCampus")));
       const author = node("div", "hub-post-author");
       const authorName = postAuthorName(post);
       const avatar = createAvatar(post.display_name || post.author_username, post.avatar_path, post.avatar_revision);
@@ -2486,14 +2556,16 @@
       authorButton.append(avatar, authorCopy);
       authorButton.onclick = event => openSchoolmateProfile(post.author_id, event.currentTarget);
       author.append(authorButton);
-      card.append(author, node("div", "hub-post-body", post.body || ""));
+      card.append(author);
+
+      const media = renderPostMedia(post);
+      if(media) card.append(media);
+      if(post.body) card.append(node("div", "hub-post-body", post.body));
 
       const tags = node("div", "hub-post-tags");
       (Array.isArray(post.tags) ? post.tags : []).forEach(tag => tags.append(node("span", "hub-post-tag", `#${tag}`)));
       if(tags.childElementCount) card.append(tags);
 
-      const media = renderPostMedia(post);
-      if(media) card.append(media);
       const poll = renderPostPoll(post);
       if(poll) card.append(poll);
       const linkedListing = window.ConCourseMarketplace?.renderLinkedListing(post.linked_listing);
