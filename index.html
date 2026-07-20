@@ -18,7 +18,9 @@
 <meta name="twitter:description" content="Discover notes, textbooks, and campus essentials from your university community." />
 <meta name="twitter:image" content="https://1239744601-netizen.github.io/ConCourse/concourse-marketplace-og.png" />
 <meta name="twitter:image:alt" content="ConCourse Campus Market — notes, textbooks, tech, and campus essentials" />
-<link rel="icon" type="image/svg+xml" href="concourse-icon.svg" />
+<meta name="theme-color" content="#061526" />
+<link rel="icon" type="image/svg+xml" sizes="any" href="concourse-icon.svg" />
+<link rel="preload" as="image" type="image/webp" href="concourse-course-odyssey.webp" fetchpriority="high" />
 <style>
   :root {
     --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
@@ -1727,38 +1729,13 @@
 </style>
 <link rel="stylesheet" href="member-hub.css?v=20260720-1" />
 <link rel="stylesheet" href="marketplace.css?v=20260720-1" />
+<link rel="stylesheet" href="concourse-navy.css?v=20260720-1" />
 </head>
 <body>
 <header id="landingScreen">
   <div class="header-row">
   <div class="brand">
-    <svg class="brand-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ConCourse">
-      <rect x="0" y="0" width="100" height="100" rx="26" fill="#4361ee"/>
-      <rect x="22" y="46" width="56" height="40" rx="8" fill="#ffffff"/>
-      <circle cx="36" cy="51" r="1.4" fill="#c6d2f2"/>
-      <circle cx="64" cy="51" r="1.4" fill="#c6d2f2"/>
-      <line x1="26" y1="56" x2="74" y2="56" stroke="#d0daf0" stroke-width="1.5"/>
-      <line x1="40.7" y1="56" x2="40.7" y2="86" stroke="#e2e8f6" stroke-width="1.4"/>
-      <line x1="59.3" y1="56" x2="59.3" y2="86" stroke="#e2e8f6" stroke-width="1.4"/>
-      <line x1="22" y1="68" x2="78" y2="68" stroke="#e2e8f6" stroke-width="1.4"/>
-      <line x1="22" y1="79" x2="78" y2="79" stroke="#e2e8f6" stroke-width="1.4"/>
-      <rect x="25" y="59" width="13" height="6.5" rx="2" fill="#10b981"/>
-      <rect x="61" y="59" width="13" height="6.5" rx="2" fill="#cdd8f2"/>
-      <rect x="25" y="70.5" width="13" height="6.5" rx="2" fill="#e3e9f6"/>
-      <rect x="61" y="70.5" width="13" height="6.5" rx="2" fill="#cdd8f2"/>
-      <rect x="34" y="37" width="32" height="6" rx="3" fill="#ffc24b"/>
-      <rect x="34" y="41.5" width="32" height="2" rx="1" fill="#e59a1f"/>
-      <circle cx="34" cy="40" r="2.2" fill="#ffc24b"/>
-      <circle cx="66" cy="40" r="2.2" fill="#ffc24b"/>
-      <polygon points="45.5,40 54.5,40 54.5,74 50,83 45.5,74" fill="#e7ecf6" stroke="#a9b7d4" stroke-width="1" stroke-linejoin="round"/>
-      <line x1="50" y1="45" x2="50" y2="75" stroke="#ccd6ec" stroke-width="1"/>
-      <rect x="47" y="19" width="6" height="19" rx="2" fill="#e59a1f"/>
-      <path d="M42 19 L42 13 L46 15.5 L50 10 L54 15.5 L58 13 L58 19 Z" fill="#ffc24b"/>
-      <rect x="41.5" y="18" width="17" height="2.4" rx="1.2" fill="#e59a1f"/>
-      <circle cx="42" cy="13" r="1.3" fill="#fff3d6"/>
-      <circle cx="50" cy="10" r="1.5" fill="#fff3d6"/>
-      <circle cx="58" cy="13" r="1.3" fill="#fff3d6"/>
-    </svg>
+    <img class="brand-mark" src="concourse-icon.svg" width="96" height="96" alt="" aria-hidden="true" />
     <div>
       <div class="brand-name"><span class="bn-a">Con</span><span class="bn-b">Course</span></div>
       <div class="brand-tag" data-i18n="brandTag">Conquer your course registrations</div>
@@ -1794,6 +1771,7 @@
     </label>
   </div>
   </div>
+  <div class="hero-stage">
   <div class="hero-copy">
     <div class="hero-kicker"><span></span><b data-i18n="intelligentPlanning">Intelligent course planning</b></div>
     <h1 data-i18n-html="heroTitle">Build your best<span>semester</span></h1>
@@ -1807,6 +1785,12 @@
       <button class="btn-accent start-app-btn" id="startAppBtn" hidden><span data-i18n="startPlanning">Start planning</span> <span aria-hidden="true">→</span></button>
       <div class="start-hint" id="startHint">Sign in to unlock your course planner.</div>
     </div>
+  </div>
+  <figure class="hero-art" aria-hidden="true">
+    <img src="concourse-course-odyssey.webp" width="1624" height="969" alt="" fetchpriority="high" decoding="async" />
+    <span class="hero-art-orbit hero-art-orbit-a"></span>
+    <span class="hero-art-orbit hero-art-orbit-b"></span>
+  </figure>
   </div>
 </header>
 
@@ -2654,7 +2638,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出价仅为非约束性的价格提议。请通过私信商定下一步；ConCourse 不会收取款项。",
     marketplaceMarkSoldConfirm:"仅在已完成线下交付后将商品标记为售出。此操作会关闭商品，但不能作为已付款的证明。",
     marketplaceMarkClaimed:"标记为已领取", marketplaceMarkClaimedConfirm:"仅在免费物品已完成交付后标记为已领取。", marketplaceCloseRequest:"关闭求购", marketplaceCloseRequestConfirm:"仅在你不再需要该物品时关闭这项求购。", marketplaceStatusClaimed:"已领取", marketplaceStatusRequestClosed:"求购已关闭",
-    brandTag:"轻松规划课程注册", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
+    brandTag:"轻松规划课程注册", returnWelcome:"返回欢迎页面", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
     intelligentPlanning:"智能课程规划", heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
     conflictFree:"无时间冲突", creditAware:"智能计算学分", builtAroundYou:"为你量身规划", startPlanning:"开始规划",
@@ -2746,7 +2730,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出價只係冇約束力嘅價錢建議。請用私訊商議下一步；ConCourse 唔會收取款項。",
     marketplaceMarkSoldConfirm:"只可以喺完成線下交收之後標記做已售出。呢個操作會關閉商品，但唔代表已經付款。",
     marketplaceMarkClaimed:"標記做已領取", marketplaceMarkClaimedConfirm:"只可以喺免費物品完成交收之後標記做已領取。", marketplaceCloseRequest:"關閉求購", marketplaceCloseRequestConfirm:"只可以喺你唔再需要件物品時關閉呢項求購。", marketplaceStatusClaimed:"已領取", marketplaceStatusRequestClosed:"求購已關閉",
-    brandTag:"輕鬆規劃課程註冊", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
+    brandTag:"輕鬆規劃課程註冊", returnWelcome:"返回歡迎頁面", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
     intelligentPlanning:"智能課程規劃", heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
     conflictFree:"唔撞時間", creditAware:"智能計學分", builtAroundYou:"為你度身規劃", startPlanning:"開始規劃",
@@ -2838,7 +2822,7 @@ const TRANSLATIONS = {
 
 function t(key, variables={}){
   const english = {
-    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.",
+    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
     signInSubtitle:"Sign in to continue to your planning workspace.", signUpSubtitle:"Create your academic profile and planning workspace.",
     signUpNote:"Institution matching confirms that a school exists; it does not verify current enrollment.",
     signInNote:"Your schedules are encrypted in transit and isolated by account-level database policies.",
@@ -2944,6 +2928,7 @@ function applyLanguage(language, {persist=true}={}){
   renderCourses();
   renderFinalTimetableStatus();
   if(solutions.length && solutions[activeSolution]) renderResults();
+  updateBrandHomeState();
   window.ConCourseHub?.refreshLanguage();
 }
 
@@ -3323,6 +3308,7 @@ function handleSchoolInput(){
 function enterPlanner(){
   if(!currentUser){ openAuthModal(); return; }
   appStarted = true;
+  updateBrandHomeState();
   document.body.classList.add("app-active");
   document.body.classList.remove("schedule-active", "hub-active");
   $("appWrap").hidden = false;
@@ -3333,11 +3319,28 @@ function enterPlanner(){
 
 function leavePlanner(){
   appStarted = false;
+  updateBrandHomeState();
   document.body.classList.remove("app-active", "schedule-active", "hub-active");
   $("appWrap").hidden = true;
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
   window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function updateBrandHomeState(){
+  const brandHome = $("landingScreen")?.querySelector(".brand");
+  if(!brandHome) return;
+  if(appStarted){
+    brandHome.setAttribute("role", "button");
+    brandHome.setAttribute("tabindex", "0");
+    brandHome.setAttribute("title", t("returnWelcome"));
+    brandHome.setAttribute("aria-label", t("returnWelcome"));
+  } else {
+    brandHome.removeAttribute("role");
+    brandHome.removeAttribute("tabindex");
+    brandHome.removeAttribute("title");
+    brandHome.removeAttribute("aria-label");
+  }
 }
 
 function showSchedulePage(){
@@ -3579,6 +3582,7 @@ function applySession(session){
     loadingUserId = null;
     loadedAcademicProfile = {};
   }
+  updateBrandHomeState();
   renderFinalTimetableStatus();
 }
 
@@ -3685,13 +3689,11 @@ function initializeAccount(){
   $("marketplaceOpenBtn").onclick = () => window.ConCourseHub?.show("marketplace");
   $("editSelections").onclick = showPlannerEditor;
   const brandHome = $("landingScreen").querySelector(".brand");
-  brandHome.setAttribute("role", "button");
-  brandHome.setAttribute("tabindex", "0");
-  brandHome.setAttribute("title", "Return to welcome screen");
   brandHome.onclick = () => { if(appStarted) leavePlanner(); };
   brandHome.onkeydown = e => {
     if(appStarted && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); leavePlanner(); }
   };
+  updateBrandHomeState();
   $("authCloseBtn").onclick = closeAuthModal;
   $("authUsername").addEventListener("input", handleUsernameInput);
   $("schoolName").addEventListener("input", handleSchoolInput);
