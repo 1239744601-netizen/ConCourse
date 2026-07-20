@@ -1730,6 +1730,7 @@
 <link rel="stylesheet" href="member-hub.css?v=20260720-1" />
 <link rel="stylesheet" href="marketplace.css?v=20260720-1" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260720-1" />
+<link rel="stylesheet" href="concourse-controls.css?v=20260720-2" />
 </head>
 <body>
 <header id="landingScreen">
@@ -1803,9 +1804,9 @@
       </div>
       <button type="button" class="btn-ghost auth-close" id="authCloseBtn" aria-label="Close sign-in dialog">×</button>
     </div>
-    <div class="auth-mode-switch" role="tablist" aria-label="Account action">
-      <button type="button" class="auth-mode-btn active" id="signInBtn" role="tab" aria-selected="true" data-i18n="signIn">Sign in</button>
-      <button type="button" class="auth-mode-btn" id="signUpBtn" role="tab" aria-selected="false" data-i18n="createAccount">Create account</button>
+    <div class="auth-mode-switch" role="group" aria-label="Account action">
+      <button type="button" class="auth-mode-btn active" id="signInBtn" aria-pressed="true" data-i18n="signIn">Sign in</button>
+      <button type="button" class="auth-mode-btn" id="signUpBtn" aria-pressed="false" data-i18n="createAccount">Create account</button>
     </div>
     <label for="authEmail" data-i18n="email">Email</label>
     <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" />
@@ -1936,13 +1937,13 @@
       </label>
 
       <label id="sessionLabel" style="margin-top:12px" data-i18n="addSessionTime">Add the session (day + time)</label>
-      <div class="days" id="dayPicker">
-        <span class="day-chip" data-d="1" data-i18n="monday">Mon</span>
-        <span class="day-chip" data-d="2" data-i18n="tuesday">Tue</span>
-        <span class="day-chip" data-d="3" data-i18n="wednesday">Wed</span>
-        <span class="day-chip" data-d="4" data-i18n="thursday">Thu</span>
-        <span class="day-chip" data-d="5" data-i18n="friday">Fri</span>
-        <span class="day-chip" data-d="6" data-i18n="saturday">Sat</span>
+      <div class="days" id="dayPicker" role="group" aria-labelledby="sessionLabel">
+        <button type="button" class="day-chip" data-d="1" aria-pressed="false" data-i18n="monday">Mon</button>
+        <button type="button" class="day-chip" data-d="2" aria-pressed="false" data-i18n="tuesday">Tue</button>
+        <button type="button" class="day-chip" data-d="3" aria-pressed="false" data-i18n="wednesday">Wed</button>
+        <button type="button" class="day-chip" data-d="4" aria-pressed="false" data-i18n="thursday">Thu</button>
+        <button type="button" class="day-chip" data-d="5" aria-pressed="false" data-i18n="friday">Fri</button>
+        <button type="button" class="day-chip" data-d="6" aria-pressed="false" data-i18n="saturday">Sat</button>
       </div>
       <div class="row" style="margin-top:8px">
         <div>
@@ -1988,31 +1989,35 @@
         </div>
       </div>
 
-      <label data-i18n="courseCount">How many courses do you want?</label>
-      <div class="choice-group" id="countModeChoice">
+      <fieldset class="choice-fieldset choice-group" id="countModeChoice">
+        <legend data-i18n="courseCount">How many courses do you want?</legend>
         <label class="choice sel">
           <input type="radio" name="countMode" value="fewest" checked />
           <span class="c-txt" data-i18n-html="fewestCourses"><b>Fewest courses to reach my credits</b> — hit the required credits with as few courses as possible.</span>
         </label>
-        <label class="choice">
-          <input type="radio" name="countMode" value="exact" />
-          <span class="c-txt" data-i18n-html="exactCourses"><b>An exact number of courses</b></span>
-          <input id="exactN" type="number" min="1" step="1" value="5" style="width:64px; margin-left:auto;" disabled />
-        </label>
-      </div>
+        <div class="choice choice-exact">
+          <label class="choice-hit-area" for="exactCountMode" aria-hidden="true"></label>
+          <input id="exactCountMode" type="radio" name="countMode" value="exact" />
+          <label class="c-txt" for="exactCountMode" data-i18n-html="exactCourses"><b>An exact number of courses</b></label>
+          <label class="exact-count-field" for="exactN">
+            <span class="sr-only" data-i18n="exactCourseCount">Exact course count</span>
+            <input id="exactN" type="number" min="1" step="1" value="5" disabled />
+          </label>
+        </div>
+      </fieldset>
 
-      <label data-i18n="freeWeekdays">Free weekdays (a day off, besides the weekend)</label>
+      <label id="freeDayLabel" data-i18n="freeWeekdays">Free weekdays (a day off, besides the weekend)</label>
       <select id="freeCount">
         <option value="0" data-i18n="noFreeDayPreference">None — no preference</option>
         <option value="1" data-i18n="oneFreeWeekday">At least 1 free weekday</option>
         <option value="2" data-i18n="twoFreeWeekdays">At least 2 free weekdays</option>
       </select>
-      <div class="days" id="freeDayPicker" style="margin-top:8px">
-        <span class="day-chip" data-d="1" data-i18n="monday">Mon</span>
-        <span class="day-chip" data-d="2" data-i18n="tuesday">Tue</span>
-        <span class="day-chip" data-d="3" data-i18n="wednesday">Wed</span>
-        <span class="day-chip" data-d="4" data-i18n="thursday">Thu</span>
-        <span class="day-chip" data-d="5" data-i18n="friday">Fri</span>
+      <div class="days" id="freeDayPicker" role="group" aria-labelledby="freeDayLabel" style="margin-top:8px">
+        <button type="button" class="day-chip" data-d="1" aria-pressed="false" data-i18n="monday">Mon</button>
+        <button type="button" class="day-chip" data-d="2" aria-pressed="false" data-i18n="tuesday">Tue</button>
+        <button type="button" class="day-chip" data-d="3" aria-pressed="false" data-i18n="wednesday">Wed</button>
+        <button type="button" class="day-chip" data-d="4" aria-pressed="false" data-i18n="thursday">Thu</button>
+        <button type="button" class="day-chip" data-d="5" aria-pressed="false" data-i18n="friday">Fri</button>
       </div>
 
       <div class="divider"></div>
@@ -2110,8 +2115,8 @@
     </div>
     <div id="warnArea"></div>
     <div id="droppedArea"></div>
-    <div id="colorModeBar" class="color-bar" style="display:none">
-      <span class="cm-label" data-i18n="colorBy">Color by</span>
+    <div id="colorModeBar" class="color-bar" role="radiogroup" aria-labelledby="colorModeLabel" style="display:none">
+      <span class="cm-label" id="colorModeLabel" data-i18n="colorBy">Color by</span>
       <label class="cm-opt"><input type="radio" name="colorMode" value="course" checked /> <span data-i18n="everyCourse">Every course</span></label>
       <label class="cm-opt"><input type="radio" name="colorMode" value="type" /> <span data-i18n="mustElective">Must-take vs elective</span></label>
       <span id="colorLegend" class="cm-legend"></span>
@@ -2664,7 +2669,7 @@ const TRANSLATIONS = {
     addCourse:"加入课程清单", semesterCriteria:"学期条件", semesterCriteriaDescription:"设置学分目标、课程数量和空闲时间。",
     requiredCredits:"本学期所需学分", mandatory:"（必填）", minimumCredits:"例如：15 — 必填", maximumCredits:"最高 — 选填",
     courseCount:"你希望修读多少门课程？", schedulePreferences:"课表偏好", generateTimetable:"生成课表",
-    fewestCourses:"<b>用最少课程达到学分要求</b> — 尽可能用较少课程满足所需学分。", exactCourses:"<b>指定课程数量</b>",
+    fewestCourses:"<b>用最少课程达到学分要求</b> — 尽可能用较少课程满足所需学分。", exactCourses:"<b>指定课程数量</b>", exactCourseCount:"指定课程数量",
     freeWeekdays:"空闲工作日（周末以外的休息日）", noFreeDayPreference:"无 — 没有偏好", oneFreeWeekday:"至少 1 个空闲工作日", twoFreeWeekdays:"至少 2 个空闲工作日",
     compactClasses:"优先紧凑排课（减少每天课程之间的等待时间）", fewerDays:"优先减少到校天数", avoidBefore:"避免早于此时间的课程", avoidAfter:"避免晚于此时间的课程",
     dailyBreaks:"每天需要保留的休息时间（选填）", add:"+ 添加", noCourses:"尚未添加课程。请从课程设置开始。",
@@ -2756,7 +2761,7 @@ const TRANSLATIONS = {
     addCourse:"加入選科清單", semesterCriteria:"學期條件", semesterCriteriaDescription:"設定學分目標、科目數量同空閒時間。",
     requiredCredits:"今個學期所需學分", mandatory:"（必填）", minimumCredits:"例如：15 — 必填", maximumCredits:"最高 — 選填",
     courseCount:"你想讀幾多科？", schedulePreferences:"時間表偏好", generateTimetable:"產生時間表",
-    fewestCourses:"<b>用最少科目達到學分要求</b> — 盡量用較少科目滿足所需學分。", exactCourses:"<b>指定科目數量</b>",
+    fewestCourses:"<b>用最少科目達到學分要求</b> — 盡量用較少科目滿足所需學分。", exactCourses:"<b>指定科目數量</b>", exactCourseCount:"指定科目數量",
     freeWeekdays:"空閒平日（週末以外嘅休息日）", noFreeDayPreference:"冇 — 無特別偏好", oneFreeWeekday:"最少 1 個空閒平日", twoFreeWeekdays:"最少 2 個空閒平日",
     compactClasses:"優先緊湊排堂（減少每日堂與堂之間嘅等候時間）", fewerDays:"優先減少返學日數", avoidBefore:"避免早過呢個時間嘅堂", avoidAfter:"避免遲過呢個時間嘅堂",
     dailyBreaks:"每日要留空嘅休息時間（選填）", add:"+ 加入", noCourses:"仲未加入課程。請由課程設定開始。",
@@ -3050,8 +3055,8 @@ function setAuthMode(mode){
   $("authPassword").autocomplete = signingUp ? "new-password" : "current-password";
   $("signInBtn").classList.toggle("active", !signingUp);
   $("signUpBtn").classList.toggle("active", signingUp);
-  $("signInBtn").setAttribute("aria-selected", String(!signingUp));
-  $("signUpBtn").setAttribute("aria-selected", String(signingUp));
+  $("signInBtn").setAttribute("aria-pressed", String(!signingUp));
+  $("signUpBtn").setAttribute("aria-pressed", String(signingUp));
   setAuthMessage("");
   if(signingUp) setTimeout(() => $("authUsername").focus(), 0);
 }
@@ -3428,9 +3433,7 @@ function applyUserState(state={}, profile={}){
   $("pNoLate").checked = prefs.noLate ?? false;
   $("lateTime").value = prefs.lateTime || "17:00";
 
-  document.querySelectorAll("#freeDayPicker .day-chip").forEach(chip => {
-    chip.classList.toggle("on", selectedFreeDays.has(+chip.dataset.d));
-  });
+  syncDayChipGroup("freeDayPicker", selectedFreeDays);
 
   invalidateSchedules();
   renderCourses();
@@ -3741,19 +3744,26 @@ function initializeAccount(){
 }
 
 // ---------- Day picker ----------
+function syncDayChipGroup(groupId, selectedSet){
+  document.querySelectorAll(`#${groupId} .day-chip`).forEach(chip => {
+    const selected = selectedSet.has(+chip.dataset.d);
+    chip.classList.toggle("on", selected);
+    chip.setAttribute("aria-pressed", String(selected));
+  });
+}
+
 $("dayPicker").addEventListener("click", e => {
   const chip = e.target.closest(".day-chip");
   if(!chip) return;
   const d = +chip.dataset.d;
-  if(selectedDays.has(d)){ selectedDays.delete(d); chip.classList.remove("on"); }
+  if(selectedDays.has(d)) selectedDays.delete(d);
   else {
     // A session represents one class meeting on one day. Selecting another
     // day moves the selection instead of silently turning it into extra days.
     selectedDays.clear();
-    document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
     selectedDays.add(d);
-    chip.classList.add("on");
   }
+  syncDayChipGroup("dayPicker", selectedDays);
 });
 
 // ---------- Free-day picker ----------
@@ -3761,8 +3771,9 @@ $("freeDayPicker").addEventListener("click", e => {
   const chip = e.target.closest(".day-chip");
   if(!chip) return;
   const d = +chip.dataset.d;
-  if(selectedFreeDays.has(d)){ selectedFreeDays.delete(d); chip.classList.remove("on"); }
-  else { selectedFreeDays.add(d); chip.classList.add("on"); }
+  if(selectedFreeDays.has(d)) selectedFreeDays.delete(d);
+  else selectedFreeDays.add(d);
+  syncDayChipGroup("freeDayPicker", selectedFreeDays);
   queueUserStateSave();
 });
 
@@ -3812,7 +3823,7 @@ function resetCourseOptions(){
   pendingSlots = [];
   savedOptions = [];
   selectedDays.clear();
-  document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
+  syncDayChipGroup("dayPicker", selectedDays);
   renderPending();
   renderSavedOptions();
 }
@@ -3850,7 +3861,7 @@ $("addSlot").addEventListener("click", () => {
   for(const s of pendingSlots){ if(slotsOverlap(s, cand)){ alert("This session overlaps the other session in this option. Put them on different days/times."); return; } }
   pendingSlots.push(cand);
   selectedDays.clear();
-  document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
+  syncDayChipGroup("dayPicker", selectedDays);
   renderPending();
 });
 
@@ -3865,7 +3876,7 @@ $("saveOption").addEventListener("click", () => {
   }
   savedOptions.push({ sessions: pendingSlots.slice() });
   pendingSlots = []; selectedDays.clear();
-  document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
+  syncDayChipGroup("dayPicker", selectedDays);
   renderPending(); renderSavedOptions();
 });
 
@@ -3934,7 +3945,7 @@ $("addCourse").addEventListener("click", () => {
   $("cMulti").checked=false; $("sessionsPerWeek").value="1"; updateSessionUi();
   // Only reset the course-session picker. The free-day picker has its own
   // state and must stay visually in sync with selectedFreeDays.
-  document.querySelectorAll("#dayPicker .day-chip.on").forEach(c=>c.classList.remove("on"));
+  syncDayChipGroup("dayPicker", selectedDays);
   renderPending(); renderSavedOptions(); renderCourses();
   queueUserStateSave();
 });
@@ -4308,12 +4319,19 @@ function renderResults(){
   }
 
   $("altArea").innerHTML = solutions.length>1
-    ? `<div class="alt-list">` + solutions.map((so,i)=>{
+    ? `<div class="alt-list" role="group" aria-label="${escapeHtml(t("compareAlternatives"))}">` + solutions.map((so,i)=>{
         const variables = {option:i+1, count:so.score.count, credits:so.score.credits, days:so.score.daysUsed};
-        return `<button class="btn-ghost alt-btn ${i===activeSolution?"active":""}" data-i="${i}" title="${escapeHtml(t("optionTitle", variables))}">${escapeHtml(t("optionButton", variables))}</button>`;
+        return `<button type="button" class="btn-ghost alt-btn ${i===activeSolution?"active":""}" data-i="${i}" aria-pressed="${i===activeSolution}" title="${escapeHtml(t("optionTitle", variables))}">${escapeHtml(t("optionButton", variables))}</button>`;
       }).join("") + `</div>`
     : "";
-  $("altArea").querySelectorAll(".alt-btn").forEach(b=>b.onclick=()=>{ activeSolution=+b.dataset.i; renderResults(); });
+  $("altArea").querySelectorAll(".alt-btn").forEach(button => {
+    button.onclick = () => {
+      const optionIndex = +button.dataset.i;
+      activeSolution = optionIndex;
+      renderResults();
+      $("altArea").querySelector(`.alt-btn[data-i="${optionIndex}"]`)?.focus({preventScroll:true});
+    };
+  });
 
   $("colorModeBar").style.display = "flex";
   renderCalendar(sol.picks);
@@ -4394,7 +4412,7 @@ function renderCalendar(picks){
         </div>
       </div>
     </div>
-    <div class="hint" style="margin-top:14px">${escapeHtml(t("showingRankedOption", {option:activeSolution+1}))}${comparisonHint} <span class="link" id="printBtn">${escapeHtml(t("printPdf"))}</span></div>
+    <div class="hint" style="margin-top:14px">${escapeHtml(t("showingRankedOption", {option:activeSolution+1}))}${comparisonHint} <button type="button" class="link print-action" id="printBtn">${escapeHtml(t("printPdf"))}</button></div>
   `;
   // scale the grid so it fits a single landscape page when printed (header row + grid ≈ totalH + 30)
   const printScale = Math.min(1, 690 / (totalH + 30));
