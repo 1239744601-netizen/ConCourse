@@ -540,15 +540,17 @@
     const snapshot = finalTimetable;
     const summary = snapshot?.summary || {};
     const courseList = Array.isArray(snapshot?.courses) ? snapshot.courses : [];
-    $("hubCourseCount").textContent = summary.courseCount ?? courseList.length ?? 0;
-    $("hubCreditCount").textContent = summary.credits ?? courseList.reduce((total, course) => total + Number(course.credits || 0), 0);
+    const courseCount = summary.courseCount ?? courseList.length;
+    const creditCount = summary.credits ?? courseList.reduce((total, course) => total + Number(course.credits || 0), 0);
+    $("hubCourseCount").textContent = courseCount;
+    $("hubCreditCount").textContent = creditCount;
     $("hubProfileStrength").textContent = `${profileStrength()}%`;
 
     const summaryContainer = $("hubFinalSummary");
     summaryContainer.replaceChildren();
     const stats = [
-      [summary.courseCount ?? courseList.length, t("coursesTakenStat")],
-      [summary.credits ?? 0, t("creditsStat")],
+      [courseCount, t("coursesTakenStat")],
+      [creditCount, t("creditsStat")],
       [summary.daysOnCampus ?? 0, t("daysOnCampusStat")],
       [`${Math.round(Number(summary.gapMinutes || 0) / 6) / 10}h`, t("totalGapsStat")]
     ];
@@ -561,13 +563,13 @@
     const coursesContainer = $("hubFinalCourses");
     coursesContainer.replaceChildren();
     courseList.forEach(course => {
-      const row = node("div", "hub-final-course");
+      const row = node("li", "hub-final-course");
       const copy = node("div");
       copy.append(node("b", "", course.name || course.code || t("notProvided")), node("small", "", [course.code, course.professor].filter(Boolean).join(" · ") || "—"));
       row.append(copy, node("span", "", `${Number(course.credits || 0)} ${t("creditsShort")}`));
       coursesContainer.append(row);
     });
-    if(!courseList.length) coursesContainer.append(node("div", "hub-chart-empty", t("hubNoFinalSchedule")));
+    if(!courseList.length) coursesContainer.append(node("li", "hub-final-empty", t("hubNoFinalSchedule")));
   }
 
   function renderOverview(){
@@ -717,6 +719,11 @@
       const fill = node("div", "hub-chart-fill");
       fill.style.width = `${share}%`;
       fill.title = t("courseChosenBy", {count:row.selection_count});
+      track.setAttribute("role", "progressbar");
+      track.setAttribute("aria-label", `${row.course_name || row.course_code || row.course_key}: ${share}%`);
+      track.setAttribute("aria-valuemin", "0");
+      track.setAttribute("aria-valuemax", "100");
+      track.setAttribute("aria-valuenow", String(share));
       track.append(fill);
       chartRow.append(label, track, node("div", "hub-chart-value", `${share}%`));
       container.append(chartRow);

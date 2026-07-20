@@ -1730,7 +1730,7 @@
 <link rel="stylesheet" href="member-hub.css?v=20260720-1" />
 <link rel="stylesheet" href="marketplace.css?v=20260720-1" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260720-1" />
-<link rel="stylesheet" href="concourse-controls.css?v=20260720-4" />
+<link rel="stylesheet" href="concourse-controls.css?v=20260720-5" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2185,28 +2185,34 @@
               <div><h2 data-i18n="courseChoiceIntelligence">Course choice intelligence</h2></div>
               <p data-i18n="anonymousAggregate">Anonymous aggregate data; small cohorts are hidden for privacy.</p>
             </div>
-            <div class="hub-filter-row">
-              <label><span data-i18n="compareStudents">Compare students</span>
-                <select id="courseInsightScope">
-                  <option value="same_major_year" data-i18n="sameMajorYear">Same major and year</option>
-                  <option value="same_major" data-i18n="sameMajorAllYears">Same major, all years</option>
-                  <option value="university_year" data-i18n="universityYear">Whole university, selected year</option>
-                  <option value="university" data-i18n="wholeUniversity">Whole university, all years</option>
-                </select>
-              </label>
-              <label><span data-i18n="studyYearFilter">Study year</span>
-                <select id="courseInsightYear">
-                  <option value="" data-i18n="allYears">All years</option>
-                  <option value="1" data-i18n="studyYear1">Year 1</option><option value="2" data-i18n="studyYear2">Year 2</option>
-                  <option value="3" data-i18n="studyYear3">Year 3</option><option value="4" data-i18n="studyYear4">Year 4</option>
-                  <option value="5" data-i18n="studyYear5">Year 5</option><option value="6" data-i18n="studyYear6">Year 6</option>
-                  <option value="7" data-i18n="studyYear7">Year 7</option><option value="8" data-i18n="studyYear8">Year 8</option>
-                </select>
-              </label>
-              <button type="button" class="btn-primary" id="loadCourseInsights" data-i18n="refreshInsights">Refresh</button>
+            <div class="hub-insight-layout">
+              <div class="hub-insight-controls">
+                <div class="hub-filter-row">
+                  <label><span data-i18n="compareStudents">Compare students</span>
+                    <select id="courseInsightScope">
+                      <option value="same_major_year" data-i18n="sameMajorYear">Same major and year</option>
+                      <option value="same_major" data-i18n="sameMajorAllYears">Same major, all years</option>
+                      <option value="university_year" data-i18n="universityYear">Whole university, selected year</option>
+                      <option value="university" data-i18n="wholeUniversity">Whole university, all years</option>
+                    </select>
+                  </label>
+                  <label><span data-i18n="studyYearFilter">Study year</span>
+                    <select id="courseInsightYear">
+                      <option value="" data-i18n="allYears">All years</option>
+                      <option value="1" data-i18n="studyYear1">Year 1</option><option value="2" data-i18n="studyYear2">Year 2</option>
+                      <option value="3" data-i18n="studyYear3">Year 3</option><option value="4" data-i18n="studyYear4">Year 4</option>
+                      <option value="5" data-i18n="studyYear5">Year 5</option><option value="6" data-i18n="studyYear6">Year 6</option>
+                      <option value="7" data-i18n="studyYear7">Year 7</option><option value="8" data-i18n="studyYear8">Year 8</option>
+                    </select>
+                  </label>
+                  <button type="button" class="btn-primary" id="loadCourseInsights" data-i18n="refreshInsights">Refresh</button>
+                </div>
+              </div>
+              <div class="hub-insight-result">
+                <div class="hub-chart" id="courseInsightChart" aria-live="polite"></div>
+                <p class="hub-inline-status" id="courseInsightStatus"></p>
+              </div>
             </div>
-            <div class="hub-chart" id="courseInsightChart" aria-live="polite"></div>
-            <p class="hub-inline-status" id="courseInsightStatus"></p>
           </article>
 
           <article class="hub-card hub-final-card">
@@ -2214,9 +2220,19 @@
               <div><h2 data-i18n="finalScheduleRecord">Final schedule record</h2></div>
               <p data-i18n="savedDecisionSummary">The academic decision that unlocks your ConCourse experience.</p>
             </div>
-            <div class="hub-final-summary" id="hubFinalSummary"></div>
-            <div class="hub-final-courses" id="hubFinalCourses"></div>
-            <button type="button" class="btn-ghost" id="overviewOpenTimetable" data-i18n="viewFullTimetable">View full timetable</button>
+            <div class="hub-final-layout">
+              <div class="hub-final-overview">
+                <div class="hub-final-summary" id="hubFinalSummary"></div>
+                <button type="button" class="btn-ghost" id="overviewOpenTimetable" data-i18n="viewFullTimetable">View full timetable</button>
+              </div>
+              <section class="hub-final-course-panel" aria-labelledby="hubFinalCoursesHeading">
+                <div class="hub-final-course-heading">
+                  <h3 id="hubFinalCoursesHeading" data-i18n="finalCourses">Final courses</h3>
+                  <span data-i18n="semesterRecord">in this semester record</span>
+                </div>
+                <ol class="hub-final-courses" id="hubFinalCourses"></ol>
+              </section>
+            </div>
           </article>
         </div>
       </section>
@@ -2468,7 +2484,7 @@
             <div class="hub-form-grid">
               <label><span data-i18n="profileVisibility">Profile visibility</span><select id="profileVisibility"><option value="school" data-i18n="schoolmatesOnly">Schoolmates only</option><option value="private" data-i18n="privateProfile">Private</option></select></label>
               <label class="hub-toggle-label"><input id="profileAllowMessages" type="checkbox" /><span data-i18n="allowMessages">Allow schoolmates to message me</span></label>
-              <label class="hub-toggle-label hub-form-wide"><input id="profileAnalyticsConsent" type="checkbox" /><span data-i18n="analyticsConsent">Share my finalized course choices in anonymous, privacy-protected trends</span></label>
+              <label class="hub-toggle-label"><input id="profileAnalyticsConsent" type="checkbox" /><span data-i18n="analyticsConsent">Share my finalized course choices in anonymous, privacy-protected trends</span></label>
             </div>
             <div class="hub-profile-save">
               <p class="hub-inline-status" id="memberProfileStatus"></p>
