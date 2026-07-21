@@ -145,16 +145,87 @@
     marketplaceNoOrders:"You have no marketplace orders yet.",
     marketplaceNoOwnListings:"You have not created a listing yet.",
     marketplacePollInvalid:"Enter a valid value.",
+    marketplaceReach:"Marketplace reach",
+    marketplaceCampusScope:"Your campus",
+    marketplaceGlobalScope:"Global campuses",
+    marketplaceCampusScopeDescription:"Trade with verified students at your university.",
+    marketplaceGlobalScopeDescription:"Discover opt-in listings from verified students at universities around the world.",
+    marketplaceGlobalLoading:"Exploring the global student marketplace…",
+    marketplaceGlobalEmpty:"No global listings match these filters yet.",
+    marketplaceGlobalResults:"{count} global listings",
+    marketplaceGlobalSavedResults:"{count} saved global listings",
+    marketplaceGlobalSearchPlaceholder:"Search universities, notes, textbooks, furniture…",
+    marketplaceVerifiedUniversity:"Verified university",
+    marketplaceGlobalDiscoveryBoundary:"Browse, save, share, and report opt-in listings from other universities. You can message sellers who allow it; cross-campus offers and payments are not enabled yet.",
+    marketplaceGlobalOptIn:"Share this listing with verified students worldwide",
+    marketplaceGlobalOptInHint:"Your username, university, listing details, and listing media become visible across the verified campus network. Personal profile details stay private.",
+    marketplaceGlobalVisibilityFailed:"The listing was saved for your campus, but global sharing could not be updated. Try editing it again after running the latest Supabase SQL.",
+    marketplaceSavedGlobally:"Listing saved and shared with verified students worldwide.",
+    marketplaceSavedCampusOnly:"Listing saved for your campus only.",
+    marketplaceGlobalSeller:"Verified student seller",
+    marketplaceGlobalMessageUnavailable:"This seller is not accepting cross-campus messages.",
+    marketplaceEnableMessages:"Enable “Allow verified students to message me” in your Profile before contacting a global seller.",
+    marketplaceGlobalConversationStarted:"Conversation started. Opening Messages…",
     edit:"Edit",
     report:"Report",
     loadMore:"Load more",
     loadingMore:"Loading more…"
   });
 
+  const LOCAL_COPY = Object.freeze({
+    "zh-CN": Object.freeze({
+      marketplaceReach:"市集范围",
+      marketplaceCampusScope:"本校校园",
+      marketplaceGlobalScope:"全球校园",
+      marketplaceCampusScopeDescription:"与本校已验证学生进行校园交易。",
+      marketplaceGlobalScopeDescription:"探索全球大学已验证学生主动公开的商品。",
+      marketplaceGlobalLoading:"正在探索全球学生市集…",
+      marketplaceGlobalEmpty:"目前没有符合筛选条件的全球商品。",
+      marketplaceGlobalResults:"{count} 件全球商品",
+      marketplaceGlobalSavedResults:"已收藏 {count} 件全球商品",
+      marketplaceGlobalSearchPlaceholder:"搜索大学、笔记、课本、家具…",
+      marketplaceVerifiedUniversity:"已验证大学",
+      marketplaceGlobalDiscoveryBoundary:"可浏览、收藏、分享及举报其他大学主动公开的商品；如卖家允许，也可发送私信。跨校出价及付款暂未开放。",
+      marketplaceGlobalOptIn:"向全球已验证学生公开这件商品",
+      marketplaceGlobalOptInHint:"你的用户名、大学、商品资料和媒体将向已验证校园网络公开；个人档案资料仍保持私密。",
+      marketplaceGlobalVisibilityFailed:"商品已保存至本校市集，但未能更新全球公开设置。请运行最新 Supabase SQL 后再次编辑。",
+      marketplaceSavedGlobally:"商品已保存，并向全球已验证学生公开。",
+      marketplaceSavedCampusOnly:"商品仅保存至本校市集。",
+      marketplaceGlobalSeller:"已验证学生卖家",
+      marketplaceGlobalMessageUnavailable:"卖家暂不接收跨校私信。",
+      marketplaceEnableMessages:"请先在个人档案开启“允许已验证学生给我发私信”，再联系全球市集卖家。",
+      marketplaceGlobalConversationStarted:"对话已建立，正在打开私信…"
+    }),
+    "zh-HK": Object.freeze({
+      marketplaceReach:"市集範圍",
+      marketplaceCampusScope:"本校校園",
+      marketplaceGlobalScope:"全球校園",
+      marketplaceCampusScopeDescription:"同本校已驗證學生進行校園交易。",
+      marketplaceGlobalScopeDescription:"探索全球大學已驗證學生主動公開嘅商品。",
+      marketplaceGlobalLoading:"正在探索全球學生市集…",
+      marketplaceGlobalEmpty:"而家未有符合篩選條件嘅全球商品。",
+      marketplaceGlobalResults:"{count} 件全球商品",
+      marketplaceGlobalSavedResults:"已收藏 {count} 件全球商品",
+      marketplaceGlobalSearchPlaceholder:"搜尋大學、筆記、教科書、傢俬…",
+      marketplaceVerifiedUniversity:"已驗證大學",
+      marketplaceGlobalDiscoveryBoundary:"可以瀏覽、收藏、分享同舉報其他大學主動公開嘅商品；如果賣家允許，亦可以傳送私訊。跨校出價同付款暫未開放。",
+      marketplaceGlobalOptIn:"向全球已驗證學生公開呢件商品",
+      marketplaceGlobalOptInHint:"你嘅用戶名、大學、商品資料同媒體會向已驗證校園網絡公開；個人檔案資料仍然保密。",
+      marketplaceGlobalVisibilityFailed:"商品已儲存到本校市集，但未能更新全球公開設定。請執行最新 Supabase SQL 後再編輯。",
+      marketplaceSavedGlobally:"商品已儲存，並向全球已驗證學生公開。",
+      marketplaceSavedCampusOnly:"商品只儲存到本校市集。",
+      marketplaceGlobalSeller:"已驗證學生賣家",
+      marketplaceGlobalMessageUnavailable:"賣家暫時唔接收跨校私訊。",
+      marketplaceEnableMessages:"請先喺個人檔案開啟「允許已驗證學生私訊我」，再聯絡全球市集賣家。",
+      marketplaceGlobalConversationStarted:"對話已建立，正在打開私訊…"
+    })
+  });
+
   const state = {
     userId:null,
     generation:0,
     active:false,
+    scope:"campus",
     mode:"discover",
     query:"",
     category:"all",
@@ -233,7 +304,10 @@
     let translated = key;
     try { if(typeof t === "function") translated = t(key, variables); }
     catch(_error){}
-    return translated && translated !== key ? translated : replaceVariables(FALLBACK[key] || key, variables);
+    if(translated && translated !== key) return translated;
+    const language = typeof currentLanguage === "string" ? currentLanguage : document.documentElement.lang;
+    const local = LOCAL_COPY[language]?.[key];
+    return replaceVariables(local || FALLBACK[key] || key, variables);
   };
   const parseJson = (value, fallback) => {
     if(value === null || value === undefined) return fallback;
@@ -293,6 +367,106 @@
     return !!(view && !view.hidden);
   };
 
+  function ensureScopeControls(){
+    const view = document.querySelector('[data-hub-view="marketplace"]');
+    const discovery = view?.querySelector(".market-discovery-bar");
+    if(!view || !discovery || byId("marketplaceScope")) return;
+    const scope = element("div", "market-scope", "");
+    scope.id = "marketplaceScope";
+    scope.setAttribute("role", "group");
+    const choices = element("div", "market-scope-choices");
+    [
+      ["campus", "marketplaceCampusScope"],
+      ["global", "marketplaceGlobalScope"]
+    ].forEach(([value, key]) => {
+      const button = element("button", "market-scope-button", tr(key));
+      button.type = "button";
+      button.dataset.marketScope = value;
+      button.setAttribute("aria-pressed", value === state.scope ? "true" : "false");
+      choices.append(button);
+    });
+    const description = element("p", "market-scope-description");
+    description.id = "marketplaceScopeDescription";
+    scope.append(choices, description);
+    discovery.before(scope);
+  }
+
+  function ensureGlobalVisibilityControl(){
+    const form = byId("marketplaceListingEditorForm");
+    const status = byId("marketplaceEditorStatus");
+    if(!form || !status || byId("marketplaceGlobalVisibilityInput")) return;
+    const label = element("label", "marketplace-check-row marketplace-global-visibility-check");
+    label.id = "marketplaceGlobalVisibilityField";
+    const input = element("input");
+    input.id = "marketplaceGlobalVisibilityInput";
+    input.type = "checkbox";
+    const copy = element("span", "marketplace-global-visibility-copy");
+    copy.append(
+      element("b", "", tr("marketplaceGlobalOptIn")),
+      element("small", "", tr("marketplaceGlobalOptInHint"))
+    );
+    label.append(input, copy);
+    status.before(label);
+  }
+
+  function syncGlobalVisibilityCopy(){
+    const copy = byId("marketplaceGlobalVisibilityField")?.querySelector(".marketplace-global-visibility-copy");
+    if(!copy) return;
+    copy.replaceChildren(
+      element("b", "", tr("marketplaceGlobalOptIn")),
+      element("small", "", tr("marketplaceGlobalOptInHint"))
+    );
+  }
+
+  function syncScopeUi(){
+    ensureScopeControls();
+    const global = state.scope === "global";
+    const view = document.querySelector('[data-hub-view="marketplace"]');
+    if(view) view.dataset.marketScope = state.scope;
+    const memberHub = byId("memberHub");
+    if(memberHub) memberHub.dataset.marketplaceScope = state.scope;
+    const scope = byId("marketplaceScope");
+    if(scope) scope.setAttribute("aria-label", tr("marketplaceReach"));
+    document.querySelectorAll("[data-market-scope]").forEach(button => {
+      const active = button.dataset.marketScope === state.scope;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+      button.textContent = tr(button.dataset.marketScope === "global" ? "marketplaceGlobalScope" : "marketplaceCampusScope");
+    });
+    const description = byId("marketplaceScopeDescription");
+    if(description) description.textContent = tr(global ? "marketplaceGlobalScopeDescription" : "marketplaceCampusScopeDescription");
+    const sell = byId("marketplaceSellButton");
+    if(sell){ sell.hidden = global; sell.disabled = global; }
+    document.querySelectorAll('#marketplaceModes [data-market-mode="mine"], #marketplaceModes [data-market-mode="orders"]').forEach(button => {
+      button.hidden = global;
+      button.disabled = global;
+    });
+    const search = byId("marketplaceSearch");
+    if(search) search.placeholder = tr(global ? "marketplaceGlobalSearchPlaceholder" : "marketplaceSearchPlaceholder");
+    const trust = view?.querySelector(".market-trust-strip");
+    if(trust){
+      const title = trust.querySelector("b");
+      const detail = trust.querySelector("span");
+      if(title) title.textContent = tr(global ? "marketplaceGlobalScope" : "marketplaceCampusOnly");
+      if(detail) detail.textContent = tr(global ? "marketplaceGlobalDiscoveryBoundary" : "marketplacePaymentBoundary");
+    }
+    if(typeof hub().refreshHeader === "function") hub().refreshHeader();
+  }
+
+  async function setScope(scope){
+    if(!["campus", "global"].includes(scope) || scope === state.scope) return;
+    closeDetail({restoreFocus:false, clearHash:true});
+    state.scope = scope;
+    if(scope === "global" && ["mine", "orders"].includes(state.mode)) state.mode = "discover";
+    state.items = [];
+    state.localItems = [];
+    state.offset = 0;
+    state.hasMore = false;
+    state.total = null;
+    syncScopeUi();
+    await setMode(state.mode);
+  }
+
   function setStatus(message="", kind=""){
     const target = byId("marketplaceStatus");
     if(!target) return;
@@ -302,6 +476,8 @@
 
   function featureError(error){
     const message = String(error?.message || error || "");
+    if(/Enable Allow messages/i.test(message)) return tr("marketplaceEnableMessages");
+    if(/seller is not accepting messages/i.test(message)) return tr("marketplaceGlobalMessageUnavailable");
     if(/verified.*membership|membership.*verified|school verification/i.test(message)) return tr("marketplaceVerificationRequired");
     if(/Could not find the function|schema cache|does not exist|PGRST202|relation .* does not exist/i.test(message)) return tr("marketplaceUnavailable");
     if(/not available|unavailable|not found/i.test(message)) return tr("marketplaceListingUnavailable");
@@ -363,6 +539,34 @@
       username:String(source.username || listing?.seller_username || ""),
       displayName:String(source.display_name || listing?.seller_display_name || source.username || listing?.seller_username || tr("anonymousStudent"))
     };
+  }
+
+  function isCrossCampusListing(listing){
+    return !!(
+      listing?._crossCampus
+      || listing?.is_cross_school === true
+      || listing?.viewer?.is_cross_school === true
+      || (state.scope === "global" && listing?.global_visible === true)
+    );
+  }
+
+  function listingUniversityName(listing){
+    return String(listing?.school_name || listing?.university_name || "").trim().slice(0, 180);
+  }
+
+  function universityContext(listing, {compact=false}={}){
+    const schoolName = listingUniversityName(listing);
+    if(!schoolName) return null;
+    const context = element("div", compact ? "marketplace-university-context compact" : "marketplace-university-context");
+    const mark = element("span", "marketplace-university-mark", "◎");
+    mark.setAttribute("aria-hidden", "true");
+    const copy = element("span", "marketplace-university-copy");
+    copy.append(
+      element("small", "", tr("marketplaceVerifiedUniversity")),
+      element("strong", "", schoolName)
+    );
+    context.append(mark, copy);
+    return context;
   }
 
   function isOwnListing(listing){
@@ -530,6 +734,11 @@
 
   function sellerButton(listing){
     const seller = normalizeSeller(listing);
+    if(isCrossCampusListing(listing)){
+      const label = element("span", "marketplace-global-seller", seller.username ? `@${seller.username}` : tr("marketplaceGlobalSeller"));
+      label.title = tr("marketplaceGlobalSeller");
+      return label;
+    }
     const button = element("button", "marketplace-seller-button", seller.displayName);
     button.type = "button";
     button.setAttribute("aria-label", `${tr("marketplaceSellerProfile")}: ${seller.displayName}`);
@@ -563,6 +772,8 @@
     titleButton.type = "button";
     titleButton.addEventListener("click", () => void openListing(id, titleButton));
     body.append(titleButton);
+    const schoolContext = isCrossCampusListing(listing) ? universityContext(listing, {compact:true}) : null;
+    if(schoolContext) body.append(schoolContext);
     body.append(element("strong", "marketplace-card-price", listingPrice(listing)));
     const meta = element("div", "marketplace-card-meta");
     meta.append(sellerButton(listing));
@@ -595,7 +806,9 @@
   function updateResultsLabel(count=state.items.length){
     const target = byId("marketplaceResultsLabel");
     if(!target) return;
-    const key = state.mode === "saved" ? "marketplaceSavedResults" : state.mode === "mine" ? "marketplaceMineResults" : state.mode === "orders" ? "marketplaceOrderResults" : "marketplaceResults";
+    const key = state.scope === "global"
+      ? state.mode === "saved" ? "marketplaceGlobalSavedResults" : "marketplaceGlobalResults"
+      : state.mode === "saved" ? "marketplaceSavedResults" : state.mode === "mine" ? "marketplaceMineResults" : state.mode === "orders" ? "marketplaceOrderResults" : "marketplaceResults";
     target.textContent = tr(key, {count:state.total ?? count});
   }
 
@@ -617,7 +830,7 @@
       if(!state.items.length) grid.append(element("div", "marketplace-empty", tr("marketplaceNoOrders")));
     } else {
       state.items.forEach(listing => grid.append(listingCard(listing)));
-      if(!state.items.length) grid.append(element("div", "marketplace-empty", state.mode === "mine" ? tr("marketplaceNoOwnListings") : tr("marketplaceEmpty")));
+      if(!state.items.length) grid.append(element("div", "marketplace-empty", state.scope === "global" ? tr("marketplaceGlobalEmpty") : state.mode === "mine" ? tr("marketplaceNoOwnListings") : tr("marketplaceEmpty")));
     }
     updateResultsLabel();
     updateLoadMore();
@@ -641,17 +854,19 @@
     state.loading = true;
     byId("marketplaceCatalogue")?.setAttribute("aria-busy", "true");
     if(!append){ state.offset = 0; state.hasMore = false; }
-    setStatus(tr("marketplaceLoading"));
+    setStatus(tr(state.scope === "global" ? "marketplaceGlobalLoading" : "marketplaceLoading"));
     updateLoadMore();
     try {
       let response;
-      if(state.mode === "mine") response = await authClient.rpc("get_my_marketplace_listings");
+      if(state.scope === "global") response = await authClient.rpc("get_global_marketplace_feed", feedParams());
+      else if(state.mode === "mine") response = await authClient.rpc("get_my_marketplace_listings");
       else if(state.mode === "orders") response = await authClient.rpc("get_my_marketplace_orders");
       else response = await authClient.rpc("get_marketplace_feed", feedParams());
       if(!contextIsCurrent(context) || request !== state.feedRequest) return;
       if(response.error) throw response.error;
       const result = collection(response.data);
       const incoming = result.items.filter(item => state.mode === "orders" ? UUID_RE.test(orderId(item)) : UUID_RE.test(listingId(item)));
+      if(state.scope === "global") incoming.forEach(item => { item._crossCampus = true; });
       if(["mine", "orders"].includes(state.mode)){
         state.localItems = incoming;
         state.items = incoming.slice(0, PAGE_SIZE);
@@ -691,6 +906,7 @@
 
   async function setMode(mode){
     if(!["discover", "saved", "mine", "orders"].includes(mode)) mode = "discover";
+    if(state.scope === "global" && ["mine", "orders"].includes(mode)) mode = "discover";
     state.mode = mode;
     state.items = [];
     state.localItems = [];
@@ -707,7 +923,7 @@
     const grid = byId("marketplaceGrid");
     if(grid){
       unloadRenderedMedia(grid);
-      grid.replaceChildren(element("div", "marketplace-empty", tr("marketplaceLoading")));
+      grid.replaceChildren(element("div", "marketplace-empty", tr(state.scope === "global" ? "marketplaceGlobalLoading" : "marketplaceLoading")));
     }
     updateResultsLabel(0);
     updateLoadMore();
@@ -797,13 +1013,15 @@
     id = String(id || "");
     if(!UUID_RE.test(id) || !authClient || !state.userId) return null;
     const context = currentContext();
+    const requestedAsCrossCampus = state.scope === "global"
+      || state.items.some(item => listingId(item) === id && isCrossCampusListing(item));
     const request = ++state.detailRequest;
     const detailModal = byId("marketplaceDetailModal");
     if(detailModal?.hidden){
       state.returnFocus = trigger instanceof HTMLElement ? trigger : null;
     }
     const content = byId("marketplaceDetailContent");
-    content?.replaceChildren(element("div", "marketplace-detail-loading", tr("marketplaceLoading")));
+    content?.replaceChildren(element("div", "marketplace-detail-loading", tr(state.scope === "global" ? "marketplaceGlobalLoading" : "marketplaceLoading")));
     openModal(byId("marketplaceDetailModal"), byId("marketplaceDetailClose"));
     try {
       const {data, error} = await authClient.rpc("get_marketplace_listing", {p_listing_id:id});
@@ -811,6 +1029,7 @@
       if(error) throw error;
       const listing = listingRecord(data);
       if(!listing || !UUID_RE.test(listingId(listing))) throw new Error("Listing is unavailable");
+      if(requestedAsCrossCampus || listing.is_cross_school === true) listing._crossCampus = true;
       state.detail = listing;
       renderListingDetail(listing);
       if(window.location.hash !== `#listing-${id}`) history.replaceState(null, "", `#listing-${id}`);
@@ -862,6 +1081,7 @@
     unloadRenderedMedia(content);
     content.replaceChildren();
     const id = listingId(listing);
+    const crossCampus = isCrossCampusListing(listing);
     const layout = element("article", "marketplace-detail");
     const gallery = element("div", "marketplace-detail-gallery");
     const media = normalizeMedia(listing.media);
@@ -875,6 +1095,8 @@
     chips.append(element("span", "marketplace-status-chip", listingStatusLabel(listing)));
     information.append(chips);
     information.append(element("h2", "marketplace-detail-title", String(listing.title || "")));
+    const schoolContext = crossCampus ? universityContext(listing) : null;
+    if(schoolContext) information.append(schoolContext);
     information.append(element("strong", "marketplace-detail-price", listingPrice(listing)));
     if(listing.negotiable) information.append(element("span", "marketplace-negotiable", tr("marketplaceNegotiable")));
     information.append(element("p", "marketplace-detail-description", String(listing.description || "")));
@@ -893,12 +1115,15 @@
     const seller = normalizeSeller(listing);
     const sellerPanel = element("section", "marketplace-seller-panel");
     sellerPanel.append(element("span", "marketplace-section-label", tr("marketplaceSeller")), sellerButton(listing));
-    if(seller.username) sellerPanel.append(element("span", "marketplace-muted", `@${seller.username}`));
+    if(seller.username && !crossCampus) sellerPanel.append(element("span", "marketplace-muted", `@${seller.username}`));
     information.append(sellerPanel);
 
     const warning = element("div", "marketplace-checkout-warning");
     warning.setAttribute("role", "note");
-    warning.append(element("strong", "", tr("marketplaceCheckoutComingSoon")), element("p", "", tr("marketplaceCheckoutWarning")));
+    warning.append(
+      element("strong", "", tr(crossCampus ? "marketplaceGlobalScope" : "marketplaceCheckoutComingSoon")),
+      element("p", "", tr(crossCampus ? "marketplaceGlobalDiscoveryBoundary" : "marketplaceCheckoutWarning"))
+    );
     information.append(warning);
 
     const actions = element("div", "marketplace-detail-actions");
@@ -949,10 +1174,16 @@
       favorite.addEventListener("click", () => void toggleFavorite(id, favorite));
       actions.append(favorite);
       const message = detailAction(tr("marketplaceMessageSeller"));
-      message.disabled = !seller.username;
-      message.addEventListener("click", () => void messageSeller(listing));
+      if(crossCampus){
+        message.disabled = listing.can_message_seller !== true;
+        if(message.disabled) message.title = tr("marketplaceGlobalMessageUnavailable");
+        message.addEventListener("click", () => void startGlobalMarketplaceConversation(listing, message));
+      } else {
+        message.disabled = !seller.username;
+        message.addEventListener("click", () => void messageSeller(listing));
+      }
       actions.append(message);
-      if(String(listing.status || "active") === "active"){
+      if(!crossCampus && String(listing.status || "active") === "active"){
         if(listing.status === "active" && getListingMode(listing) === "sale" && listing.negotiable === true){
           const offer = detailAction(tr("marketplaceMakeOffer"));
           offer.addEventListener("click", () => void makeOffer(listing, offer));
@@ -974,7 +1205,7 @@
     share.addEventListener("click", () => void shareListing(id, listing.title));
     actions.append(share);
     information.append(actions);
-    const offers = renderOffers(listing);
+    const offers = crossCampus ? null : renderOffers(listing);
     if(offers) information.append(offers);
     layout.append(information);
     content.append(layout);
@@ -990,6 +1221,36 @@
     const username = normalizeSeller(listing).username;
     if(!username) return;
     await messageUsername(username);
+  }
+
+  async function startGlobalMarketplaceConversation(listing, trigger){
+    const id = listingId(listing);
+    if(!UUID_RE.test(id) || listing.can_message_seller !== true || state.busyListings.has(id)) return;
+    const context = currentContext();
+    state.busyListings.add(id);
+    if(trigger) trigger.disabled = true;
+    try {
+      const {data, error} = await authClient.rpc("start_marketplace_conversation", {p_listing_id:id});
+      if(!contextIsCurrent(context)) return;
+      if(error) throw error;
+      const conversationId = String(Array.isArray(data) ? data[0]?.conversation_id || data[0] || "" : data || "");
+      if(!UUID_RE.test(conversationId)) throw new Error("Conversation could not be started");
+      setStatus(tr("marketplaceGlobalConversationStarted"), "success");
+      closeDetail({restoreFocus:false, clearHash:true});
+      if(typeof hub().openConversationById === "function"){
+        const opened = await hub().openConversationById(conversationId);
+        if(!opened) throw new Error("Conversation could not be opened");
+      } else if(typeof hub().switchView === "function"){
+        await hub().switchView("messages");
+      }
+    } catch(error){
+      if(contextIsCurrent(context)) setStatus(featureError(error), "error");
+    } finally {
+      if(contextIsCurrent(context)){
+        state.busyListings.delete(id);
+        if(trigger?.isConnected) trigger.disabled = false;
+      }
+    }
   }
 
   async function messageUsername(username){
@@ -1225,6 +1486,7 @@
     byId("marketplaceCourseInput").value = listing?.course_code || listing?.course || "";
     byId("marketplaceNegotiableInput").checked = listing?.negotiable === true;
     byId("marketplaceRightsInput").checked = !!listing?.rights_attestation || listing?.academic_rights_confirmed === true;
+    if(byId("marketplaceGlobalVisibilityInput")) byId("marketplaceGlobalVisibilityInput").checked = listing?.global_visible === true;
     if(byId("marketplaceRightsBasisInput")) byId("marketplaceRightsBasisInput").value = RIGHTS_BASIS_VALUES.includes(listing?.academic_rights_basis) ? listing.academic_rights_basis : "not_applicable";
     const deliveries = new Set(parseJson(listing?.delivery_methods, []));
     document.querySelectorAll('#marketplaceDeliveryInputs input[name="marketplaceDelivery"]').forEach(input => { input.checked = deliveries.has(input.value); });
@@ -1251,7 +1513,7 @@
   }
 
   async function openListingEditor(listing=null, trigger=document.activeElement){
-    if(!state.userId) return;
+    if(!state.userId || (state.scope === "global" && !listing)) return;
     let fullListing = listing;
     if(listing && !listing.description){
       const id = listingId(listing);
@@ -1391,12 +1653,22 @@
     const context = currentContext();
     const operation = ++state.editorOperation;
     const existing = state.editorListing;
+    const shareGlobally = byId("marketplaceGlobalVisibilityInput")?.checked === true;
+    const wasSharedGlobally = existing?.global_visible === true;
     const id = existing ? listingId(existing) : crypto.randomUUID();
     if(!UUID_RE.test(id)) return;
     let uploaded = [];
     setEditorBusy(true);
     setEditorStatus(tr("marketplaceSaving"));
     try {
+      if(existing && wasSharedGlobally && !shareGlobally){
+        const visibilityResponse = await authClient.rpc("set_marketplace_listing_global_visibility", {
+          p_listing_id:id,
+          p_visible:false
+        });
+        if(!contextIsCurrent(context) || operation !== state.editorOperation) return;
+        if(visibilityResponse.error) throw visibilityResponse.error;
+      }
       let response;
       if(existing){
         response = await authClient.rpc("update_marketplace_listing", {
@@ -1411,10 +1683,25 @@
       }
       if(!contextIsCurrent(context) || operation !== state.editorOperation){ await removeUploaded(uploaded); return; }
       if(response.error) throw response.error;
+      let globalVisibilityFailed = false;
+      if(shareGlobally && (!existing || !wasSharedGlobally)){
+        const visibilityResponse = await authClient.rpc("set_marketplace_listing_global_visibility", {
+          p_listing_id:id,
+          p_visible:true
+        });
+        if(!contextIsCurrent(context) || operation !== state.editorOperation){ await removeUploaded(uploaded); return; }
+        globalVisibilityFailed = !!visibilityResponse.error;
+      }
       uploaded = [];
       closeEditor({restoreFocus:false, force:true});
-      setStatus(tr("marketplaceSaved"), "success");
       await Promise.all([loadMarketplace({force:true}), loadCommunityListingChoices()]);
+      setStatus(
+        globalVisibilityFailed
+          ? tr("marketplaceGlobalVisibilityFailed")
+          : tr(shareGlobally ? "marketplaceSavedGlobally" : "marketplaceSavedCampusOnly"),
+        globalVisibilityFailed ? "error" : "success"
+      );
+      if(globalVisibilityFailed) return;
       await openListing(id, byId("marketplaceSellButton"));
     } catch(error){
       await removeUploaded(uploaded);
@@ -1717,6 +2004,7 @@
     state.generation += 1;
     state.userId = nextUserId;
     state.active = false;
+    state.scope = "campus";
     state.mode = "discover";
     state.query = "";
     state.category = "all";
@@ -1755,6 +2043,7 @@
     if(search){ search.value = ""; search.disabled = false; }
     if(category){ category.value = "all"; category.disabled = false; }
     if(sort){ sort.value = "recent"; sort.disabled = false; }
+    syncScopeUi();
     document.querySelectorAll("#marketplaceModes [data-market-mode]").forEach(button => {
       const active = button.dataset.marketMode === "discover";
       button.classList.toggle("active", active);
@@ -1809,6 +2098,8 @@
   }
 
   function refreshLanguage(){
+    syncScopeUi();
+    syncGlobalVisibilityCopy();
     updateResultsLabel();
     updateLoadMore();
     renderGrid();
@@ -1844,10 +2135,17 @@
   }
 
   function bindEvents(){
+    ensureScopeControls();
+    ensureGlobalVisibilityControl();
+    syncScopeUi();
     document.querySelectorAll("#marketplaceModes [data-market-mode]").forEach(button => {
       button.tabIndex = button.dataset.marketMode === "discover" ? 0 : -1;
     });
     byId("marketplaceSellButton")?.addEventListener("click", event => void openListingEditor(null, event.currentTarget));
+    byId("marketplaceScope")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-market-scope]");
+      if(button) void setScope(button.dataset.marketScope);
+    });
     byId("marketplaceAddMediaButton")?.addEventListener("click", () => byId("marketplaceMediaInput")?.click());
     byId("marketplaceEditorCancel")?.addEventListener("click", () => closeEditor());
     byId("marketplaceEditorCancelButton")?.addEventListener("click", () => closeEditor());
@@ -1873,7 +2171,7 @@
     });
     byId("marketplaceModes")?.addEventListener("keydown", event => {
       if(!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-      const buttons = [...event.currentTarget.querySelectorAll("[data-market-mode]")];
+      const buttons = [...event.currentTarget.querySelectorAll("[data-market-mode]")].filter(button => !button.hidden && !button.disabled);
       const index = buttons.indexOf(event.target.closest("[data-market-mode]"));
       if(index < 0 || !buttons.length) return;
       event.preventDefault();

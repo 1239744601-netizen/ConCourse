@@ -41,6 +41,8 @@
     activeConversationUserId: null,
     activeConversationName: "",
     activeConversationUsername: "",
+    activeConversationContext: "",
+    activeConversationCanSend: false,
     messages: [],
     sendingMessage: false,
     messagePoll: null,
@@ -260,6 +262,8 @@
     hubState.activeConversationUserId = null;
     hubState.activeConversationName = "";
     hubState.activeConversationUsername = "";
+    hubState.activeConversationContext = "";
+    hubState.activeConversationCanSend = false;
     hubState.messages = [];
     hubState.sendingMessage = false;
     hubState.loadingFeed = false;
@@ -525,12 +529,14 @@
 
   function renderHubHeader(){
     const view = ["community", "marketplace", "messages", "overview", "profile"].includes(hubState.activeView) ? hubState.activeView : "community";
+    const worldwideCommunity = view === "community" && hubState.feedScope === "cross";
+    const worldwideMarketplace = view === "marketplace" && $("memberHub")?.dataset.marketplaceScope === "global";
     const prefix = view === "overview"
       ? "hubInsights"
       : view === "community"
-        ? "hubCommunity"
+        ? (worldwideCommunity ? "hubCommunityGlobal" : "hubCommunity")
         : view === "marketplace"
-          ? "hubMarketplace"
+          ? (worldwideMarketplace ? "hubMarketplaceGlobal" : "hubMarketplace")
           : view === "messages"
             ? "hubMessages"
             : "hubProfile";
@@ -2020,6 +2026,11 @@
       wrapper.append(button);
     });
     wrapper.append(node("span", "hub-poll-summary", t(total === 1 ? "oneVote" : "votesCount", {count:total})));
+    if(hubState.feedScope === "cross"){
+      const note = node("span", "hub-poll-readonly-note", t("worldwidePollReadOnly"));
+      note.setAttribute("role", "note");
+      wrapper.append(note);
+    }
     return wrapper;
   }
 
@@ -2155,6 +2166,7 @@
     if($("communityComposer")) $("communityComposer").hidden = crossCampus;
     if($("communityFeedTitle")) $("communityFeedTitle").textContent = t(crossCampus ? "acrossCampusFeed" : "campusFeed");
     if($("communitySearch")) $("communitySearch").placeholder = t(crossCampus ? "searchAcrossCampuses" : "searchCommunity");
+    if(hubState.activeView === "community") renderHubHeader();
     if(!crossCampus) setStatus("communityFeedStatus", "");
   }
 
@@ -2772,7 +2784,7 @@
       hubState.feedScope = "cross";
       syncCommunityScopeControls();
     }
-    const mode = communityFeedMode();
+    let mode = communityFeedMode();
     if(!force && !append && hubState.feed.length && hubState.feedMode === mode){
       renderCommunityFeed(hubState.feed);
       return;
@@ -2814,6 +2826,7 @@
       : null;
     const hashPostId = hashMatch?.[1] || "";
     if(hashPostId && !rows.some(post => post.post_id === hashPostId)){
+      const requestedScope = hubState.feedScope;
       let targeted = {data:null, error:null};
       try {
         targeted = await requestCommunityFeed({
@@ -2826,7 +2839,37 @@
         targeted = {data:null, error:requestError};
       }
       if(!contextIsCurrent(context) || request !== hubState.feedRequest) return;
-      if(!targeted.error && Array.isArray(targeted.data)) rows = [...rows, ...targeted.data];
+      if(!targeted.error && Array.isArray(targeted.data) && targeted.data.length){
+        rows = [...rows, ...targeted.data];
+      } else if(!targeted.error && Array.isArray(targeted.data)){
+        // A shared post can be opened by both its home campus and the wider
+        // verified network. If the link's original scope is not the viewer's
+        // applicable scope, resolve it safely through the alternate feed RPC.
+        const alternateScope = requestedScope === "cross" ? "school" : "cross";
+        let alternate = {data:null, error:null};
+        try {
+          alternate = await requestCommunityFeed({
+            p_limit:1,
+            p_offset:0,
+            p_bookmarked_only:false,
+            p_post_id:hashPostId
+          }, alternateScope);
+        } catch(requestError){
+          alternate = {data:null, error:requestError};
+        }
+        if(!contextIsCurrent(context) || request !== hubState.feedRequest) return;
+        if(!alternate.error && Array.isArray(alternate.data) && alternate.data.length){
+          hubState.feedScope = alternateScope;
+          hubState.feed = [];
+          hubState.feedOffset = 0;
+          hubState.feedHasMore = false;
+          syncCommunityScopeControls();
+          syncCommunityTopicControls();
+          mode = communityFeedMode();
+          rows = alternate.data;
+          data = alternate.data;
+        }
+      }
     }
     const base = append && hubState.feedMode === mode ? hubState.feed : [];
     const seen = new Set(base.map(post => post.post_id));
@@ -2939,6 +2982,14 @@
     }
   }
 
+  function conversationContextLabel(conversation){
+    if(conversation?.conversation_context !== "marketplace") return "";
+    return [conversation.other_school_name, conversation.marketplace_listing_title]
+      .map(value => String(value || "").trim())
+      .filter(Boolean)
+      .join(" · ");
+  }
+
   function renderConversations(conversations){
     const list = $("conversationList");
     list.replaceChildren();
@@ -2953,7 +3004,10 @@
       button.classList.toggle("active", conversation.conversation_id === hubState.activeConversationId);
       const avatar = createAvatar(conversation.other_display_name || conversation.other_username, conversation.other_avatar_path, conversation.other_avatar_revision);
       const copy = node("div");
-      copy.append(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)), node("span", "", conversation.last_message || t("messagesEmpty")));
+      copy.append(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)));
+      const contextLabel = conversationContextLabel(conversation);
+      if(contextLabel) copy.append(node("small", "hub-conversation-context", contextLabel));
+      copy.append(node("span", "", conversation.last_message || t("messagesEmpty")));
       button.append(avatar, copy);
       button.onclick = () => openConversation(conversation);
       list.append(button);
@@ -2975,7 +3029,10 @@
       button.type = "button";
       const avatar = createAvatar(conversation.other_display_name || conversation.other_username, conversation.other_avatar_path, conversation.other_avatar_revision, "hub-avatar-small");
       const copy = node("span");
-      copy.append(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)), node("small", "", conversation.last_message || t("messagesEmpty")));
+      copy.append(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)));
+      const contextLabel = conversationContextLabel(conversation);
+      if(contextLabel) copy.append(node("small", "hub-conversation-context", contextLabel));
+      copy.append(node("small", "", conversation.last_message || t("messagesEmpty")));
       button.append(avatar, copy, node("i", "", "→"));
       button.onclick = async () => {
         const context = requestContext();
@@ -2996,6 +3053,8 @@
     hubState.activeConversationUserId = null;
     hubState.activeConversationName = "";
     hubState.activeConversationUsername = "";
+    hubState.activeConversationContext = "";
+    hubState.activeConversationCanSend = false;
     hubState.messages = [];
     hubState.sendingMessage = false;
     $("chatHeading").textContent = message;
@@ -3062,8 +3121,12 @@
   function renderActiveConversationHeader(){
     if(hubState.activeConversationId){
       $("chatHeading").textContent = hubState.activeConversationName;
-      $("chatSubheading").textContent = t("directMessagePrivacy");
-      $("chatMessageInput").placeholder = t("writePrivateMessage");
+      $("chatSubheading").textContent = [
+        hubState.activeConversationContext,
+        hubState.activeConversationCanSend ? "" : t("conversationReadOnly"),
+        t("directMessagePrivacy")
+      ].filter(Boolean).join(" · ");
+      $("chatMessageInput").placeholder = t(hubState.activeConversationCanSend ? "writePrivateMessage" : "conversationReadOnly");
     } else {
       $("chatHeading").textContent = t("selectConversation");
       $("chatSubheading").textContent = "";
@@ -3078,9 +3141,11 @@
     hubState.activeConversationUserId = conversation.other_user_id;
     hubState.activeConversationName = identityLabel(conversation.other_display_name, conversation.other_username);
     hubState.activeConversationUsername = conversation.other_username || "";
+    hubState.activeConversationContext = conversationContextLabel(conversation);
+    hubState.activeConversationCanSend = conversation.can_send !== false;
     renderActiveConversationHeader();
-    $("chatMessageInput").disabled = hubState.sendingMessage;
-    $("sendChatMessage").disabled = hubState.sendingMessage;
+    $("chatMessageInput").disabled = hubState.sendingMessage || !hubState.activeConversationCanSend;
+    $("sendChatMessage").disabled = hubState.sendingMessage || !hubState.activeConversationCanSend;
     $("reportConversation").disabled = false;
     $("blockConversationUser").disabled = !hubState.activeConversationUserId;
     if(!skipConversationRender) renderConversations(hubState.conversations);
@@ -3105,6 +3170,21 @@
     setStatus("chatStatus", "");
     hubState.messages = Array.isArray(data) ? data : [];
     renderMessages(hubState.messages);
+  }
+
+  async function openConversationById(conversationId){
+    const id = String(conversationId || "");
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return false;
+    hubState.activeConversationId = id;
+    await switchView("messages");
+    let conversation = hubState.conversations.find(item => item.conversation_id === id);
+    if(!conversation){
+      await loadConversations({force:true, suppressStatus:true});
+      conversation = hubState.conversations.find(item => item.conversation_id === id);
+    }
+    if(!conversation) return false;
+    await openConversation(conversation, {skipConversationRender:false, showLoading:true});
+    return true;
   }
 
   async function startConversation(){
@@ -3155,7 +3235,7 @@
 
   async function sendMessage(){
     const button = $("sendChatMessage");
-    if(button.disabled || hubState.sendingMessage) return;
+    if(button.disabled || !hubState.activeConversationCanSend || hubState.sendingMessage) return;
     const body = $("chatMessageInput").value.trim();
     if(!body){ setStatus("chatStatus", t("messageRequired"), "error"); return; }
     if(!hubState.activeConversationId) return;
@@ -3187,9 +3267,9 @@
     } finally {
       if(contextIsCurrent(context)){
         hubState.sendingMessage = false;
-        const hasActiveConversation = !!hubState.activeConversationId;
-        $("chatMessageInput").disabled = !hasActiveConversation;
-        button.disabled = !hasActiveConversation;
+        const canSend = !!hubState.activeConversationId && hubState.activeConversationCanSend;
+        $("chatMessageInput").disabled = !canSend;
+        button.disabled = !canSend;
       }
     }
   }
@@ -3235,6 +3315,13 @@
       renderOverview();
       if(!hubState.profileUserId) loadMemberProfile().catch(console.warn);
       if(!hubState.socialConnectionUserId && !hubState.socialConnectionLoading) loadSocialConnections().catch(console.warn);
+      const postHash = String(window.location.hash || "").match(/^#(cross-)?post-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      if(postHash && $("memberHub").hidden){
+        hubState.feedScope = postHash[1] ? "cross" : "school";
+        hubState.feedTopic = "all";
+        showHub("community");
+        return;
+      }
     }
     window.ConCourseMarketplace?.syncAccess();
     window.syncPrimaryNavigation?.();
@@ -3363,7 +3450,8 @@
       hubState.feedTopic = "all";
       syncCommunityScopeControls();
       syncCommunityTopicControls();
-      void loadCommunityFeed({force:true});
+      if($("memberHub").hidden) showHub("community");
+      else void switchView("community");
     } else renderCommunityFeed(hubState.feed);
   });
   window.addEventListener("beforeunload", () => { revokeAvatarUrls(); revokeCommunityMediaUrls(); }, {once:true});
@@ -3372,6 +3460,8 @@
     show: showHub,
     hide: hideHub,
     switchView,
+    openConversationById,
+    refreshHeader: renderHubHeader,
     syncAccess,
     syncFinalSchedule,
     requestAction: requestHubAction,

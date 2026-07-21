@@ -304,6 +304,97 @@ input.market-search::placeholder {
 
 .market-trust-strip span { min-width: 0; }
 
+/* Campus / global discovery scope. This reads as navigation, not another card. */
+
+.market-scope {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(220px, 1fr);
+  gap: 18px clamp(24px, 4vw, 56px);
+  align-items: end;
+  margin: 4px 0 8px;
+  padding: 0 2px;
+}
+
+.market-scope-choices {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 3vw, 38px);
+}
+
+.market-scope-button {
+  position: relative;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 0 12px;
+  color: #777a82;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: clamp(13px, 1.2vw, 15px);
+  font-weight: 760;
+  letter-spacing: -.015em;
+  white-space: nowrap;
+}
+
+.market-scope-button::after {
+  content: "";
+  position: absolute;
+  right: 50%;
+  bottom: 3px;
+  left: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, #e99d12, #ffca62);
+  border-radius: 99px;
+  transition: right .24s ease, left .24s ease;
+}
+
+.market-scope-button:hover,
+.market-scope-button.active,
+.market-scope-button[aria-pressed="true"] {
+  color: var(--market-ink);
+  background: transparent;
+  filter: none;
+  transform: none;
+}
+
+.market-scope-button.active::after,
+.market-scope-button[aria-pressed="true"]::after {
+  right: 0;
+  left: 0;
+}
+
+.market-scope-description {
+  max-width: 620px;
+  justify-self: end;
+  margin: 0 0 12px;
+  color: var(--market-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.marketplace-view[data-market-scope="global"] .market-trust-strip {
+  margin-top: 0;
+  padding: 10px 2px 13px;
+  color: #526276;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--market-line);
+  border-radius: 0;
+}
+
+.marketplace-view[data-market-scope="global"] .market-trust-strip b { color: #0d5d9f; }
+.marketplace-view[data-market-scope="global"] .market-discovery-bar {
+  grid-template-columns: minmax(280px, 1fr) minmax(142px, 172px) minmax(142px, 172px);
+}
+.marketplace-view[data-market-scope="global"] .market-layout { grid-template-columns: minmax(0, 1fr); }
+.marketplace-view[data-market-scope="global"] .market-rail { display: none; }
+.market-sell-button[hidden],
+.market-mode-tabs > button[hidden] { display: none !important; }
+
 .market-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(238px, 278px);
@@ -1457,6 +1548,37 @@ input.market-search::placeholder {
 .marketplace-check-row { margin-top: 8px; }
 .marketplace-rights-check { background: #fffaf0; border-color: rgba(232,134,0,.17); }
 
+.marketplace-global-visibility-check {
+  align-items: center;
+  margin-top: 14px;
+  padding: 12px 2px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--market-line);
+  border-bottom: 1px solid var(--market-line);
+  border-radius: 0;
+}
+
+.marketplace-global-visibility-copy { min-width: 0; }
+
+.marketplace-global-visibility-copy :where(b, small) {
+  display: block;
+}
+
+.marketplace-global-visibility-copy b {
+  color: var(--market-ink);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.marketplace-global-visibility-copy small {
+  margin-top: 4px;
+  color: var(--market-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
 .marketplace-editor-status {
   min-height: 20px;
   margin: 10px 0 0;
@@ -2115,6 +2237,75 @@ input.market-search::placeholder {
 
 .marketplace-seller-button:hover { color: var(--market-ink); background: #e9e9ec; filter: none; transform: none; }
 
+.marketplace-global-seller {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: #526276;
+  font-size: 11.5px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marketplace-university-context {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 2px 0 16px;
+  padding-left: 2px;
+}
+
+.marketplace-university-context.compact {
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 7px;
+  margin: -1px 0 10px;
+}
+
+.marketplace-university-mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #0a6bb7;
+  background: radial-gradient(circle, rgba(85,183,255,.2), rgba(85,183,255,0) 72%);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.marketplace-university-context.compact .marketplace-university-mark {
+  width: 22px;
+  height: 22px;
+  font-size: 16px;
+}
+
+.marketplace-university-copy { min-width: 0; }
+
+.marketplace-university-copy :where(small, strong) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marketplace-university-copy small {
+  color: #4683ad;
+  font-size: 10px;
+  font-weight: 780;
+  letter-spacing: .02em;
+}
+
+.marketplace-university-copy strong {
+  margin-top: 2px;
+  color: var(--market-ink);
+  font-size: 12px;
+}
+
+.marketplace-university-context.compact .marketplace-university-copy small { font-size: 9px; }
+.marketplace-university-context.compact .marketplace-university-copy strong { font-size: 11px; }
+
 .marketplace-card-actions {
   display: flex;
   align-items: center;
@@ -2670,6 +2861,7 @@ input.market-search::placeholder {
   }
 
   .market-search { grid-column: 1 / -1; }
+  .marketplace-view[data-market-scope="global"] .market-discovery-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .market-layout { grid-template-columns: minmax(0, 1fr); }
   .market-rail { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .market-rail > .market-protection-card { grid-column: 1 / -1; }
@@ -2696,6 +2888,27 @@ input.market-search::placeholder {
     margin-top: 10px;
     padding: 8px;
     border-radius: 18px;
+  }
+
+  .marketplace-view[data-market-scope="global"] .market-discovery-bar { grid-template-columns: minmax(0, 1fr); }
+
+  .market-scope {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 2px;
+  }
+
+  .market-scope-choices {
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .market-scope-button { flex: 1; }
+
+  .market-scope-description {
+    justify-self: start;
+    margin: 4px 0 8px;
+    text-align: left;
   }
 
   .market-search,
@@ -2923,4 +3136,240 @@ input.market-search::placeholder {
   #memberHub,
   .member-hub[data-active-view="marketplace"],
   .marketplace-modal { display: none !important; }
+}
+
+/* --------------------------------------------------------------------------
+   Cinematic marketplace
+   The catalogue is a gallery, not a grid of boxed widgets.  Product imagery,
+   prices and editorial rhythm carry hierarchy; transactional controls keep
+   the clear affordances required for safe buying and selling.
+   -------------------------------------------------------------------------- */
+
+.member-hub[data-active-view="marketplace"] .market-discovery-bar {
+  padding: 0 0 22px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(139, 216, 255, .18);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.member-hub[data-active-view="marketplace"] .market-search {
+  background: rgba(255, 253, 248, .96);
+  border: 1px solid rgba(139, 216, 255, .24);
+  box-shadow: 0 14px 40px rgba(1, 12, 24, .13);
+}
+
+.member-hub[data-active-view="marketplace"] .market-filter-select > select {
+  background-color: rgba(255, 253, 248, .96);
+  border-color: rgba(139, 216, 255, .2);
+  box-shadow: 0 10px 28px rgba(1, 12, 24, .1);
+}
+
+.member-hub[data-active-view="marketplace"] .market-mode-tabs {
+  gap: clamp(20px, 3vw, 40px);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(139, 216, 255, .18);
+  border-radius: 0;
+}
+
+.member-hub[data-active-view="marketplace"] .market-mode-tabs > button,
+.member-hub[data-active-view="marketplace"] .market-mode-button {
+  min-width: max-content;
+  padding-inline: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="marketplace"] .market-mode-tabs > button:hover,
+.member-hub[data-active-view="marketplace"] .market-mode-tabs > button.active,
+.member-hub[data-active-view="marketplace"] .market-mode-tabs > button[aria-selected="true"] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="marketplace"] .market-trust-strip {
+  padding: 4px 2px 18px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(139, 216, 255, .12);
+  border-radius: 0;
+}
+
+.member-hub[data-active-view="marketplace"] .market-catalogue {
+  padding: clamp(32px, 4.8vw, 62px) clamp(26px, 5vw, 66px);
+  background: linear-gradient(90deg,
+    transparent 0,
+    rgba(248, 245, 237, .76) 3%,
+    rgba(255, 253, 248, .985) 10%,
+    rgba(255, 253, 248, .985) 90%,
+    rgba(248, 245, 237, .74) 97%,
+    transparent 100%);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="marketplace"] .market-results-heading {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--market-line);
+}
+
+.member-hub[data-active-view="marketplace"] .market-grid {
+  gap: clamp(26px, 3.2vw, 44px) clamp(18px, 2.3vw, 30px);
+}
+
+.member-hub[data-active-view="marketplace"] :is(.marketplace-card, .market-card) {
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="marketplace"] :is(.marketplace-card, .market-card):hover,
+.member-hub[data-active-view="marketplace"] :is(.marketplace-card, .market-card):focus-within {
+  border: 0;
+  box-shadow: none;
+  transform: translateY(-3px);
+}
+
+.member-hub[data-active-view="marketplace"] :is(.marketplace-card-media-button, .market-card-media) {
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  -webkit-mask-image: radial-gradient(ellipse 98% 96% at 50% 48%, #000 66%, rgba(0, 0, 0, .92) 80%, transparent 100%);
+  mask-image: radial-gradient(ellipse 98% 96% at 50% 48%, #000 66%, rgba(0, 0, 0, .92) 80%, transparent 100%);
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-media-button:focus-visible {
+  outline: 3px solid rgba(0, 113, 227, .72);
+  outline-offset: -5px;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-media {
+  background: transparent;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-body {
+  padding: 16px 4px 0;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-title {
+  font-size: clamp(14px, 1.35vw, 17px);
+  font-weight: 790;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-actions {
+  gap: 14px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid var(--market-line);
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-action {
+  min-height: 38px;
+  padding: 7px 0;
+  color: #4d6477;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-action:hover,
+.member-hub[data-active-view="marketplace"] .marketplace-card-action.active,
+.member-hub[data-active-view="marketplace"] .marketplace-card-action[aria-pressed="true"] {
+  color: var(--market-trust);
+  background: transparent;
+  border-bottom-color: currentColor;
+}
+
+.member-hub[data-active-view="marketplace"] .market-rail {
+  padding: clamp(24px, 3vw, 38px);
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 253, 248, .94) 12%,
+    rgba(255, 253, 248, .98) 86%,
+    transparent);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="marketplace"] .market-rail-card {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="marketplace"] .market-empty,
+.member-hub[data-active-view="marketplace"] .marketplace-empty {
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, .72), transparent 76%);
+  border: 0;
+  border-radius: 0;
+}
+
+/* Listing media in the detail view receives the same soft dissolve.  The
+   editor, checkout and order dialogs intentionally retain a clear perimeter. */
+.marketplace-modal .market-detail-hero,
+.marketplace-modal .marketplace-detail-gallery > .marketplace-media:first-child {
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  -webkit-mask-image: radial-gradient(ellipse 98% 95% at center, #000 68%, rgba(0, 0, 0, .92) 82%, transparent 100%);
+  mask-image: radial-gradient(ellipse 98% 95% at center, #000 68%, rgba(0, 0, 0, .92) 82%, transparent 100%);
+}
+
+@media (max-width: 960px) {
+  .member-hub[data-active-view="marketplace"] .market-catalogue {
+    padding-inline: clamp(22px, 5vw, 48px);
+  }
+}
+
+@media (max-width: 700px) {
+  .member-hub[data-active-view="marketplace"] .market-discovery-bar {
+    padding: 0 0 18px;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-catalogue {
+    padding: 26px 18px;
+    background: linear-gradient(90deg,
+      rgba(248, 245, 237, .78),
+      rgba(255, 253, 248, .99) 5% 95%,
+      rgba(248, 245, 237, .78));
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-mode-tabs {
+    gap: 24px;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-grid {
+    gap: 30px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-hub[data-active-view="marketplace"] :is(.marketplace-card, .market-card),
+  .member-hub[data-active-view="marketplace"] :is(.marketplace-card-media-button, .market-card-media) > :where(img, video) {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .member-hub[data-active-view="marketplace"] :is(.marketplace-card-media-button, .market-card-media),
+  .marketplace-modal .market-detail-hero,
+  .marketplace-modal .marketplace-detail-gallery > .marketplace-media:first-child {
+    -webkit-mask-image: none;
+    mask-image: none;
+    border: 1px solid CanvasText;
+  }
 }

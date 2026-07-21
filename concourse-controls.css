@@ -4905,3 +4905,749 @@ body.app-active #landingScreen .language-control {
     font-size: 10.5px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Frameless masthead
+   The account utilities and primary destinations sit directly on the navy
+   field. These final rules intentionally close the cascade so legacy glass-
+   card declarations cannot restore an enclosing header box.
+   -------------------------------------------------------------------------- */
+
+#landingScreen .header-row,
+body.app-active #landingScreen .header-row {
+  padding-inline: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.app-active #landingScreen {
+  padding-top: 10px;
+  padding-bottom: 16px;
+  border: 0;
+  background: linear-gradient(180deg, rgba(4, 17, 31, .97) 0%, rgba(4, 17, 31, .9) 72%, rgba(4, 17, 31, .72) 100%);
+  box-shadow: none;
+}
+
+body.app-active #landingScreen .brand {
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+body.app-active #landingScreen .brand:hover {
+  border: 0;
+  background: transparent;
+  opacity: .84;
+  transform: translateY(-1px);
+}
+
+body.app-active #landingScreen .primary-navigation {
+  gap: clamp(22px, 3vw, 42px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.app-active #landingScreen .primary-navigation-button {
+  position: relative;
+  min-height: 42px;
+  min-width: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 0;
+  color: rgba(229, 239, 248, .62);
+  background: transparent;
+  box-shadow: none;
+}
+
+body.app-active #landingScreen .primary-navigation-button::after {
+  content: "";
+  position: absolute;
+  right: 50%;
+  bottom: 3px;
+  left: 50%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--cc-control-sky);
+  opacity: 0;
+  transition: right .24s ease, left .24s ease, opacity .2s ease;
+}
+
+body.app-active #landingScreen .primary-navigation-button:hover:not(:disabled) {
+  color: #fff;
+  background: transparent;
+}
+
+body.app-active #landingScreen .primary-navigation-button:hover:not(:disabled)::after,
+body.app-active #landingScreen .primary-navigation-button[aria-current="page"]::after {
+  right: 0;
+  left: 0;
+  opacity: 1;
+}
+
+body.app-active #landingScreen .primary-navigation-button[aria-current="page"] {
+  color: #fff;
+  background: transparent;
+  box-shadow: none;
+}
+
+#landingScreen .auth-bar :is(.btn-primary, .btn-ghost),
+body.app-active #landingScreen #signOutBtn {
+  min-height: 40px;
+  padding-inline: 10px;
+  border: 0;
+  border-radius: 0;
+  color: rgba(241, 247, 252, .76);
+  background: transparent;
+  box-shadow: none;
+}
+
+#landingScreen .auth-bar .btn-primary {
+  color: var(--gold-300);
+  background: transparent;
+  border: 0;
+}
+
+#landingScreen .auth-bar :is(.btn-primary, .btn-ghost):hover {
+  color: #fff;
+  background: transparent;
+  border: 0;
+  box-shadow: inset 0 -2px 0 rgba(139, 216, 255, .7);
+}
+
+#landingScreen .language-control,
+body.app-active #landingScreen .language-control {
+  min-width: 132px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 2px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  color: rgba(240, 247, 252, .84);
+  background: transparent;
+  box-shadow: none;
+}
+
+#landingScreen .language-control::before {
+  display: none;
+}
+
+#landingScreen .language-control::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  left: 0;
+  height: 1px;
+  background: rgba(139, 216, 255, .3);
+  transform: scaleX(.34);
+  transform-origin: left;
+  transition: background-color .22s ease, transform .22s ease;
+}
+
+#landingScreen .language-control:hover,
+#landingScreen .language-control:focus-within {
+  border: 0;
+  color: #fff;
+  background: transparent;
+  box-shadow: none;
+}
+
+#landingScreen .language-control:hover::after,
+#landingScreen .language-control:focus-within::after {
+  background: var(--cc-control-sky);
+  transform: scaleX(1);
+}
+
+#landingScreen .language-icon {
+  width: 29px;
+  height: 29px;
+  flex-basis: 29px;
+  color: var(--sky-300);
+  background: transparent;
+  box-shadow: none;
+}
+
+#landingScreen .language-select {
+  color: rgba(244, 249, 252, .9);
+}
+
+body.app-active #landingScreen :is(
+  .primary-navigation-button,
+  #signOutBtn,
+  .brand
+):focus-visible,
+#landingScreen .auth-bar :is(.btn-primary, .btn-ghost):focus-visible,
+#landingScreen .language-control:focus-within {
+  outline: 2px solid rgba(139, 216, 255, .86);
+  outline-offset: 4px;
+}
+
+@media (max-width: 760px) {
+  body.app-active #landingScreen {
+    padding-bottom: 12px;
+  }
+
+  body.app-active #landingScreen .primary-navigation {
+    justify-content: center;
+    gap: clamp(24px, 12vw, 68px);
+    padding-top: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  #landingScreen .language-control,
+  body.app-active #landingScreen .language-control {
+    width: 38px;
+    min-width: 38px;
+    padding: 0 4px;
+    overflow: hidden;
+  }
+
+  #landingScreen .language-control::after {
+    right: 4px;
+    left: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.app-active #landingScreen .brand,
+  body.app-active #landingScreen .primary-navigation-button::after,
+  #landingScreen .language-control::after {
+    transition: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Edge-free cinematic product language
+   Final cascade: large areas dissolve into their surrounding scene.  Explicit
+   boundaries are reserved for editable fields, decisive actions, the calendar
+   grid, message bubbles and modal dialogs.
+   -------------------------------------------------------------------------- */
+
+/* Planner: chapters separated by rhythm and light instead of stacked cards. */
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(7, 29, 50, .15);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a {
+  min-height: 52px;
+  padding: 12px 2px 14px;
+  color: #52677a;
+  background: transparent;
+  border: 0;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a + a {
+  margin-left: clamp(24px, 5vw, 70px);
+  border-left: 0;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a span {
+  display: none;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a:hover,
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a:focus-visible {
+  color: var(--navy-950);
+  background: transparent;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel {
+  margin: 0 !important;
+  padding: clamp(38px, 5vw, 68px) 2px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid rgba(7, 29, 50, .13);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel:hover {
+  background: transparent;
+  box-shadow: none;
+}
+
+.configurator-column .panel-index,
+#wishlistPanel .panel-index,
+#timetablePanel .panel-index {
+  display: none !important;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel-heading {
+  margin-bottom: clamp(30px, 4vw, 46px);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel-heading h2 {
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 820;
+  line-height: .98;
+  letter-spacing: -.045em;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .choice {
+  min-height: 58px;
+  padding: 15px 12px;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(7, 29, 50, .14);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .choice:hover {
+  background: linear-gradient(90deg, rgba(47, 109, 246, .06), transparent 72%);
+  border-color: rgba(47, 109, 246, .34);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .choice.sel {
+  color: var(--navy-950);
+  background: linear-gradient(90deg, rgba(47, 109, 246, .13), transparent 78%);
+  border-color: rgba(47, 109, 246, .42);
+  box-shadow: inset 4px 0 0 var(--cc-control-blue);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .choice.sel :is(.c-txt, .c-txt b, .c-eg) {
+  color: var(--navy-950);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .prefs label.chk {
+  margin: 0;
+  padding: 15px 4px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(7, 29, 50, .13);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .prefs label.chk:hover,
+body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .prefs label.chk:has(input:checked) {
+  background: linear-gradient(90deg, rgba(47, 109, 246, .08), transparent 72%);
+  border-color: rgba(47, 109, 246, .3);
+  box-shadow: inset 4px 0 0 var(--cc-control-blue);
+}
+
+/* The saved outcome is a navy pool of light, not a floating rectangle. */
+body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
+  padding: clamp(34px, 4.5vw, 58px);
+  overflow: visible;
+  background: radial-gradient(ellipse 104% 96% at 48% 46%,
+    rgba(9, 35, 60, .995) 0 58%,
+    rgba(4, 22, 39, .96) 74%,
+    rgba(4, 22, 39, .32) 92%,
+    transparent 100%);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel:hover {
+  box-shadow: none;
+}
+
+#wishlistPanel .wishlist-profile {
+  padding-inline: 0;
+  background: transparent;
+  border: 0;
+  border-block: 1px solid rgba(139, 216, 255, .17);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Full timetable: keep the calendar legible, dissolve only its outer sheet. */
+body.schedule-active #schedulePage #timetablePanel {
+  padding: clamp(28px, 4vw, 58px) clamp(24px, 4.5vw, 64px);
+  background: linear-gradient(90deg,
+    transparent 0,
+    rgba(249, 251, 253, .86) 3%,
+    rgba(255, 255, 255, .99) 9%,
+    rgba(255, 255, 255, .99) 91%,
+    rgba(249, 251, 253, .84) 97%,
+    transparent 100%);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.schedule-active #schedulePage #timetablePanel::before { display: none; }
+
+body.schedule-active #schedulePage .stat-row {
+  gap: 0;
+  border-block: 1px solid rgba(7, 29, 50, .12);
+}
+
+body.schedule-active #schedulePage .stat {
+  background: transparent;
+  border: 0;
+  border-right: 1px solid rgba(7, 29, 50, .12);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.schedule-active #schedulePage .stat:last-child { border-right: 0; }
+
+body.schedule-active #schedulePage .alt-list {
+  gap: clamp(18px, 3vw, 34px);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(7, 29, 50, .14);
+  border-radius: 0;
+}
+
+body.schedule-active #schedulePage .alt-btn {
+  position: relative;
+  padding-inline: 0;
+  color: #52677a;
+  background: transparent;
+  border-radius: 0;
+}
+
+body.schedule-active #schedulePage .alt-btn:hover,
+body.schedule-active #schedulePage .alt-btn.active,
+body.schedule-active #schedulePage .alt-btn[aria-pressed="true"] {
+  color: var(--navy-950);
+  background: transparent;
+  box-shadow: inset 0 -3px 0 var(--cc-control-gold);
+}
+
+body.schedule-active .final-timetable-bar {
+  padding: clamp(32px, 4vw, 48px) clamp(28px, 4vw, 50px);
+  background: radial-gradient(ellipse 96% 92% at center,
+    rgba(9, 35, 60, .99) 0 58%,
+    rgba(4, 22, 39, .94) 76%,
+    rgba(4, 22, 39, .24) 94%,
+    transparent 100%);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Close the later cascade around every Hub destination. */
+.member-hub .hub-sidebar {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 -1px 0 rgba(139, 216, 255, .18) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.member-hub .hub-hero-art {
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub .hub-view[data-hub-view="overview"],
+.member-hub .hub-view[data-hub-view="messages"],
+.member-hub .hub-view[data-hub-view="profile"] {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="community"] :is(
+  .hub-community-stream,
+  .hub-community-discovery,
+  .hub-compose-card,
+  .hub-feed-toolbar,
+  .hub-post-card,
+  .hub-community-rail
+),
+.member-hub[data-active-view="marketplace"] :is(
+  .market-discovery-bar,
+  .market-catalogue,
+  .market-rail,
+  .marketplace-card
+) {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="community"] .hub-community-stream,
+.member-hub[data-active-view="marketplace"] .market-catalogue {
+  border: 0 !important;
+}
+
+.member-hub[data-active-view="community"] .hub-community-discovery,
+.member-hub[data-active-view="community"] .hub-compose-card,
+.member-hub[data-active-view="community"] .hub-feed-toolbar,
+.member-hub[data-active-view="community"] .hub-post-card,
+.member-hub[data-active-view="marketplace"] .market-discovery-bar,
+.member-hub[data-active-view="marketplace"] .marketplace-card {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-catalogue {
+  background: linear-gradient(90deg,
+    transparent 0,
+    rgba(248, 245, 237, .76) 3%,
+    rgba(255, 253, 248, .985) 10% 90%,
+    rgba(248, 245, 237, .74) 97%,
+    transparent 100%) !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-rail,
+.member-hub[data-active-view="community"] .hub-community-rail {
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 253, 248, .94) 12%,
+    rgba(255, 253, 248, .98) 86%,
+    transparent) !important;
+  border: 0 !important;
+}
+
+/* Global marketplace message context: secondary, but unmistakably distinct
+   from both the username and the latest message. */
+.member-hub .hub-conversation-context {
+  min-width: 0;
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #3979a6 !important;
+  font-size: 9px !important;
+  font-weight: 760;
+  letter-spacing: .015em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-hub .hub-conversation-context::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: 1px;
+  background: var(--hub-editorial-gold, #e9b84c);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(233, 184, 76, .12);
+}
+
+.member-hub .hub-conversation-button.active .hub-conversation-context {
+  color: #bfe6ff !important;
+}
+
+.member-hub .hub-poll-readonly-note {
+  display: block;
+  max-width: 52ch;
+  margin-top: 12px;
+  color: rgba(8, 34, 58, .66);
+  font-size: 11px;
+  font-weight: 690;
+  letter-spacing: .012em;
+  line-height: 1.55;
+}
+
+.member-hub .hub-poll-readonly-note::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  display: inline-block;
+  margin: 0 8px 3px 0;
+  background: var(--hub-editorial-gold, #e9b84c);
+}
+
+/* Selection motion is a short light trace, never a bounce. */
+#landingScreen .language-icon {
+  position: relative;
+  transform-origin: center;
+  transition: color .2s ease, filter .24s ease, transform .24s cubic-bezier(.2, .8, .2, 1);
+}
+
+#landingScreen .language-icon::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid rgba(139, 216, 255, .45);
+  border-top-color: var(--cc-control-gold);
+  border-radius: 50%;
+  opacity: 0;
+  transform: rotate(-48deg) scale(.72);
+  pointer-events: none;
+}
+
+#landingScreen .language-control:focus-within .language-icon::after {
+  animation: cc-language-orbit .62s cubic-bezier(.2, .75, .2, 1) both;
+}
+
+#landingScreen .language-control:active .language-icon {
+  color: #fff;
+  filter: drop-shadow(0 0 10px rgba(139, 216, 255, .42));
+  transform: scale(.9) rotate(-10deg);
+}
+
+.member-hub .hub-avatar-button .hub-avatar-edit-badge {
+  transform-origin: 50% 50%;
+  transition: filter .2s ease, transform .24s cubic-bezier(.2, .8, .2, 1);
+}
+
+.member-hub .hub-avatar-button:hover .hub-avatar-edit-badge,
+.member-hub .hub-avatar-button:focus-visible .hub-avatar-edit-badge {
+  filter: drop-shadow(0 0 8px rgba(233, 184, 76, .55));
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.member-hub .hub-avatar-button:active .hub-avatar-edit-badge {
+  transform: rotate(10deg) scale(.86);
+}
+
+.member-hub .hub-nav-button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px;
+  background: radial-gradient(circle, rgba(139, 216, 255, .22), transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(.35);
+  pointer-events: none;
+}
+
+.member-hub .hub-nav-button:active::before,
+.member-hub .hub-nav-button.active::before,
+.member-hub .hub-nav-button[aria-current="page"]::before {
+  animation: cc-control-glint .42s ease-out both;
+}
+
+:is(
+  .member-hub .hub-nav-button,
+  .member-hub .hub-campus-scope button,
+  .member-hub .hub-topic-chip,
+  .member-hub .market-scope-button,
+  .member-hub .market-mode-tabs > button,
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a,
+  body.schedule-active #schedulePage .alt-btn
+) {
+  transition: color .18s ease, opacity .18s ease, transform .18s ease, border-color .18s ease;
+}
+
+:is(
+  .member-hub .hub-nav-button,
+  .member-hub .hub-campus-scope button,
+  .member-hub .hub-topic-chip,
+  .member-hub .market-scope-button,
+  .member-hub .market-mode-tabs > button,
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a,
+  body.schedule-active #schedulePage .alt-btn
+):active {
+  opacity: .82;
+  transform: translateY(1px) scale(.985);
+}
+
+:is(
+  .member-hub .hub-campus-scope button.active,
+  .member-hub .hub-campus-scope button[aria-pressed="true"],
+  .member-hub .hub-topic-chip.active,
+  .member-hub .hub-topic-chip[aria-pressed="true"],
+  .member-hub .market-scope-button.active,
+  .member-hub .market-scope-button[aria-pressed="true"],
+  .member-hub .market-mode-tabs > button.active,
+  .member-hub .market-mode-tabs > button[aria-selected="true"],
+  body.schedule-active #schedulePage .alt-btn.active,
+  body.schedule-active #schedulePage .alt-btn[aria-pressed="true"]
+)::after {
+  animation: cc-selection-trace .38s cubic-bezier(.2, .8, .2, 1) both;
+  transform-origin: left;
+}
+
+@keyframes cc-control-glint {
+  0% { opacity: 0; transform: scale(.35); }
+  42% { opacity: .95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+
+@keyframes cc-language-orbit {
+  0% { opacity: 0; transform: rotate(-48deg) scale(.72); }
+  38% { opacity: .9; }
+  100% { opacity: 0; transform: rotate(312deg) scale(1.12); }
+}
+
+@keyframes cc-selection-trace {
+  from { opacity: .15; transform: scaleX(.08); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+@media (max-width: 700px) {
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel {
+    padding: 34px 0;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel,
+  body.schedule-active #schedulePage #timetablePanel {
+    padding-inline: 18px;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-catalogue {
+    background: linear-gradient(90deg,
+      rgba(248, 245, 237, .78),
+      rgba(255, 253, 248, .99) 5% 95%,
+      rgba(248, 245, 237, .78)) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    .member-hub .hub-nav-button,
+    .member-hub .hub-campus-scope button,
+    .member-hub .hub-topic-chip,
+    .member-hub .market-scope-button,
+    .member-hub .market-mode-tabs > button,
+    body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a,
+    body.schedule-active #schedulePage .alt-btn
+  ),
+  :is(
+    .member-hub .hub-nav-button,
+    .member-hub .hub-campus-scope button,
+    .member-hub .hub-topic-chip,
+    .member-hub .market-scope-button,
+    .member-hub .market-mode-tabs > button,
+    body.schedule-active #schedulePage .alt-btn
+  )::after,
+  .member-hub .hub-nav-button::before,
+  #landingScreen .language-icon,
+  #landingScreen .language-icon::after,
+  .member-hub .hub-avatar-button .hub-avatar-edit-badge {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel,
+  body.schedule-active #schedulePage #timetablePanel,
+  .member-hub .hub-view,
+  .member-hub .hub-community-stream,
+  .member-hub .market-catalogue {
+    background: Canvas !important;
+    border: 1px solid CanvasText !important;
+  }
+}
