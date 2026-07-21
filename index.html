@@ -1689,7 +1689,7 @@
 <link rel="stylesheet" href="concourse-navy.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
-<link rel="stylesheet" href="academic-tools.css?v=20260721-academic-tools2" />
+<link rel="stylesheet" href="academic-tools.css?v=20260721-academic-tools3" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2203,7 +2203,11 @@
         <header class="academic-tools-intro">
           <div>
             <h2 id="academicToolsWorkspaceTitle" data-academic-i18n="toolsWorkspaceTitle">Citation Studio</h2>
-            <span class="academic-tools-local-note" data-academic-i18n="toolsLocalNote">Your source details stay in this browser.</span>
+            <span class="academic-tools-local-note academic-localized-copy">
+              <span lang="en">Manual entries and your bibliography stay on this device. Automatic lookup sends only the website URL to ConCourse’s lookup service.</span>
+              <span lang="zh-CN">手动输入的资料和参考书目仅保存在此设备。使用自动查找时，只有网页网址会发送至 ConCourse 的查找服务。</span>
+              <span lang="zh-HK">手動輸入嘅資料同參考書目只會儲存喺呢部裝置。使用自動查找時，只有網頁網址會傳送去 ConCourse 嘅查找服務。</span>
+            </span>
           </div>
           <p data-academic-i18n="toolsWorkspaceIntro">Build a polished reference, check its in-text form, and keep a bibliography for your current project.</p>
         </header>
@@ -2231,7 +2235,7 @@
               </div>
             </fieldset>
 
-            <fieldset class="citation-section citation-entry-mode-section" id="citationEntryModeSection" data-citation-sources="website" hidden>
+            <fieldset class="citation-section citation-entry-mode-section" id="citationEntryModeSection" data-citation-sources="website" aria-describedby="citationLookupNote" hidden>
               <legend data-academic-i18n="citationEntryModeLegend">Add this website</legend>
               <div class="citation-entry-mode-switch" role="radiogroup" aria-label="Website citation method" data-academic-i18n-aria-label="citationEntryModeLegend">
                 <label class="citation-mode-choice">
@@ -2249,16 +2253,16 @@
                   </span>
                 </label>
               </div>
-              <div class="citation-automatic-panel" id="citationAutomaticPanel">
+              <div class="citation-automatic-panel" id="citationAutomaticPanel" aria-busy="false" aria-describedby="citationLookupNote citationLookupStatus">
                 <div class="citation-field citation-auto-url-field">
                   <label for="citationAutomaticUrl" data-academic-i18n="citationWebsiteUrl">Website URL</label>
                   <div class="citation-auto-url-row">
-                    <input id="citationAutomaticUrl" type="url" maxlength="1200" autocomplete="url" inputmode="url" placeholder="https://example.edu/article" data-academic-i18n-placeholder="citationWebsiteUrlPlaceholder" />
-                    <button type="button" class="academic-tool-button primary" id="citationLookupWebsite" data-academic-i18n="citationFindSource">Find source</button>
+                    <input id="citationAutomaticUrl" type="url" maxlength="1200" autocomplete="url" inputmode="url" placeholder="https://example.edu/article" data-academic-i18n-placeholder="citationWebsiteUrlPlaceholder" aria-describedby="citationLookupNote citationLookupStatus" aria-errormessage="citationLookupStatus" />
+                    <button type="button" class="academic-tool-button primary" id="citationLookupWebsite" data-academic-i18n="citationFindSource" aria-controls="citationDetailsSection citationPreview">Find source</button>
                   </div>
                 </div>
-                <p class="citation-lookup-status" id="citationLookupStatus" role="status" aria-live="polite"></p>
-                <p class="citation-lookup-note" data-academic-i18n="citationLookupNote">Automatic lookup reads public page metadata. Review every imported field before using the citation.</p>
+                <p class="citation-lookup-status" id="citationLookupStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+                <p class="citation-lookup-note" id="citationLookupNote" data-academic-i18n="citationLookupNote">Automatic lookup reads public page metadata. Review every imported field before using the citation.</p>
               </div>
             </fieldset>
 
@@ -2281,7 +2285,7 @@
                   <span data-academic-i18n="citationTitle">Title</span>
                   <input id="citationTitle" type="text" maxlength="500" autocomplete="off" placeholder="Enter the source title exactly as published" data-academic-i18n-placeholder="citationTitlePlaceholder" />
                 </label>
-                <label class="citation-field" data-citation-sources="book journal">
+                <label class="citation-field" data-citation-sources="book journal website">
                   <span data-academic-i18n="citationYear">Publication year</span>
                   <input id="citationYear" type="text" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="2026 or leave blank for no date" data-academic-i18n-placeholder="citationYearPlaceholder" />
                 </label>
@@ -2337,10 +2341,16 @@
             </fieldset>
             <div class="citation-editor-actions">
               <button type="button" class="academic-tool-button" id="clearCitation" data-academic-i18n="citationClear">Clear fields</button>
+              <a class="citation-preview-jump academic-localized-copy" href="#citationPreview">
+                <span lang="en">View live reference</span>
+                <span lang="zh-CN">查看实时参考文献</span>
+                <span lang="zh-HK">查看即時參考文獻</span>
+                <span aria-hidden="true">↓</span>
+              </a>
             </div>
           </form>
 
-          <aside class="citation-preview" aria-labelledby="citationPreviewTitle">
+          <aside class="citation-preview" id="citationPreview" tabindex="-1" aria-labelledby="citationPreviewTitle" aria-describedby="citationStatus">
             <div class="citation-preview-head">
               <div>
                 <span data-academic-i18n="citationPreviewEyebrow">Live output</span>
@@ -2353,7 +2363,12 @@
                 <span class="citation-output-label" id="citationReferenceLabel" data-academic-i18n="citationReferenceLabel">Editable reference-list entry</span>
                 <span class="citation-edited-badge" id="citationEditedBadge" data-academic-i18n="citationEdited" hidden>Edited</span>
               </div>
-              <div class="citation-render citation-editable-reference is-placeholder" id="citationOutput" contenteditable="plaintext-only" role="textbox" aria-multiline="true" aria-labelledby="citationReferenceLabel" aria-describedby="citationEditHint" spellcheck="true" data-academic-i18n-placeholder="citationPreviewPlaceholder" data-placeholder="Enter a title to generate a reference, or type one directly."></div>
+              <div class="citation-render citation-editable-reference is-placeholder" id="citationOutput" contenteditable="true" role="textbox" tabindex="0" aria-multiline="true" aria-labelledby="citationReferenceLabel" aria-describedby="citationEditHint citationReferencePlaceholderHelp" spellcheck="true" data-academic-i18n-placeholder="citationPreviewPlaceholder" data-placeholder="Enter a title to generate a reference, or type one directly."></div>
+              <span class="academic-tools-sr-only academic-localized-copy" id="citationReferencePlaceholderHelp">
+                <span lang="en">Enter a title to generate a reference, or type the complete reference directly.</span>
+                <span lang="zh-CN">输入标题以生成参考文献，或直接输入完整的参考文献。</span>
+                <span lang="zh-HK">輸入標題以產生參考文獻，或者直接輸入完整嘅參考文獻。</span>
+              </span>
               <div class="citation-edit-controls">
                 <small id="citationEditHint" data-academic-i18n="citationEditHint">You can correct the generated entry directly in this box.</small>
                 <button type="button" class="citation-restore-button" id="restoreCitation" data-academic-i18n="citationRestore" hidden>Restore generated version</button>
@@ -4797,8 +4812,8 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260721-academic-tools1"></script>
+<script src="member-hub.js?v=20260721-academic-tools2"></script>
 <script src="marketplace.js?v=20260721-market-gallery5"></script>
-<script src="academic-tools.js?v=20260721-academic-tools2"></script>
+<script src="academic-tools.js?v=20260721-academic-tools3"></script>
 </body>
 </html>

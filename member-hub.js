@@ -638,6 +638,7 @@
 
   function hideHub(){
     configureMessagePolling(false);
+    window.ConCourseAcademicTools?.deactivate?.();
     window.ConCourseMarketplace?.closeTransientUi?.();
     closeSchoolmateProfile({restoreFocus:false});
     closeHubAction(null, {restoreFocus:false});
@@ -670,6 +671,7 @@
 
   async function switchView(view){
     if(!["overview", "community", "marketplace", "messages", "academic-tools", "profile"].includes(view)) view = "community";
+    if(view !== "academic-tools") window.ConCourseAcademicTools?.deactivate?.();
     if(view !== "community") closeSchoolmateProfile({restoreFocus:false});
     hubState.activeView = view;
     $("memberHub").dataset.activeView = view;

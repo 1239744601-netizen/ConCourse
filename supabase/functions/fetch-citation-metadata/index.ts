@@ -1,13 +1,16 @@
 // ConCourse automatic website citation metadata lookup.
-// Deploy as an authenticated Supabase Edge Function with JWT verification enabled.
+// Authentication is enforced below by createSupabaseContext({ auth: "user" }).
+// Keep the platform's legacy verify_jwt switch disabled for this function.
 
-import { createSupabaseContext } from "jsr:@supabase/server@^1";
+import { createSupabaseContext } from "jsr:@supabase/server@1.4.0";
 
 const PRODUCTION_ORIGIN = "https://1239744601-netizen.github.io";
 const MAX_URL_LENGTH = 2048;
 const MAX_REDIRECTS = 4;
+const MAX_REQUEST_BYTES = 4 * 1024;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const MAX_HEAD_CHARACTERS = 512 * 1024;
+const CHARSET_SNIFF_BYTES = 16 * 1024;
 const FETCH_TIMEOUT_MS = 8000;
 const DNS_TIMEOUT_MS = 2500;
 
@@ -34,6 +37,25 @@ class HttpError extends Error {
     super(message);
     this.status = status;
     this.code = code;
+  }
+}
+
+function remainingTime(deadline: number, maximum = Number.POSITIVE_INFINITY): number {
+  const remaining = Math.floor(deadline - performance.now());
+  if (remaining <= 0) throw new HttpError(504, "lookup_timeout", "The website took too long to respond.");
+  return Math.max(1, Math.min(remaining, maximum));
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && (error.name === "AbortError" || error.name === "TimeoutError");
+}
+
+async function cancelBody(response: Response | null): Promise<void> {
+  if (!response?.body || response.body.locked) return;
+  try {
+    await response.body.cancel();
+  } catch (_error) {
+    // Cancellation is best effort; the original response error is more useful.
   }
 }
 
@@ -156,6 +178,7 @@ function ipv6HasPrefix(ip: number[], prefix: number[], bits: number): boolean {
 }
 
 const BLOCKED_IPV6_PREFIXES: Array<[string, number]> = [
+  ["::", 96],
   ["::", 128],
   ["::1", 128],
   ["::ffff:0:0", 96],
@@ -165,15 +188,17 @@ const BLOCKED_IPV6_PREFIXES: Array<[string, number]> = [
   ["2001::", 23],
   ["2001:db8::", 32],
   ["2002::", 16],
+  ["3fff::", 20],
   ["fc00::", 7],
-  ["fe80::", 10],
-  ["fec0::", 10],
+  ["fe00::", 8],
   ["ff00::", 8],
 ];
 
 function isPublicIpv6(value: string): boolean {
   const ip = parseIpv6(value);
   if (!ip) return false;
+  const globalUnicast = parseIpv6("2000::");
+  if (!globalUnicast || !ipv6HasPrefix(ip, globalUnicast, 3)) return false;
   return !BLOCKED_IPV6_PREFIXES.some(([base, bits]) => {
     const prefix = parseIpv6(base);
     return !!prefix && ipv6HasPrefix(ip, prefix, bits);
@@ -201,7 +226,7 @@ const BLOCKED_HOST_SUFFIXES = [
   ".invalid",
 ];
 
-async function validatePublicUrl(raw: string): Promise<URL> {
+function parsePublicUrl(raw: string): URL {
   if (!raw || raw.length > MAX_URL_LENGTH || /[\\\u0000-\u001f\u007f]/u.test(raw)) {
     throw new HttpError(400, "invalid_url", "Use a complete public website URL.");
   }
@@ -224,17 +249,31 @@ async function validatePublicUrl(raw: string): Promise<URL> {
   }
   if (isIpLiteral(hostname)) {
     if (!isPublicIp(hostname)) throw new HttpError(400, "private_address", "Private or reserved network addresses cannot be fetched.");
-    return url;
   }
+  return url;
+}
+
+async function validatePublicUrl(raw: string, deadline: number): Promise<URL> {
+  const url = parsePublicUrl(raw);
+  const hostname = url.hostname.toLocaleLowerCase().replace(/^\[|\]$/gu, "").replace(/\.$/u, "");
+  if (isIpLiteral(hostname)) return url;
 
   const resolve = async (type: "A" | "AAAA"): Promise<string[]> => {
     try {
-      return await Deno.resolveDns(hostname, type, { signal: AbortSignal.timeout(DNS_TIMEOUT_MS) }) as string[];
-    } catch (_error) {
-      return [];
+      const timeout = remainingTime(deadline, DNS_TIMEOUT_MS);
+      return await Deno.resolveDns(hostname, type, { signal: AbortSignal.timeout(timeout) }) as string[];
+    } catch (error) {
+      // A missing A or AAAA family is normal. Resolver failures and timeouts are
+      // not: allowing the other family in that case would create an SSRF gap.
+      if (error instanceof Error && error.name === "NotFound") return [];
+      if (isAbortError(error) && performance.now() >= deadline) {
+        throw new HttpError(504, "lookup_timeout", "The website took too long to respond.");
+      }
+      throw new HttpError(422, "dns_failed", "The website address could not be resolved safely.");
     }
   };
   const [ipv4, ipv6] = await Promise.all([resolve("A"), resolve("AAAA")]);
+  remainingTime(deadline);
   const addresses = [...ipv4, ...ipv6];
   if (!addresses.length) throw new HttpError(422, "dns_failed", "The website address could not be resolved.");
   if (addresses.some((address) => !isPublicIp(address))) {
@@ -243,69 +282,205 @@ async function validatePublicUrl(raw: string): Promise<URL> {
   return url;
 }
 
-async function fetchHtml(source: URL): Promise<{ html: string; finalUrl: URL }> {
-  let current = source;
-  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
-    current = await validatePublicUrl(current.href);
-    const response = await fetch(current, {
-      method: "GET",
-      redirect: "manual",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: {
-        Accept: "text/html,application/xhtml+xml;q=0.9",
-        "Accept-Language": "en;q=0.8",
-        "User-Agent": "ConCourseCitationBot/1.0 (+https://1239744601-netizen.github.io/ConCourse/)",
-      },
-    });
+function decoderLabel(value: string): string {
+  const label = value.trim().replace(/^['"]|['"]$/gu, "").toLocaleLowerCase();
+  if (!/^[a-z0-9._:+-]{1,40}$/u.test(label)) return "";
+  try {
+    return new TextDecoder(label).encoding;
+  } catch (_error) {
+    return "";
+  }
+}
 
-    if ([301, 302, 303, 307, 308].includes(response.status)) {
-      const location = response.headers.get("location");
-      if (!location || redirectCount === MAX_REDIRECTS) throw new HttpError(422, "redirect_limit", "The website redirected too many times.");
-      const next = new URL(location, current);
-      if (current.protocol === "https:" && next.protocol === "http:") throw new HttpError(422, "unsafe_redirect", "The website redirected to an insecure address.");
-      current = await validatePublicUrl(next.href);
-      continue;
-    }
-    if (!response.ok) throw new HttpError(422, "upstream_failed", "The website did not return a readable page.");
-    const contentType = (response.headers.get("content-type") || "").toLocaleLowerCase();
-    if (!contentType.includes("text/html") && !contentType.includes("application/xhtml+xml")) {
-      throw new HttpError(415, "unsupported_content", "Only HTML website pages are supported.");
-    }
-    const declaredLength = Number(response.headers.get("content-length") || 0);
-    if (declaredLength > MAX_RESPONSE_BYTES) throw new HttpError(413, "page_too_large", "The website page is too large to inspect safely.");
-    if (!response.body) throw new HttpError(422, "empty_page", "The website returned an empty page.");
+function detectEncoding(contentType: string, prefix: Uint8Array): string {
+  const headerLabel = contentType.match(/charset\s*=\s*(?:["']\s*)?([a-z0-9._:+-]+)/iu)?.[1] || "";
+  const headerEncoding = decoderLabel(headerLabel);
+  if (headerEncoding) return headerEncoding;
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8", { fatal: false });
-    let bytes = 0;
-    let html = "";
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      bytes += value.byteLength;
-      if (bytes > MAX_RESPONSE_BYTES) {
-        await reader.cancel();
+  if (prefix[0] === 0xef && prefix[1] === 0xbb && prefix[2] === 0xbf) return "utf-8";
+  if (prefix[0] === 0xff && prefix[1] === 0xfe) return "utf-16le";
+  if (prefix[0] === 0xfe && prefix[1] === 0xff) return "utf-16be";
+
+  const sample = new TextDecoder("windows-1252").decode(prefix);
+  const metaLabel = sample.match(/<meta\b[^>]*\bcharset\s*=\s*(?:["']\s*)?([a-z0-9._:+-]+)/iu)?.[1]
+    || sample.match(/<meta\b[^>]*\bcontent\s*=\s*["'][^"']*charset\s*=\s*([a-z0-9._:+-]+)/iu)?.[1]
+    || "";
+  const metaEncoding = decoderLabel(metaLabel);
+  if (metaEncoding) return metaEncoding;
+
+  // UTF-8 is the modern default. Fall back to the HTML legacy encoding only
+  // when the sampled bytes cannot form valid UTF-8.
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(prefix, { stream: true });
+    return "utf-8";
+  } catch (_error) {
+    return "windows-1252";
+  }
+}
+
+function combineChunks(chunks: Uint8Array[], length: number): Uint8Array {
+  const output = new Uint8Array(length);
+  let offset = 0;
+  chunks.forEach((chunk) => {
+    output.set(chunk, offset);
+    offset += chunk.byteLength;
+  });
+  return output;
+}
+
+async function readHtml(response: Response, contentType: string, deadline: number): Promise<string> {
+  if (!response.body) throw new HttpError(422, "empty_page", "The website returned an empty page.");
+  const reader = response.body.getReader();
+  const prefixChunks: Uint8Array[] = [];
+  let prefixBytes = 0;
+  let totalBytes = 0;
+  let streamDone = false;
+
+  const read = async (): Promise<ReadableStreamReadResult<Uint8Array>> => {
+    remainingTime(deadline);
+    try {
+      const result = await reader.read();
+      remainingTime(deadline);
+      return result;
+    } catch (error) {
+      if (isAbortError(error) || performance.now() >= deadline) {
+        throw new HttpError(504, "lookup_timeout", "The website took too long to respond.");
+      }
+      throw error;
+    }
+  };
+  const cancel = async (): Promise<void> => {
+    try {
+      await reader.cancel();
+    } catch (_error) {
+      // Best effort: the fetch signal may already have closed the stream.
+    }
+  };
+
+  try {
+    while (prefixBytes < CHARSET_SNIFF_BYTES) {
+      const { value, done } = await read();
+      if (done) {
+        streamDone = true;
+        break;
+      }
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_RESPONSE_BYTES) {
+        await cancel();
+        throw new HttpError(413, "page_too_large", "The website page is too large to inspect safely.");
+      }
+      prefixChunks.push(value);
+      prefixBytes += value.byteLength;
+    }
+
+    const prefix = combineChunks(prefixChunks, prefixBytes);
+    const decoder = new TextDecoder(detectEncoding(contentType, prefix), { fatal: false });
+    let html = decoder.decode(prefix, { stream: !streamDone });
+    if (html.length > MAX_HEAD_CHARACTERS || /<\/head\s*>/iu.test(html)) {
+      if (!streamDone) await cancel();
+      return html.slice(0, MAX_HEAD_CHARACTERS);
+    }
+
+    while (!streamDone) {
+      const { value, done } = await read();
+      if (done) {
+        streamDone = true;
+        break;
+      }
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_RESPONSE_BYTES) {
+        await cancel();
         throw new HttpError(413, "page_too_large", "The website page is too large to inspect safely.");
       }
       html += decoder.decode(value, { stream: true });
       if (html.length > MAX_HEAD_CHARACTERS || /<\/head\s*>/iu.test(html)) {
-        await reader.cancel();
-        break;
+        await cancel();
+        return html.slice(0, MAX_HEAD_CHARACTERS);
       }
     }
     html += decoder.decode();
-    return { html: html.slice(0, MAX_HEAD_CHARACTERS), finalUrl: current };
+    return html.slice(0, MAX_HEAD_CHARACTERS);
+  } catch (error) {
+    await cancel();
+    throw error;
+  }
+}
+
+async function fetchHtml(source: URL): Promise<{ html: string; finalUrl: URL }> {
+  const deadline = performance.now() + FETCH_TIMEOUT_MS;
+  let current = source;
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+    current = await validatePublicUrl(current.href, deadline);
+    let response: Response;
+    try {
+      response = await fetch(current, {
+        method: "GET",
+        redirect: "manual",
+        signal: AbortSignal.timeout(remainingTime(deadline)),
+        headers: {
+          Accept: "text/html,application/xhtml+xml;q=0.9",
+          "Accept-Language": "en;q=0.8",
+          "User-Agent": "ConCourseCitationBot/1.0 (+https://1239744601-netizen.github.io/ConCourse/)",
+        },
+      });
+      remainingTime(deadline);
+    } catch (error) {
+      if (isAbortError(error) || performance.now() >= deadline) {
+        throw new HttpError(504, "lookup_timeout", "The website took too long to respond.");
+      }
+      throw error;
+    }
+
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const location = response.headers.get("location");
+      await cancelBody(response);
+      if (!location || redirectCount === MAX_REDIRECTS) throw new HttpError(422, "redirect_limit", "The website redirected too many times.");
+      const next = new URL(location, current);
+      if (current.protocol === "https:" && next.protocol === "http:") throw new HttpError(422, "unsafe_redirect", "The website redirected to an insecure address.");
+      current = parsePublicUrl(next.href);
+      continue;
+    }
+    if (!response.ok) {
+      await cancelBody(response);
+      throw new HttpError(422, "upstream_failed", "The website did not return a readable page.");
+    }
+    const contentType = (response.headers.get("content-type") || "").toLocaleLowerCase();
+    if (!contentType.includes("text/html") && !contentType.includes("application/xhtml+xml")) {
+      await cancelBody(response);
+      throw new HttpError(415, "unsupported_content", "Only HTML website pages are supported.");
+    }
+    const declaredLength = Number(response.headers.get("content-length") || 0);
+    if (declaredLength > MAX_RESPONSE_BYTES) {
+      await cancelBody(response);
+      throw new HttpError(413, "page_too_large", "The website page is too large to inspect safely.");
+    }
+    const html = await readHtml(response, contentType, deadline);
+    return { html, finalUrl: current };
   }
   throw new HttpError(422, "redirect_limit", "The website redirected too many times.");
 }
 
 function decodeEntities(value: string): string {
-  const named: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-  return value.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/giu, (match, entity: string) => {
+  const named: Record<string, string> = {
+    amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ensp: " ", emsp: " ", thinsp: " ",
+    copy: "©", reg: "®", trade: "™", euro: "€", cent: "¢", pound: "£", yen: "¥", sect: "§", para: "¶",
+    middot: "·", bull: "•", hellip: "…", prime: "′", ndash: "–", mdash: "—", minus: "−",
+    lsquo: "‘", rsquo: "’", sbquo: "‚", ldquo: "“", rdquo: "”", bdquo: "„",
+    laquo: "«", raquo: "»", lsaquo: "‹", rsaquo: "›", dagger: "†", permil: "‰",
+    times: "×", divide: "÷", plusmn: "±", ne: "≠", le: "≤", ge: "≥", deg: "°", micro: "µ",
+    frac14: "¼", frac12: "½", frac34: "¾", sup1: "¹", sup2: "²", sup3: "³",
+  };
+  return value.replace(/&(#x[\da-f]+|#\d+|[a-z][a-z0-9]+);/giu, (match, entity: string) => {
     if (entity[0] === "#") {
       const hex = entity[1]?.toLocaleLowerCase() === "x";
       const number = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
-      return Number.isFinite(number) && number > 0 && number <= 0x10ffff ? String.fromCodePoint(number) : match;
+      const scalar = Number.isInteger(number)
+        && number > 0
+        && number <= 0x10ffff
+        && !(number >= 0xd800 && number <= 0xdfff)
+        && (number & 0xffff) !== 0xfffe
+        && (number & 0xffff) !== 0xffff;
+      return scalar ? String.fromCodePoint(number) : match;
     }
     return named[entity.toLocaleLowerCase()] ?? match;
   });
@@ -415,16 +590,47 @@ function authorsFromJson(value: unknown): { people: string[]; organization: stri
   return { people: [...new Set(people)].slice(0, 20), organization };
 }
 
+const MONTH_NUMBERS: Record<string, number> = {
+  jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
+  may: 5, jun: 6, june: 6, jul: 7, july: 7, aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12,
+};
+
+function exactDate(yearValue: string, monthValue: string | number, dayValue: string): string {
+  const year = Number(yearValue);
+  const month = Number(monthValue);
+  const day = Number(dayValue);
+  if (!Number.isInteger(year) || year < 1 || year > 9999 || !Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(day)) return "";
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day < 1 || day > days[month - 1]) return "";
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 function normalizedDate(value: unknown): string {
   const raw = cleanText(value, 100);
   if (!raw) return "";
-  const direct = raw.match(/^(\d{4})-(\d{2})-(\d{2})/u);
-  if (direct) {
-    const date = new Date(`${direct[1]}-${direct[2]}-${direct[3]}T00:00:00Z`);
-    if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === `${direct[1]}-${direct[2]}-${direct[3]}`) return `${direct[1]}-${direct[2]}-${direct[3]}`;
+  const numeric = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?=$|[Tt\s])/u);
+  if (numeric) return exactDate(numeric[1], numeric[2], numeric[3]);
+
+  const dayFirst = raw.match(/^(?:[a-z]{3,9},\s*)?(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})(?:\s*,\s*|\s+)(\d{4})(?=$|[Tt\s])/iu);
+  if (dayFirst) {
+    const month = MONTH_NUMBERS[dayFirst[2].toLocaleLowerCase()];
+    return month ? exactDate(dayFirst[3], month, dayFirst[1]) : "";
   }
-  const date = new Date(raw);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+
+  const monthFirst = raw.match(/^([a-z]{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s*,\s*|\s+)(\d{4})(?=$|[Tt\s])/iu);
+  if (monthFirst) {
+    const month = MONTH_NUMBERS[monthFirst[1].toLocaleLowerCase()];
+    return month ? exactDate(monthFirst[3], month, monthFirst[2]) : "";
+  }
+  return "";
+}
+
+function normalizedYear(value: unknown): string {
+  const raw = cleanText(value, 100);
+  const year = raw.match(/(?:^|\D)(\d{4})(?=\D|$)/u)?.[1] || "";
+  return year !== "0000" ? year : "";
 }
 
 function sameOriginCanonical(html: string, finalUrl: URL, meta: Map<string, string[]>): string {
@@ -464,7 +670,9 @@ function extractMetadata(html: string, sourceUrl: URL, finalUrl: URL): MetadataR
 
   const publisher = nameFrom(primary.publisher) || nameFrom(primary.isPartOf);
   const siteName = firstMeta(meta, ["og:site_name", "application-name"]) || publisher || finalUrl.hostname.replace(/^www\./u, "");
-  const publicationDate = normalizedDate(firstMeta(meta, ["citation_publication_date", "citation_date", "article:published_time", "dc.date", "dcterms.date"]) || primary.datePublished);
+  const rawPublicationDate = firstMeta(meta, ["citation_publication_date", "citation_date", "article:published_time", "dc.date", "dcterms.date"]) || primary.datePublished;
+  const publicationDate = normalizedDate(rawPublicationDate);
+  const publicationYear = publicationDate.slice(0, 4) || normalizedYear(rawPublicationDate);
   const languageMatch = html.match(/<html\b[^>]*>/iu);
   const language = cleanText(languageMatch ? attributes(languageMatch[0]).lang : "", 30);
   const canonicalUrl = sameOriginCanonical(html, finalUrl, meta);
@@ -473,6 +681,7 @@ function extractMetadata(html: string, sourceUrl: URL, finalUrl: URL): MetadataR
   if (!title) warnings.push("missing_title");
   if (!authors.length && !organization) warnings.push("missing_author");
   if (!publicationDate) warnings.push("missing_publication_date");
+  if (rawPublicationDate && !publicationDate) warnings.push(publicationYear ? "partial_publication_date" : "invalid_publication_date");
 
   return {
     sourceUrl: sourceUrl.href,
@@ -484,10 +693,60 @@ function extractMetadata(html: string, sourceUrl: URL, finalUrl: URL): MetadataR
     authorType: organization && !authors.length ? "organization" : "person",
     siteName,
     publicationDate,
-    publicationYear: publicationDate.slice(0, 4),
+    publicationYear,
     language,
     warnings,
   };
+}
+
+async function readJsonRequest(request: Request): Promise<{ url?: unknown }> {
+  const contentType = (request.headers.get("content-type") || "").split(";", 1)[0].trim().toLocaleLowerCase();
+  if (!/^application\/(?:[a-z0-9._-]+\+)?json$/u.test(contentType)) {
+    throw new HttpError(415, "unsupported_request", "Send the lookup request as JSON.");
+  }
+
+  const lengthHeader = request.headers.get("content-length");
+  if (lengthHeader && (!/^\d+$/u.test(lengthHeader) || Number(lengthHeader) > MAX_REQUEST_BYTES)) {
+    throw new HttpError(413, "request_too_large", "The lookup request is too large.");
+  }
+  if (!request.body) throw new HttpError(400, "invalid_json", "Send a valid JSON lookup request.");
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  let bytes = 0;
+  let text = "";
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_REQUEST_BYTES) {
+        await reader.cancel();
+        throw new HttpError(413, "request_too_large", "The lookup request is too large.");
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+  } catch (error) {
+    try {
+      await reader.cancel();
+    } catch (_cancelError) {
+      // The request may already be closed.
+    }
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(400, "invalid_json", "Send a valid UTF-8 JSON lookup request.");
+  }
+
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch (_error) {
+    throw new HttpError(400, "invalid_json", "Send a valid JSON lookup request.");
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new HttpError(400, "invalid_json", "Send a JSON object containing a website URL.");
+  }
+  return value as { url?: unknown };
 }
 
 export default {
@@ -506,10 +765,10 @@ export default {
     }
 
     try {
+      const body = await readJsonRequest(request);
+      const raw = typeof body.url === "string" ? body.url.trim() : "";
+      const sourceUrl = parsePublicUrl(raw);
       await consumeQuota(context.supabase);
-      const body = await request.json().catch(() => null) as { url?: unknown } | null;
-      const raw = typeof body?.url === "string" ? body.url.trim() : "";
-      const sourceUrl = await validatePublicUrl(raw);
       const { html, finalUrl } = await fetchHtml(sourceUrl);
       const result = extractMetadata(html, sourceUrl, finalUrl);
       if (!result.title && !result.siteName) throw new HttpError(422, "metadata_not_found", "No useful citation metadata was found.");

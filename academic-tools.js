@@ -3,6 +3,7 @@
 
   const STORAGE_PREFIX = "concourse-citation-library-v1";
   const MAX_LIBRARY_ITEMS = 60;
+  const MAX_REFERENCE_LENGTH = 5000;
   const STYLE_VALUES = new Set(["apa", "mla", "chicago", "harvard", "ieee"]);
   const SOURCE_VALUES = new Set(["book", "journal", "website"]);
 
@@ -10,7 +11,7 @@
     en: Object.freeze({
       toolsWorkspaceTitle:"Citation Studio",
       toolsWorkspaceIntro:"Build a polished reference, check its in-text form, and keep a bibliography for your current project.",
-      toolsLocalNote:"Your source details stay in this browser.",
+      toolsLocalNote:"Manual entries and saved bibliographies stay on this device. Automatic lookup sends only the submitted URL to ConCourse’s lookup service.",
       citationStyleLegend:"Citation style",
       sourceTypeLegend:"Source type",
       sourceBook:"Book",
@@ -31,7 +32,10 @@
       citationLookupSuccess:"Source details found. Review and correct the imported fields below.",
       citationLookupPartial:"Some details were found. Complete the missing fields below before using the citation.",
       citationLookupFailed:"ConCourse could not read this page. You can still enter the details manually below.",
-      citationLookupUnavailable:"Automatic lookup is not active yet. Deploy the ConCourse citation metadata function, or use manual entry.",
+      citationLookupUnavailable:"Automatic lookup is temporarily unavailable. Enter the source details manually below.",
+      citationLookupRateLimited:"You have made several lookups in a short time. Wait a minute, then try again.",
+      citationLookupSessionExpired:"Your session has expired. Sign in again before using automatic lookup.",
+      citationLookupUnsupported:"This page cannot be read automatically. Enter the source details manually below.",
       citationLookupSignIn:"Sign in before using automatic website lookup.",
       citationLookupReplaceConfirm:"Finding a new source will replace the current website draft and edited reference. Continue?",
       citationDetailsLegend:"Source details",
@@ -86,10 +90,13 @@
       citationCopiedPlain:"Reference copied as plain text.",
       citationCopyFailed:"Copying failed. Select the reference and copy it manually.",
       citationAdded:"Added to this project bibliography.",
+      citationUpdated:"The saved reference has been updated.",
       citationDuplicate:"This source is already in the bibliography.",
       citationMissingTitle:"Add the source title to generate a reference.",
       citationInvalidYear:"Use a four-digit publication year or leave it blank.",
       citationInvalidUrl:"Use a complete http(s) URL or a DOI beginning with 10.",
+      citationInvalidDate:"Use a real publication date or leave it blank.",
+      citationReferenceLimit:"References can contain up to 5,000 characters. Extra text was removed.",
       citationBookPublisherWarning:"Add a publisher for a complete book reference.",
       citationJournalWarning:"Add the journal title for a complete article reference.",
       citationWebsiteWarning:"Add a URL for a complete website reference.",
@@ -124,7 +131,7 @@
     "zh-CN": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"创建规范参考文献、查看文内引用，并为当前项目整理参考书目。",
-      toolsLocalNote:"你的文献资料仅保存在此浏览器中。",
+      toolsLocalNote:"手动输入和已保存的参考书目只保存在此设备。自动查找只会把你提交的网址发送至 ConCourse 查找服务。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"资料类型",
       sourceBook:"书籍",
@@ -145,7 +152,10 @@
       citationLookupSuccess:"已找到资料详情。请核对并修正下方导入字段。",
       citationLookupPartial:"已找到部分资料。使用引用前，请补全下方缺失字段。",
       citationLookupFailed:"ConCourse 无法读取此网页。你仍可在下方手动输入资料。",
-      citationLookupUnavailable:"自动查找尚未启用。请部署 ConCourse 引用元数据函数，或改用手动输入。",
+      citationLookupUnavailable:"自动查找暂时不可用，请在下方手动输入资料。",
+      citationLookupRateLimited:"你在短时间内进行了多次查找。请等待一分钟后再试。",
+      citationLookupSessionExpired:"登录状态已过期。请重新登录后使用自动查找。",
+      citationLookupUnsupported:"此网页无法自动读取，请在下方手动输入资料。",
       citationLookupSignIn:"请先登录，再使用网页自动查找。",
       citationLookupReplaceConfirm:"查找新资料将替换当前网页草稿及已编辑引用。是否继续？",
       citationDetailsLegend:"资料详情",
@@ -200,10 +210,13 @@
       citationCopiedPlain:"已复制纯文本引用。",
       citationCopyFailed:"复制失败，请手动选择并复制引用。",
       citationAdded:"已加入本项目参考书目。",
+      citationUpdated:"已更新保存的参考文献。",
       citationDuplicate:"该资料已在参考书目中。",
       citationMissingTitle:"请输入资料标题以生成引用。",
       citationInvalidYear:"请输入四位年份，或留空表示无日期。",
       citationInvalidUrl:"请输入完整的 http(s) 网址，或以 10. 开头的 DOI。",
+      citationInvalidDate:"请输入有效的发布日期，或留空。",
+      citationReferenceLimit:"参考文献最多可包含 5,000 个字符，超出内容已移除。",
       citationBookPublisherWarning:"请补充出版社以获得完整书籍引用。",
       citationJournalWarning:"请补充期刊名称以获得完整文章引用。",
       citationWebsiteWarning:"请补充网址以获得完整网页引用。",
@@ -238,7 +251,7 @@
     "zh-HK": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"建立規範參考文獻、查看文內引用，並為而家嘅項目整理參考書目。",
-      toolsLocalNote:"你嘅文獻資料只會儲存喺呢個瀏覽器。",
+      toolsLocalNote:"手動輸入同已儲存嘅參考書目只會留喺呢部裝置。自動查找只會將你提交嘅網址傳送去 ConCourse 查找服務。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"資料類型",
       sourceBook:"書籍",
@@ -259,7 +272,10 @@
       citationLookupSuccess:"已經搵到資料詳情。請核對同修正下面匯入嘅欄位。",
       citationLookupPartial:"已經搵到部分資料。使用引用之前，請補齊下面欠缺嘅欄位。",
       citationLookupFailed:"ConCourse 未能讀取呢個網頁。你仍然可以喺下面手動輸入資料。",
-      citationLookupUnavailable:"自動查找功能未啟用。請部署 ConCourse 引用元資料函數，或者改用手動輸入。",
+      citationLookupUnavailable:"自動查找暫時用唔到，請喺下面手動輸入資料。",
+      citationLookupRateLimited:"你喺短時間內查找咗多次。請等一分鐘再試。",
+      citationLookupSessionExpired:"登入狀態已過期。請重新登入先使用自動查找。",
+      citationLookupUnsupported:"呢個網頁未能自動讀取，請喺下面手動輸入資料。",
       citationLookupSignIn:"請先登入，再使用網頁自動查找。",
       citationLookupReplaceConfirm:"搵新資料會取代目前網頁草稿同已編輯引用。係咪繼續？",
       citationDetailsLegend:"資料詳情",
@@ -314,10 +330,13 @@
       citationCopiedPlain:"已複製純文字引用。",
       citationCopyFailed:"複製失敗，請手動揀選同複製引用。",
       citationAdded:"已加入呢個項目嘅參考書目。",
+      citationUpdated:"已更新儲存嘅參考文獻。",
       citationDuplicate:"呢份資料已經喺參考書目入面。",
       citationMissingTitle:"請輸入資料標題嚟產生引用。",
       citationInvalidYear:"請輸入四位年份，或者留空代表冇日期。",
       citationInvalidUrl:"請輸入完整 http(s) 網址，或者以 10. 開頭嘅 DOI。",
+      citationInvalidDate:"請輸入有效嘅發佈日期，或者留空。",
+      citationReferenceLimit:"參考文獻最多可以有 5,000 個字元，超出內容已移除。",
       citationBookPublisherWarning:"請加入出版社以取得完整書籍引用。",
       citationJournalWarning:"請加入期刊名稱以取得完整文章引用。",
       citationWebsiteWarning:"請加入網址以取得完整網頁引用。",
@@ -360,7 +379,8 @@
     draftOverrides:Object.create(null),
     overrideBaseFingerprints:Object.create(null),
     lookupRequest:0,
-    lookupBusy:false
+    lookupBusy:false,
+    lookupAbortController:null
   };
 
   const byId = id => document.getElementById(id);
@@ -378,7 +398,7 @@
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
-    .slice(0, 5000);
+    .slice(0, MAX_REFERENCE_LENGTH);
   const escapeHtml = value => clean(value).replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]));
   const referenceTextHtml = value => cleanReference(value)
     .replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]))
@@ -474,6 +494,7 @@
   }
 
   function harvardAuthors(authors){
+    if(authors.length > 3) return `${authorLastInitial(authors[0])} et al.`;
     return serialJoin(authors.map(authorLastInitial), "and", false);
   }
 
@@ -533,12 +554,13 @@
   function recordFromForm(){
     const source = document.querySelector('input[name="citationSource"]:checked')?.value || "book";
     const publicationDate = clean(byId("citationPublicationDate")?.value);
+    const enteredYear = clean(byId("citationYear")?.value);
     return {
       id:crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       source:SOURCE_VALUES.has(source) ? source : "book",
       authors:parseAuthors(byId("citationAuthors")?.value, byId("citationAuthorType")?.value || "person"),
       title:clean(byId("citationTitle")?.value),
-      year:source === "website" ? String(dateParts(publicationDate)?.year || "") : clean(byId("citationYear")?.value),
+      year:source === "website" ? String(dateParts(publicationDate)?.year || enteredYear) : enteredYear,
       publicationDate,
       accessDate:clean(byId("citationAccessDate")?.value),
       publisher:clean(byId("citationPublisher")?.value),
@@ -563,6 +585,7 @@
     const warnings = [];
     if(!record.title) errors.push("citationMissingTitle");
     if(record.year && !/^\d{4}$/u.test(record.year)) errors.push("citationInvalidYear");
+    if(record.publicationDate && !dateParts(record.publicationDate)) errors.push("citationInvalidDate");
     if(record.locator && locatorInfo(record.locator).kind === "invalid") errors.push("citationInvalidUrl");
     if(!record.authors.length) warnings.push("citationAuthorWarning");
     if(record.source === "book" && !record.publisher) warnings.push("citationBookPublisherWarning");
@@ -576,12 +599,13 @@
     const locator = locatorInfo(record.locator);
     if(!locator.kind || locator.kind === "invalid") return "";
     if(style === "ieee" && locator.kind === "doi") return `doi: ${locator.value}`;
+    if(style === "mla" && locator.kind === "url") return locator.value.replace(/^https?:\/\//iu, "");
     return locator.kind === "doi" ? locator.url : locator.value;
   };
 
   function formatApa(record){
     const author = apaAuthors(record.authors);
-    const year = record.year ? `${record.year}${record.yearSuffix || ""}` : "n.d.";
+    const year = record.year ? `${record.year}${record.yearSuffix || ""}` : `n.d.${record.yearSuffix ? `-${record.yearSuffix}` : ""}`;
     const lead = [author ? sentence(author) : "", `(${year}).`].filter(Boolean).join(" ");
     const edition = ordinalEdition(record.edition);
     const locator = locatorFor(record, "apa");
@@ -603,7 +627,7 @@
       return joinWords(pair(lead), article, container, locator ? pair(locator) : pair());
     }
     const date = record.publicationDate ? dateApa(record.publicationDate, record.yearSuffix || "") : "";
-    const datedLead = author ? `${sentence(author)} (${date || record.year || "n.d."}).` : `(${date || record.year || "n.d."}).`;
+    const datedLead = author ? `${sentence(author)} (${date || year}).` : `(${date || year}).`;
     const sameSite = record.authors.length === 1 && record.authors[0].kind === "organization" && record.authors[0].literal.toLocaleLowerCase() === record.containerTitle.toLocaleLowerCase();
     if(!author) return joinWords(withPeriod(italicPair(record.title)), pair(datedLead), record.containerTitle ? pair(sentence(record.containerTitle)) : pair(), locator ? pair(locator) : pair());
     return joinWords(pair(datedLead), withPeriod(italicPair(record.title)), !sameSite && record.containerTitle ? pair(sentence(record.containerTitle)) : pair(), locator ? pair(locator) : pair());
@@ -653,15 +677,16 @@
 
   function formatHarvard(record){
     const author = harvardAuthors(record.authors);
-    const year = record.year ? `${record.year}${record.yearSuffix || ""}` : "no date";
+    const year = record.year ? `${record.year}${record.yearSuffix || ""}` : `no date${record.yearSuffix ? ` ${record.yearSuffix}` : ""}`;
     const lead = `${author ? `${author} ` : ""}(${year})`;
     const locator = locatorFor(record, "harvard");
     const edition = ordinalEdition(record.edition);
     const available = locator ? `Available at: ${locator}` : "";
     const accessed = dateDayFirst(record.accessDate);
     if(record.source === "book"){
-      if(!author) return joinWords(withPeriod(italicPair(record.title)), pair(`(${year})`), edition ? pair(`${edition} edn.`) : pair(), record.publisher ? pair(sentence(record.publisher)) : pair(), available ? pair(`${available}${accessed && locatorInfo(record.locator).kind === "url" ? ` (Accessed: ${accessed})` : ""}.`) : pair());
-      return joinWords(pair(lead), withPeriod(italicPair(record.title)), edition ? pair(`${edition} edn.`) : pair(), record.publisher ? pair(sentence(record.publisher)) : pair(), available ? pair(`${available}${accessed && locatorInfo(record.locator).kind === "url" ? ` (Accessed: ${accessed})` : ""}.`) : pair());
+      const publication = record.publisher ? `${record.publisherPlace ? `${record.publisherPlace}: ` : ""}${record.publisher}` : record.publisherPlace;
+      if(!author) return joinWords(withPeriod(italicPair(record.title)), pair(`(${year})`), edition ? pair(`${edition} edn.`) : pair(), publication ? pair(sentence(publication)) : pair(), available ? pair(`${available}${accessed && locatorInfo(record.locator).kind === "url" ? ` (Accessed: ${accessed})` : ""}.`) : pair());
+      return joinWords(pair(lead), withPeriod(italicPair(record.title)), edition ? pair(`${edition} edn.`) : pair(), publication ? pair(sentence(publication)) : pair(), available ? pair(`${available}${accessed && locatorInfo(record.locator).kind === "url" ? ` (Accessed: ${accessed})` : ""}.`) : pair());
     }
     if(record.source === "journal"){
       let journal = record.containerTitle;
@@ -696,26 +721,46 @@
     return result;
   }
 
+  function shortenedTitle(value, wordLimit=4){
+    const words = stripTerminal(value).split(/\s+/u).filter(Boolean);
+    return words.length > wordLimit ? words.slice(0, wordLimit).join(" ") : words.join(" ");
+  }
+
+  function titleForParenthetical(record){
+    const title = shortenedTitle(record.title);
+    return record.source === "book" ? title : quoted(title);
+  }
+
+  function chicagoShortAuthors(authors){
+    const families = authors.map(authorFamily).filter(Boolean);
+    if(families.length <= 3) return serialJoin(families, "and", true);
+    return `${families[0]} et al.`;
+  }
+
   function inTextCitation(record, style, sequence=1){
     const family = record.authors.map(authorFamily).filter(Boolean);
-    const year = record.year ? `${record.year}${record.yearSuffix || ""}` : "n.d.";
+    const year = record.year ? `${record.year}${record.yearSuffix || ""}` : `n.d.${record.yearSuffix ? `-${record.yearSuffix}` : ""}`;
     const pinpoint = clean(record.pinpoint);
     const pageLabel = pinpoint && /^\d/u.test(pinpoint) ? (/[–—,-]/u.test(pinpoint) ? "pp." : "p.") : "";
     if(style === "ieee") return pinpoint ? `[${sequence}, ${pageLabel ? `${pageLabel} ` : ""}${pinpoint}]` : `[${sequence}]`;
     if(style === "mla"){
-      const author = family.length ? `${family[0]}${family.length === 2 ? ` and ${family[1]}` : family.length > 2 ? " et al." : ""}` : record.title;
+      const author = family.length ? `${family[0]}${family.length === 2 ? ` and ${family[1]}` : family.length > 2 ? " et al." : ""}` : titleForParenthetical(record);
       return `(${author}${pinpoint ? ` ${pinpoint}` : ""})`;
     }
     if(style === "chicago"){
-      const author = record.authors[0] ? authorFamily(record.authors[0]) : "";
-      const shortTitle = record.source === "book" ? record.title : quoted(record.title);
-      return `${[author, shortTitle, pinpoint].filter(Boolean).join(", ")}.`;
+      const author = chicagoShortAuthors(record.authors);
+      const shortTitle = shortenedTitle(record.title);
+      const title = record.source === "book" ? shortTitle : quotedTerminalPair(shortTitle, pinpoint ? "," : ".").plain;
+      const lead = author ? `${author}, ${title}` : title;
+      if(!pinpoint) return record.source === "book" ? `${lead}.` : lead;
+      return `${lead}${record.source === "book" ? "," : ""} ${pinpoint}.`;
     }
     if(style === "harvard"){
-      const author = !family.length ? record.title : family.length === 1 ? family[0] : family.length === 2 ? `${family[0]} and ${family[1]}` : `${family[0]} et al.`;
-      return `(${author}, ${record.year ? `${record.year}${record.yearSuffix || ""}` : "no date"}${pinpoint ? `, ${pageLabel ? `${pageLabel} ` : ""}${pinpoint}` : ""})`;
+      const author = !family.length ? titleForParenthetical(record) : family.length === 1 ? family[0] : family.length <= 3 ? serialJoin(family, "and", false) : `${family[0]} et al.`;
+      const harvardYear = record.year ? `${record.year}${record.yearSuffix || ""}` : `no date${record.yearSuffix ? ` ${record.yearSuffix}` : ""}`;
+      return `(${author}, ${harvardYear}${pinpoint ? `, ${pageLabel ? `${pageLabel} ` : ""}${pinpoint}` : ""})`;
     }
-    const author = !family.length ? record.title : family.length === 1 ? family[0] : family.length === 2 ? `${family[0]} & ${family[1]}` : `${family[0]} et al.`;
+    const author = !family.length ? titleForParenthetical(record) : family.length === 1 ? family[0] : family.length === 2 ? `${family[0]} & ${family[1]}` : `${family[0]} et al.`;
     return `(${author}, ${year}${pinpoint ? `, ${pageLabel ? `${pageLabel} ` : ""}${pinpoint}` : ""})`;
   }
 
@@ -801,6 +846,11 @@
     if(!target) return;
     target.textContent = message;
     target.className = `citation-lookup-status${kind ? ` ${kind}` : ""}`;
+    const input = byId("citationAutomaticUrl");
+    if(input){
+      if(kind === "error") input.setAttribute("aria-invalid", "true");
+      else input.removeAttribute("aria-invalid");
+    }
   }
 
   function updateReferenceEditUi(custom=false){
@@ -864,7 +914,7 @@
     updateReferenceEditUi(hasOverride);
     state.preview = {record, style, generated, ...formatted};
     byId("copyCitation").disabled = !formatted.plain;
-    byId("addCitation").disabled = !formatted.plain || !record.title;
+    byId("addCitation").disabled = !formatted.plain || !record.title || validation.errors.length > 0;
     if(validation.errors.length){
       setStatus(tr(validation.errors[0]), "error", announce);
     } else if(hasOverride){
@@ -878,6 +928,14 @@
   function schedulePreview(){
     if(state.previewTimer) clearTimeout(state.previewTimer);
     state.previewTimer = window.setTimeout(() => { state.previewTimer = null; renderPreview(); }, 120);
+  }
+
+  function flushPreview(){
+    if(state.previewTimer){
+      clearTimeout(state.previewTimer);
+      state.previewTimer = null;
+    }
+    renderPreview();
   }
 
   function syncSourceFields({render=true}={}){
@@ -895,8 +953,10 @@
   function syncEntryMode(){
     const isWebsite = document.querySelector('input[name="citationSource"]:checked')?.value === "website";
     const automatic = document.querySelector('input[name="citationEntryMode"]:checked')?.value !== "manual";
+    const active = isWebsite && automatic;
     const panel = byId("citationAutomaticPanel");
-    if(panel) panel.hidden = !isWebsite || !automatic;
+    if(panel) panel.hidden = !active;
+    if(!active && state.lookupBusy) cancelLookup({clearStatus:true});
   }
 
   function syncStyle({render=true}={}){
@@ -907,11 +967,35 @@
   }
 
   function fingerprint(record){
-    return JSON.stringify([record.source, record.title.toLocaleLowerCase(), record.year, record.authors.map(author => author.kind === "organization" ? author.literal : `${author.family}|${author.given}`), normalizeDoi(record.locator) || locatorInfo(record.locator).value]);
+    const identity = value => clean(value).toLocaleLowerCase();
+    const locator = locatorInfo(record.locator);
+    return JSON.stringify([
+      record.source,
+      identity(record.title),
+      identity(record.year),
+      identity(record.publicationDate),
+      record.authors.map(author => author.kind === "organization"
+        ? ["organization", identity(author.literal)]
+        : ["person", identity(author.family), identity(author.given)]),
+      identity(record.publisher),
+      identity(record.publisherPlace),
+      identity(record.edition),
+      identity(record.containerTitle),
+      identity(record.volume),
+      identity(record.issue),
+      identity(record.pages),
+      identity(locator.kind === "doi" ? locator.value : locator.value || "")
+    ]);
   }
 
   function addCurrentCitation(){
+    flushPreview();
     if(!state.preview) return;
+    const validation = validateRecord(state.preview.record);
+    if(validation.errors.length){
+      setStatus(tr(validation.errors[0]), "error", true);
+      return;
+    }
     const referenceOverrides = {};
     STYLE_VALUES.forEach(style => {
       if(owns(state.draftOverrides, style)){
@@ -921,8 +1005,27 @@
     });
     const next = {...state.preview.record, referenceOverrides, id:crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`};
     const key = fingerprint(next);
-    if(state.library.some(item => fingerprint(item) === key)){
-      setStatus(tr("citationDuplicate"), "", true);
+    const existingIndex = state.library.findIndex(item => fingerprint(item) === key);
+    if(existingIndex >= 0){
+      const existing = state.library[existingIndex];
+      const updated = {
+        ...next,
+        id:existing.id,
+        referenceOverrides:{...(existing.referenceOverrides || {}), ...referenceOverrides}
+      };
+      if(JSON.stringify(existing) === JSON.stringify(updated)){
+        setStatus(tr("citationDuplicate"), "", true);
+        return;
+      }
+      const previous = [...state.library];
+      state.library[existingIndex] = updated;
+      if(!saveLibrary()){
+        state.library = previous;
+        setStatus(tr("bibliographyStorageFailed"), "error", true);
+        return;
+      }
+      renderLibrary();
+      setStatus(tr("citationUpdated"), "success", true);
       return;
     }
     const previous = [...state.library];
@@ -949,8 +1052,8 @@
     if(!["apa", "harvard"].includes(selectedStyle())) return ordered;
     const groups = new Map();
     ordered.forEach((record, index) => {
-      if(!record.authors.length || !record.year) return;
-      const key = `${record.authors.map(author => author.kind === "organization" ? clean(author.literal).toLocaleLowerCase() : `${clean(author.family).toLocaleLowerCase()}|${clean(author.given).toLocaleLowerCase()}`).join(";")}::${record.year}`;
+      if(!record.authors.length) return;
+      const key = `${record.authors.map(author => author.kind === "organization" ? clean(author.literal).toLocaleLowerCase() : `${clean(author.family).toLocaleLowerCase()}|${clean(author.given).toLocaleLowerCase()}`).join(";")}::${record.year || "no-date"}`;
       const indexes = groups.get(key) || [];
       indexes.push(index);
       groups.set(key, indexes);
@@ -1013,6 +1116,7 @@
   }
 
   async function copyCurrentCitation(){
+    flushPreview();
     if(!state.preview) return;
     const result = await copyRich(state.preview.plain, `<div style="padding-left:2em;text-indent:-2em">${state.preview.html}</div>`);
     setStatus(tr(result === "rich" ? "citationCopied" : result === "plain" ? "citationCopiedPlain" : "citationCopyFailed"), result === "failed" ? "error" : "success", true);
@@ -1048,26 +1152,44 @@
 
   function setLookupBusy(busy){
     state.lookupBusy = busy;
+    byId("citationAutomaticPanel")?.setAttribute("aria-busy", String(busy));
     const button = byId("citationLookupWebsite");
     if(!button) return;
     button.disabled = busy;
     button.textContent = tr(busy ? "citationFindingSource" : "citationFindSource");
   }
 
+  function cancelLookup({clearStatus=false}={}){
+    state.lookupRequest += 1;
+    state.lookupAbortController?.abort();
+    state.lookupAbortController = null;
+    setLookupBusy(false);
+    if(clearStatus) setLookupStatus("");
+  }
+
   function websiteDraftHasContent(){
-    return ["citationAuthors", "citationTitle", "citationPublicationDate", "citationSite", "citationLocator"]
+    return ["citationAuthors", "citationTitle", "citationYear", "citationPublicationDate", "citationSite", "citationLocator"]
       .some(id => clean(byId(id)?.value)) || Object.keys(state.draftOverrides).length > 0;
   }
 
   function applyWebsiteMetadata(metadata){
     const authors = Array.isArray(metadata.authors) ? metadata.authors.map(clean).filter(Boolean).slice(0, 20) : [];
     const organisation = clean(metadata.organization);
-    const authorType = metadata.authorType === "organization" || organisation ? "organization" : "person";
+    const authorType = metadata.authorType === "person" && authors.length
+      ? "person"
+      : metadata.authorType === "organization" && organisation
+        ? "organization"
+        : authors.length ? "person" : organisation ? "organization" : "person";
     byId("citationAuthorType").value = authorType;
     byId("citationAuthors").value = authorType === "organization" ? organisation || authors[0] || "" : authors.join("; ");
     byId("citationTitle").value = clean(metadata.title);
     byId("citationPinpoint").value = "";
-    byId("citationPublicationDate").value = /^\d{4}-\d{2}-\d{2}$/u.test(clean(metadata.publicationDate)) ? clean(metadata.publicationDate) : "";
+    const publicationDate = dateParts(metadata.publicationDate) ? clean(metadata.publicationDate) : "";
+    const publicationYear = /^\d{4}$/u.test(clean(metadata.publicationYear))
+      ? clean(metadata.publicationYear)
+      : publicationDate ? publicationDate.slice(0, 4) : "";
+    byId("citationPublicationDate").value = publicationDate;
+    byId("citationYear").value = publicationYear;
     byId("citationSite").value = clean(metadata.siteName);
     const resolvedUrl = normalizedWebsiteUrl(metadata.canonicalUrl || metadata.finalUrl || metadata.sourceUrl || byId("citationAutomaticUrl")?.value);
     byId("citationLocator").value = resolvedUrl;
@@ -1077,9 +1199,26 @@
     state.overrideBaseFingerprints = Object.create(null);
     if(state.previewTimer){ clearTimeout(state.previewTimer); state.previewTimer = null; }
     renderPreview({announce:true});
-    const partial = !metadata.title || !(organisation || authors.length) || !metadata.siteName || !metadata.publicationDate;
+    const partial = !metadata.title || !(organisation || authors.length) || !metadata.siteName || !(publicationDate || publicationYear);
     setLookupStatus(tr(partial ? "citationLookupPartial" : "citationLookupSuccess"), partial ? "warning" : "success");
     byId("citationTitle")?.focus();
+  }
+
+  async function lookupErrorKey(error){
+    const status = Number(error?.context?.status || 0);
+    let details = null;
+    try {
+      const response = error?.context;
+      if(response?.clone && typeof response.clone().json === "function") details = await response.clone().json();
+      else if(typeof response?.json === "function") details = await response.json();
+    } catch(_error){}
+    const code = clean(details?.code || details?.error).toLocaleUpperCase();
+    const message = clean(`${details?.message || ""} ${error?.message || ""}`).toLocaleLowerCase();
+    if(status === 401 || code === "INVALID_CREDENTIALS") return "citationLookupSessionExpired";
+    if(status === 429 || code.includes("RATE_LIMIT")) return "citationLookupRateLimited";
+    if([413, 415, 422].includes(status) || code.includes("UNSUPPORTED") || code.includes("TOO_LARGE")) return "citationLookupUnsupported";
+    if(status === 404 || message.includes("not found") || message.includes("failed to send")) return "citationLookupUnavailable";
+    return "citationLookupFailed";
   }
 
   async function lookupWebsiteMetadata(){
@@ -1093,24 +1232,33 @@
     if(!client || !user){ setLookupStatus(tr("citationLookupSignIn"), "error"); return; }
     if(websiteDraftHasContent() && !window.confirm(tr("citationLookupReplaceConfirm"))) return;
 
+    state.lookupAbortController?.abort();
+    const controller = new AbortController();
+    state.lookupAbortController = controller;
     const request = ++state.lookupRequest;
     byId("citationAutomaticUrl").value = url;
     setLookupBusy(true);
     setLookupStatus(tr("citationFindingSource"), "loading");
+    let timeoutId;
     try {
-      let timeoutId;
-      const timeout = new Promise((_, reject) => { timeoutId = window.setTimeout(() => reject(new Error("citation_lookup_timeout")), 16000); });
-      const invocation = client.functions.invoke("fetch-citation-metadata", {body:{url}});
+      const timeout = new Promise((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+          controller.abort();
+          reject(new Error("citation_lookup_timeout"));
+        }, 16000);
+      });
+      const invocation = client.functions.invoke("fetch-citation-metadata", {body:{url}, signal:controller.signal});
       const {data, error} = await Promise.race([invocation, timeout]);
       clearTimeout(timeoutId);
       if(request !== state.lookupRequest) return;
       if(error){
-        const status = Number(error?.context?.status || 0);
-        const message = clean(error?.message).toLocaleLowerCase();
-        const unavailable = status === 404 || message.includes("not found") || message.includes("failed to send");
-        setLookupStatus(tr(unavailable ? "citationLookupUnavailable" : "citationLookupFailed"), "error");
+        setLookupStatus(tr(await lookupErrorKey(error)), "error");
         return;
       }
+      const stillActive = document.querySelector('input[name="citationSource"]:checked')?.value === "website"
+        && document.querySelector('input[name="citationEntryMode"]:checked')?.value !== "manual"
+        && !byId("hubAcademicToolsView")?.hidden;
+      if(!stillActive) return;
       if(!data || typeof data !== "object" || !(clean(data.title) || clean(data.siteName) || normalizedWebsiteUrl(data.canonicalUrl || data.finalUrl || data.sourceUrl))){
         setLookupStatus(tr("citationLookupFailed"), "error");
         return;
@@ -1119,7 +1267,11 @@
     } catch(_error){
       if(request === state.lookupRequest) setLookupStatus(tr("citationLookupFailed"), "error");
     } finally {
-      if(request === state.lookupRequest) setLookupBusy(false);
+      clearTimeout(timeoutId);
+      if(request === state.lookupRequest){
+        state.lookupAbortController = null;
+        setLookupBusy(false);
+      }
     }
   }
 
@@ -1129,7 +1281,24 @@
     const style = selectedStyle();
     const record = recordFromForm();
     if(!owns(state.overrideBaseFingerprints, style)) state.overrideBaseFingerprints[style] = sourceFingerprint(record);
-    const override = cleanReference(reference.innerText);
+    const rawReference = String(reference.innerText || "");
+    const exceededLimit = rawReference.length > MAX_REFERENCE_LENGTH;
+    const override = cleanReference(rawReference);
+    if(exceededLimit || (!override && reference.childNodes.length)){
+      reference.replaceChildren();
+      if(override) reference.append(document.createTextNode(override));
+      if(exceededLimit){
+        reference.focus();
+        const selection = window.getSelection?.();
+        const range = document.createRange?.();
+        if(selection && range){
+          range.selectNodeContents(reference);
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+    }
     state.draftOverrides[style] = override;
     const validation = validateRecord(record);
     const generated = record.title && !validation.errors.length ? formatRecord(record, style, 1) : null;
@@ -1137,8 +1306,9 @@
     reference.className = `citation-render citation-editable-reference is-edited${override ? "" : " is-placeholder"}`;
     updateReferenceEditUi(true);
     byId("copyCitation").disabled = !override;
-    byId("addCitation").disabled = !override || !record.title;
-    setStatus(tr("citationEditedStatus"), "edited", false);
+    byId("addCitation").disabled = !override || !record.title || validation.errors.length > 0;
+    if(exceededLimit) setStatus(tr("citationReferenceLimit"), "error", true);
+    else setStatus(tr(validation.errors[0] || "citationEditedStatus"), validation.errors.length ? "error" : "edited", false);
   }
 
   function restoreGeneratedReference(){
@@ -1168,7 +1338,7 @@
   }
 
   function resetFormState(){
-    state.lookupRequest += 1;
+    cancelLookup();
     state.draftOverrides = Object.create(null);
     state.overrideBaseFingerprints = Object.create(null);
     setLookupBusy(false);
@@ -1196,15 +1366,19 @@
       return;
     }
     renderLibrary();
-    byId("citationTitle")?.focus();
-    setStatus(tr("citationEditedStatus"), "edited", true);
+    const heading = byId("citationLibraryTitle");
+    if(heading){ heading.tabIndex = -1; heading.focus(); }
+    setStatus(tr("bibliographyCleared"), "success", true);
   }
 
   function refreshLanguage(){
     document.querySelectorAll("[data-academic-i18n]").forEach(element => { element.textContent = tr(element.dataset.academicI18n); });
     document.querySelectorAll("[data-academic-i18n-placeholder]").forEach(element => {
       const value = tr(element.dataset.academicI18nPlaceholder);
-      if(element.hasAttribute("contenteditable")) element.dataset.placeholder = value;
+      if(element.hasAttribute("contenteditable")){
+        element.dataset.placeholder = value;
+        element.setAttribute("aria-placeholder", value);
+      }
       else element.placeholder = value;
     });
     document.querySelectorAll("[data-academic-i18n-aria-label]").forEach(element => { element.setAttribute("aria-label", tr(element.dataset.academicI18nAriaLabel)); });
@@ -1224,6 +1398,10 @@
     renderPreview();
   }
 
+  function deactivate(){
+    cancelLookup();
+  }
+
   function reset(nextUserId){
     if(state.previewTimer){ clearTimeout(state.previewTimer); state.previewTimer = null; }
     state.preview = null;
@@ -1239,9 +1417,11 @@
     if(byId("citationAccessDate") && !byId("citationAccessDate").value) byId("citationAccessDate").value = localDateValue();
     byId("citationForm").addEventListener("submit", event => {
       event.preventDefault();
-      const isAutomaticWebsite = document.querySelector('input[name="citationSource"]:checked')?.value === "website"
-        && document.querySelector('input[name="citationEntryMode"]:checked')?.value !== "manual";
-      if(isAutomaticWebsite) void lookupWebsiteMetadata();
+    });
+    byId("citationAutomaticUrl")?.addEventListener("keydown", event => {
+      if(event.key !== "Enter" || event.isComposing) return;
+      event.preventDefault();
+      void lookupWebsiteMetadata();
     });
     byId("citationForm").addEventListener("input", event => {
       if(event.target.id !== "citationAutomaticUrl") schedulePreview();
@@ -1286,9 +1466,10 @@
 
   window.ConCourseAcademicTools = Object.freeze({
     activate,
+    deactivate,
     reset,
     refreshLanguage,
-    __test:Object.freeze({formatRecord, effectiveFormat, parseAuthors, normalizeDoi, normalizedWebsiteUrl, validateRecord})
+    __test:Object.freeze({formatRecord, effectiveFormat, parseAuthors, normalizeDoi, normalizedWebsiteUrl, validateRecord, fingerprint, sourceFingerprint})
   });
 
   bind();

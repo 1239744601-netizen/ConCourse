@@ -1,0 +1,8 @@
+{
+  "name": "concourse",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check academic-tools.js && node --check member-hub.js && node --test tests/*.test.mjs"
+  }
+}
