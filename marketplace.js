@@ -23,6 +23,11 @@
     marketplaceVerificationRequired:"A verified university membership is required to use the campus marketplace.",
     marketplaceLoading:"Loading your campus marketplace…",
     marketplaceEmpty:"No listings match these filters yet.",
+    marketplaceEmptyHint:"Try another search—or add the first useful item for your campus.",
+    marketplaceSavedEmptyHint:"Save useful listings and they will stay together here.",
+    marketplaceOwnEmptyHint:"Turn something you no longer need into another student's next find.",
+    marketplaceOrderEmptyHint:"When you make or receive an order, its progress will appear here.",
+    marketplaceGlobalEmptyHint:"Try another university, category, or search.",
     marketplaceResults:"{count} listings",
     marketplaceSavedResults:"{count} saved listings",
     marketplaceMineResults:"{count} of your listings",
@@ -194,7 +199,12 @@
       marketplaceGlobalSeller:"已验证学生卖家",
       marketplaceGlobalMessageUnavailable:"卖家暂不接收跨校私信。",
       marketplaceEnableMessages:"请先在个人档案开启“允许已验证学生给我发私信”，再联系全球市集卖家。",
-      marketplaceGlobalConversationStarted:"对话已建立，正在打开私信…"
+      marketplaceGlobalConversationStarted:"对话已建立，正在打开私信…",
+      marketplaceEmptyHint:"尝试其他关键词或筛选条件，也可以成为第一个发布校园好物的人。",
+      marketplaceSavedEmptyHint:"收藏感兴趣的商品后，它们会集中显示在这里。",
+      marketplaceOwnEmptyHint:"把不再需要的物品发布出来，让它成为另一位学生的新发现。",
+      marketplaceOrderEmptyHint:"当你创建或收到订单后，交易进度会显示在这里。",
+      marketplaceGlobalEmptyHint:"尝试其他大学、分类或搜索关键词。"
     }),
     "zh-HK": Object.freeze({
       marketplaceReach:"市集範圍",
@@ -217,7 +227,12 @@
       marketplaceGlobalSeller:"已驗證學生賣家",
       marketplaceGlobalMessageUnavailable:"賣家暫時唔接收跨校私訊。",
       marketplaceEnableMessages:"請先喺個人檔案開啟「允許已驗證學生私訊我」，再聯絡全球市集賣家。",
-      marketplaceGlobalConversationStarted:"對話已建立，正在打開私訊…"
+      marketplaceGlobalConversationStarted:"對話已建立，正在打開私訊…",
+      marketplaceEmptyHint:"試下其他關鍵字或篩選條件，亦可以成為第一個發佈校園好物嘅人。",
+      marketplaceSavedEmptyHint:"收藏感興趣嘅商品之後，佢哋會集中顯示喺呢度。",
+      marketplaceOwnEmptyHint:"將唔再需要嘅物品發佈出嚟，等佢成為另一位學生嘅新發現。",
+      marketplaceOrderEmptyHint:"當你建立或者收到訂單之後，交易進度會顯示喺呢度。",
+      marketplaceGlobalEmptyHint:"試下其他大學、分類或者搜尋關鍵字。"
     })
   });
 
@@ -443,8 +458,11 @@
       button.hidden = global;
       button.disabled = global;
     });
+    const searchCopy = tr(global ? "marketplaceGlobalSearchPlaceholder" : "marketplaceSearchPlaceholder");
     const search = byId("marketplaceSearch");
-    if(search) search.placeholder = tr(global ? "marketplaceGlobalSearchPlaceholder" : "marketplaceSearchPlaceholder");
+    if(search){ search.placeholder = searchCopy; search.setAttribute("aria-label", searchCopy); }
+    const searchLabel = byId("marketplaceSearchLabel");
+    if(searchLabel) searchLabel.textContent = searchCopy;
     const trust = view?.querySelector(".market-trust-strip");
     if(trust){
       const title = trust.querySelector("b");
@@ -822,17 +840,96 @@
     button.textContent = state.loading ? tr("loadingMore") : tr("loadMore");
   }
 
+  function emptyState(message){
+    const empty = element("div", "marketplace-empty");
+    const visual = element("span", "marketplace-empty-visual");
+    visual.setAttribute("aria-hidden", "true");
+    visual.append(element("i", "marketplace-empty-orbit"));
+
+    const copy = element("div", "marketplace-empty-content");
+    copy.append(element("h3", "", message));
+    const hintKey = state.scope === "global"
+      ? "marketplaceGlobalEmptyHint"
+      : state.mode === "saved"
+        ? "marketplaceSavedEmptyHint"
+        : state.mode === "mine"
+          ? "marketplaceOwnEmptyHint"
+          : state.mode === "orders"
+            ? "marketplaceOrderEmptyHint"
+            : "marketplaceEmptyHint";
+    copy.append(element("p", "", tr(hintKey)));
+
+    const filtersApply = !["mine", "orders"].includes(state.mode);
+    const filtered = filtersApply && Boolean(state.query || state.category !== "all");
+    const actionType = !filtered && state.scope === "campus"
+      ? ["discover", "mine"].includes(state.mode)
+        ? "sell"
+        : ["saved", "orders"].includes(state.mode)
+          ? "explore"
+          : ""
+      : "";
+    if(actionType){
+      const action = element("button", "hub-marketplace-action primary marketplace-empty-action", tr(actionType === "sell" ? "marketplaceSell" : "marketplaceDiscover"));
+      action.type = "button";
+      action.dataset.marketAction = actionType;
+      action.setAttribute("aria-controls", actionType === "sell" ? "marketplaceListingEditorModal" : "marketplaceCatalogue");
+      if(actionType === "sell") action.setAttribute("aria-haspopup", "dialog");
+      copy.append(action);
+    }
+
+    empty.append(visual, copy);
+    return empty;
+  }
+
+  function renderMarketplaceLoading(){
+    const grid = byId("marketplaceGrid");
+    if(!grid) return;
+    unloadRenderedMedia(grid);
+    const loading = element("div", "marketplace-loading");
+    loading.setAttribute("aria-hidden", "true");
+    loading.append(element("span", "marketplace-loading-orbit"));
+    grid.replaceChildren(loading);
+    const catalogue = byId("marketplaceCatalogue");
+    if(catalogue){
+      catalogue.dataset.empty = "true";
+      catalogue.dataset.feedState = "loading";
+    }
+  }
+
+  function renderMarketplaceError(message){
+    const grid = byId("marketplaceGrid");
+    if(!grid) return;
+    unloadRenderedMedia(grid);
+    const error = element("div", "marketplace-feed-error");
+    error.setAttribute("aria-hidden", "true");
+    error.append(element("span", "marketplace-feed-error-mark", "!"), element("strong", "", message));
+    grid.replaceChildren(error);
+    state.total = null;
+    updateResultsLabel(0);
+    updateLoadMore();
+    const catalogue = byId("marketplaceCatalogue");
+    if(catalogue){
+      catalogue.dataset.empty = "true";
+      catalogue.dataset.feedState = "error";
+    }
+  }
+
   function renderGrid(){
     const grid = byId("marketplaceGrid");
     if(!grid) return;
     unloadRenderedMedia(grid);
     grid.replaceChildren();
+    const catalogue = byId("marketplaceCatalogue");
+    if(catalogue){
+      catalogue.dataset.empty = state.items.length ? "false" : "true";
+      catalogue.dataset.feedState = "ready";
+    }
     if(state.mode === "orders"){
       state.items.forEach(order => grid.append(orderCard(order)));
-      if(!state.items.length) grid.append(element("div", "marketplace-empty", tr("marketplaceNoOrders")));
+      if(!state.items.length) grid.append(emptyState(tr("marketplaceNoOrders")));
     } else {
       state.items.forEach(listing => grid.append(listingCard(listing)));
-      if(!state.items.length) grid.append(element("div", "marketplace-empty", state.scope === "global" ? tr("marketplaceGlobalEmpty") : state.mode === "mine" ? tr("marketplaceNoOwnListings") : tr("marketplaceEmpty")));
+      if(!state.items.length) grid.append(emptyState(state.scope === "global" ? tr("marketplaceGlobalEmpty") : state.mode === "mine" ? tr("marketplaceNoOwnListings") : tr("marketplaceEmpty")));
     }
     updateResultsLabel();
     updateLoadMore();
@@ -854,7 +951,9 @@
     const context = currentContext();
     const request = ++state.feedRequest;
     state.loading = true;
-    byId("marketplaceCatalogue")?.setAttribute("aria-busy", "true");
+    const catalogue = byId("marketplaceCatalogue");
+    catalogue?.setAttribute("aria-busy", "true");
+    if(catalogue) catalogue.dataset.feedState = "loading";
     if(!append){ state.offset = 0; state.hasMore = false; }
     setStatus(tr(state.scope === "global" ? "marketplaceGlobalLoading" : "marketplaceLoading"));
     updateLoadMore();
@@ -886,8 +985,12 @@
       setStatus("");
     } catch(error){
       if(contextIsCurrent(context) && request === state.feedRequest){
-        if(!append){ state.items = []; renderGrid(); }
-        setStatus(featureError(error) || tr("marketplaceLoadFailed"), "error");
+        const message = featureError(error) || tr("marketplaceLoadFailed");
+        if(!append){
+          state.items = [];
+          renderMarketplaceError(message);
+        } else if(catalogue) catalogue.dataset.feedState = "ready";
+        setStatus(message, "error");
       }
     } finally {
       if(contextIsCurrent(context) && request === state.feedRequest){
@@ -922,11 +1025,7 @@
       button.tabIndex = active ? 0 : -1;
       if(active && button.id) byId("marketplaceCatalogue")?.setAttribute("aria-labelledby", button.id);
     });
-    const grid = byId("marketplaceGrid");
-    if(grid){
-      unloadRenderedMedia(grid);
-      grid.replaceChildren(element("div", "marketplace-empty", tr(state.scope === "global" ? "marketplaceGlobalLoading" : "marketplaceLoading")));
-    }
+    renderMarketplaceLoading();
     updateResultsLabel(0);
     updateLoadMore();
     const filtersDisabled = ["mine", "orders"].includes(mode);
@@ -955,7 +1054,10 @@
         if(listingId(item) === id){ item.favorited_by_me = favorite; if(item.viewer) item.viewer.favorited = favorite; }
       });
       if(state.detail && listingId(state.detail) === id){ state.detail.favorited_by_me = favorite; if(state.detail.viewer) state.detail.viewer.favorited = favorite; }
-      if(state.mode === "saved" && !favorite) state.items = state.items.filter(item => listingId(item) !== id);
+      if(state.mode === "saved" && !favorite){
+        state.items = state.items.filter(item => listingId(item) !== id);
+        if(Number.isFinite(state.total)) state.total = Math.max(0, state.total - 1);
+      }
       renderGrid();
       if(state.detail && listingId(state.detail) === id) renderListingDetail(state.detail);
       if(restoreFocus){

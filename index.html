@@ -1684,10 +1684,11 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260721-market-entry4" />
-<link rel="stylesheet" href="marketplace.css?v=20260721-market-entry4" />
-<link rel="stylesheet" href="concourse-navy.css?v=20260721-market-entry4" />
-<link rel="stylesheet" href="concourse-controls.css?v=20260721-market-entry4" />
+<link rel="stylesheet" href="member-hub.css?v=20260721-market-gallery5" />
+<link rel="stylesheet" href="marketplace.css?v=20260721-market-gallery5" />
+<link rel="stylesheet" href="concourse-navy.css?v=20260721-market-gallery5" />
+<link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
+<link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2289,6 +2290,7 @@
       <section class="hub-view marketplace-view" data-hub-view="marketplace" hidden>
         <div class="market-discovery-bar">
           <label class="market-search" for="marketplaceSearch">
+            <span class="sr-only" id="marketplaceSearchLabel" data-i18n="marketplaceSearchPlaceholder">Search notes, textbooks, furniture...</span>
             <span aria-hidden="true">⌕</span>
             <input id="marketplaceSearch" type="search" maxlength="100" placeholder="Search notes, textbooks, furniture..." data-i18n-placeholder="marketplaceSearchPlaceholder" />
           </label>
@@ -2329,7 +2331,7 @@
         </div>
 
         <div class="market-layout">
-          <div class="market-catalogue" id="marketplaceCatalogue" role="tabpanel" aria-labelledby="marketplaceTabDiscover" aria-busy="false" tabindex="0">
+          <div class="market-catalogue" id="marketplaceCatalogue" role="tabpanel" aria-labelledby="marketplaceTabDiscover" aria-busy="false" tabindex="0" data-empty="true">
             <div class="market-results-heading">
               <h2 id="marketplaceResultsLabel" data-i18n="marketplaceRecentListings">Recent listings</h2>
               <span id="marketplaceStatus" role="status" aria-live="polite"></span>
@@ -2337,9 +2339,9 @@
             <div class="market-grid" id="marketplaceGrid" aria-live="polite"></div>
             <button type="button" class="btn-ghost market-load-more" id="marketplaceLoadMore" data-i18n="loadMore" hidden>Load more</button>
           </div>
-          <aside class="market-rail">
+          <aside class="market-rail" aria-labelledby="marketplaceTransactionFlowTitle">
             <article class="market-rail-card">
-              <span class="market-rail-eyebrow" data-i18n="marketplaceTransactionFlow">Transaction flow</span>
+              <h2 class="market-rail-eyebrow" id="marketplaceTransactionFlowTitle" data-i18n="marketplaceTransactionFlow">Transaction flow</h2>
               <ol class="market-protection-steps">
                 <li><b data-i18n="marketplaceStepAgree">Agree</b><span data-i18n="marketplaceStepAgreeText">Confirm the item, price, and delivery method.</span></li>
                 <li><b data-i18n="marketplaceStepReview">Review</b><span data-i18n="marketplaceStepReviewText">Inspect the item or material after delivery.</span></li>
@@ -2347,7 +2349,7 @@
               </ol>
             </article>
             <article class="market-rail-card market-policy-card">
-              <b data-i18n="marketplaceRightsTitle">Trade responsibly</b>
+              <h2 class="market-policy-title" data-i18n="marketplaceRightsTitle">Trade responsibly</h2>
               <p data-i18n="marketplaceRightsSummary">Sell only original or authorised materials. Leaked exams, active assessment answers, personal data, and pirated copies are prohibited.</p>
             </article>
           </aside>
@@ -4593,7 +4595,7 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260721-market-entry4"></script>
-<script src="marketplace.js?v=20260721-market-entry4"></script>
+<script src="member-hub.js?v=20260721-market-gallery5"></script>
+<script src="marketplace.js?v=20260721-market-gallery5"></script>
 </body>
 </html>
