@@ -427,7 +427,7 @@
     if(memberHub) memberHub.dataset.marketplaceScope = state.scope;
     const scope = byId("marketplaceScope");
     if(scope) scope.setAttribute("aria-label", tr("marketplaceReach"));
-    document.querySelectorAll("[data-market-scope]").forEach(button => {
+    document.querySelectorAll("#marketplaceScope [data-market-scope]").forEach(button => {
       const active = button.dataset.marketScope === state.scope;
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
@@ -435,8 +435,10 @@
     });
     const description = byId("marketplaceScopeDescription");
     if(description) description.textContent = tr(global ? "marketplaceGlobalScopeDescription" : "marketplaceCampusScopeDescription");
-    const sell = byId("marketplaceSellButton");
-    if(sell){ sell.hidden = global; sell.disabled = global; }
+    document.querySelectorAll('[data-market-action="sell"]').forEach(sell => {
+      sell.hidden = global;
+      sell.disabled = global;
+    });
     document.querySelectorAll('#marketplaceModes [data-market-mode="mine"], #marketplaceModes [data-market-mode="orders"]').forEach(button => {
       button.hidden = global;
       button.disabled = global;
@@ -2134,6 +2136,23 @@
     else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
   }
 
+  function handleMarketplaceAction(event){
+    const action = event.target.closest?.("[data-market-action]");
+    if(!action || !event.currentTarget.contains(action) || action.disabled) return;
+    if(action.dataset.marketAction === "sell"){
+      if(state.scope !== "global") void openListingEditor(null, action);
+      return;
+    }
+    if(action.dataset.marketAction !== "explore") return;
+    const discover = byId("marketplaceTabDiscover");
+    if(discover?.getAttribute("aria-selected") !== "true") discover.click();
+    const catalogue = byId("marketplaceCatalogue");
+    if(!catalogue) return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    catalogue.scrollIntoView({behavior:reduceMotion ? "auto" : "smooth", block:"start"});
+    window.requestAnimationFrame(() => catalogue.focus({preventScroll:true}));
+  }
+
   function bindEvents(){
     ensureScopeControls();
     ensureGlobalVisibilityControl();
@@ -2141,7 +2160,7 @@
     document.querySelectorAll("#marketplaceModes [data-market-mode]").forEach(button => {
       button.tabIndex = button.dataset.marketMode === "discover" ? 0 : -1;
     });
-    byId("marketplaceSellButton")?.addEventListener("click", event => void openListingEditor(null, event.currentTarget));
+    byId("memberHub")?.addEventListener("click", handleMarketplaceAction);
     byId("marketplaceScope")?.addEventListener("click", event => {
       const button = event.target.closest("[data-market-scope]");
       if(button) void setScope(button.dataset.marketScope);

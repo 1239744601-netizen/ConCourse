@@ -543,6 +543,8 @@
     $("hubPageKicker").textContent = t(`${prefix}Kicker`);
     $("hubGreeting").textContent = t(`${prefix}Title`);
     $("hubPageIntroduction").textContent = t(`${prefix}Intro`);
+    const marketplaceActions = $("hubMarketplaceActions");
+    if(marketplaceActions) marketplaceActions.hidden = view !== "marketplace";
   }
 
   function renderIdentity(){

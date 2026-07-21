@@ -1684,10 +1684,10 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260721-guidance3" />
-<link rel="stylesheet" href="marketplace.css?v=20260721-guidance3" />
-<link rel="stylesheet" href="concourse-navy.css?v=20260721-guidance3" />
-<link rel="stylesheet" href="concourse-controls.css?v=20260721-guidance3" />
+<link rel="stylesheet" href="member-hub.css?v=20260721-market-entry4" />
+<link rel="stylesheet" href="marketplace.css?v=20260721-market-entry4" />
+<link rel="stylesheet" href="concourse-navy.css?v=20260721-market-entry4" />
+<link rel="stylesheet" href="concourse-controls.css?v=20260721-market-entry4" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2115,6 +2115,10 @@
           <p class="hub-kicker" id="hubPageKicker">ConCourse Community</p>
           <h1 id="hubGreeting">Campus community</h1>
           <p id="hubPageIntroduction">Discover what students at your university are asking, sharing, and planning.</p>
+          <div class="hub-marketplace-actions" id="hubMarketplaceActions" hidden>
+            <button type="button" class="hub-marketplace-action primary" data-market-action="explore" aria-controls="marketplaceCatalogue" data-i18n="marketplaceDiscover">Discover</button>
+            <button type="button" class="hub-marketplace-action secondary" data-market-action="sell" aria-controls="marketplaceListingEditorModal" aria-haspopup="dialog" data-i18n="marketplaceSell">Sell</button>
+          </div>
         </div>
         <figure class="hub-hero-art" aria-hidden="true">
           <img src="concourse-campus-community.jpg" width="1536" height="1024" alt="" data-hub-hero="community" decoding="async" fetchpriority="high" />
@@ -2309,7 +2313,7 @@
               <option value="popular" data-i18n="marketplacePopular">Most saved</option>
             </select>
           </label>
-          <button type="button" class="btn-primary market-sell-button" id="marketplaceSellButton" data-i18n="marketplaceSell">Sell</button>
+          <button type="button" class="btn-primary market-sell-button" id="marketplaceSellButton" data-market-action="sell" aria-controls="marketplaceListingEditorModal" aria-haspopup="dialog" data-i18n="marketplaceSell">Sell</button>
         </div>
 
         <div class="market-mode-tabs" id="marketplaceModes" role="tablist" aria-label="Marketplace views" data-i18n-aria-label="marketplaceViews">
@@ -4589,7 +4593,7 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260721-guidance3"></script>
-<script src="marketplace.js?v=20260721-guidance3"></script>
+<script src="member-hub.js?v=20260721-market-entry4"></script>
+<script src="marketplace.js?v=20260721-market-entry4"></script>
 </body>
 </html>
