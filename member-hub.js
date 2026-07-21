@@ -68,6 +68,7 @@
     communityMediaLoadCache: new Map(),
     communityVideoUrlCache: new Map(),
     highlightedPostId: "",
+    openCommentPostIds: new Set(),
     likeBusy: new Set(),
     bookmarkBusy: new Set(),
     pollBusy: new Set()
@@ -94,6 +95,7 @@
   const AVATAR_URL_CACHE_LIMIT = 48;
   const COMMUNITY_FEED_PAGE_SIZE = 30;
   const COMMUNITY_FEED_WINDOW = 90;
+  const HUB_RPC_TIMEOUT_MS = 15000;
 
   const node = (tag, className="", content="") => {
     const element = document.createElement(tag);
@@ -131,6 +133,24 @@
   };
 
   const missingRpcError = error => /Could not find the function|schema cache|PGRST202/i.test(String(error?.message || ""));
+
+  const hubRpc = async (functionName, parameters={}, timeoutMs=HUB_RPC_TIMEOUT_MS) => {
+    let timeoutId = 0;
+    try {
+      return await Promise.race([
+        authClient.rpc(functionName, parameters),
+        new Promise((_, reject) => {
+          timeoutId = window.setTimeout(() => {
+            const error = new Error("Campus service request timed out");
+            error.code = "CONCOURSE_RPC_TIMEOUT";
+            reject(error);
+          }, timeoutMs);
+        })
+      ]);
+    } finally {
+      if(timeoutId) window.clearTimeout(timeoutId);
+    }
+  };
 
   const wrapMediaUploadError = (error, bucket) => {
     const wrapped = new Error(String(error?.message || "Media upload failed"));
@@ -244,6 +264,7 @@
     hubState.mediaPrepareOperation += 1;
     hubState.publishOperation += 1;
     hubState.highlightedPostId = "";
+    hubState.openCommentPostIds.clear();
     hubState.likeBusy.clear();
     hubState.bookmarkBusy.clear();
     hubState.pollBusy.clear();
@@ -2358,7 +2379,7 @@
     let data = [];
     let error = null;
     try {
-      const response = await authClient.rpc("get_post_comments", {p_post_id:postId});
+      const response = await hubRpc("get_post_comments", {p_post_id:postId});
       data = response.data || [];
       error = response.error || null;
     } catch(requestError){
@@ -2371,7 +2392,11 @@
       loadStatus.setAttribute("role", "status");
       container.append(loadStatus);
     }
-    data.forEach(comment => {
+    const commentRows = Array.isArray(data) ? data : [];
+    if(!error && !commentRows.length){
+      container.append(node("p", "hub-comment-status hub-comment-empty", t("commentsEmpty")));
+    }
+    commentRows.forEach(comment => {
       const item = node("div", "hub-comment");
       const copy = node("div", "hub-comment-copy");
       copy.append(
@@ -2425,7 +2450,7 @@
       submitStatus.className = "hub-comment-status";
       submitStatus.textContent = t("commentPosting");
       try {
-        const response = await authClient.rpc("add_post_comment", {p_post_id:postId, p_body:body});
+        const response = await hubRpc("add_post_comment", {p_post_id:postId, p_body:body});
         if(!contextIsCurrent(commentContext) || !container.isConnected) return;
         if(response.error){
           submitStatus.className = "hub-comment-status error";
@@ -2581,11 +2606,13 @@
       const actions = node("div", "hub-post-actions");
       const commentButton = node("button", "", `${t("comment")} · ${Number(post.comment_count || 0)}`);
       commentButton.type = "button";
-      commentButton.setAttribute("aria-expanded", "false");
       const comments = node("div", "hub-comments");
-      let commentsVisible = false;
+      let commentsVisible = hubState.openCommentPostIds.has(post.post_id);
+      commentButton.setAttribute("aria-expanded", commentsVisible ? "true" : "false");
       commentButton.onclick = async () => {
         commentsVisible = !commentsVisible;
+        if(commentsVisible) hubState.openCommentPostIds.add(post.post_id);
+        else hubState.openCommentPostIds.delete(post.post_id);
         comments.hidden = !commentsVisible;
         commentButton.setAttribute("aria-expanded", commentsVisible ? "true" : "false");
         if(commentsVisible) await loadPostComments(post.post_id, comments);
@@ -2627,9 +2654,10 @@
       }
       menu.append(summary, menuList);
       actions.append(menu);
-      comments.hidden = true;
+      comments.hidden = !commentsVisible;
       card.append(actions, comments);
       feed.append(card);
+      if(commentsVisible) void loadPostComments(post.post_id, comments);
     });
     const hashPostId = String(window.location.hash || "").replace(/^#post-/, "");
     if(hashPostId && hashPostId !== hubState.highlightedPostId){
@@ -2860,6 +2888,7 @@
     $("chatHeading").textContent = message;
     $("chatSubheading").textContent = "";
     $("chatMessages").replaceChildren(node("div", "hub-message-empty", message));
+    $("chatMessageInput").placeholder = t("selectConversation");
     $("chatMessageInput").disabled = true;
     $("sendChatMessage").disabled = true;
     $("reportConversation").disabled = true;
@@ -2871,8 +2900,16 @@
     const context = requestContext();
     const request = ++hubState.conversationListRequest;
     hubState.loadingConversations = true;
-    if(!hubState.conversations.length || !force) $("conversationList").replaceChildren(node("div", "hub-feed-empty", t("messagesLoading")));
-    const { data, error } = await authClient.rpc("get_my_conversations");
+    if(!hubState.conversations.length) $("conversationList").replaceChildren(node("div", "hub-feed-empty", t("messagesLoading")));
+    let data = null;
+    let error = null;
+    try {
+      const response = await hubRpc("get_my_conversations");
+      data = response.data;
+      error = response.error;
+    } catch(requestError){
+      error = requestError;
+    }
     if(!contextIsCurrent(context) || request !== hubState.conversationListRequest) return;
     hubState.loadingConversations = false;
     if(error){
@@ -2880,12 +2917,19 @@
       setStatus("chatStatus", featureError(error), "error");
       return;
     }
-    hubState.conversations = data || [];
+    hubState.conversations = Array.isArray(data) ? data : [];
     renderConversations(hubState.conversations);
-    if(hubState.activeConversationId){
-      const active = hubState.conversations.find(item => item.conversation_id === hubState.activeConversationId);
-      if(active) await openConversation(active, {skipConversationRender:true});
-      else clearActiveConversation();
+    let active = hubState.activeConversationId
+      ? hubState.conversations.find(item => item.conversation_id === hubState.activeConversationId)
+      : null;
+    if(hubState.activeConversationId && !active) clearActiveConversation();
+    if(!active && hubState.activeView === "messages") active = hubState.conversations[0] || null;
+    if(active){
+      const selectionWasAlreadyRendered = hubState.activeConversationId === active.conversation_id;
+      await openConversation(active, {skipConversationRender:selectionWasAlreadyRendered, showLoading:!force});
+    } else if(hubState.activeView === "messages" && !hubState.conversations.length){
+      clearActiveConversation();
+      $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("noConversations")));
     }
     return hubState.conversations;
   }
@@ -2906,13 +2950,15 @@
     if(hubState.activeConversationId){
       $("chatHeading").textContent = hubState.activeConversationName;
       $("chatSubheading").textContent = t("directMessagePrivacy");
+      $("chatMessageInput").placeholder = t("writePrivateMessage");
     } else {
       $("chatHeading").textContent = t("selectConversation");
       $("chatSubheading").textContent = "";
+      $("chatMessageInput").placeholder = t("selectConversation");
     }
   }
 
-  async function openConversation(conversation, {skipConversationRender=false}={}){
+  async function openConversation(conversation, {skipConversationRender=false, showLoading=true}={}){
     const context = requestContext();
     const request = ++hubState.conversationRequest;
     hubState.activeConversationId = conversation.conversation_id;
@@ -2925,14 +2971,26 @@
     $("reportConversation").disabled = false;
     $("blockConversationUser").disabled = false;
     if(!skipConversationRender) renderConversations(hubState.conversations);
-    $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("messagesLoading")));
-    const { data, error } = await authClient.rpc("get_conversation_messages", {p_conversation_id:conversation.conversation_id, p_limit:100});
+    if(showLoading || !hubState.messages.length){
+      $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("messagesLoading")));
+    }
+    let data = null;
+    let error = null;
+    try {
+      const response = await hubRpc("get_conversation_messages", {p_conversation_id:conversation.conversation_id, p_limit:100});
+      data = response.data;
+      error = response.error;
+    } catch(requestError){
+      error = requestError;
+    }
     if(!contextIsCurrent(context) || request !== hubState.conversationRequest || hubState.activeConversationId !== conversation.conversation_id) return;
     if(error){
       $("chatMessages").replaceChildren(node("div", "hub-message-empty", featureError(error)));
+      setStatus("chatStatus", featureError(error), "error");
       return;
     }
-    hubState.messages = data || [];
+    setStatus("chatStatus", "");
+    hubState.messages = Array.isArray(data) ? data : [];
     renderMessages(hubState.messages);
   }
 
@@ -2944,16 +3002,22 @@
     const context = requestContext();
     button.disabled = true;
     setStatus("chatStatus", t("startingConversation"));
-    const { data, error } = await authClient.rpc("start_direct_conversation", {p_username:username});
-    if(!contextIsCurrent(context)) return;
-    button.disabled = false;
-    if(error){ setStatus("chatStatus", featureError(error) || t("conversationStartFailed"), "error"); return; }
-    $("chatUsername").value = "";
-    setStatus("chatStatus", t("conversationStarted"), "success");
-    await loadConversations({force:true});
-    const conversationId = Array.isArray(data) ? data[0]?.conversation_id : data;
-    const conversation = hubState.conversations.find(item => item.conversation_id === conversationId);
-    if(conversation) await openConversation(conversation);
+    try {
+      const { data, error } = await hubRpc("start_direct_conversation", {p_username:username});
+      if(!contextIsCurrent(context)) return;
+      if(error){ setStatus("chatStatus", featureError(error) || t("conversationStartFailed"), "error"); return; }
+      $("chatUsername").value = "";
+      setStatus("chatStatus", t("conversationStarted"), "success");
+      await loadConversations({force:true});
+      if(!contextIsCurrent(context)) return;
+      const conversationId = Array.isArray(data) ? data[0]?.conversation_id : data;
+      const conversation = hubState.conversations.find(item => item.conversation_id === conversationId);
+      if(conversation) await openConversation(conversation);
+    } catch(requestError){
+      if(contextIsCurrent(context)) setStatus("chatStatus", featureError(requestError) || t("conversationStartFailed"), "error");
+    } finally {
+      if(contextIsCurrent(context)) button.disabled = false;
+    }
   }
 
   async function sendMessage(){
@@ -2968,31 +3032,33 @@
     button.disabled = true;
     $("chatMessageInput").disabled = true;
     setStatus("chatStatus", t("sendingMessage"));
-    const { error } = await authClient.rpc("send_direct_message", {
-      p_conversation_id:conversationId,
-      p_body:body,
-      p_client_nonce:crypto.randomUUID()
-    });
-    if(!contextIsCurrent(context)) return;
-    if(error){
-      hubState.sendingMessage = false;
+    try {
+      const { error } = await hubRpc("send_direct_message", {
+        p_conversation_id:conversationId,
+        p_body:body,
+        p_client_nonce:crypto.randomUUID()
+      });
+      if(!contextIsCurrent(context)) return;
+      if(error){
+        setStatus("chatStatus", featureError(error) || t("messageSendFailed"), "error");
+        return;
+      }
       const conversationStillActive = hubState.activeConversationId === conversationId;
-      $("chatMessageInput").disabled = !conversationStillActive;
-      button.disabled = !conversationStillActive;
-      setStatus("chatStatus", featureError(error) || t("messageSendFailed"), "error");
-      return;
+      if(conversationStillActive) $("chatMessageInput").value = "";
+      setStatus("chatStatus", "");
+      const active = hubState.conversations.find(item => item.conversation_id === conversationId);
+      if(active && conversationStillActive) await openConversation(active);
+      await loadConversations({force:true});
+    } catch(requestError){
+      if(contextIsCurrent(context)) setStatus("chatStatus", featureError(requestError) || t("messageSendFailed"), "error");
+    } finally {
+      if(contextIsCurrent(context)){
+        hubState.sendingMessage = false;
+        const hasActiveConversation = !!hubState.activeConversationId;
+        $("chatMessageInput").disabled = !hasActiveConversation;
+        button.disabled = !hasActiveConversation;
+      }
     }
-    const conversationStillActive = hubState.activeConversationId === conversationId;
-    if(conversationStillActive) $("chatMessageInput").value = "";
-    setStatus("chatStatus", "");
-    const active = hubState.conversations.find(item => item.conversation_id === conversationId);
-    if(active && conversationStillActive) await openConversation(active);
-    await loadConversations({force:true});
-    if(!contextIsCurrent(context)) return;
-    hubState.sendingMessage = false;
-    const hasActiveConversation = !!hubState.activeConversationId;
-    $("chatMessageInput").disabled = !hasActiveConversation;
-    button.disabled = !hasActiveConversation;
   }
 
   async function reportConversation(){

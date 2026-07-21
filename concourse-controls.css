@@ -4290,6 +4290,55 @@ body.app-active #landingScreen .language-control {
   }
 }
 
+/* Keep typed and loaded conversation text legible across browser themes. */
+.member-hub #chatMessageInput,
+.member-hub .hub-comment-form input {
+  color: var(--hub-editorial-ink) !important;
+  -webkit-text-fill-color: var(--hub-editorial-ink) !important;
+  caret-color: var(--cc-control-blue);
+  opacity: 1;
+  font-family: inherit;
+  font-size: 13.5px;
+}
+
+.member-hub #chatMessageInput::placeholder,
+.member-hub .hub-comment-form input::placeholder {
+  color: #66788a !important;
+  -webkit-text-fill-color: #66788a !important;
+  opacity: 1;
+}
+
+.member-hub #chatMessageInput:disabled {
+  color: #71808f !important;
+  -webkit-text-fill-color: #71808f !important;
+  background: #e7edf2 !important;
+  border-color: rgba(7, 29, 50, .1) !important;
+  cursor: not-allowed;
+}
+
+.member-hub .hub-comment-form input:disabled {
+  opacity: .72;
+  cursor: progress;
+}
+
+.member-hub .hub-comment-copy > span,
+.member-hub .hub-message:not(.mine) {
+  color: var(--hub-editorial-ink);
+  -webkit-text-fill-color: currentColor;
+  opacity: 1;
+  visibility: visible;
+}
+
+.member-hub .hub-message.mine {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+
+.member-hub .hub-comment-empty {
+  padding: 4px 2px;
+  font-weight: 650;
+}
+
 /* Cross-Hub density corrections found during the full component audit. */
 .member-hub:is(
   [data-active-view="overview"],

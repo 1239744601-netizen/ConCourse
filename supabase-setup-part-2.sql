@@ -2390,3 +2390,6 @@ revoke all on function public.get_school_feed_v2(integer, integer, boolean, uuid
   from public, anon, authenticated;
 grant execute on function public.get_school_feed_v2(integer, integer, boolean, uuid)
   to authenticated;
+
+-- Refresh the API schema after the second setup half completes.
+notify pgrst, 'reload schema';

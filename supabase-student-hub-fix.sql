@@ -1,7 +1,9 @@
--- ConCourse Student Hub activation patch
--- Run once in Supabase SQL Editor after setup Part 1 and Part 2.
--- Safe to rerun. It repairs community comments and refreshes the public
--- connected-provider allowlist without exposing LinkedIn as a verified badge.
+-- ConCourse Student Hub comments and messaging activation patch
+-- Run in Supabase SQL Editor after supabase-setup-part-1.sql. Part 2 remains
+-- optional unless the Campus Market is also being enabled.
+-- Safe to rerun. It repairs community comments, private campus conversations,
+-- chat RPCs, and the public connected-provider allowlist without exposing
+-- LinkedIn as a verified badge.
 
 begin;
 
@@ -14,7 +16,7 @@ begin
      or to_regclass('public.user_blocks') is null
      or to_regclass('public.content_reports') is null
      or to_regprocedure('private.verified_school_key()') is null then
-    raise exception 'Run supabase-setup-part-1.sql and supabase-setup-part-2.sql before this Student Hub patch';
+    raise exception 'Run supabase-setup-part-1.sql before this Student Hub comments and messaging patch';
   end if;
 end;
 $$;
@@ -57,8 +59,13 @@ declare
   post_author uuid;
 begin
   if caller_school is null then raise exception 'Verified school membership required'; end if;
-  select author_id into post_author from public.community_posts
-  where id = p_post_id and school_key = caller_school and status = 'published' and deleted_at is null;
+  select post.author_id
+  into post_author
+  from public.community_posts as post
+  where post.id = p_post_id
+    and post.school_key = caller_school
+    and post.status = 'published'
+    and post.deleted_at is null;
   if post_author is null then raise exception 'Post is unavailable'; end if;
   if exists (
     select 1 from public.user_blocks block
@@ -199,6 +206,338 @@ $$;
 revoke all on function public.delete_community_comment(uuid) from public;
 grant execute on function public.delete_community_comment(uuid) to authenticated;
 
+-- Blocking is shared by feed and chat actions, so restore it alongside the
+-- direct-message RPCs rather than leaving the conversation Block button
+-- dependent on whichever version of Part 1 was installed previously.
+create or replace function public.block_community_user(p_user_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if p_user_id is null or p_user_id = caller then raise exception 'Invalid user'; end if;
+  if not exists (
+    select 1 from public.school_memberships
+    where user_id = p_user_id and school_key = caller_school and status = 'verified'
+  ) then raise exception 'User is not in your verified school community'; end if;
+  insert into public.user_blocks (blocker_id, blocked_id)
+  values (caller, p_user_id) on conflict do nothing;
+  return true;
+end;
+$$;
+
+revoke all on function public.block_community_user(uuid) from public;
+grant execute on function public.block_community_user(uuid) to authenticated;
+
+-- Direct campus conversations. Tables remain inaccessible through ordinary
+-- REST table operations; authenticated clients use the participant-checking
+-- security-definer RPCs below. Messages are private, but not end-to-end
+-- encrypted because trusted database administrators can access them.
+create table if not exists public.direct_conversations (
+  id uuid primary key default gen_random_uuid(),
+  school_key text not null,
+  user_low uuid not null references auth.users(id) on delete cascade,
+  user_high uuid not null references auth.users(id) on delete cascade,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (school_key, user_low, user_high),
+  check (user_low <> user_high)
+);
+
+create table if not exists public.direct_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.direct_conversations(id) on delete cascade,
+  sender_id uuid not null references auth.users(id) on delete cascade,
+  client_nonce uuid not null,
+  body text not null check (char_length(trim(body)) between 1 and 2000),
+  created_at timestamptz not null default now(),
+  edited_at timestamptz,
+  deleted_at timestamptz,
+  unique (sender_id, client_nonce)
+);
+
+create index if not exists direct_conversations_low_idx
+  on public.direct_conversations (user_low, created_at desc);
+create index if not exists direct_conversations_high_idx
+  on public.direct_conversations (user_high, created_at desc);
+create index if not exists direct_messages_conversation_created_idx
+  on public.direct_messages (conversation_id, created_at);
+create index if not exists direct_messages_sender_created_idx
+  on public.direct_messages (sender_id, created_at desc);
+
+alter table public.direct_conversations enable row level security;
+alter table public.direct_messages enable row level security;
+revoke all on table public.direct_conversations from anon, authenticated;
+revoke all on table public.direct_messages from anon, authenticated;
+
+create or replace function public.start_direct_conversation(p_username text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  target_user uuid;
+  low_user uuid;
+  high_user uuid;
+  conversation uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  select profile.user_id into target_user
+  from public.profiles profile
+  join public.school_memberships membership on membership.user_id = profile.user_id
+  left join public.member_profiles member on member.user_id = profile.user_id
+  where profile.username = trim(p_username)
+    and membership.school_key = caller_school
+    and membership.status = 'verified'
+    and coalesce(member.allow_messages, false) = true;
+
+  if target_user is null then raise exception 'No messageable schoolmate has that username'; end if;
+  if target_user = caller then raise exception 'You cannot message yourself'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = target_user)
+       or (block.blocker_id = target_user and block.blocked_id = caller)
+  ) then raise exception 'Messaging is unavailable because one participant blocked the other'; end if;
+
+  if caller::text < target_user::text then low_user := caller; high_user := target_user;
+  else low_user := target_user; high_user := caller; end if;
+
+  insert into public.direct_conversations (school_key, user_low, user_high, created_by)
+  values (caller_school, low_user, high_user, caller)
+  on conflict (school_key, user_low, user_high) do update set school_key = excluded.school_key
+  returning id into conversation;
+  return conversation;
+end;
+$$;
+
+revoke all on function public.start_direct_conversation(text) from public;
+grant execute on function public.start_direct_conversation(text) to authenticated;
+
+-- The avatar columns changed this RPC's return type after its first release,
+-- so an explicit drop is required when repairing an older installation.
+drop function if exists public.get_my_conversations();
+create or replace function public.get_my_conversations()
+returns table (
+  conversation_id uuid,
+  other_user_id uuid,
+  other_username text,
+  other_display_name text,
+  other_avatar_path text,
+  other_avatar_revision bigint,
+  last_message text,
+  last_message_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  return query
+  with mine as (
+    select
+      conversation.id,
+      case when conversation.user_low = caller then conversation.user_high else conversation.user_low end as other_id,
+      conversation.created_at
+    from public.direct_conversations conversation
+    where conversation.school_key = caller_school
+      and (conversation.user_low = caller or conversation.user_high = caller)
+  )
+  select
+    mine.id,
+    mine.other_id,
+    profile.username,
+    case when member.profile_visibility = 'school' then member.display_name else null end,
+    case when member.profile_visibility = 'school' then member.avatar_path else null end,
+    case when member.profile_visibility = 'school' then member.avatar_revision else null end,
+    latest.body,
+    latest.created_at
+  from mine
+  join public.profiles profile on profile.user_id = mine.other_id
+  join public.school_memberships other_membership
+    on other_membership.user_id = mine.other_id
+   and other_membership.school_key = caller_school
+   and other_membership.status = 'verified'
+  left join public.member_profiles member on member.user_id = mine.other_id
+  left join lateral (
+    select message.body, message.created_at
+    from public.direct_messages message
+    where message.conversation_id = mine.id and message.deleted_at is null
+    order by message.created_at desc, message.id desc
+    limit 1
+  ) latest on true
+  where not exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = mine.other_id)
+       or (block.blocker_id = mine.other_id and block.blocked_id = caller)
+  )
+  order by coalesce(latest.created_at, mine.created_at) desc, mine.id desc;
+end;
+$$;
+
+revoke all on function public.get_my_conversations() from public;
+grant execute on function public.get_my_conversations() to authenticated;
+
+create or replace function public.get_conversation_messages(p_conversation_id uuid, p_limit integer default 100)
+returns table (
+  message_id uuid,
+  sender_id uuid,
+  body text,
+  created_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if not exists (
+    select 1 from public.direct_conversations conversation
+    where conversation.id = p_conversation_id
+      and conversation.school_key = caller_school
+      and (conversation.user_low = caller or conversation.user_high = caller)
+      and not exists (
+        select 1 from public.user_blocks block
+        where (
+          block.blocker_id = caller
+          and block.blocked_id = case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+        ) or (
+          block.blocked_id = caller
+          and block.blocker_id = case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+        )
+      )
+  ) then raise exception 'Conversation is unavailable'; end if;
+
+  return query
+  with recent_messages as (
+    select message.id, message.sender_id, message.body, message.created_at
+    from public.direct_messages message
+    where message.conversation_id = p_conversation_id and message.deleted_at is null
+    order by message.created_at desc, message.id desc
+    limit least(greatest(coalesce(p_limit, 100), 1), 200)
+  )
+  select recent.id, recent.sender_id, recent.body, recent.created_at
+  from recent_messages recent
+  order by recent.created_at, recent.id;
+end;
+$$;
+
+revoke all on function public.get_conversation_messages(uuid, integer) from public;
+grant execute on function public.get_conversation_messages(uuid, integer) to authenticated;
+
+create or replace function public.send_direct_message(
+  p_conversation_id uuid,
+  p_body text,
+  p_client_nonce uuid
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  other_user uuid;
+  new_id uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_body, ''))) not between 1 and 2000 then raise exception 'Message must contain 1 to 2000 characters'; end if;
+  if p_client_nonce is null then raise exception 'Message identifier is required'; end if;
+  if (select count(*) from public.direct_messages where sender_id = caller and created_at > now() - interval '1 minute') >= 30 then
+    raise exception 'Please wait before sending another message';
+  end if;
+
+  select case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+  into other_user
+  from public.direct_conversations conversation
+  where conversation.id = p_conversation_id
+    and conversation.school_key = caller_school
+    and (conversation.user_low = caller or conversation.user_high = caller);
+  if other_user is null then raise exception 'Conversation is unavailable'; end if;
+  if not exists (
+    select 1 from public.school_memberships membership
+    where membership.user_id = other_user
+      and membership.school_key = caller_school
+      and membership.status = 'verified'
+  ) then raise exception 'This schoolmate is no longer available for messaging'; end if;
+  if not exists (
+    select 1 from public.member_profiles member
+    where member.user_id = other_user and member.allow_messages = true
+  ) then raise exception 'This schoolmate is not accepting messages'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = other_user)
+       or (block.blocker_id = other_user and block.blocked_id = caller)
+  ) then raise exception 'Messaging is unavailable because one participant blocked the other'; end if;
+
+  insert into public.direct_messages (conversation_id, sender_id, client_nonce, body)
+  values (p_conversation_id, caller, p_client_nonce, trim(p_body))
+  on conflict (sender_id, client_nonce) do update set body = public.direct_messages.body
+  returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.send_direct_message(uuid, text, uuid) from public;
+grant execute on function public.send_direct_message(uuid, text, uuid) to authenticated;
+
+create or replace function public.report_conversation_user(p_conversation_id uuid, p_reason text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  other_user uuid;
+  new_id uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_reason, ''))) not between 1 and 500 then raise exception 'A report reason is required'; end if;
+  select case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
+  into other_user
+  from public.direct_conversations conversation
+  where conversation.id = p_conversation_id
+    and conversation.school_key = caller_school
+    and (conversation.user_low = caller or conversation.user_high = caller);
+  if other_user is null then raise exception 'Conversation is unavailable'; end if;
+
+  if exists (
+    select 1 from public.content_reports
+    where reporter_id = caller and target_type = 'user' and target_id = other_user
+      and status in ('open', 'reviewing')
+  ) then raise exception 'You already reported this user'; end if;
+  if (select count(*) from public.content_reports where reporter_id = caller and created_at > now() - interval '1 hour') >= 20 then
+    raise exception 'Please wait before submitting another report';
+  end if;
+
+  insert into public.content_reports (reporter_id, target_type, target_id, reason)
+  values (caller, 'user', other_user, trim(p_reason)) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.report_conversation_user(uuid, text) from public;
+grant execute on function public.report_conversation_user(uuid, text) to authenticated;
+
 -- Only providers that ConCourse currently offers as direct account connections
 -- may appear as authenticated badges. Pasted LinkedIn profile URLs remain in
 -- member_profiles.linkedin_url and are deliberately separate/self-reported.
@@ -259,4 +598,4 @@ grant execute on function public.get_schoolmate_connected_providers(uuid) to aut
 commit;
 
 notify pgrst, 'reload schema';
-select 'ConCourse comments and connected-provider badges are ready' as student_hub_patch_status;
+select 'ConCourse comments, private messaging, and connected-provider badges are ready' as student_hub_patch_status;

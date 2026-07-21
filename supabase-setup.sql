@@ -2241,8 +2241,13 @@ declare
   post_author uuid;
 begin
   if caller_school is null then raise exception 'Verified school membership required'; end if;
-  select author_id into post_author from public.community_posts
-  where id = p_post_id and school_key = caller_school and status = 'published' and deleted_at is null;
+  select post.author_id
+  into post_author
+  from public.community_posts as post
+  where post.id = p_post_id
+    and post.school_key = caller_school
+    and post.status = 'published'
+    and post.deleted_at is null;
   if post_author is null then raise exception 'Post is unavailable'; end if;
   if exists (
     select 1 from public.user_blocks block
@@ -2732,14 +2737,17 @@ set search_path = ''
 as $$
 declare
   caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
   other_user uuid;
   new_id uuid;
 begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
   if char_length(trim(coalesce(p_reason, ''))) not between 1 and 500 then raise exception 'A report reason is required'; end if;
   select case when conversation.user_low = caller then conversation.user_high else conversation.user_low end
   into other_user
   from public.direct_conversations conversation
   where conversation.id = p_conversation_id
+    and conversation.school_key = caller_school
     and (conversation.user_low = caller or conversation.user_high = caller);
   if other_user is null then raise exception 'Conversation is unavailable'; end if;
 
@@ -5154,3 +5162,6 @@ revoke all on function public.get_school_feed_v2(integer, integer, boolean, uuid
   from public, anon, authenticated;
 grant execute on function public.get_school_feed_v2(integer, integer, boolean, uuid)
   to authenticated;
+
+-- Refresh the Supabase API schema after the complete setup finishes.
+notify pgrst, 'reload schema';
