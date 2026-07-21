@@ -1,6 +1,8 @@
 // ConCourse automatic website citation metadata lookup.
 // Deploy as an authenticated Supabase Edge Function with JWT verification enabled.
 
+import { createSupabaseContext } from "jsr:@supabase/server@^1";
+
 const PRODUCTION_ORIGIN = "https://1239744601-netizen.github.io";
 const MAX_URL_LENGTH = 2048;
 const MAX_REDIRECTS = 4;
@@ -65,43 +67,14 @@ function jsonResponse(origin: string, body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: responseHeaders(origin) });
 }
 
-function publishableKey(): string {
-  const legacy = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
-  if (legacy) return legacy;
-  try {
-    const keys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") || "{}") as Record<string, unknown>;
-    const match = Object.values(keys).find((value) => typeof value === "string" && value.length > 20);
-    return typeof match === "string" ? match : "";
-  } catch (_error) {
-    return "";
-  }
-}
+type UserSupabaseClient = {
+  rpc: (name: string) => PromiseLike<{ data: unknown; error: unknown }>;
+};
 
-async function consumeQuota(request: Request): Promise<void> {
-  const authorization = request.headers.get("authorization") || "";
-  if (!/^Bearer\s+\S+$/iu.test(authorization)) {
-    throw new HttpError(401, "authentication_required", "Sign in before using automatic citation lookup.");
-  }
-  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-  const key = publishableKey();
-  if (!supabaseUrl || !key) throw new HttpError(503, "service_not_configured", "Citation lookup is not configured.");
-
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/consume_citation_fetch_quota`, {
-    method: "POST",
-    headers: {
-      apikey: key,
-      authorization,
-      "content-type": "application/json",
-    },
-    body: "{}",
-    signal: AbortSignal.timeout(4000),
-  });
-  if (response.status === 401 || response.status === 403) {
-    throw new HttpError(401, "authentication_required", "Your session is no longer valid.");
-  }
-  if (!response.ok) throw new HttpError(503, "quota_unavailable", "Citation lookup is not configured.");
-  const allowed = await response.json().catch(() => false);
-  if (allowed !== true) throw new HttpError(429, "rate_limited", "Too many lookups. Wait one minute and try again.");
+async function consumeQuota(supabase: UserSupabaseClient): Promise<void> {
+  const { data, error } = await supabase.rpc("consume_citation_fetch_quota");
+  if (error) throw new HttpError(503, "quota_unavailable", "Citation lookup is not configured.");
+  if (data !== true) throw new HttpError(429, "rate_limited", "Too many lookups. Wait one minute and try again.");
 }
 
 function parseIpv4(value: string): number[] | null {
@@ -517,31 +490,41 @@ function extractMetadata(html: string, sourceUrl: URL, finalUrl: URL): MetadataR
   };
 }
 
-Deno.serve(async (request: Request) => {
-  const origin = allowedOrigin(request.headers.get("origin"));
-  if (!origin) return new Response("Origin not allowed", { status: 403 });
-  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: responseHeaders(origin) });
-  if (request.method !== "POST") return jsonResponse(origin, { error: "method_not_allowed" }, 405);
+export default {
+  fetch: async (request: Request) => {
+    const origin = allowedOrigin(request.headers.get("origin"));
+    if (!origin) return new Response("Origin not allowed", { status: 403 });
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: responseHeaders(origin) });
+    if (request.method !== "POST") return jsonResponse(origin, { error: "method_not_allowed" }, 405);
 
-  try {
-    await consumeQuota(request);
-    const body = await request.json().catch(() => null) as { url?: unknown } | null;
-    const raw = typeof body?.url === "string" ? body.url.trim() : "";
-    const sourceUrl = await validatePublicUrl(raw);
-    const { html, finalUrl } = await fetchHtml(sourceUrl);
-    const result = extractMetadata(html, sourceUrl, finalUrl);
-    if (!result.title && !result.siteName) throw new HttpError(422, "metadata_not_found", "No useful citation metadata was found.");
-    return jsonResponse(origin, result);
-  } catch (error) {
-    if (error instanceof HttpError) {
-      const headers = responseHeaders(origin) as Record<string, string>;
-      if (error.status === 429) headers["Retry-After"] = "60";
-      return new Response(JSON.stringify({ error: error.code, message: error.message }), { status: error.status, headers });
+    const { data: context, error: authError } = await createSupabaseContext(request, { auth: "user" });
+    if (authError || !context) {
+      return jsonResponse(origin, {
+        error: authError?.code || "authentication_required",
+        message: authError?.message || "Sign in before using automatic citation lookup.",
+      }, authError?.status || 401);
     }
-    const timeout = error instanceof DOMException && error.name === "TimeoutError";
-    return jsonResponse(origin, {
-      error: timeout ? "lookup_timeout" : "lookup_failed",
-      message: timeout ? "The website took too long to respond." : "The website could not be inspected.",
-    }, timeout ? 504 : 422);
-  }
-});
+
+    try {
+      await consumeQuota(context.supabase);
+      const body = await request.json().catch(() => null) as { url?: unknown } | null;
+      const raw = typeof body?.url === "string" ? body.url.trim() : "";
+      const sourceUrl = await validatePublicUrl(raw);
+      const { html, finalUrl } = await fetchHtml(sourceUrl);
+      const result = extractMetadata(html, sourceUrl, finalUrl);
+      if (!result.title && !result.siteName) throw new HttpError(422, "metadata_not_found", "No useful citation metadata was found.");
+      return jsonResponse(origin, result);
+    } catch (error) {
+      if (error instanceof HttpError) {
+        const headers = responseHeaders(origin) as Record<string, string>;
+        if (error.status === 429) headers["Retry-After"] = "60";
+        return new Response(JSON.stringify({ error: error.code, message: error.message }), { status: error.status, headers });
+      }
+      const timeout = error instanceof DOMException && error.name === "TimeoutError";
+      return jsonResponse(origin, {
+        error: timeout ? "lookup_timeout" : "lookup_failed",
+        message: timeout ? "The website took too long to respond." : "The website could not be inspected.",
+      }, timeout ? 504 : 422);
+    }
+  },
+};

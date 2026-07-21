@@ -13,6 +13,8 @@ create table if not exists private.citation_fetch_rate_limits (
   primary key (user_id, window_start)
 );
 
+alter table private.citation_fetch_rate_limits enable row level security;
+
 revoke all on table private.citation_fetch_rate_limits
 from public, anon, authenticated;
 
