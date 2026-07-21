@@ -231,6 +231,7 @@
     revokeAvatarUrls();
     revokeCommunityMediaUrls();
     window.ConCourseMarketplace?.reset(nextUserId);
+    window.ConCourseAcademicTools?.reset?.(nextUserId);
     hubState.sessionUserId = nextUserId;
     hubState.generation += 1;
     hubState.conversationRequest += 1;
@@ -528,7 +529,7 @@
   }
 
   function renderHubHeader(){
-    const view = ["community", "marketplace", "messages", "overview", "profile"].includes(hubState.activeView) ? hubState.activeView : "community";
+    const view = ["community", "marketplace", "messages", "overview", "academic-tools", "profile"].includes(hubState.activeView) ? hubState.activeView : "community";
     const worldwideCommunity = view === "community" && hubState.feedScope === "cross";
     const worldwideMarketplace = view === "marketplace" && $("memberHub")?.dataset.marketplaceScope === "global";
     const prefix = view === "overview"
@@ -539,7 +540,9 @@
           ? (worldwideMarketplace ? "hubMarketplaceGlobal" : "hubMarketplace")
           : view === "messages"
             ? "hubMessages"
-            : "hubProfile";
+            : view === "academic-tools"
+              ? "hubAcademicTools"
+              : "hubProfile";
     $("hubPageKicker").textContent = t(`${prefix}Kicker`);
     $("hubGreeting").textContent = t(`${prefix}Title`);
     $("hubPageIntroduction").textContent = t(`${prefix}Intro`);
@@ -666,7 +669,7 @@
   }
 
   async function switchView(view){
-    if(!["overview", "community", "marketplace", "messages", "profile"].includes(view)) view = "community";
+    if(!["overview", "community", "marketplace", "messages", "academic-tools", "profile"].includes(view)) view = "community";
     if(view !== "community") closeSchoolmateProfile({restoreFocus:false});
     hubState.activeView = view;
     $("memberHub").dataset.activeView = view;
@@ -692,6 +695,8 @@
       await Promise.all([loadCommunityFeed(), loadConversations()]);
     } else if(view === "marketplace"){
       await window.ConCourseMarketplace?.activate();
+    } else if(view === "academic-tools"){
+      window.ConCourseAcademicTools?.activate?.();
     } else if(view === "messages"){
       await loadConversations();
     } else if(view === "profile"){
@@ -3482,6 +3487,7 @@
       syncCommunityScopeControls();
       syncAccess();
       window.ConCourseMarketplace?.refreshLanguage();
+      window.ConCourseAcademicTools?.refreshLanguage?.();
     }
   };
 
