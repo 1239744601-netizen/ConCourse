@@ -1,15 +1,21 @@
--- ConCourse Student Hub comments and messaging activation patch
+-- ConCourse Student Hub community and messaging activation patch
 -- Run in Supabase SQL Editor after supabase-setup-part-1.sql. Part 2 remains
 -- optional unless the Campus Market is also being enabled.
--- Safe to rerun. It repairs community comments, private campus conversations,
--- chat RPCs, and the public connected-provider allowlist without exposing
--- LinkedIn as a verified badge.
+-- Safe to rerun. It repairs community comments, cross-campus discovery,
+-- private campus conversations, chat RPCs, and the public connected-provider
+-- allowlist without exposing LinkedIn as a verified badge.
 
 begin;
 
 do $$
 begin
   if to_regclass('public.community_posts') is null
+     or to_regclass('public.community_post_media') is null
+     or to_regclass('public.community_polls') is null
+     or to_regclass('public.community_poll_options') is null
+     or to_regclass('public.community_poll_votes') is null
+     or to_regclass('public.post_likes') is null
+     or to_regclass('public.post_bookmarks') is null
      or to_regclass('public.profiles') is null
      or to_regclass('public.member_profiles') is null
      or to_regclass('public.school_memberships') is null
@@ -20,6 +26,50 @@ begin
   end if;
 end;
 $$;
+
+-- Older Student Hub drafts did not always have the columns consumed by the
+-- conversation list. Add them before compiling the chat RPCs and keep the
+-- current opt-in messaging default: existing accounts are not made messageable
+-- merely by applying a repair patch.
+alter table public.member_profiles
+  add column if not exists allow_messages boolean not null default false;
+alter table public.member_profiles
+  add column if not exists avatar_path text;
+alter table public.member_profiles
+  add column if not exists avatar_revision bigint not null default 0;
+update public.member_profiles set allow_messages = false where allow_messages is null;
+update public.member_profiles set avatar_revision = 0 where avatar_revision is null;
+alter table public.member_profiles alter column allow_messages type boolean using allow_messages::boolean;
+alter table public.member_profiles alter column avatar_path type text using avatar_path::text;
+alter table public.member_profiles alter column avatar_revision type bigint using avatar_revision::bigint;
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'member_profiles'
+      and column_name = 'allow_messages'
+      and column_default in ('true', 'true::boolean')
+  ) then
+    update public.member_profiles set allow_messages = false where allow_messages = true;
+  end if;
+end;
+$$;
+alter table public.member_profiles alter column allow_messages set default false;
+alter table public.member_profiles alter column allow_messages set not null;
+alter table public.member_profiles alter column avatar_revision set default 0;
+alter table public.member_profiles alter column avatar_revision set not null;
+
+-- Existing campus posts stay campus-only. The author must explicitly opt a
+-- post into cross-campus discovery through the narrow RPC below.
+alter table public.community_posts
+  add column if not exists cross_campus_visible boolean not null default false;
+update public.community_posts
+set cross_campus_visible = false
+where cross_campus_visible is null;
+alter table public.community_posts alter column cross_campus_visible set default false;
+alter table public.community_posts alter column cross_campus_visible set not null;
 
 create table if not exists public.community_comments (
   id uuid primary key default gen_random_uuid(),
@@ -39,12 +89,14 @@ create index if not exists community_comments_author_created_idx
 alter table public.community_comments enable row level security;
 revoke all on table public.community_comments from anon, authenticated;
 
+drop function if exists public.get_post_comments(uuid);
 create or replace function public.get_post_comments(p_post_id uuid)
 returns table (
   comment_id uuid,
   author_id uuid,
   author_username text,
   display_name text,
+  school_name text,
   body text,
   created_at timestamptz
 )
@@ -62,8 +114,12 @@ begin
   select post.author_id
   into post_author
   from public.community_posts as post
+  join public.school_memberships post_author_membership
+    on post_author_membership.user_id = post.author_id
+   and post_author_membership.school_key = post.school_key
+   and post_author_membership.status = 'verified'
   where post.id = p_post_id
-    and post.school_key = caller_school
+    and (post.school_key = caller_school or post.cross_campus_visible = true)
     and post.status = 'published'
     and post.deleted_at is null;
   if post_author is null then raise exception 'Post is unavailable'; end if;
@@ -79,14 +135,19 @@ begin
       comment.id,
       comment.author_id,
       profile.username,
-      case when member.profile_visibility = 'school' then member.display_name else null end as safe_display_name,
+      case
+        when author_membership.school_key = caller_school
+         and member.profile_visibility = 'school'
+          then member.display_name
+        else null
+      end as safe_display_name,
+      author_membership.school_name,
       comment.body,
       comment.created_at
     from public.community_comments comment
     join public.profiles profile on profile.user_id = comment.author_id
     join public.school_memberships author_membership
       on author_membership.user_id = comment.author_id
-     and author_membership.school_key = caller_school
      and author_membership.status = 'verified'
     left join public.member_profiles member on member.user_id = comment.author_id
     where comment.post_id = p_post_id
@@ -100,7 +161,8 @@ begin
     order by comment.created_at desc, comment.id desc
     limit 100
   )
-  select recent.id, recent.author_id, recent.username, recent.safe_display_name, recent.body, recent.created_at
+  select recent.id, recent.author_id, recent.username, recent.safe_display_name,
+    recent.school_name, recent.body, recent.created_at
   from recent_comments recent
   order by recent.created_at, recent.id;
 end;
@@ -126,8 +188,16 @@ begin
   if (select count(*) from public.community_comments where author_id = caller and created_at > now() - interval '1 minute') >= 10 then
     raise exception 'Please wait before adding another comment';
   end if;
-  select author_id into post_author from public.community_posts
-  where id = p_post_id and school_key = caller_school and status = 'published' and deleted_at is null;
+  select post.author_id into post_author
+  from public.community_posts post
+  join public.school_memberships author_membership
+    on author_membership.user_id = post.author_id
+   and author_membership.school_key = post.school_key
+   and author_membership.status = 'verified'
+  where post.id = p_post_id
+    and (post.school_key = caller_school or post.cross_campus_visible = true)
+    and post.status = 'published'
+    and post.deleted_at is null;
   if post_author is null then raise exception 'Post is unavailable'; end if;
   if exists (
     select 1 from public.user_blocks block
@@ -161,10 +231,17 @@ begin
     select 1
     from public.community_comments comment
     join public.community_posts post on post.id = comment.post_id
+    join public.school_memberships post_author_membership
+      on post_author_membership.user_id = post.author_id
+     and post_author_membership.school_key = post.school_key
+     and post_author_membership.status = 'verified'
+    join public.school_memberships comment_author_membership
+      on comment_author_membership.user_id = comment.author_id
+     and comment_author_membership.status = 'verified'
     where comment.id = p_comment_id
       and comment.status = 'published'
       and comment.deleted_at is null
-      and post.school_key = caller_school
+      and (post.school_key = caller_school or post.cross_campus_visible = true)
       and post.status = 'published'
       and post.deleted_at is null
   ) then raise exception 'Comment is unavailable'; end if;
@@ -223,8 +300,8 @@ begin
   if p_user_id is null or p_user_id = caller then raise exception 'Invalid user'; end if;
   if not exists (
     select 1 from public.school_memberships
-    where user_id = p_user_id and school_key = caller_school and status = 'verified'
-  ) then raise exception 'User is not in your verified school community'; end if;
+    where user_id = p_user_id and status = 'verified'
+  ) then raise exception 'User is not a verified ConCourse member'; end if;
   insert into public.user_blocks (blocker_id, blocked_id)
   values (caller, p_user_id) on conflict do nothing;
   return true;
@@ -233,6 +310,370 @@ $$;
 
 revoke all on function public.block_community_user(uuid) from public;
 grant execute on function public.block_community_user(uuid) to authenticated;
+
+-- Cross-campus discovery is read-only for publishing: verified members may
+-- discover and interact with opted-in posts from other verified universities,
+-- while publish_community_post* continues to derive its school from the caller.
+drop index if exists public.community_posts_discovery_created_idx;
+create index community_posts_discovery_created_idx
+  on public.community_posts (created_at desc, id desc)
+  where cross_campus_visible = true and status = 'published' and deleted_at is null;
+
+create or replace function public.can_view_community_media(p_owner_id text, p_object_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    coalesce(p_owner_id = (select auth.uid())::text, false)
+    or exists (
+      select 1
+      from public.community_post_media media
+      join public.community_posts post
+        on post.id = media.post_id
+       and post.status = 'published'
+       and post.deleted_at is null
+      join public.school_memberships viewer
+        on viewer.user_id = (select auth.uid())
+       and viewer.status = 'verified'
+      join public.school_memberships author_membership
+        on author_membership.user_id = post.author_id
+       and author_membership.school_key = post.school_key
+       and author_membership.status = 'verified'
+      where media.owner_id::text = p_owner_id
+        and media.storage_path = p_object_path
+        and media.owner_id = post.author_id
+        and (viewer.school_key = post.school_key or post.cross_campus_visible = true)
+        and not exists (
+          select 1
+          from public.user_blocks block
+          where (block.blocker_id = viewer.user_id and block.blocked_id = post.author_id)
+             or (block.blocker_id = post.author_id and block.blocked_id = viewer.user_id)
+        )
+    );
+$$;
+
+revoke all on function public.can_view_community_media(text, text) from public, anon, authenticated;
+grant execute on function public.can_view_community_media(text, text) to authenticated;
+
+drop function if exists public.get_cross_school_feed(integer, integer, boolean, uuid);
+create or replace function public.get_cross_school_feed(
+  p_limit integer default 30,
+  p_offset integer default 0,
+  p_bookmarked_only boolean default false,
+  p_post_id uuid default null
+)
+returns table (
+  post_id uuid,
+  author_id uuid,
+  author_username text,
+  display_name text,
+  avatar_path text,
+  avatar_revision bigint,
+  major_of_study text,
+  school_key text,
+  school_name text,
+  body text,
+  tags text[],
+  media jsonb,
+  poll jsonb,
+  created_at timestamptz,
+  like_count bigint,
+  comment_count bigint,
+  liked_by_me boolean,
+  bookmarked_by_me boolean
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+
+  return query
+  select
+    post.id,
+    post.author_id,
+    profile.username,
+    null::text,
+    null::text,
+    null::bigint,
+    null::text,
+    post.school_key,
+    author_membership.school_name,
+    post.body,
+    post.tags,
+    coalesce(
+      (
+        select jsonb_agg(
+          jsonb_build_object(
+            'storage_path', attachment.storage_path,
+            'media_type', attachment.media_type,
+            'mime_type', attachment.mime_type,
+            'alt_text', attachment.alt_text,
+            'position', attachment.position
+          )
+          order by attachment.position
+        )
+        from public.community_post_media attachment
+        where attachment.post_id = post.id
+          and attachment.owner_id = post.author_id
+      ),
+      '[]'::jsonb
+    ),
+    (
+      select jsonb_build_object(
+        'poll_id', community_poll.id,
+        'question', community_poll.question,
+        'total_votes', (
+          select count(*) from public.community_poll_votes poll_vote
+          where poll_vote.poll_id = community_poll.id
+        ),
+        'selected_option_id', (
+          select poll_vote.option_id
+          from public.community_poll_votes poll_vote
+          where poll_vote.poll_id = community_poll.id and poll_vote.user_id = caller
+        ),
+        'options', coalesce(
+          (
+            select jsonb_agg(
+              jsonb_build_object(
+                'option_id', poll_option.id,
+                'label', poll_option.label,
+                'vote_count', (
+                  select count(*)
+                  from public.community_poll_votes option_vote
+                  where option_vote.poll_id = community_poll.id
+                    and option_vote.option_id = poll_option.id
+                )
+              )
+              order by poll_option.position
+            )
+            from public.community_poll_options poll_option
+            where poll_option.poll_id = community_poll.id
+          ),
+          '[]'::jsonb
+        )
+      )
+      from public.community_polls community_poll
+      where community_poll.post_id = post.id
+    ),
+    post.created_at,
+    (select count(*) from public.post_likes likes where likes.post_id = post.id),
+    (
+      select count(*)
+      from public.community_comments comments
+      join public.school_memberships comment_membership
+        on comment_membership.user_id = comments.author_id
+       and comment_membership.status = 'verified'
+      where comments.post_id = post.id
+        and comments.status = 'published'
+        and comments.deleted_at is null
+        and not exists (
+          select 1 from public.user_blocks comment_block
+          where (comment_block.blocker_id = caller and comment_block.blocked_id = comments.author_id)
+             or (comment_block.blocker_id = comments.author_id and comment_block.blocked_id = caller)
+        )
+    ),
+    exists (select 1 from public.post_likes mine where mine.post_id = post.id and mine.user_id = caller),
+    exists (select 1 from public.post_bookmarks saved where saved.post_id = post.id and saved.user_id = caller)
+  from public.community_posts post
+  join public.profiles profile on profile.user_id = post.author_id
+  join public.school_memberships author_membership
+    on author_membership.user_id = post.author_id
+   and author_membership.school_key = post.school_key
+   and author_membership.status = 'verified'
+  where post.school_key <> caller_school
+    and post.cross_campus_visible = true
+    and post.status = 'published'
+    and post.deleted_at is null
+    and (p_post_id is null or post.id = p_post_id)
+    and (
+      not coalesce(p_bookmarked_only, false)
+      or exists (
+        select 1 from public.post_bookmarks saved_filter
+        where saved_filter.post_id = post.id and saved_filter.user_id = caller
+      )
+    )
+    and not exists (
+      select 1 from public.user_blocks block
+      where (block.blocker_id = caller and block.blocked_id = post.author_id)
+         or (block.blocker_id = post.author_id and block.blocked_id = caller)
+    )
+  order by post.created_at desc, post.id desc
+  limit least(greatest(coalesce(p_limit, 30), 1), 50)
+  offset greatest(coalesce(p_offset, 0), 0);
+end;
+$$;
+
+revoke all on function public.get_cross_school_feed(integer, integer, boolean, uuid)
+  from public, anon, authenticated;
+grant execute on function public.get_cross_school_feed(integer, integer, boolean, uuid)
+  to authenticated;
+
+create or replace function public.set_community_post_cross_campus(
+  p_post_id uuid,
+  p_visible boolean
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if p_post_id is null or p_visible is null then raise exception 'Post visibility is required'; end if;
+
+  update public.community_posts post
+  set cross_campus_visible = p_visible,
+      updated_at = now()
+  where post.id = p_post_id
+    and post.author_id = caller
+    and post.school_key = caller_school
+    and post.status = 'published'
+    and post.deleted_at is null;
+  if not found then raise exception 'Post is unavailable'; end if;
+  return p_visible;
+end;
+$$;
+
+revoke all on function public.set_community_post_cross_campus(uuid, boolean)
+  from public, anon, authenticated;
+grant execute on function public.set_community_post_cross_campus(uuid, boolean)
+  to authenticated;
+
+create or replace function public.toggle_post_like(p_post_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  post_author uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  select post.author_id into post_author
+  from public.community_posts post
+  join public.school_memberships author_membership
+    on author_membership.user_id = post.author_id
+   and author_membership.school_key = post.school_key
+   and author_membership.status = 'verified'
+  where post.id = p_post_id
+    and (post.school_key = caller_school or post.cross_campus_visible = true)
+    and post.status = 'published'
+    and post.deleted_at is null;
+  if post_author is null then raise exception 'Post is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = post_author)
+       or (block.blocker_id = post_author and block.blocked_id = caller)
+  ) then raise exception 'Post is unavailable'; end if;
+
+  delete from public.post_likes where post_id = p_post_id and user_id = caller;
+  if found then return false; end if;
+  insert into public.post_likes (post_id, user_id) values (p_post_id, caller);
+  return true;
+end;
+$$;
+
+revoke all on function public.toggle_post_like(uuid) from public, anon, authenticated;
+grant execute on function public.toggle_post_like(uuid) to authenticated;
+
+create or replace function public.toggle_post_bookmark(p_post_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  post_author uuid;
+begin
+  if caller is null then raise exception 'Authentication required'; end if;
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+
+  select post.author_id into post_author
+  from public.community_posts post
+  join public.school_memberships author_membership
+    on author_membership.user_id = post.author_id
+   and author_membership.school_key = post.school_key
+   and author_membership.status = 'verified'
+  where post.id = p_post_id
+    and (post.school_key = caller_school or post.cross_campus_visible = true)
+    and post.status = 'published'
+    and post.deleted_at is null;
+  if post_author is null then raise exception 'Post is unavailable'; end if;
+  if exists (
+    select 1 from public.user_blocks block
+    where (block.blocker_id = caller and block.blocked_id = post_author)
+       or (block.blocker_id = post_author and block.blocked_id = caller)
+  ) then raise exception 'Post is unavailable'; end if;
+
+  delete from public.post_bookmarks where post_id = p_post_id and user_id = caller;
+  if found then return false; end if;
+  insert into public.post_bookmarks (post_id, user_id) values (p_post_id, caller);
+  return true;
+end;
+$$;
+
+revoke all on function public.toggle_post_bookmark(uuid) from public, anon, authenticated;
+grant execute on function public.toggle_post_bookmark(uuid) to authenticated;
+
+create or replace function public.report_community_post(p_post_id uuid, p_reason text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  caller_school text := private.verified_school_key();
+  new_id uuid;
+begin
+  if caller_school is null then raise exception 'Verified school membership required'; end if;
+  if char_length(trim(coalesce(p_reason, ''))) not between 1 and 500 then raise exception 'A report reason is required'; end if;
+  if not exists (
+    select 1
+    from public.community_posts post
+    join public.school_memberships author_membership
+      on author_membership.user_id = post.author_id
+     and author_membership.school_key = post.school_key
+     and author_membership.status = 'verified'
+    where post.id = p_post_id
+      and (post.school_key = caller_school or post.cross_campus_visible = true)
+      and post.status = 'published'
+      and post.deleted_at is null
+  ) then raise exception 'Post is unavailable'; end if;
+  if exists (
+    select 1 from public.content_reports
+    where reporter_id = caller and target_type = 'post' and target_id = p_post_id
+      and status in ('open', 'reviewing')
+  ) then raise exception 'You already reported this post'; end if;
+  if (select count(*) from public.content_reports where reporter_id = caller and created_at > now() - interval '1 hour') >= 20 then
+    raise exception 'Please wait before submitting another report';
+  end if;
+  insert into public.content_reports (reporter_id, target_type, target_id, reason)
+  values (caller, 'post', p_post_id, trim(p_reason)) returning id into new_id;
+  return new_id;
+end;
+$$;
+
+revoke all on function public.report_community_post(uuid, text) from public, anon, authenticated;
+grant execute on function public.report_community_post(uuid, text) to authenticated;
 
 -- Direct campus conversations. Tables remain inaccessible through ordinary
 -- REST table operations; authenticated clients use the participant-checking
@@ -598,4 +1039,4 @@ grant execute on function public.get_schoolmate_connected_providers(uuid) to aut
 commit;
 
 notify pgrst, 'reload schema';
-select 'ConCourse comments, private messaging, and connected-provider badges are ready' as student_hub_patch_status;
+select 'ConCourse comments, cross-campus discovery, private messaging, and connected-provider badges are ready' as student_hub_patch_status;

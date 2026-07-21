@@ -46,6 +46,7 @@
     messagePoll: null,
     loadingFeed: false,
     loadingConversations: false,
+    feedScope: "school",
     feedTopic: "all",
     feedQuery: "",
     feedMode: "all",
@@ -105,10 +106,13 @@
   };
 
   const setStatus = (id, message="", kind="") => {
-    const element = $(id);
+    const targetId = id === "communityComposerStatus" && hubState.feedScope === "cross"
+      ? "communityFeedStatus"
+      : id;
+    const element = $(targetId);
     if(!element) return;
     element.textContent = message;
-    element.className = `hub-inline-status${kind ? ` ${kind}` : ""}`;
+    element.className = `hub-inline-status${targetId === "communityFeedStatus" ? " hub-feed-status" : ""}${kind ? ` ${kind}` : ""}`;
   };
 
   const locale = () => currentLanguage === "zh-CN" ? "zh-CN" : currentLanguage === "zh-HK" ? "zh-HK" : "en-GB";
@@ -120,8 +124,12 @@
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "" : date.toLocaleString(locale(), {month:"short", day:"numeric", hour:"2-digit", minute:"2-digit"});
   };
+  const errorText = error => [error?.message, error?.details, error?.hint, error?.code]
+    .filter(Boolean)
+    .join(" ");
+
   const featureError = error => {
-    const message = String(error?.message || "");
+    const message = errorText(error);
     if(/verified school membership|membership must be verified|school verification/i.test(message)) return t("schoolVerificationRequired");
     if(/Could not find the function|schema cache|does not exist|relation .* does not exist|PGRST202/i.test(message)) return t("memberSetupRequired");
     if(/already reported/i.test(message)) return t("alreadyReported");
@@ -129,10 +137,19 @@
     if(/not accepting messages|Messaging is unavailable|blocked the other/i.test(message)) return t("messagingUnavailable");
     if(/No messageable schoolmate/i.test(message)) return t("conversationStartFailed");
     if(/Post is unavailable|Comment is unavailable|Conversation is unavailable|Campus profile is unavailable/i.test(message)) return t("contentUnavailable");
+    if(/timed out|timeout|network|failed to fetch|offline|connection/i.test(message)) return t("connectionRetry");
     return t("featureUnavailable");
   };
 
-  const missingRpcError = error => /Could not find the function|schema cache|PGRST202/i.test(String(error?.message || ""));
+  const missingRpcError = error => /Could not find the function|schema cache|PGRST202/i.test(errorText(error));
+
+  const conversationStartError = error => {
+    const message = errorText(error);
+    if(/You cannot message yourself|cannot message yourself/i.test(message)) return t("cannotMessageSelf");
+    if(/No messageable schoolmate|username.*not found|no account.*username/i.test(message)) return t("conversationStartFailed");
+    if(/not accepting messages|Messaging is unavailable|blocked the other/i.test(message)) return t("messagingUnavailable");
+    return featureError(error);
+  };
 
   const hubRpc = async (functionName, parameters={}, timeoutMs=HUB_RPC_TIMEOUT_MS) => {
     let timeoutId = 0;
@@ -247,6 +264,7 @@
     hubState.sendingMessage = false;
     hubState.loadingFeed = false;
     hubState.loadingConversations = false;
+    hubState.feedScope = "school";
     hubState.feedTopic = "all";
     hubState.feedQuery = "";
     hubState.feedMode = "all";
@@ -274,10 +292,12 @@
     fillMemberProfile({});
     setProfileFormDisabled(true);
     ["communityPostBody", "communityPostTags", "communitySearch", "communityMediaInput", "chatUsername", "chatMessageInput"].forEach(id => { if($(id)) $(id).value = ""; });
+    if($("communityCrossCampus")) $("communityCrossCampus").checked = false;
     resetCommunityPoll();
     renderComposerMedia();
     setCommunityComposerBusy(false);
     syncCommunityTopicControls();
+    syncCommunityScopeControls();
     updateCommunityLoadMore();
     updateCommunityPostCounter();
     document.querySelectorAll("[data-community-topic]").forEach(button => {
@@ -295,7 +315,7 @@
     $("schoolmateProfileConnections").replaceChildren();
     $("schoolmateProfileLinksSection").hidden = true;
     $("schoolmateProfileConnectionsSection").hidden = true;
-    ["communityComposerStatus", "chatStatus", "memberProfileStatus", "avatarUploadStatus", "courseInsightStatus"].forEach(id => setStatus(id, ""));
+    ["communityComposerStatus", "communityFeedStatus", "chatStatus", "memberProfileStatus", "avatarUploadStatus", "courseInsightStatus"].forEach(id => setStatus(id, ""));
     setSocialConnectionStatus();
     renderSocialConnections();
     $("chatHeading").textContent = t("selectConversation");
@@ -1954,6 +1974,7 @@
   }
 
   async function voteCommunityPoll(pollId, optionId){
+    if(hubState.feedScope === "cross") return;
     if(hubState.pollBusy.has(pollId)) return;
     hubState.pollBusy.add(pollId);
     document.querySelectorAll(`[data-poll-id="${pollId}"]`).forEach(button => { button.disabled = true; });
@@ -1985,7 +2006,7 @@
       const button = node("button", `hub-poll-choice${selected === optionId ? " selected" : ""}`);
       button.type = "button";
       button.dataset.pollId = poll.poll_id;
-      button.disabled = hubState.pollBusy.has(poll.poll_id);
+      button.disabled = hubState.feedScope === "cross" || hubState.pollBusy.has(poll.poll_id);
       button.setAttribute("aria-pressed", selected === optionId ? "true" : "false");
       if(selected){
         const fill = node("span", "hub-poll-choice-fill");
@@ -2018,7 +2039,7 @@
     if(hubState.feedTopic === "saved" && !post.bookmarked_by_me) renderCommunityFeed(hubState.feed);
     const context = requestContext();
     try {
-      const { data, error } = await authClient.rpc("toggle_post_bookmark", {p_post_id:postId});
+      const { data, error } = await hubRpc("toggle_post_bookmark", {p_post_id:postId});
       if(!contextIsCurrent(context)) return;
       if(error){
         post.bookmarked_by_me = previous;
@@ -2027,8 +2048,14 @@
         return;
       }
       post.bookmarked_by_me = data === true;
-      if(hubState.feedMode === "saved" && !post.bookmarked_by_me) hubState.feedOffset = Math.max(0, hubState.feedOffset - 1);
+      if(hubState.feedTopic === "saved" && !post.bookmarked_by_me) hubState.feedOffset = Math.max(0, hubState.feedOffset - 1);
       renderCommunityFeed(hubState.feed);
+    } catch(requestError){
+      if(contextIsCurrent(context)){
+        post.bookmarked_by_me = previous;
+        renderCommunityFeed(hubState.feed);
+        setStatus("communityComposerStatus", featureError(requestError), "error");
+      }
     } finally {
       if(contextIsCurrent(context)){
         hubState.bookmarkBusy.delete(postId);
@@ -2040,7 +2067,7 @@
 
   async function shareCommunityPost(postId){
     const url = new URL(window.location.href);
-    url.hash = `post-${postId}`;
+    url.hash = `${hubState.feedScope === "cross" ? "cross-post" : "post"}-${postId}`;
     if(navigator.share){
       try {
         await navigator.share({title:"ConCourse", text:t("sharedPostMessage"), url:url.toString()});
@@ -2062,6 +2089,7 @@
     hubState.composerMedia = [];
     $("communityPostBody").value = "";
     $("communityPostTags").value = "";
+    $("communityCrossCampus").checked = false;
     renderComposerMedia();
     resetCommunityPoll();
     window.ConCourseMarketplace?.clearCommunityListing();
@@ -2095,7 +2123,7 @@
       if(!query) return true;
       const poll = parseJsonValue(post.poll, null);
       const pollCopy = poll ? [poll.question, ...(Array.isArray(poll.options) ? poll.options.map(option => option.label || option.option_text) : [])] : [];
-      return [post.body, ...pollCopy, post.display_name, post.author_username, post.major_of_study, ...(Array.isArray(post.tags) ? post.tags : [])]
+      return [post.body, ...pollCopy, post.display_name, post.author_username, post.school_name, post.major_of_study, ...(Array.isArray(post.tags) ? post.tags : [])]
         .filter(Boolean)
         .join(" ")
         .toLocaleLowerCase()
@@ -2116,10 +2144,41 @@
     }
   }
 
+  function syncCommunityScopeControls(){
+    const crossCampus = hubState.feedScope === "cross";
+    document.querySelectorAll("[data-community-scope]").forEach(button => {
+      const active = button.dataset.communityScope === hubState.feedScope;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    if($("memberHub")) $("memberHub").dataset.communityScope = hubState.feedScope;
+    if($("communityComposer")) $("communityComposer").hidden = crossCampus;
+    if($("communityFeedTitle")) $("communityFeedTitle").textContent = t(crossCampus ? "acrossCampusFeed" : "campusFeed");
+    if($("communitySearch")) $("communitySearch").placeholder = t(crossCampus ? "searchAcrossCampuses" : "searchCommunity");
+    if(!crossCampus) setStatus("communityFeedStatus", "");
+  }
+
+  function communityFeedMode(){
+    return `${hubState.feedScope}:${hubState.feedTopic === "saved" ? "saved" : "all"}`;
+  }
+
+  function selectCommunityScope(scope="school"){
+    const nextScope = scope === "cross" ? "cross" : "school";
+    if(nextScope === hubState.feedScope) return;
+    hubState.feedScope = nextScope;
+    hubState.feed = [];
+    hubState.feedOffset = 0;
+    hubState.feedHasMore = false;
+    hubState.openCommentPostIds.clear();
+    syncCommunityScopeControls();
+    syncCommunityTopicControls();
+    void loadCommunityFeed({force:true});
+  }
+
   function selectCommunityTopic(topic="all"){
     hubState.feedTopic = topic;
     syncCommunityTopicControls();
-    const nextMode = topic === "saved" ? "saved" : "all";
+    const nextMode = communityFeedMode();
     if(nextMode !== hubState.feedMode){
       hubState.feed = [];
       hubState.feedOffset = 0;
@@ -2325,7 +2384,7 @@
     }
     const context = requestContext();
     try {
-      const { data, error } = await authClient.rpc("toggle_post_like", {p_post_id:postId});
+      const { data, error } = await hubRpc("toggle_post_like", {p_post_id:postId});
       if(!contextIsCurrent(context)) return;
       if(error){
         post.liked_by_me = wasLiked;
@@ -2340,6 +2399,18 @@
         button.textContent = `${post.liked_by_me ? t("unlike") : t("like")} · ${post.like_count}`;
         button.classList.toggle("liked", post.liked_by_me);
         button.setAttribute("aria-pressed", post.liked_by_me ? "true" : "false");
+      }
+    } catch(requestError){
+      if(contextIsCurrent(context)){
+        post.liked_by_me = wasLiked;
+        post.like_count = previousCount;
+        setStatus("communityComposerStatus", featureError(requestError), "error");
+        const button = document.querySelector(`[data-like-post="${postId}"]`);
+        if(button){
+          button.textContent = `${post.liked_by_me ? t("unlike") : t("like")} · ${post.like_count}`;
+          button.classList.toggle("liked", post.liked_by_me);
+          button.setAttribute("aria-pressed", post.liked_by_me ? "true" : "false");
+        }
       }
     } finally {
       if(contextIsCurrent(context)){
@@ -2399,16 +2470,18 @@
     commentRows.forEach(comment => {
       const item = node("div", "hub-comment");
       const copy = node("div", "hub-comment-copy");
-      copy.append(
-        node("b", "", identityLabel(comment.display_name, comment.author_username)),
-        node("span", "", comment.body || ""),
-        node("time", "", formatCompactDate(comment.created_at))
-      );
+      copy.append(node("b", "", identityLabel(comment.display_name, comment.author_username)));
+      if(hubState.feedScope === "cross" && comment.school_name){
+        copy.append(node("small", "hub-comment-school", comment.school_name));
+      }
+      copy.append(node("span", "", comment.body || ""), node("time", "", formatCompactDate(comment.created_at)));
       const actions = node("div", "hub-comment-actions");
-      const profileButton = node("button", "", t("viewProfile"));
-      profileButton.type = "button";
-      profileButton.onclick = event => openSchoolmateProfile(comment.author_id, event.currentTarget);
-      actions.append(profileButton);
+      if(hubState.feedScope !== "cross"){
+        const profileButton = node("button", "", t("viewProfile"));
+        profileButton.type = "button";
+        profileButton.onclick = event => openSchoolmateProfile(comment.author_id, event.currentTarget);
+        actions.append(profileButton);
+      }
       if(comment.author_id === currentUser?.id){
         const deleteButton = node("button", "", t("deleteComment"));
         deleteButton.type = "button";
@@ -2562,7 +2635,7 @@
     const feed = replaceCommunityFeed();
     if(!feed) return;
     updateCommunityLoadMore();
-    if(!posts.length){ feed.append(node("div", "hub-feed-empty", t("communityEmpty"))); return; }
+    if(!posts.length){ feed.append(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityEmpty" : "communityEmpty"))); return; }
     const visiblePosts = filteredCommunityPosts(posts);
     if(!visiblePosts.length){ feed.append(node("div", "hub-feed-empty", t("communityNoMatches"))); return; }
     const featuredPost = visiblePosts
@@ -2577,16 +2650,17 @@
       const card = node("article", `hub-post-card${mediaItems.length ? " hub-post-card--media" : " hub-post-card--text"}${featured ? " hub-post-card--featured" : ""}`);
       card.id = `post-${post.post_id}`;
       card.dataset.postId = post.post_id;
-      if(featured) card.append(node("span", "hub-post-popular-label", t("popularOnCampus")));
+      if(featured) card.append(node("span", "hub-post-popular-label", t(hubState.feedScope === "cross" ? "popularAcrossCampuses" : "popularOnCampus")));
       const author = node("div", "hub-post-author");
       const authorName = postAuthorName(post);
       const avatar = createAvatar(post.display_name || post.author_username, post.avatar_path, post.avatar_revision);
       const authorCopy = node("div");
-      authorCopy.append(node("b", "", authorName), node("span", "", [post.major_of_study, formatCompactDate(post.created_at)].filter(Boolean).join(" · ")));
-      const authorButton = node("button", "hub-post-author-button");
-      authorButton.type = "button";
+      authorCopy.append(node("b", "", authorName), node("span", "", [post.school_name, post.major_of_study, formatCompactDate(post.created_at)].filter(Boolean).join(" · ")));
+      const crossCampus = hubState.feedScope === "cross";
+      const authorButton = node(crossCampus ? "div" : "button", `hub-post-author-button${crossCampus ? " cross-campus" : ""}`);
+      if(!crossCampus) authorButton.type = "button";
       authorButton.append(avatar, authorCopy);
-      authorButton.onclick = event => openSchoolmateProfile(post.author_id, event.currentTarget);
+      if(!crossCampus) authorButton.onclick = event => openSchoolmateProfile(post.author_id, event.currentTarget);
       author.append(authorButton);
       card.append(author);
 
@@ -2659,7 +2733,7 @@
       feed.append(card);
       if(commentsVisible) void loadPostComments(post.post_id, comments);
     });
-    const hashPostId = String(window.location.hash || "").replace(/^#post-/, "");
+    const hashPostId = String(window.location.hash || "").replace(/^#(?:cross-)?post-/, "");
     if(hashPostId && hashPostId !== hubState.highlightedPostId){
       const target = document.getElementById(`post-${hashPostId}`);
       if(target){
@@ -2681,10 +2755,11 @@
     button.textContent = t(hubState.loadingFeed ? "loadingMore" : "loadMore");
   }
 
-  async function requestCommunityFeed(parameters){
-    let response = await authClient.rpc("get_school_feed_v2", parameters);
+  async function requestCommunityFeed(parameters, scope=hubState.feedScope){
+    if(scope === "cross") return hubRpc("get_cross_school_feed", parameters);
+    let response = await hubRpc("get_school_feed_v2", parameters);
     if(response.error && missingRpcError(response.error)){
-      response = await authClient.rpc("get_school_feed", parameters);
+      response = await hubRpc("get_school_feed", parameters);
     }
     return response;
   }
@@ -2692,7 +2767,12 @@
   async function loadCommunityFeed({force=false, append=false}={}){
     if(!authClient || !currentUser) return;
     if(append && hubState.loadingFeed) return;
-    const mode = hubState.feedTopic === "saved" ? "saved" : "all";
+    const crossHash = /^#cross-post-/i.test(String(window.location.hash || ""));
+    if(crossHash && !append && hubState.feedScope !== "cross"){
+      hubState.feedScope = "cross";
+      syncCommunityScopeControls();
+    }
+    const mode = communityFeedMode();
     if(!force && !append && hubState.feed.length && hubState.feedMode === mode){
       renderCommunityFeed(hubState.feed);
       return;
@@ -2703,13 +2783,23 @@
     const offset = append && hubState.feedMode === mode ? hubState.feedOffset : 0;
     hubState.loadingFeed = true;
     updateCommunityLoadMore();
-    if(!append && (!hubState.feed.length || hubState.feedMode !== mode)) replaceCommunityFeed(node("div", "hub-feed-empty", t("communityLoading")));
-    const { data, error } = await requestCommunityFeed({
-      p_limit:limit,
-      p_offset:offset,
-      p_bookmarked_only:mode === "saved",
-      p_post_id:null
-    });
+    if(!append && (!hubState.feed.length || hubState.feedMode !== mode)){
+      replaceCommunityFeed(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityLoading" : "communityLoading")));
+    }
+    let data = null;
+    let error = null;
+    try {
+      const response = await requestCommunityFeed({
+        p_limit:limit,
+        p_offset:offset,
+        p_bookmarked_only:hubState.feedTopic === "saved",
+        p_post_id:null
+      });
+      data = response.data;
+      error = response.error;
+    } catch(requestError){
+      error = requestError;
+    }
     if(!contextIsCurrent(context) || request !== hubState.feedRequest) return;
     hubState.loadingFeed = false;
     if(error){
@@ -2719,17 +2809,22 @@
       return;
     }
     let rows = Array.isArray(data) ? data : [];
-    const hashMatch = mode === "all" && offset === 0
-      ? String(window.location.hash || "").match(/^#post-([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i)
+    const hashMatch = hubState.feedTopic !== "saved" && offset === 0
+      ? String(window.location.hash || "").match(/^#(?:cross-)?post-([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i)
       : null;
     const hashPostId = hashMatch?.[1] || "";
     if(hashPostId && !rows.some(post => post.post_id === hashPostId)){
-      const targeted = await requestCommunityFeed({
-        p_limit:1,
-        p_offset:0,
-        p_bookmarked_only:false,
-        p_post_id:hashPostId
-      });
+      let targeted = {data:null, error:null};
+      try {
+        targeted = await requestCommunityFeed({
+          p_limit:1,
+          p_offset:0,
+          p_bookmarked_only:false,
+          p_post_id:hashPostId
+        });
+      } catch(requestError){
+        targeted = {data:null, error:requestError};
+      }
       if(!contextIsCurrent(context) || request !== hubState.feedRequest) return;
       if(!targeted.error && Array.isArray(targeted.data)) rows = [...rows, ...targeted.data];
     }
@@ -2765,7 +2860,7 @@
   }
 
   async function publishCommunityPost(){
-    if(hubState.composerMediaBusy || !currentUser) return;
+    if(hubState.feedScope === "cross" || hubState.composerMediaBusy || !currentUser) return;
     const linkedListingId = window.ConCourseMarketplace?.selectedCommunityListingId() || null;
     const typedBody = $("communityPostBody").value.trim();
     const body = typedBody || (linkedListingId ? t("marketplaceSharedPostDefault") : "");
@@ -2777,6 +2872,7 @@
     const context = requestContext();
     const operation = ++hubState.publishOperation;
     const draftId = crypto.randomUUID();
+    const crossCampusVisible = $("communityCrossCampus").checked;
     const mediaSnapshot = hubState.composerMedia.map(item => ({...item, altText:String(item.altText || "").trim()}));
     const pollSnapshot = poll ? {question:poll.question, options:[...poll.options]} : null;
     let uploaded = {paths:[], descriptors:[]};
@@ -2802,7 +2898,7 @@
           p_poll_options:pollSnapshot?.options || []
         });
       }
-      const {error} = response;
+      const {data:publishedPost, error} = response;
       if(error){
         await removeCommunityUploads(uploaded.paths);
         if(!contextIsCurrent(context) || operation !== hubState.publishOperation) return;
@@ -2810,10 +2906,27 @@
         return;
       }
       if(!contextIsCurrent(context) || operation !== hubState.publishOperation) return;
+      let crossCampusError = null;
+      if(crossCampusVisible){
+        const postId = Array.isArray(publishedPost) ? publishedPost[0]?.post_id || publishedPost[0]?.id : publishedPost;
+        if(postId){
+          try {
+            const visibilityResponse = await hubRpc("set_community_post_cross_campus", {p_post_id:postId, p_visible:true});
+            crossCampusError = visibilityResponse.error || null;
+          } catch(visibilityRequestError){
+            crossCampusError = visibilityRequestError;
+          }
+        } else crossCampusError = new Error("Published post identifier was unavailable");
+      }
+      if(!contextIsCurrent(context) || operation !== hubState.publishOperation) return;
       clearCommunityComposer();
       hubState.feedTopic = "all";
       syncCommunityTopicControls();
-      setStatus("communityComposerStatus", t("postPublished"), "success");
+      setStatus(
+        "communityComposerStatus",
+        crossCampusError ? t("postPublishedCampusOnly") : t(crossCampusVisible ? "postPublishedAcrossCampuses" : "postPublished"),
+        crossCampusError ? "error" : "success"
+      );
       await loadCommunityFeed({force:true});
     } catch(error){
       await removeCommunityUploads(uploaded.paths);
@@ -2895,8 +3008,8 @@
     $("blockConversationUser").disabled = true;
   }
 
-  async function loadConversations({force=false}={}){
-    if(!authClient || !currentUser) return;
+  async function loadConversations({force=false, suppressStatus=false}={}){
+    if(!authClient || !currentUser) return null;
     const context = requestContext();
     const request = ++hubState.conversationListRequest;
     hubState.loadingConversations = true;
@@ -2914,8 +3027,8 @@
     hubState.loadingConversations = false;
     if(error){
       $("conversationList").replaceChildren(node("div", "hub-feed-empty", featureError(error)));
-      setStatus("chatStatus", featureError(error), "error");
-      return;
+      if(!suppressStatus) setStatus("chatStatus", featureError(error), "error");
+      return null;
     }
     hubState.conversations = Array.isArray(data) ? data : [];
     renderConversations(hubState.conversations);
@@ -2969,7 +3082,7 @@
     $("chatMessageInput").disabled = hubState.sendingMessage;
     $("sendChatMessage").disabled = hubState.sendingMessage;
     $("reportConversation").disabled = false;
-    $("blockConversationUser").disabled = false;
+    $("blockConversationUser").disabled = !hubState.activeConversationUserId;
     if(!skipConversationRender) renderConversations(hubState.conversations);
     if(showLoading || !hubState.messages.length){
       $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("messagesLoading")));
@@ -2995,26 +3108,46 @@
   }
 
   async function startConversation(){
-    const username = $("chatUsername").value.trim();
+    const username = $("chatUsername").value.trim().replace(/^@/, "");
     if(!username) return;
+    if(!/^[A-Za-z0-9_]{3,24}$/.test(username)){
+      setStatus("chatStatus", t("chatUsernameInvalid"), "error");
+      return;
+    }
     if(username === currentUser?.user_metadata?.username){ setStatus("chatStatus", t("cannotMessageSelf"), "error"); return; }
     const button = $("startConversation");
+    if(button.disabled) return;
     const context = requestContext();
     button.disabled = true;
     setStatus("chatStatus", t("startingConversation"));
     try {
       const { data, error } = await hubRpc("start_direct_conversation", {p_username:username});
       if(!contextIsCurrent(context)) return;
-      if(error){ setStatus("chatStatus", featureError(error) || t("conversationStartFailed"), "error"); return; }
+      if(error){ setStatus("chatStatus", conversationStartError(error), "error"); return; }
+      const conversationId = Array.isArray(data) ? data[0]?.conversation_id : data;
+      if(!conversationId){ setStatus("chatStatus", t("conversationStartFailed"), "error"); return; }
       $("chatUsername").value = "";
       setStatus("chatStatus", t("conversationStarted"), "success");
-      await loadConversations({force:true});
+      await loadConversations({force:true, suppressStatus:true});
       if(!contextIsCurrent(context)) return;
-      const conversationId = Array.isArray(data) ? data[0]?.conversation_id : data;
-      const conversation = hubState.conversations.find(item => item.conversation_id === conversationId);
-      if(conversation) await openConversation(conversation);
+      let conversation = hubState.conversations.find(item => item.conversation_id === conversationId);
+      if(!conversation){
+        conversation = {
+          conversation_id: conversationId,
+          other_user_id: null,
+          other_username: username,
+          other_display_name: null,
+          other_avatar_path: null,
+          other_avatar_revision: 0,
+          last_message: null,
+          last_message_at: null
+        };
+        hubState.conversations = [conversation, ...hubState.conversations];
+        renderConversations(hubState.conversations);
+      }
+      await openConversation(conversation);
     } catch(requestError){
-      if(contextIsCurrent(context)) setStatus("chatStatus", featureError(requestError) || t("conversationStartFailed"), "error");
+      if(contextIsCurrent(context)) setStatus("chatStatus", conversationStartError(requestError), "error");
     } finally {
       if(contextIsCurrent(context)) button.disabled = false;
     }
@@ -3162,6 +3295,7 @@
     renderCommunityFeed(hubState.feed);
   });
   document.querySelectorAll("[data-community-topic]").forEach(button => button.addEventListener("click", () => selectCommunityTopic(button.dataset.communityTopic || "all")));
+  document.querySelectorAll("[data-community-scope]").forEach(button => button.addEventListener("click", () => selectCommunityScope(button.dataset.communityScope || "school")));
   $("communityShowSaved")?.addEventListener("click", () => selectCommunityTopic("saved"));
   $("communityOpenMessages")?.addEventListener("click", () => switchView("messages"));
   $("communityStartMessage")?.addEventListener("click", async () => {
@@ -3169,6 +3303,12 @@
     $("chatUsername").focus();
   });
   $("startConversation")?.addEventListener("click", startConversation);
+  $("chatUsername")?.addEventListener("keydown", event => {
+    if(event.key === "Enter" && !event.isComposing && event.keyCode !== 229){
+      event.preventDefault();
+      void startConversation();
+    }
+  });
   $("refreshMessages")?.addEventListener("click", () => loadConversations({force:true}));
   $("reportConversation")?.addEventListener("click", reportConversation);
   $("blockConversationUser")?.addEventListener("click", blockConversationUser);
@@ -3218,8 +3358,10 @@
     const listingMatch = String(window.location.hash || "").match(/^#listing-([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
     if(listingMatch){
       return;
-    } else if(/^#post-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(window.location.hash)){
+    } else if(/^#(?:cross-)?post-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(window.location.hash)){
+      hubState.feedScope = /^#cross-post-/i.test(window.location.hash) ? "cross" : "school";
       hubState.feedTopic = "all";
+      syncCommunityScopeControls();
       syncCommunityTopicControls();
       void loadCommunityFeed({force:true});
     } else renderCommunityFeed(hubState.feed);
@@ -3245,6 +3387,7 @@
       });
       renderComposerMedia();
       updateCommunityPostCounter();
+      syncCommunityScopeControls();
       syncAccess();
       window.ConCourseMarketplace?.refreshLanguage();
     }

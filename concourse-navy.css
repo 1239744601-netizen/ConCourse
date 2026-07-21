@@ -323,20 +323,6 @@ body:not(.app-active) #landingScreen::after {
   animation: navyReveal .78s .08s cubic-bezier(.22, .78, .22, 1) both;
 }
 
-#landingScreen .hero-kicker {
-  margin-bottom: 24px;
-  padding: 8px 13px;
-  color: var(--sky-300);
-  background: rgba(139, 216, 255, .075);
-  border-color: rgba(139, 216, 255, .2);
-  box-shadow: none;
-}
-
-#landingScreen .hero-kicker span {
-  background: var(--gold-400);
-  box-shadow: 0 0 0 5px rgba(239, 195, 106, .12);
-}
-
 #landingScreen .hero-copy h1 {
   max-width: 640px;
   color: var(--ivory-50);
@@ -360,18 +346,6 @@ body:not(.app-active) #landingScreen::after {
   color: rgba(229, 239, 248, .7);
   font-size: clamp(16px, 1.65vw, 21px);
   line-height: 1.55;
-}
-
-#landingScreen .hero-pills {
-  justify-content: flex-start;
-  gap: 9px;
-  margin-top: 28px;
-}
-
-#landingScreen .hero-pills span {
-  color: rgba(235, 244, 251, .72);
-  background: rgba(255, 255, 255, .055);
-  border-color: rgba(205, 226, 246, .14);
 }
 
 #landingScreen .landing-actions {
@@ -1767,10 +1741,6 @@ input.market-search:focus,
     margin-inline: auto;
   }
 
-  #landingScreen .hero-pills {
-    justify-content: center;
-  }
-
   #landingScreen .landing-actions {
     align-items: center;
   }
@@ -1970,15 +1940,6 @@ input.market-search:focus,
   #landingScreen .language-control {
     width: 38px;
     min-width: 38px;
-  }
-
-  #landingScreen .hero-kicker {
-    font-size: 10.5px;
-  }
-
-  #landingScreen .hero-pills span {
-    padding: 7px 9px;
-    font-size: 10.5px;
   }
 
   .hero-art {

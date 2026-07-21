@@ -453,30 +453,6 @@
     text-align: center;
     animation: revealUp .9s .12s cubic-bezier(.2,.8,.2,1) both;
   }
-  .hero-kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 22px;
-    padding: 7px 12px;
-    border: 1px solid rgba(0,113,227,.12);
-    border-radius: 980px;
-    background: rgba(255,255,255,.6);
-    color: #0066cc;
-    font-size: 12px;
-    font-weight: 620;
-    letter-spacing: .15px;
-    box-shadow: 0 7px 22px rgba(0,113,227,.07);
-    backdrop-filter: blur(16px);
-  }
-  .hero-kicker span {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #0a84ff;
-    box-shadow: 0 0 0 5px rgba(10,132,255,.11);
-  }
-  .hero-kicker b { font: inherit; }
   .hero-copy h1 {
     margin: 0;
     color: var(--text);
@@ -503,24 +479,6 @@
     letter-spacing: -.25px;
     line-height: 1.42;
   }
-  .hero-pills {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 28px;
-  }
-  .hero-pills span {
-    padding: 8px 12px;
-    border: 1px solid rgba(29,29,31,.07);
-    border-radius: 980px;
-    background: rgba(255,255,255,.48);
-    color: var(--muted);
-    font-size: 11.5px;
-    font-weight: 540;
-    backdrop-filter: blur(14px);
-  }
-
   .wrap {
     position: relative;
     max-width: 1450px;
@@ -881,7 +839,6 @@
     .hero-copy { margin-top: 58px; }
     .hero-copy h1 { font-size: clamp(48px, 15vw, 70px); letter-spacing: -3.5px; }
     header .hero-copy p { font-size: 17px; }
-    .hero-pills { margin-top: 22px; }
     .wrap { padding: 0 12px 60px; }
     .panel { padding: 17px; border-radius: 22px; }
     .row,
@@ -1729,8 +1686,8 @@
 </style>
 <link rel="stylesheet" href="member-hub.css?v=20260720-1" />
 <link rel="stylesheet" href="marketplace.css?v=20260720-1" />
-<link rel="stylesheet" href="concourse-navy.css?v=20260720-1" />
-<link rel="stylesheet" href="concourse-controls.css?v=20260721-chat1" />
+<link rel="stylesheet" href="concourse-navy.css?v=20260721-campus1" />
+<link rel="stylesheet" href="concourse-controls.css?v=20260721-campus1" />
 </head>
 <body>
 <header id="landingScreen">
@@ -1775,14 +1732,8 @@
   </div>
   <div class="hero-stage">
   <div class="hero-copy">
-    <div class="hero-kicker"><span></span><b data-i18n="intelligentPlanning">Intelligent course planning</b></div>
     <h1 data-i18n-html="heroTitle">Build your best<span>semester</span></h1>
     <p data-i18n="heroDescription">Add every course you want. ConCourse explores every conflict-free combination, reaches your credit goal, and ranks the schedules that fit your life.</p>
-    <div class="hero-pills" aria-label="ConCourse highlights">
-      <span data-i18n="conflictFree">Conflict-free</span>
-      <span data-i18n="creditAware">Credit-aware</span>
-      <span data-i18n="builtAroundYou">Built around you</span>
-    </div>
     <div class="landing-actions">
       <button class="btn-accent start-app-btn" id="startAppBtn" hidden><span data-i18n="startPlanning">Start planning</span> <span aria-hidden="true">→</span></button>
       <div class="start-hint" id="startHint">Sign in to unlock your course planner.</div>
@@ -2176,7 +2127,7 @@
           <article class="hub-metric-card"><span data-i18n="finalCourses">Final courses</span><b id="hubCourseCount">0</b><small data-i18n="fromFinalTimetable">from your final timetable</small></article>
           <article class="hub-metric-card"><span data-i18n="finalCredits">Final credits</span><b id="hubCreditCount">0</b><small data-i18n="semesterRecord">in this semester record</small></article>
           <article class="hub-metric-card"><span data-i18n="profileStrength">Profile strength</span><b id="hubProfileStrength">0%</b><small data-i18n="completeProfilePrompt">Complete details to build trust</small></article>
-          <article class="hub-metric-card"><span data-i18n="networkScope">Network scope</span><b id="hubNetworkScope">—</b><small data-i18n="yourUniversityOnly">your university only</small></article>
+          <article class="hub-metric-card"><span data-i18n="networkScope">Network scope</span><b id="hubNetworkScope">—</b><small data-i18n="yourUniversityOnly">verified campus network</small></article>
         </div>
 
         <div class="hub-overview-grid">
@@ -2241,6 +2192,10 @@
         <div class="hub-community-layout">
           <div class="hub-community-stream">
             <div class="hub-community-discovery">
+              <div class="hub-campus-scope" role="group" aria-label="Community reach" data-i18n-aria-label="communityReach">
+                <button type="button" class="active" data-community-scope="school" data-i18n="yourCampus" aria-pressed="true">Your campus</button>
+                <button type="button" data-community-scope="cross" data-i18n="acrossCampuses" aria-pressed="false">Across campuses</button>
+              </div>
               <label class="hub-community-search">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.35-4.35m2.35-5.15a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"/></svg>
                 <input id="communitySearch" type="search" maxlength="100" data-i18n-placeholder="searchCommunity" placeholder="Search recent campus conversations" />
@@ -2255,7 +2210,7 @@
                 <button type="button" class="hub-topic-chip" data-community-topic="saved" data-i18n="topicSaved" aria-pressed="false">Saved</button>
               </div>
             </div>
-            <article class="hub-card hub-compose-card">
+            <article class="hub-card hub-compose-card" id="communityComposer">
               <div class="hub-compose-shell">
                 <div class="hub-avatar hub-compose-avatar" id="hubComposerInitials" aria-hidden="true">CC</div>
                 <div class="hub-compose-content">
@@ -2283,6 +2238,10 @@
                     <input id="communityPostTags" maxlength="100" data-i18n-placeholder="postTagsPlaceholder" data-i18n-aria-label="postTagsPlaceholder" aria-label="Post topics" placeholder="Add topics" />
                     <span id="communityPostCounter" aria-live="polite">0 / 1200</span>
                   </div>
+                  <label class="hub-cross-campus-toggle" for="communityCrossCampus">
+                    <input id="communityCrossCampus" type="checkbox" />
+                    <span data-i18n="shareAcrossCampuses">Share this post with verified students at other universities</span>
+                  </label>
                   <div class="hub-compose-toolbar">
                     <div class="hub-compose-tools">
                       <button type="button" class="hub-tool-button" id="addCommunityMedia" data-i18n="addMedia">Photo / video</button>
@@ -2295,7 +2254,8 @@
                 </div>
               </div>
             </article>
-            <div class="hub-feed-toolbar"><b data-i18n="campusFeed">Campus feed</b><button type="button" class="btn-ghost" id="refreshCommunityFeed" data-i18n="refresh">Refresh</button></div>
+            <div class="hub-feed-toolbar"><b id="communityFeedTitle" data-i18n="campusFeed">Campus feed</b><button type="button" class="btn-ghost" id="refreshCommunityFeed" data-i18n="refresh">Refresh</button></div>
+            <p class="hub-inline-status hub-feed-status" id="communityFeedStatus" aria-live="polite"></p>
             <div class="hub-feed" id="communityFeed" aria-live="polite"></div>
             <button type="button" class="btn-ghost hub-feed-load-more" id="communityLoadMore" data-i18n="loadMore" hidden>Load more</button>
           </div>
@@ -2390,7 +2350,7 @@
         <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="privateConversations">Private conversations</p><h2 data-i18n="campusMessages">Campus messages</h2></div><p data-i18n="messagesDescription">Start a private conversation with a schoolmate by username. Blocking and reporting controls protect both participants.</p></div>
         <article class="hub-card hub-chat-card">
           <div class="hub-chat-start">
-            <input id="chatUsername" maxlength="24" data-i18n-placeholder="usernameToMessage" placeholder="Enter a schoolmate's username" />
+            <input id="chatUsername" maxlength="25" data-i18n-placeholder="usernameToMessage" placeholder="Enter the exact username — capitalization matters" />
             <button type="button" class="btn-primary" id="startConversation" data-i18n="startChat">Start chat</button>
           </div>
           <p class="hub-inline-status" id="chatStatus"></p>
@@ -2662,9 +2622,9 @@ const TRANSLATIONS = {
     marketplaceMarkSoldConfirm:"仅在已完成线下交付后将商品标记为售出。此操作会关闭商品，但不能作为已付款的证明。",
     marketplaceMarkClaimed:"标记为已领取", marketplaceMarkClaimedConfirm:"仅在免费物品已完成交付后标记为已领取。", marketplaceCloseRequest:"关闭求购", marketplaceCloseRequestConfirm:"仅在你不再需要该物品时关闭这项求购。", marketplaceStatusClaimed:"已领取", marketplaceStatusRequestClosed:"求购已关闭",
     brandTag:"轻松规划课程注册", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
-    intelligentPlanning:"智能课程规划", heroTitle:"打造你最理想的<span>学期</span>",
+    heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
-    conflictFree:"无时间冲突", creditAware:"智能计算学分", builtAroundYou:"为你量身规划", startPlanning:"开始规划",
+    startPlanning:"开始规划",
     accountTitle:"你的 ConCourse 账户", createAccount:"创建账户", email:"邮箱", password:"密码",
     passwordPlaceholder:"至少 8 个字符", username:"用户名", usernamePlaceholder:"创建唯一用户名",
     usernameHelp:"使用 3–24 位大小写字母、数字或下划线。区分大小写：Alex 和 alex 是不同用户名。", realName:"真实姓名", confidential:"保密",
@@ -2723,22 +2683,23 @@ const TRANSLATIONS = {
     studentHub:"学生中心", hubNavigation:"学生中心栏目", closeProfile:"关闭资料", communitySafety:"社区安全", cancel:"取消", enterStudentHub:"进入学生中心", hubOverview:"概览", hubCommunity:"校园社区", hubMessages:"私信", hubProfile:"个人资料", membershipPending:"学校身份待验证", membershipVerified:"学校身份已验证", membershipRejected:"学校身份验证未通过", membershipRevoked:"学校身份验证已撤销",
     hubCommunityStandard:"为可信赖的校园社区而设计", hubCommunityStandardText:"个人资料、举报机制、隐私控制以及仅限校内的访问权限，共同构建更安全的网络。", backToTimetable:"返回课表",
     concourseNetwork:"ConCourse 校园网络", hubIntroduction:"将最终课表转化为选课洞察、有价值的校园交流和更紧密的学术连接。", privateByDesign:"隐私优先",
-    finalCourses:"最终课程", fromFinalTimetable:"来自你的最终课表", finalCredits:"最终学分", semesterRecord:"本学期记录", profileStrength:"资料完整度", completeProfilePrompt:"完善资料，建立信任", networkScope:"社区范围", yourUniversityOnly:"仅限你的大学",
+    finalCourses:"最终课程", fromFinalTimetable:"来自你的最终课表", finalCredits:"最终学分", semesterRecord:"本学期记录", profileStrength:"资料完整度", completeProfilePrompt:"完善资料，建立信任", networkScope:"社区范围", yourUniversityOnly:"已验证校园网络",
     courseChoiceIntelligence:"选课趋势洞察", anonymousAggregate:"匿名汇总数据；为保护隐私，小规模群体不会显示。", compareStudents:"对比学生群体", sameMajorYear:"同专业、所选年级", sameMajorAllYears:"同专业、所有年级", universityYear:"全校、所选年级", wholeUniversity:"全校、所有年级", studyYearFilter:"就读年级", allYears:"所有年级", refreshInsights:"刷新数据",
     finalScheduleRecord:"最终课表记录", savedDecisionSummary:"这份学业决定将解锁你的 ConCourse 校园体验。", viewFullTimetable:"查看完整课表",
     campusLife:"校园生活", campusProfile:"校园资料", selfReportedLinks:"平台标识代表该账号已完成授权连接。手动粘贴的社交链接仍由用户自行提供，不能证明身份或在校资格。", viewProfile:"查看资料", schoolCommunity:"你的校园社区", communityDescription:"分享实用经历、提出问题，并探索同校学生的观点。", shareCampusThought:"分享选课心得、校园建议、问题或经历…", postTagsPlaceholder:"标签：课程、社团、住宿", publishPost:"发布动态", latestFromCampus:"校园最新动态", refresh:"刷新",
-    privateConversations:"私密对话", campusMessages:"校园私信", messagesDescription:"通过用户名与同校同学开启私密对话。拉黑和举报功能会保护双方。", usernameToMessage:"输入同校同学的用户名", startChat:"开始对话", selectConversation:"选择一个对话", writePrivateMessage:"输入私信…", send:"发送",
+    privateConversations:"私密对话", campusMessages:"校园私信", messagesDescription:"通过用户名与同校同学开启私密对话。拉黑和举报功能会保护双方。", usernameToMessage:"输入完整用户名（区分大小写）", startChat:"开始对话", selectConversation:"选择一个对话", writePrivateMessage:"输入私信…", send:"发送",
     identityAndTrust:"身份与信任", completeYourProfile:"完善个人资料", profileDescription:"添加可选信息，帮助同学辨认你。你可以控制资料可见范围以及是否允许他人向你发送私信。", personalDetails:"个人信息", privateContactNote:"此版本中的电话和 WhatsApp 信息始终保持私密。", displayName:"显示名称", phoneNumber:"电话号码", profileBio:"个人简介", interests:"兴趣", interestsPlaceholder:"金融、篮球、人工智能、志愿服务",
     socialConnections:"社交账号", verificationPending:"用户自行提供 · 尚无平台连接", disconnect:"断开连接", linkedinPublicProfile:"LinkedIn 公开资料网址", publicLinkSelfReported:"用户自行提供 · 未经验证", authenticatedConnections:"已授权连接", selfReportedProfiles:"用户自行提供的资料链接", linkedinProfileSelfReported:"LinkedIn 资料 · 用户自行提供", personalWebsite:"个人网站", privacyAndSafety:"隐私与安全", profileVisibility:"资料可见范围", schoolmatesOnly:"仅同校同学", privateProfile:"仅自己可见", allowMessages:"允许同校同学给我发私信", analyticsConsent:"将我的最终选课以匿名、隐私保护的方式加入趋势统计", saveProfile:"保存资料",
     hubGreetingName:"欢迎回来，{name}。", hubNoFinalSchedule:"请先保存最终课表，再进入学生中心。", notProvided:"未提供",
     courseInsightLoading:"正在载入匿名选课趋势…", courseInsightNoData:"目前分享最终课表的学生人数不足，暂时无法显示此视图。", courseInsightPrivacy:"至少有 {minimum} 名学生参与后才会显示结果。", courseInsightUnavailable:"选课趋势暂时不可用。", courseChosenBy:"约 {count} 名学生选择", courseChoiceParticipants:"基于约 {count} 名学生的隐私取整数据",
-    memberSetupRequired:"请运行最新的 Supabase 设置 SQL 以启用学生中心。", schoolVerificationRequired:"学校成员身份必须经过验证后才能使用此功能。", featureUnavailable:"此功能暂时无法使用，请稍后再试。", alreadyReported:"你已经提交过这项举报。", rateLimited:"操作过于频繁，请稍后再试。", messagingUnavailable:"该同学目前无法接收你的私信。", contentUnavailable:"此内容已不可用。",
-    communityLoading:"正在载入校园社区…", communityEmpty:"校园里还没有动态。来发起第一个有价值的讨论吧。", profileUnavailable:"此校园资料不可见。", postBodyRequired:"请先填写内容再发布。", publishing:"正在发布…", postPublished:"动态已发布。", postPublishFailed:"无法发布此动态。", postDeleted:"动态已删除。", deletePost:"删除", confirmDeletePost:"确定要删除这条动态吗？", deleteComment:"删除评论", confirmDeleteComment:"确定要删除这条评论吗？", commentDeleted:"评论已删除。", commentPosting:"正在发布评论…", commentPosted:"评论已发布。", commentsUnavailable:"暂时无法载入评论。你仍可在下方重试发布。", commentsEmpty:"还没有评论。来发表第一条吧。", anonymousStudent:"学生", like:"点赞", unlike:"取消点赞", comment:"评论", writeComment:"写评论…", postComment:"发布评论", commentRequired:"请先填写评论。", report:"举报", reportReasonPrompt:"请简要说明举报原因。", reasonPlaceholder:"请输入举报原因…", reasonRequired:"请填写举报原因。", reported:"举报已提交。", block:"拉黑", blocked:"已拉黑该用户。", confirmBlock:"确定拉黑 @{username} 吗？你们将无法看到对方的动态或私信。",
-    messagesLoading:"正在载入对话…", noConversations:"还没有对话。请输入同校同学的用户名开始聊天。", startingConversation:"正在开启对话…", conversationStarted:"对话已打开。", conversationStartFailed:"无法开启此对话。", cannotMessageSelf:"不能给自己发私信。", messagesEmpty:"还没有消息。打个招呼吧。", messageRequired:"请先填写消息。", sendingMessage:"正在发送…", messageSendFailed:"消息无法发送。", directMessagePrivacy:"仅参与者可见；消息并非端到端加密。",
+    memberSetupRequired:"请运行最新的 Supabase 设置 SQL 以启用学生中心。", schoolVerificationRequired:"学校成员身份必须经过验证后才能使用此功能。", featureUnavailable:"此功能暂时无法使用，请稍后再试。", connectionRetry:"连接中断，请检查网络后重试。", chatUsernameInvalid:"用户名应为 3–24 位字母、数字或下划线；大小写必须完全一致。", alreadyReported:"你已经提交过这项举报。", rateLimited:"操作过于频繁，请稍后再试。", messagingUnavailable:"该同学目前无法接收你的私信。", contentUnavailable:"此内容已不可用。",
+    communityLoading:"正在载入校园社区…", communityEmpty:"校园里还没有动态。来发起第一个有价值的讨论吧。", profileUnavailable:"此校园资料不可见。", postBodyRequired:"请先填写内容再发布。", publishing:"正在发布…", postPublished:"动态已发布。", postPublishedAcrossCampuses:"动态已发布，并向其他已验证大学开放。", postPublishedCampusOnly:"动态已在本校发布，但跨校分享暂时未能启用。请运行最新的学生中心修复 SQL。", shareAcrossCampuses:"向其他大学的已验证学生分享此动态", postPublishFailed:"无法发布此动态。", postDeleted:"动态已删除。", deletePost:"删除", confirmDeletePost:"确定要删除这条动态吗？", deleteComment:"删除评论", confirmDeleteComment:"确定要删除这条评论吗？", commentDeleted:"评论已删除。", commentPosting:"正在发布评论…", commentPosted:"评论已发布。", commentsUnavailable:"暂时无法载入评论。你仍可在下方重试发布。", commentsEmpty:"还没有评论。来发表第一条吧。", anonymousStudent:"学生", like:"点赞", unlike:"取消点赞", comment:"评论", writeComment:"写评论…", postComment:"发布评论", commentRequired:"请先填写评论。", report:"举报", reportReasonPrompt:"请简要说明举报原因。", reasonPlaceholder:"请输入举报原因…", reasonRequired:"请填写举报原因。", reported:"举报已提交。", block:"拉黑", blocked:"已拉黑该用户。", confirmBlock:"确定拉黑 @{username} 吗？你们将无法看到对方的动态或私信。",
+    messagesLoading:"正在载入对话…", noConversations:"还没有对话。请输入同校同学的用户名开始聊天。", startingConversation:"正在开启对话…", conversationStarted:"对话已打开。", conversationStartFailed:"找不到完全匹配且可接收私信的同校用户名。请检查大小写和对方的私信设置。", cannotMessageSelf:"不能给自己发私信。", messagesEmpty:"还没有消息。打个招呼吧。", messageRequired:"请先填写消息。", sendingMessage:"正在发送…", messageSendFailed:"消息无法发送。", directMessagePrivacy:"仅参与者可见；消息并非端到端加密。",
     socialVerificationNote:"添加已授权的账号连接；手动粘贴的个人链接仍由用户自行提供。", socialConnectionDisclosure:"已连接标识只确认 ConCourse 获得了相应平台账号的授权；不能验证法定身份、在校资格、雇佣关系或任何手动粘贴的资料网址。当你的资料对同校同学可见时，这些标识也会显示。", socialAccount:"社交账号", socialConnectionsLoading:"正在检查账号连接…", socialConnectionsUnavailable:"暂时无法检查账号连接，请稍后重试。", providerNotConnected:"{provider} 尚未连接", providerConnectionHelp:"授权 {provider} 账号，以显示账号连接标识。", connectProvider:"连接 {provider}", providerConnected:"{provider} 已连接", providerConnectedDetail:"已于 {date} 通过 {provider} 授权", providerConnectedHelp:"{provider} 账号已经授权。", providerConnectionLoading:"正在检查 {provider} 连接…", providerConnecting:"正在打开 {provider} 授权页面…", providerConnectedSuccess:"{provider} 账号已连接。", providerConnectionFailed:"无法连接 {provider}，请重试。", providerSetupRequired:"{provider} 连接暂时不可用，请联系网站管理员。", disconnectProviderTitle:"断开 {provider}", confirmDisconnectProvider:"要从 ConCourse 断开 {provider} 账号吗？", providerDisconnected:"{provider} 已断开。", providerDisconnectFailed:"无法断开 {provider}。",
     hubInsights:"学业洞察", editProfile:"编辑资料", searchCommunity:"搜索最近的校园讨论", communityTopics:"社区话题", topicForYou:"为你推荐", topicCourses:"课程", topicCampusLife:"校园生活", topicClubs:"社团", topicHousing:"住宿", topicCareers:"职业发展", startConversationPost:"发起校园讨论", communityShortcuts:"社区快捷入口", yourCampusIdentity:"你的校园身份", recentMessages:"最近私信", openMessages:"打开私信", schoolScopedCommunity:"属于已验证学校成员的空间", schoolScopedCommunityText:"个人资料、动态和私信均限定在你的大学社区内，并全程提供举报与拉黑控制。",
     chooseProfilePhoto:"选择个人头像", profilePhoto:"个人头像", profilePhotoHint:"支持 JPG、PNG、WebP、GIF、AVIF、HEIC/HEIF 及其他安全的栅格图片。ConCourse 会移除元数据并保存私密 WebP 副本；SVG 会被拦截。", replacePhoto:"更换", removePhoto:"移除头像", connectionTypes:"连接类型", verifiedAccounts:"已授权账号", profileLinks:"资料链接", profileLinksDisclosure:"这些联系方式由你自行提供，未经 ConCourse 验证。电话和 WhatsApp 保持私密。", wechatId:"微信号", wechatIdPlaceholder:"你的微信号", wechatSelfReported:"用户自行提供 · 未验证", shareWechat:"向已验证的同校同学显示此微信号", invalidWechatId:"请输入不超过 64 个字符的有效微信号。", messageStudent:"发送私信", avatarPreparing:"正在安全处理头像…", avatarReady:"新头像已准备好；保存资料后生效。", avatarInvalid:"无法解码该文件。请尝试 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", avatarTooLarge:"图片必须小于 20 MB。", avatarSvgUnsupported:"为保护安全，不支持 SVG 头像。请导出为 JPG、PNG、WebP 或其他栅格格式。", avatarUploadFailed:"头像无法保存，请重试。", avatarRemoved:"保存资料后将移除头像。", communityNoMatches:"没有符合当前搜索或话题的动态。", wechatCopied:"微信号已复制。", copyWechat:"复制微信号", noRecentMessages:"还没有最近的私信。", hubCommunityKicker:"ConCourse 社区", hubCommunityTitle:"校园社区", hubCommunityIntro:"发现你的大学同学正在提问、分享和计划什么。", hubMessagesKicker:"ConCourse 私信", hubMessagesTitle:"保持联系，不受干扰", hubMessagesIntro:"与已验证的同校同学进行私密的一对一交流。", hubInsightsKicker:"ConCourse 洞察", hubInsightsTitle:"用更清晰的数据规划学业", hubInsightsIntro:"查看匿名选课趋势，并保存你的最终学期决定。", hubProfileKicker:"ConCourse 个人资料", hubProfileTitle:"建立可信赖的校园身份", hubProfileIntro:"管理头像、个人资料、社交连接和隐私设置。",
-    topicSaved:"已收藏", createPost:"创建动态", createPoll:"创建投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"提出一个问题", pollOptionPlaceholder:"投票选项", addPollOption:"添加选项", addMedia:"照片 / 视频", addPoll:"投票", campusFeed:"校园动态", popularOnCampus:"校园热门", savedPosts:"已收藏动态", savedPostsPrivate:"仅自己可见", pollOptionLimit:"每个投票最多 6 个选项。", pollIncomplete:"请填写投票问题和至少两个选项。", pollDuplicateOptions:"投票选项不能重复。", removeMedia:"移除媒体", altTextPlaceholder:"图片说明（方便使用辅助技术的同学）", mediaPreparing:"正在处理媒体…", mediaLimit:"每条动态最多添加 4 个媒体文件。", videoTooLarge:"视频必须小于 40 MB。", imageTooLarge:"图片必须小于 25 MB。", mediaInvalid:"无法解码该图片。请尝试 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"为保护安全，不支持 SVG。请导出为栅格图片。", mediaReady:"媒体已准备好。", mediaLoading:"正在载入媒体…", mediaUnavailable:"媒体暂时无法显示。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"查看这条 ConCourse 校园动态", postLinkCopied:"链接已复制；打开时需要登录同校账号。", shareFailed:"无法分享这条动态。", postContentRequired:"请添加文字、媒体或投票后再发布。", loadMore:"加载更多", loadingMore:"正在加载更多…", pollOptionNumber:"投票选项 {number}", mediaDescriptionNumber:"第 {number} 个媒体文件的说明", videoDescriptionPlaceholder:"视频说明（方便使用辅助技术的同学）", postVideo:"动态中的视频", videoInvalid:"请选择有效的 MP4、WebM 或 MOV 视频。",
+    communityReach:"社区范围", yourCampus:"本校", acrossCampuses:"跨校浏览", searchAcrossCampuses:"搜索其他大学的动态", acrossCampusFeed:"跨校动态", crossCommunityLoading:"正在载入其他大学的动态…", crossCommunityEmpty:"其他大学暂时还没有可浏览的动态。", popularAcrossCampuses:"跨校热门",
+    topicSaved:"已收藏", createPost:"创建动态", createPoll:"创建投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"提出一个问题", pollOptionPlaceholder:"投票选项", addPollOption:"添加选项", addMedia:"照片 / 视频", addPoll:"投票", campusFeed:"校园动态", popularOnCampus:"校园热门", savedPosts:"已收藏动态", savedPostsPrivate:"仅自己可见", pollOptionLimit:"每个投票最多 6 个选项。", pollIncomplete:"请填写投票问题和至少两个选项。", pollDuplicateOptions:"投票选项不能重复。", removeMedia:"移除媒体", altTextPlaceholder:"图片说明（方便使用辅助技术的同学）", mediaPreparing:"正在处理媒体…", mediaLimit:"每条动态最多添加 4 个媒体文件。", videoTooLarge:"视频必须小于 40 MB。", imageTooLarge:"图片必须小于 25 MB。", mediaInvalid:"无法解码该图片。请尝试 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"为保护安全，不支持 SVG。请导出为栅格图片。", mediaReady:"媒体已准备好。", mediaLoading:"正在载入媒体…", mediaUnavailable:"媒体暂时无法显示。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"查看这条 ConCourse 校园动态", postLinkCopied:"链接已复制；打开时需要已验证账号。", shareFailed:"无法分享这条动态。", postContentRequired:"请添加文字、媒体或投票后再发布。", loadMore:"加载更多", loadingMore:"正在加载更多…", pollOptionNumber:"投票选项 {number}", mediaDescriptionNumber:"第 {number} 个媒体文件的说明", videoDescriptionPlaceholder:"视频说明（方便使用辅助技术的同学）", postVideo:"动态中的视频", videoInvalid:"请选择有效的 MP4、WebM 或 MOV 视频。",
     profileLoading:"正在载入个人资料…", profileSaved:"个人资料已保存。", profileSaveFailed:"无法保存个人资料。", invalidUrl:"请使用完整的 https:// 链接。", invalidInstagramUrl:"请使用 Instagram 的 https:// 链接。", invalidWhatsappUrl:"请使用 wa.me 的 https:// 链接。", invalidLinkedinUrl:"请使用 LinkedIn 的 https:// 链接。", invalidWebsiteUrl:"请使用完整的 https:// 链接。",
     hubMarketplace:"校园市集", hubMarketplaceKicker:"ConCourse 校园市集", hubMarketplaceTitle:"在校园里发现真正有用的物品", hubMarketplaceIntro:"购买和出售学习资料、课本、宿舍用品及同学真正需要的物品。",
     attachMarketplaceListing:"附加市集商品", removeListingAttachment:"移除", marketplaceSharedPostDefault:"我刚刚在 ConCourse 校园市集发布了这个商品。",
@@ -2755,9 +2716,9 @@ const TRANSLATIONS = {
     marketplaceMarkSoldConfirm:"只可以喺完成線下交收之後標記做已售出。呢個操作會關閉商品，但唔代表已經付款。",
     marketplaceMarkClaimed:"標記做已領取", marketplaceMarkClaimedConfirm:"只可以喺免費物品完成交收之後標記做已領取。", marketplaceCloseRequest:"關閉求購", marketplaceCloseRequestConfirm:"只可以喺你唔再需要件物品時關閉呢項求購。", marketplaceStatusClaimed:"已領取", marketplaceStatusRequestClosed:"求購已關閉",
     brandTag:"輕鬆規劃課程註冊", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
-    intelligentPlanning:"智能課程規劃", heroTitle:"砌出你最理想嘅<span>學期</span>",
+    heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
-    conflictFree:"唔撞時間", creditAware:"智能計學分", builtAroundYou:"為你度身規劃", startPlanning:"開始規劃",
+    startPlanning:"開始規劃",
     accountTitle:"你嘅 ConCourse 帳戶", createAccount:"建立帳戶", email:"電郵", password:"密碼",
     passwordPlaceholder:"最少 8 個字元", username:"用戶名稱", usernamePlaceholder:"建立獨有用戶名稱",
     usernameHelp:"可用 3–24 個大小寫英文字母、數字或底線。大小寫有分別：Alex 同 alex 係唔同用戶名稱。", realName:"真實姓名", confidential:"保密",
@@ -2816,22 +2777,23 @@ const TRANSLATIONS = {
     studentHub:"學生中心", hubNavigation:"學生中心欄目", closeProfile:"關閉檔案", communitySafety:"社群安全", cancel:"取消", enterStudentHub:"進入學生中心", hubOverview:"總覽", hubCommunity:"校園社群", hubMessages:"私訊", hubProfile:"個人檔案", membershipPending:"學校身份等待驗證", membershipVerified:"學校身份已驗證", membershipRejected:"學校身份驗證未通過", membershipRevoked:"學校身份驗證已撤銷",
     hubCommunityStandard:"為可信賴嘅校園社群而設", hubCommunityStandardText:"個人檔案、舉報機制、私隱控制同只限校內嘅存取權限，一齊建立更安全嘅網絡。", backToTimetable:"返回時間表",
     concourseNetwork:"ConCourse 校園網絡", hubIntroduction:"將已確認嘅時間表變成選科趨勢、實用校園交流同更緊密嘅學術連繫。", privateByDesign:"私隱優先",
-    finalCourses:"最終課程", fromFinalTimetable:"來自你嘅最終時間表", finalCredits:"最終學分", semesterRecord:"今個學期記錄", profileStrength:"檔案完整度", completeProfilePrompt:"完善檔案，建立信任", networkScope:"社群範圍", yourUniversityOnly:"只限你嘅大學",
+    finalCourses:"最終課程", fromFinalTimetable:"來自你嘅最終時間表", finalCredits:"最終學分", semesterRecord:"今個學期記錄", profileStrength:"檔案完整度", completeProfilePrompt:"完善檔案，建立信任", networkScope:"社群範圍", yourUniversityOnly:"已驗證校園網絡",
     courseChoiceIntelligence:"選科趨勢分析", anonymousAggregate:"匿名匯總資料；為保障私隱，人數太少嘅群組唔會顯示。", compareStudents:"比較學生群組", sameMajorYear:"同主修、所選年級", sameMajorAllYears:"同主修、所有年級", universityYear:"全校、所選年級", wholeUniversity:"全校、所有年級", studyYearFilter:"就讀年級", allYears:"所有年級", refreshInsights:"更新數據",
     finalScheduleRecord:"最終時間表記錄", savedDecisionSummary:"呢個學術決定會開啟你嘅 ConCourse 校園體驗。", viewFullTimetable:"查看完整時間表",
     campusLife:"校園生活", campusProfile:"校園檔案", selfReportedLinks:"平台標誌代表嗰個帳戶完成咗授權連接。手動貼上嘅社交連結仍然由用戶自行提供，唔代表身份或在校資格已獲驗證。", viewProfile:"查看檔案", schoolCommunity:"你嘅校園社群", communityDescription:"分享實用經驗、發問，同探索同校學生嘅觀點。", shareCampusThought:"分享選科心得、校園貼士、問題或經歷…", postTagsPlaceholder:"標籤：課程、學會、住宿", publishPost:"發佈貼文", latestFromCampus:"校園最新動態", refresh:"重新整理",
-    privateConversations:"私人對話", campusMessages:"校園私訊", messagesDescription:"用用戶名稱同同校同學開始私人對話。封鎖同舉報功能會保障雙方。", usernameToMessage:"輸入同校同學嘅用戶名稱", startChat:"開始對話", selectConversation:"揀一個對話", writePrivateMessage:"輸入私人訊息…", send:"傳送",
+    privateConversations:"私人對話", campusMessages:"校園私訊", messagesDescription:"用用戶名稱同同校同學開始私人對話。封鎖同舉報功能會保障雙方。", usernameToMessage:"輸入完整用戶名稱（分大小寫）", startChat:"開始對話", selectConversation:"揀一個對話", writePrivateMessage:"輸入私人訊息…", send:"傳送",
     identityAndTrust:"身份與信任", completeYourProfile:"完善個人檔案", profileDescription:"加入選填資料，方便同學認出你。你可以控制檔案可見範圍，同埋其他人可唔可以私訊你。", personalDetails:"個人資料", privateContactNote:"呢個版本入面，電話同 WhatsApp 資料會一直保持私人。", displayName:"顯示名稱", phoneNumber:"電話號碼", profileBio:"簡短自我介紹", interests:"興趣", interestsPlaceholder:"金融、籃球、人工智能、義工服務",
     socialConnections:"社交連結", verificationPending:"用戶自行提供 · 未有平台連接", disconnect:"中斷連接", linkedinPublicProfile:"LinkedIn 公開檔案網址", publicLinkSelfReported:"用戶自行提供 · 未經驗證", authenticatedConnections:"已授權連接", selfReportedProfiles:"用戶自行提供嘅檔案連結", linkedinProfileSelfReported:"LinkedIn 檔案 · 用戶自行提供", personalWebsite:"個人網站", privacyAndSafety:"私隱與安全", profileVisibility:"檔案可見範圍", schoolmatesOnly:"只限同校同學", privateProfile:"只限自己", allowMessages:"允許同校同學私訊我", analyticsConsent:"以匿名同保障私隱方式，將我嘅最終選科加入趨勢統計", saveProfile:"儲存檔案",
     hubGreetingName:"歡迎返嚟，{name}。", hubNoFinalSchedule:"請先儲存最終時間表，再進入學生中心。", notProvided:"未提供",
     courseInsightLoading:"正在載入匿名選科趨勢…", courseInsightNoData:"而家分享最終時間表嘅學生人數唔夠，暫時未能顯示。", courseInsightPrivacy:"最少有 {minimum} 位學生參與先會顯示結果。", courseInsightUnavailable:"選科趨勢暫時用唔到。", courseChosenBy:"約 {count} 位學生選擇", courseChoiceParticipants:"根據約 {count} 位學生、經私隱取整嘅資料",
-    memberSetupRequired:"請執行最新 Supabase 設定 SQL，以啟用學生中心。", schoolVerificationRequired:"學校成員身份要先通過驗證，先可以使用呢個功能。", featureUnavailable:"呢個功能暫時用唔到，請稍後再試。", alreadyReported:"你已經提交過呢項舉報。", rateLimited:"操作太頻密，請稍後再試。", messagingUnavailable:"呢位同學而家唔接受你嘅私訊。", contentUnavailable:"呢項內容已經唔再可用。",
-    communityLoading:"正在載入校園社群…", communityEmpty:"校園仲未有貼文。發起第一個有用嘅討論啦。", profileUnavailable:"呢個校園檔案唔公開。", postBodyRequired:"請先填寫內容再發佈。", publishing:"正在發佈…", postPublished:"貼文已發佈。", postPublishFailed:"未能發佈貼文。", postDeleted:"貼文已刪除。", deletePost:"刪除", confirmDeletePost:"確定要刪除呢篇貼文？", deleteComment:"刪除留言", confirmDeleteComment:"確定要刪除呢個留言？", commentDeleted:"留言已刪除。", commentPosting:"正在發佈留言…", commentPosted:"留言已發佈。", commentsUnavailable:"暫時載入唔到留言。你仍然可以喺下面重試發佈。", commentsEmpty:"仲未有留言。嚟發表第一個留言啦。", anonymousStudent:"學生", like:"讚好", unlike:"取消讚好", comment:"留言", writeComment:"寫留言…", postComment:"發佈留言", commentRequired:"請先填寫留言。", report:"舉報", reportReasonPrompt:"請簡單講低舉報原因。", reasonPlaceholder:"請輸入舉報原因…", reasonRequired:"請填寫舉報原因。", reported:"舉報已提交。", block:"封鎖", blocked:"已封鎖呢位用戶。", confirmBlock:"確定封鎖 @{username}？你哋之後睇唔到對方嘅貼文或私訊。",
-    messagesLoading:"正在載入對話…", noConversations:"仲未有對話。輸入同校同學嘅用戶名稱開始傾偈。", startingConversation:"正在開始對話…", conversationStarted:"對話已開啟。", conversationStartFailed:"未能開始呢個對話。", cannotMessageSelf:"唔可以私訊自己。", messagesEmpty:"仲未有訊息。打個招呼啦。", messageRequired:"請先輸入訊息。", sendingMessage:"正在傳送…", messageSendFailed:"訊息未能傳送。", directMessagePrivacy:"只限參與者查看；訊息並非端對端加密。",
+    memberSetupRequired:"請執行最新 Supabase 設定 SQL，以啟用學生中心。", schoolVerificationRequired:"學校成員身份要先通過驗證，先可以使用呢個功能。", featureUnavailable:"呢個功能暫時用唔到，請稍後再試。", connectionRetry:"連線中斷，請檢查網絡後再試。", chatUsernameInvalid:"用戶名稱要有 3–24 個字母、數字或底線，而且大小寫要完全一致。", alreadyReported:"你已經提交過呢項舉報。", rateLimited:"操作太頻密，請稍後再試。", messagingUnavailable:"呢位同學而家唔接受你嘅私訊。", contentUnavailable:"呢項內容已經唔再可用。",
+    communityLoading:"正在載入校園社群…", communityEmpty:"校園仲未有貼文。發起第一個有用嘅討論啦。", profileUnavailable:"呢個校園檔案唔公開。", postBodyRequired:"請先填寫內容再發佈。", publishing:"正在發佈…", postPublished:"貼文已發佈。", postPublishedAcrossCampuses:"貼文已發佈，並向其他已驗證大學開放。", postPublishedCampusOnly:"貼文已喺本校發佈，但跨校分享暫時未能啟用。請執行最新學生中心修復 SQL。", shareAcrossCampuses:"向其他大學嘅已驗證學生分享呢篇貼文", postPublishFailed:"未能發佈貼文。", postDeleted:"貼文已刪除。", deletePost:"刪除", confirmDeletePost:"確定要刪除呢篇貼文？", deleteComment:"刪除留言", confirmDeleteComment:"確定要刪除呢個留言？", commentDeleted:"留言已刪除。", commentPosting:"正在發佈留言…", commentPosted:"留言已發佈。", commentsUnavailable:"暫時載入唔到留言。你仍然可以喺下面重試發佈。", commentsEmpty:"仲未有留言。嚟發表第一個留言啦。", anonymousStudent:"學生", like:"讚好", unlike:"取消讚好", comment:"留言", writeComment:"寫留言…", postComment:"發佈留言", commentRequired:"請先填寫留言。", report:"舉報", reportReasonPrompt:"請簡單講低舉報原因。", reasonPlaceholder:"請輸入舉報原因…", reasonRequired:"請填寫舉報原因。", reported:"舉報已提交。", block:"封鎖", blocked:"已封鎖呢位用戶。", confirmBlock:"確定封鎖 @{username}？你哋之後睇唔到對方嘅貼文或私訊。",
+    messagesLoading:"正在載入對話…", noConversations:"仲未有對話。輸入同校同學嘅用戶名稱開始傾偈。", startingConversation:"正在開始對話…", conversationStarted:"對話已開啟。", conversationStartFailed:"搵唔到完全相符而且可以收私訊嘅同校用戶名稱。請檢查大小寫同對方嘅私訊設定。", cannotMessageSelf:"唔可以私訊自己。", messagesEmpty:"仲未有訊息。打個招呼啦。", messageRequired:"請先輸入訊息。", sendingMessage:"正在傳送…", messageSendFailed:"訊息未能傳送。", directMessagePrivacy:"只限參與者查看；訊息並非端對端加密。",
     socialVerificationNote:"新增已授權嘅帳戶連接；手動貼上嘅個人連結仍然由用戶自行提供。", socialConnectionDisclosure:"已連接標誌只確認 ConCourse 獲得咗相應平台帳戶嘅授權；唔代表法定身份、在校資格、僱傭關係或任何手動貼上嘅檔案網址已獲驗證。當你嘅檔案同校內同學分享時，呢啲標誌亦會顯示。", socialAccount:"社交帳戶", socialConnectionsLoading:"正在檢查帳戶連接…", socialConnectionsUnavailable:"暫時未能檢查帳戶連接，請稍後再試。", providerNotConnected:"{provider} 尚未連接", providerConnectionHelp:"授權 {provider} 帳戶，以顯示帳戶連接標誌。", connectProvider:"連接 {provider}", providerConnected:"{provider} 已連接", providerConnectedDetail:"已於 {date} 透過 {provider} 授權", providerConnectedHelp:"{provider} 帳戶已經授權。", providerConnectionLoading:"正在檢查 {provider} 連接…", providerConnecting:"正在開啟 {provider} 授權頁面…", providerConnectedSuccess:"{provider} 帳戶已連接。", providerConnectionFailed:"未能連接 {provider}，請再試。", providerSetupRequired:"{provider} 連接暫時用唔到，請聯絡網站管理員。", disconnectProviderTitle:"中斷 {provider} 連接", confirmDisconnectProvider:"要由 ConCourse 中斷 {provider} 帳戶連接嗎？", providerDisconnected:"{provider} 已中斷連接。", providerDisconnectFailed:"未能中斷 {provider} 連接。",
     hubInsights:"學業分析", editProfile:"編輯檔案", searchCommunity:"搜尋最近嘅校園討論", communityTopics:"社群話題", topicForYou:"為你推薦", topicCourses:"課程", topicCampusLife:"校園生活", topicClubs:"學會", topicHousing:"住宿", topicCareers:"職涯", startConversationPost:"開始校園討論", communityShortcuts:"社群捷徑", yourCampusIdentity:"你嘅校園身份", recentMessages:"最近私訊", openMessages:"開啟私訊", schoolScopedCommunity:"屬於已驗證學校成員嘅空間", schoolScopedCommunityText:"個人檔案、貼文同私訊都只限你嘅大學社群，並全程提供舉報同封鎖控制。",
     chooseProfilePhoto:"選擇個人頭像", profilePhoto:"個人頭像", profilePhotoHint:"支援 JPG、PNG、WebP、GIF、AVIF、HEIC/HEIF 同其他安全點陣圖片。ConCourse 會移除元資料並儲存私人 WebP 副本；SVG 會被封鎖。", replacePhoto:"更換", removePhoto:"移除頭像", connectionTypes:"連接類型", verifiedAccounts:"已授權帳戶", profileLinks:"檔案連結", profileLinksDisclosure:"呢啲聯絡方式由你自行提供，未經 ConCourse 驗證。電話同 WhatsApp 保持私人。", wechatId:"微信號", wechatIdPlaceholder:"你嘅微信號", wechatSelfReported:"用戶自行提供 · 未驗證", shareWechat:"向已驗證嘅同校同學顯示呢個微信號", invalidWechatId:"請輸入唔多過 64 個字元嘅有效微信號。", messageStudent:"傳送私訊", avatarPreparing:"正在安全處理頭像…", avatarReady:"新頭像已準備好；儲存檔案後生效。", avatarInvalid:"未能解碼呢個檔案。請試 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", avatarTooLarge:"圖片必須細過 20 MB。", avatarSvgUnsupported:"為咗安全，唔支援 SVG 頭像。請匯出做 JPG、PNG、WebP 或其他點陣格式。", avatarUploadFailed:"未能儲存頭像，請再試。", avatarRemoved:"儲存檔案後會移除頭像。", communityNoMatches:"冇貼文符合目前嘅搜尋或話題。", wechatCopied:"微信號已複製。", copyWechat:"複製微信號", noRecentMessages:"仲未有最近私訊。", hubCommunityKicker:"ConCourse 社群", hubCommunityTitle:"校園社群", hubCommunityIntro:"睇下你間大學嘅同學正在問、分享同計劃啲乜。", hubMessagesKicker:"ConCourse 私訊", hubMessagesTitle:"保持連繫，唔受打擾", hubMessagesIntro:"同已驗證嘅同校同學進行私人一對一交流。", hubInsightsKicker:"ConCourse 分析", hubInsightsTitle:"用更清晰嘅數據規劃學業", hubInsightsIntro:"查看匿名選科趨勢，同儲存你嘅最終學期決定。", hubProfileKicker:"ConCourse 個人檔案", hubProfileTitle:"建立可信賴嘅校園身份", hubProfileIntro:"管理頭像、個人資料、社交連接同私隱設定。",
-    topicSaved:"已收藏", createPost:"建立貼文", createPoll:"建立投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"問一個問題", pollOptionPlaceholder:"投票選項", addPollOption:"加選項", addMedia:"相片 / 影片", addPoll:"投票", campusFeed:"校園動態", popularOnCampus:"校園熱門", savedPosts:"已收藏貼文", savedPostsPrivate:"只有你睇到", pollOptionLimit:"每個投票最多 6 個選項。", pollIncomplete:"請填投票問題同最少兩個選項。", pollDuplicateOptions:"投票選項唔可以重複。", removeMedia:"移除媒體", altTextPlaceholder:"圖片說明（方便使用輔助技術嘅同學）", mediaPreparing:"正在處理媒體…", mediaLimit:"每篇貼文最多加 4 個媒體檔案。", videoTooLarge:"影片必須細過 40 MB。", imageTooLarge:"圖片必須細過 25 MB。", mediaInvalid:"未能解碼張圖片。請試 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"為咗安全，唔支援 SVG。請匯出做點陣圖片。", mediaReady:"媒體已準備好。", mediaLoading:"正在載入媒體…", mediaUnavailable:"媒體暫時顯示唔到。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"睇呢篇 ConCourse 校園貼文", postLinkCopied:"連結已複製；開啟時需要登入同校帳戶。", shareFailed:"未能分享呢篇貼文。", postContentRequired:"請加入文字、媒體或者投票先發佈。", loadMore:"載入更多", loadingMore:"正在載入更多…", pollOptionNumber:"投票選項 {number}", mediaDescriptionNumber:"第 {number} 個媒體檔案嘅說明", videoDescriptionPlaceholder:"影片說明（方便使用輔助技術嘅同學）", postVideo:"貼文入面嘅影片", videoInvalid:"請揀有效嘅 MP4、WebM 或 MOV 影片。",
+    communityReach:"社群範圍", yourCampus:"本校", acrossCampuses:"跨校瀏覽", searchAcrossCampuses:"搜尋其他大學嘅貼文", acrossCampusFeed:"跨校貼文", crossCommunityLoading:"正在載入其他大學嘅貼文…", crossCommunityEmpty:"其他大學暫時未有可以瀏覽嘅貼文。", popularAcrossCampuses:"跨校熱門",
+    topicSaved:"已收藏", createPost:"建立貼文", createPoll:"建立投票", poll:"投票", removePoll:"移除", pollQuestionPlaceholder:"問一個問題", pollOptionPlaceholder:"投票選項", addPollOption:"加選項", addMedia:"相片 / 影片", addPoll:"投票", campusFeed:"校園動態", popularOnCampus:"校園熱門", savedPosts:"已收藏貼文", savedPostsPrivate:"只有你睇到", pollOptionLimit:"每個投票最多 6 個選項。", pollIncomplete:"請填投票問題同最少兩個選項。", pollDuplicateOptions:"投票選項唔可以重複。", removeMedia:"移除媒體", altTextPlaceholder:"圖片說明（方便使用輔助技術嘅同學）", mediaPreparing:"正在處理媒體…", mediaLimit:"每篇貼文最多加 4 個媒體檔案。", videoTooLarge:"影片必須細過 40 MB。", imageTooLarge:"圖片必須細過 25 MB。", mediaInvalid:"未能解碼張圖片。請試 JPG、PNG、WebP、GIF、AVIF、HEIC 或 HEIF。", svgUnsupported:"為咗安全，唔支援 SVG。請匯出做點陣圖片。", mediaReady:"媒體已準備好。", mediaLoading:"正在載入媒體…", mediaUnavailable:"媒體暫時顯示唔到。", oneVote:"{count} 票", votesCount:"{count} 票", saved:"已收藏", savePost:"收藏", share:"分享", moreActions:"更多操作", sharedPostMessage:"睇呢篇 ConCourse 校園貼文", postLinkCopied:"連結已複製；開啟時需要已驗證帳戶。", shareFailed:"未能分享呢篇貼文。", postContentRequired:"請加入文字、媒體或者投票先發佈。", loadMore:"載入更多", loadingMore:"正在載入更多…", pollOptionNumber:"投票選項 {number}", mediaDescriptionNumber:"第 {number} 個媒體檔案嘅說明", videoDescriptionPlaceholder:"影片說明（方便使用輔助技術嘅同學）", postVideo:"貼文入面嘅影片", videoInvalid:"請揀有效嘅 MP4、WebM 或 MOV 影片。",
     profileLoading:"正在載入個人檔案…", profileSaved:"個人檔案已儲存。", profileSaveFailed:"未能儲存個人檔案。", invalidUrl:"請使用完整嘅 https:// 連結。", invalidInstagramUrl:"請使用 Instagram 嘅 https:// 連結。", invalidWhatsappUrl:"請使用 wa.me 嘅 https:// 連結。", invalidLinkedinUrl:"請使用 LinkedIn 嘅 https:// 連結。", invalidWebsiteUrl:"請使用完整嘅 https:// 連結。",
     hubMarketplace:"校園市集", hubMarketplaceKicker:"ConCourse 校園市集", hubMarketplaceTitle:"喺校園發現真正有用嘅物品", hubMarketplaceIntro:"買賣溫習資料、教科書、宿舍用品同同學真正需要嘅物品。",
     attachMarketplaceListing:"附上市集商品", removeListingAttachment:"移除", marketplaceSharedPostDefault:"我啱啱喺 ConCourse 校園市集發佈咗呢件商品。",
@@ -2883,13 +2845,14 @@ function t(key, variables={}){
     chooseOption:"pick 1 of {count} options", optionLabel:"Option {option}", meetingLabel:"Meeting", creditsShort:"cr", noValidTimetable:"No valid timetable found.", tooManyTimetables:"Too many valid timetables to rank accurately.",
     hubGreetingName:"Welcome back, {name}.", hubNoFinalSchedule:"Save a final timetable to enter the student hub.", notProvided:"Not provided", selectConversation:"Select a conversation", membershipPending:"School verification pending", membershipVerified:"School verified", membershipRejected:"School verification rejected", membershipRevoked:"School verification revoked",
     courseInsightLoading:"Loading anonymous course trends…", courseInsightNoData:"Not enough students have shared a final timetable for this view yet.", courseInsightPrivacy:"Results appear when at least {minimum} students are included.", courseInsightUnavailable:"Course insights are temporarily unavailable.", courseChosenBy:"Chosen by about {count} students", courseChoiceParticipants:"Based on a privacy-rounded group of about {count} students",
-    memberSetupRequired:"Run the latest Supabase setup SQL to enable the student hub.", schoolVerificationRequired:"Your school membership must be verified before you can use this feature.", featureUnavailable:"This feature is temporarily unavailable. Please try again.", alreadyReported:"You already submitted this report.", rateLimited:"Too many requests. Please try again shortly.", messagingUnavailable:"This schoolmate is not available for messaging.", contentUnavailable:"This content is no longer available.",
-    communityLoading:"Loading your campus community…", communityEmpty:"No posts yet. Start a useful campus conversation.", profileUnavailable:"This campus profile is not visible.", postBodyRequired:"Write something before publishing.", publishing:"Publishing…", postPublished:"Post published.", postPublishFailed:"The post could not be published.", postDeleted:"Post deleted.", deletePost:"Delete", confirmDeletePost:"Delete this post?", deleteComment:"Delete comment", confirmDeleteComment:"Delete this comment?", commentDeleted:"Comment deleted.", commentPosting:"Posting comment…", commentPosted:"Comment posted.", commentsUnavailable:"Comments could not be loaded. You can still retry posting below.", commentsEmpty:"No comments yet. Start the conversation.", viewProfile:"View profile", personalWebsite:"Personal website", anonymousStudent:"Student", like:"Like", unlike:"Unlike", comment:"Comment", writeComment:"Write a comment…", postComment:"Post comment", commentRequired:"Write a comment first.", report:"Report", reportReasonPrompt:"Briefly explain why you are reporting this content.", reasonPlaceholder:"Enter the reason for this report…", reasonRequired:"Add a reason for this report.", reported:"Report submitted.", block:"Block", blocked:"User blocked.", confirmBlock:"Block @{username}? You will no longer see each other's posts or messages.",
-    messagesLoading:"Loading conversations…", noConversations:"No conversations yet. Start one with a schoolmate's username.", startingConversation:"Starting conversation…", conversationStarted:"Conversation opened.", conversationStartFailed:"The conversation could not be started.", cannotMessageSelf:"You cannot message yourself.", messagesEmpty:"No messages yet. Say hello.", messageRequired:"Write a message first.", sendingMessage:"Sending…", messageSendFailed:"The message could not be sent.", directMessagePrivacy:"Private between participants; messages are not end-to-end encrypted.",
+    memberSetupRequired:"Run the latest Supabase setup SQL to enable the student hub.", schoolVerificationRequired:"Your school membership must be verified before you can use this feature.", featureUnavailable:"This feature is temporarily unavailable. Please try again.", connectionRetry:"The connection was interrupted. Check your network and try again.", chatUsernameInvalid:"Use 3–24 letters, numbers, or underscores, with the exact capitalization.", alreadyReported:"You already submitted this report.", rateLimited:"Too many requests. Please try again shortly.", messagingUnavailable:"This schoolmate is not available for messaging.", contentUnavailable:"This content is no longer available.",
+    communityLoading:"Loading your campus community…", communityEmpty:"No posts yet. Start a useful campus conversation.", profileUnavailable:"This campus profile is not visible.", postBodyRequired:"Write something before publishing.", publishing:"Publishing…", postPublished:"Post published.", postPublishedAcrossCampuses:"Post published and shared with verified students across campuses.", postPublishedCampusOnly:"Post published to your campus, but cross-campus sharing could not be enabled. Run the latest Student Hub repair SQL.", shareAcrossCampuses:"Share this post with verified students at other universities", postPublishFailed:"The post could not be published.", postDeleted:"Post deleted.", deletePost:"Delete", confirmDeletePost:"Delete this post?", deleteComment:"Delete comment", confirmDeleteComment:"Delete this comment?", commentDeleted:"Comment deleted.", commentPosting:"Posting comment…", commentPosted:"Comment posted.", commentsUnavailable:"Comments could not be loaded. You can still retry posting below.", commentsEmpty:"No comments yet. Start the conversation.", viewProfile:"View profile", personalWebsite:"Personal website", anonymousStudent:"Student", like:"Like", unlike:"Unlike", comment:"Comment", writeComment:"Write a comment…", postComment:"Post comment", commentRequired:"Write a comment first.", report:"Report", reportReasonPrompt:"Briefly explain why you are reporting this content.", reasonPlaceholder:"Enter the reason for this report…", reasonRequired:"Add a reason for this report.", reported:"Report submitted.", block:"Block", blocked:"User blocked.", confirmBlock:"Block @{username}? You will no longer see each other's posts or messages.",
+    messagesLoading:"Loading conversations…", noConversations:"No conversations yet. Start one with a schoolmate's username.", startingConversation:"Starting conversation…", conversationStarted:"Conversation opened.", conversationStartFailed:"No messageable schoolmate matches that exact username. Check capitalization and their message setting.", cannotMessageSelf:"You cannot message yourself.", messagesEmpty:"No messages yet. Say hello.", writePrivateMessage:"Write a private message…", messageRequired:"Write a message first.", sendingMessage:"Sending…", messageSendFailed:"The message could not be sent.", directMessagePrivacy:"Private between participants; messages are not end-to-end encrypted.",
     selfReportedLinks:"Provider badges show an authenticated account connection. Pasted social links remain self-reported and do not verify identity or enrollment.", disconnect:"Disconnect", linkedinPublicProfile:"LinkedIn public profile URL", publicLinkSelfReported:"Self-reported · not verified", authenticatedConnections:"Authenticated connections", selfReportedProfiles:"Self-reported profiles", linkedinProfileSelfReported:"LinkedIn profile · self-reported",
     socialVerificationNote:"Add authenticated account connections. Pasted profile links remain self-reported.", socialConnectionDisclosure:"A connected badge confirms authorization from the named provider. It does not verify legal identity, university enrollment, employment, or any pasted profile URL. Badges are visible when your profile is shared with schoolmates.", socialAccount:"social account", socialConnectionsLoading:"Checking account connections…", socialConnectionsUnavailable:"Account connections are temporarily unavailable. Please try again.", providerNotConnected:"{provider} not connected", providerConnectionHelp:"Authorize a {provider} account to show an account-connection badge.", connectProvider:"Connect {provider}", providerConnected:"{provider} connected", providerConnectedDetail:"Authenticated with {provider} on {date}", providerConnectedHelp:"Your {provider} account is authorized.", providerConnectionLoading:"Checking your {provider} connection…", providerConnecting:"Opening {provider} authorization…", providerConnectedSuccess:"{provider} account connected.", providerConnectionFailed:"{provider} could not be connected. Please try again.", providerSetupRequired:"{provider} connection is temporarily unavailable. Please contact the site administrator.", disconnectProviderTitle:"Disconnect {provider}", confirmDisconnectProvider:"Disconnect your {provider} account from ConCourse?", providerDisconnected:"{provider} disconnected.", providerDisconnectFailed:"{provider} could not be disconnected.",
     hubInsights:"Academic insights", editProfile:"Edit profile", communityNoMatches:"No recent posts match this search or topic.", noRecentMessages:"No recent messages yet.", hubCommunityKicker:"ConCourse Community", hubCommunityTitle:"Campus community", hubCommunityIntro:"Discover what students at your university are asking, sharing, and planning.", hubMessagesKicker:"ConCourse Messages", hubMessagesTitle:"Stay connected, without the noise.", hubMessagesIntro:"Have focused, private conversations with verified schoolmates.", hubInsightsKicker:"ConCourse Insights", hubInsightsTitle:"Plan with a clearer academic picture.", hubInsightsIntro:"Explore anonymous course trends and keep your final semester decision close.", hubProfileKicker:"ConCourse Profile", hubProfileTitle:"Build a trusted campus identity.", hubProfileIntro:"Manage your photo, personal details, social connections, and privacy choices.", avatarPreparing:"Preparing your photo securely…", avatarReady:"Your new photo is ready. Save your profile to apply it.", avatarInvalid:"That file could not be decoded. Try JPG, PNG, WebP, GIF, AVIF, HEIC, or HEIF.", avatarTooLarge:"The image must be smaller than 20 MB.", avatarSvgUnsupported:"For safety, SVG profile photos are not supported. Export a JPG, PNG, WebP, or another raster format.", avatarUploadFailed:"Your profile photo could not be saved. Try again.", avatarRemoved:"Your photo will be removed when you save.", wechatId:"WeChat ID", invalidWechatId:"Enter a valid WeChat ID of up to 64 characters.", wechatCopied:"WeChat ID copied.", copyWechat:"Copy WeChat ID",
-    topicSaved:"Saved", createPost:"Create post", createPoll:"Create a poll", poll:"Poll", removePoll:"Remove", pollQuestionPlaceholder:"Ask a question", pollOptionPlaceholder:"Poll option", addPollOption:"Add option", addMedia:"Photo / video", addPoll:"Poll", campusFeed:"Campus feed", popularOnCampus:"Popular on campus", savedPosts:"Saved posts", savedPostsPrivate:"Only visible to you", pollOptionLimit:"A poll can have up to 6 options.", pollIncomplete:"Add a poll question and at least two options.", pollDuplicateOptions:"Poll options must be different.", removeMedia:"Remove media", altTextPlaceholder:"Image description for accessibility", mediaPreparing:"Preparing media…", mediaLimit:"A post can include up to 4 media files.", videoTooLarge:"Videos must be smaller than 40 MB.", imageTooLarge:"Images must be smaller than 25 MB.", mediaInvalid:"That image could not be decoded. Try JPG, PNG, WebP, GIF, AVIF, HEIC, or HEIF.", svgUnsupported:"For safety, SVG is not supported. Export a raster image instead.", mediaReady:"Media ready.", mediaLoading:"Loading media…", mediaUnavailable:"Media is temporarily unavailable.", oneVote:"{count} vote", votesCount:"{count} votes", saved:"Saved", savePost:"Save", share:"Share", moreActions:"More actions", sharedPostMessage:"View this ConCourse campus post", postLinkCopied:"Link copied. A school account is required to open it.", shareFailed:"This post could not be shared.", postContentRequired:"Add text, media, or a poll before posting.", loadMore:"Load more", loadingMore:"Loading more…", pollOptionNumber:"Poll option {number}", mediaDescriptionNumber:"Description for media item {number}", videoDescriptionPlaceholder:"Video description for accessibility", postVideo:"Post video", videoInvalid:"Choose a valid MP4, WebM, or MOV video.",
+    communityReach:"Community reach", yourCampus:"Your campus", acrossCampuses:"Across campuses", searchAcrossCampuses:"Search posts from other universities", acrossCampusFeed:"Across campuses", crossCommunityLoading:"Loading posts from other universities…", crossCommunityEmpty:"No posts from other universities are available yet.", popularAcrossCampuses:"Popular across campuses",
+    topicSaved:"Saved", createPost:"Create post", createPoll:"Create a poll", poll:"Poll", removePoll:"Remove", pollQuestionPlaceholder:"Ask a question", pollOptionPlaceholder:"Poll option", addPollOption:"Add option", addMedia:"Photo / video", addPoll:"Poll", campusFeed:"Campus feed", popularOnCampus:"Popular on campus", savedPosts:"Saved posts", savedPostsPrivate:"Only visible to you", pollOptionLimit:"A poll can have up to 6 options.", pollIncomplete:"Add a poll question and at least two options.", pollDuplicateOptions:"Poll options must be different.", removeMedia:"Remove media", altTextPlaceholder:"Image description for accessibility", mediaPreparing:"Preparing media…", mediaLimit:"A post can include up to 4 media files.", videoTooLarge:"Videos must be smaller than 40 MB.", imageTooLarge:"Images must be smaller than 25 MB.", mediaInvalid:"That image could not be decoded. Try JPG, PNG, WebP, GIF, AVIF, HEIC, or HEIF.", svgUnsupported:"For safety, SVG is not supported. Export a raster image instead.", mediaReady:"Media ready.", mediaLoading:"Loading media…", mediaUnavailable:"Media is temporarily unavailable.", oneVote:"{count} vote", votesCount:"{count} votes", saved:"Saved", savePost:"Save", share:"Share", moreActions:"More actions", sharedPostMessage:"View this ConCourse campus post", postLinkCopied:"Link copied. A verified account is required to open it.", shareFailed:"This post could not be shared.", postContentRequired:"Add text, media, or a poll before posting.", loadMore:"Load more", loadingMore:"Loading more…", pollOptionNumber:"Poll option {number}", mediaDescriptionNumber:"Description for media item {number}", videoDescriptionPlaceholder:"Video description for accessibility", postVideo:"Post video", videoInvalid:"Choose a valid MP4, WebM, or MOV video.",
     profileLoading:"Loading your profile…", profileSaved:"Profile saved.", profileSaveFailed:"Your profile could not be saved.", invalidUrl:"Use a complete https:// link.", invalidInstagramUrl:"Use an Instagram https:// link.", invalidWhatsappUrl:"Use a wa.me https:// link.", invalidLinkedinUrl:"Use a LinkedIn https:// link.", invalidWebsiteUrl:"Use a complete https:// link.",
     hubMarketplace:"Campus market", hubMarketplaceKicker:"ConCourse Campus Market", hubMarketplaceTitle:"Useful things, already on your campus.", hubMarketplaceIntro:"Buy and sell study materials, textbooks, dorm essentials, and the things students actually need.",
     attachMarketplaceListing:"Attach a market listing", removeListingAttachment:"Remove", marketplaceSharedPostDefault:"I just listed this in the ConCourse campus market.",
@@ -4622,7 +4585,7 @@ updateSessionUi();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260721-chat1"></script>
+<script src="member-hub.js?v=20260721-campus1"></script>
 <script src="marketplace.js?v=20260720-media1"></script>
 </body>
 </html>
