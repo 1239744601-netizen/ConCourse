@@ -4430,3 +4430,321 @@ body.app-active #landingScreen .language-control {
 .member-hub .hub-view[data-hub-view="overview"] .hub-card-heading {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* --------------------------------------------------------------------------
+   Post-caption hierarchy and rhythm
+   Removing the editorial captions should make the Hub calmer, not leave the
+   space they used to occupy behind. This layer closes those gaps and lets the
+   remaining titles, selected values, results and schedule facts carry the UI.
+   -------------------------------------------------------------------------- */
+
+.member-hub .hub-page-header-copy {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 0;
+}
+
+.member-hub .hub-page-header-copy::after {
+  content: "";
+  width: clamp(58px, 7vw, 104px);
+  height: 5px;
+  margin-top: clamp(16px, 2vw, 24px);
+  background: linear-gradient(90deg, var(--hub-editorial-gold), #74c8f3);
+  border-radius: 999px;
+  box-shadow: 0 8px 22px rgba(116, 200, 243, .18);
+}
+
+.member-hub .hub-page-header h1,
+.member-hub[data-active-view="community"] .hub-page-header h1,
+.member-hub[data-active-view="marketplace"] .hub-page-header h1 {
+  font-weight: 820;
+  line-height: .94;
+  text-shadow: 0 14px 34px rgba(0, 0, 0, .2);
+}
+
+.member-hub .hub-card-heading {
+  min-height: 0;
+  align-items: flex-end;
+  gap: 0;
+  margin-bottom: clamp(20px, 2.5vw, 32px);
+}
+
+.member-hub .hub-card-heading > div {
+  min-width: 0;
+  display: block;
+}
+
+.member-hub :is(
+  .hub-card-heading h2,
+  .hub-section-heading h2,
+  .market-results-heading h2
+) {
+  color: var(--hub-editorial-ink);
+  font-weight: 820;
+  line-height: 1;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+
+.member-hub .hub-section-heading {
+  min-height: 0;
+  margin-bottom: 20px;
+  padding: 8px clamp(6px, 1vw, 14px) 18px;
+}
+
+.member-hub :is(
+  .hub-feed-toolbar > b,
+  .hub-rail-card-heading > b,
+  .hub-message-heading b,
+  .hub-final-course-heading h3
+) {
+  color: var(--hub-editorial-ink);
+  font-weight: 800;
+}
+
+/* Academic overview: compact the summary strip after its captions were
+   removed, and keep every surviving label strong enough to explain its value. */
+.member-hub .hub-view[data-hub-view="overview"] .hub-metric-grid {
+  margin-bottom: clamp(38px, 4.5vw, 56px);
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-metric-card {
+  min-height: 116px;
+  padding-block: 20px;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-metric-card > b {
+  margin-bottom: 10px;
+  font-weight: 830;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-metric-card > span {
+  color: #38536c;
+  font-size: 11px;
+  font-weight: 820;
+  letter-spacing: .09em;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-overview-grid {
+  gap: 0;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-card + .hub-card {
+  padding-top: clamp(42px, 5vw, 64px);
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-card-heading {
+  margin-bottom: clamp(24px, 3vw, 36px);
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-card-heading h2 {
+  max-width: 22ch;
+  font-size: clamp(30px, 4vw, 54px);
+  font-weight: 830;
+  line-height: .98;
+}
+
+/* The filters and their outcome read as a single configurator. The labels stay
+   available to assistive technology; the selected values become the visible
+   hierarchy requested for the caption-free design. */
+.member-hub .hub-view[data-hub-view="overview"] .hub-filter-row {
+  gap: 14px;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-filter-row label {
+  min-width: 0;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-filter-row select {
+  min-height: 56px !important;
+  color: #f7fbff !important;
+  background-color: rgba(255, 255, 255, .075) !important;
+  border-color: rgba(139, 216, 255, .3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+  font-size: 14px !important;
+  font-weight: 760 !important;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-filter-row select:focus {
+  border-color: rgba(139, 216, 255, .78);
+  box-shadow: 0 0 0 4px rgba(139, 216, 255, .13);
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-filter-row select option {
+  color: var(--hub-editorial-ink);
+  background: #fff;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] #loadCourseInsights {
+  min-height: 56px;
+  font-size: 14px;
+  font-weight: 820;
+}
+
+.hub-insight-result {
+  min-height: 286px;
+  justify-content: center;
+  padding: 18px 0 18px clamp(30px, 4vw, 54px);
+  border-left: 1px solid var(--hub-editorial-line);
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-chart {
+  min-height: 250px;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-chart-empty {
+  max-width: 580px;
+  padding: clamp(24px, 4vw, 48px);
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-chart-empty > b {
+  max-width: 25ch;
+  margin: 0 auto;
+  color: var(--hub-editorial-ink);
+  font-size: clamp(22px, 2.6vw, 32px);
+  font-weight: 820;
+  line-height: 1.18;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-chart-label b,
+.member-hub .hub-view[data-hub-view="overview"] .hub-chart-value {
+  font-weight: 800;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] #courseInsightStatus:not(:empty) {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 18px;
+  padding: 8px 12px;
+  color: #38536c;
+  background: #eaf0f4;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.4;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] #courseInsightStatus.error:not(:empty) {
+  color: #922331;
+  background: #fbe9ec;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] #courseInsightStatus.success:not(:empty) {
+  color: #08684d;
+  background: #e5f5ef;
+}
+
+/* Final record: facts lead, supporting rows stay quiet, and the heading no
+   longer keeps space for the deleted semester caption. */
+.hub-final-course-heading {
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.hub-final-course-heading h3 {
+  font-size: clamp(23px, 2.5vw, 32px);
+  font-weight: 820;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-final-stat b {
+  font-weight: 830;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-final-stat span {
+  color: rgba(235, 245, 252, .76);
+  font-size: 10.5px;
+  font-weight: 780;
+  letter-spacing: .065em;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] #overviewOpenTimetable {
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-final-course b {
+  font-size: 16px;
+  font-weight: 780;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-final-course > span {
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.member-hub :is(.hub-feed-empty, .hub-message-empty, .hub-final-empty) {
+  color: var(--hub-editorial-ink);
+  font-size: 13.5px;
+  font-weight: 720;
+  line-height: 1.55;
+}
+
+.member-hub .hub-final-empty {
+  font-size: 15px;
+}
+
+@media (max-width: 860px) {
+  .hub-insight-result {
+    min-height: 240px;
+    padding: 30px 0 0;
+    border-top: 1px solid var(--hub-editorial-line);
+    border-left: 0;
+  }
+
+  .member-hub .hub-view[data-hub-view="overview"] .hub-chart {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 700px) {
+  .member-hub:is(
+    [data-active-view="overview"],
+    [data-active-view="messages"],
+    [data-active-view="profile"]
+  ) .hub-page-header {
+    margin-bottom: 24px;
+  }
+
+  .member-hub .hub-page-header-copy::after {
+    height: 4px;
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 620px) {
+  .member-hub .hub-view[data-hub-view="overview"] .hub-metric-grid {
+    margin-bottom: 36px;
+  }
+
+  .member-hub .hub-view[data-hub-view="overview"] .hub-card-heading {
+    margin-bottom: 24px;
+  }
+
+  .member-hub .hub-view[data-hub-view="overview"] .hub-card-heading h2 {
+    max-width: 18ch;
+    font-size: clamp(30px, 9vw, 42px);
+  }
+
+  .hub-insight-result {
+    min-height: 210px;
+  }
+
+  .member-hub .hub-view[data-hub-view="overview"] .hub-chart-empty {
+    padding-inline: 6px;
+  }
+}
+
+@media (max-width: 430px) {
+  .member-hub .hub-view[data-hub-view="overview"] .hub-metric-card {
+    min-height: 104px;
+    padding-block: 17px;
+  }
+
+  .member-hub .hub-view[data-hub-view="overview"] .hub-metric-card > span {
+    font-size: 10.5px;
+  }
+}
