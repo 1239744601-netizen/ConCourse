@@ -1927,6 +1927,345 @@ input.market-search::placeholder {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Community identity rail + dependable Hub navigation
+   The profile summary belongs to the surrounding night field. It should read
+   as editorial information, never as a narrow illuminated card squeezed into
+   the side of the feed.
+   -------------------------------------------------------------------------- */
+
+.member-hub[data-active-view="community"] .hub-community-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 378px);
+}
+
+.member-hub[data-active-view="community"] .hub-community-rail {
+  position: sticky;
+  top: calc(var(--app-bar-offset) + 24px);
+  display: block;
+  padding: clamp(18px, 2.4vw, 30px) clamp(8px, 1.8vw, 22px) clamp(28px, 3vw, 40px);
+  color: rgba(246, 249, 252, .94);
+  background: radial-gradient(ellipse 118% 52% at 0 10%, rgba(84, 171, 226, .15), transparent 72%) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  isolation: isolate;
+  animation: cc-community-rail-arrive .5s cubic-bezier(.2, .78, .2, 1) both;
+}
+
+.member-hub[data-active-view="community"] .hub-community-rail::before {
+  content: "";
+  position: absolute;
+  inset: 10px auto 10px 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(139, 216, 255, .48) 18%, rgba(233, 184, 76, .58) 70%, transparent);
+  pointer-events: none;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-card,
+.member-hub[data-active-view="community"] .hub-community-rail > :not(.hub-rail-links) {
+  display: block !important;
+  margin: 0;
+  padding: clamp(24px, 2.4vw, 34px) clamp(16px, 2vw, 26px);
+  color: inherit;
+  background: transparent !important;
+  border: 0;
+  border-bottom: 1px solid rgba(205, 226, 246, .16);
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-card:first-child { padding-top: 8px; }
+.member-hub[data-active-view="community"] .hub-rail-card:last-child { border-bottom: 0; }
+
+.member-hub[data-active-view="community"] .hub-rail-profile-row {
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 16px;
+  margin: 0 0 26px;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-profile-row .hub-avatar {
+  width: 68px;
+  height: 68px;
+  color: #061a2f;
+  background: linear-gradient(145deg, #f5cf7b, #d99a2e);
+  border: 1px solid rgba(255, 234, 180, .7);
+  border-radius: 50%;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .22), 0 0 0 6px rgba(139, 216, 255, .06);
+  font-size: 13px;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-profile-row b {
+  color: #fff;
+  font-size: clamp(19px, 1.8vw, 25px);
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-profile-row span {
+  margin-top: 6px;
+  color: rgba(205, 226, 246, .68);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.member-hub[data-active-view="community"] .hub-profile-progress {
+  margin: 0 0 22px;
+}
+
+.member-hub[data-active-view="community"] .hub-profile-progress > span {
+  margin-bottom: 11px;
+  color: rgba(205, 226, 246, .68);
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.member-hub[data-active-view="community"] .hub-profile-progress strong {
+  color: var(--cc-control-gold);
+  font-size: 18px;
+  letter-spacing: -.03em;
+}
+
+.member-hub[data-active-view="community"] .hub-profile-progress > div {
+  height: 3px;
+  overflow: visible;
+  background: rgba(205, 226, 246, .14);
+  border-radius: 999px;
+}
+
+.member-hub[data-active-view="community"] .hub-profile-progress i {
+  min-width: 3px;
+  background: linear-gradient(90deg, var(--cc-control-gold), var(--cc-control-sky));
+  box-shadow: 0 0 16px rgba(139, 216, 255, .35);
+  transition: width .55s cubic-bezier(.2, .78, .2, 1);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-profile > .btn-ghost {
+  width: fit-content;
+  min-height: 36px;
+  padding: 7px 0 6px;
+  color: var(--cc-control-gold);
+  background: transparent !important;
+  border: 0;
+  border-bottom: 1px solid rgba(233, 184, 76, .52);
+  border-radius: 0 !important;
+  box-shadow: none;
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-profile > .btn-ghost:hover,
+.member-hub[data-active-view="community"] .hub-rail-profile > .btn-ghost:focus-visible {
+  color: #ffe4a4;
+  border-bottom-color: #ffe4a4;
+  transform: translateX(4px);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-links {
+  display: grid !important;
+  gap: 0;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link {
+  color: rgba(246, 249, 252, .92);
+  border-bottom-color: rgba(205, 226, 246, .14);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link b {
+  color: #fff;
+  font-size: 13px;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link small {
+  margin-top: 5px;
+  color: rgba(205, 226, 246, .6);
+  font-size: 10px;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link i { color: var(--cc-control-gold); }
+
+.member-hub[data-active-view="community"] .hub-rail-link:hover,
+.member-hub[data-active-view="community"] .hub-rail-link.active,
+.member-hub[data-active-view="community"] .hub-rail-link[aria-pressed="true"] {
+  color: #fff;
+  background: linear-gradient(90deg, rgba(139, 216, 255, .12), transparent 80%);
+  border-bottom-color: rgba(139, 216, 255, .36);
+  box-shadow: inset 3px 0 0 var(--cc-control-sky);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-heading { margin: 0 0 14px; }
+
+.member-hub[data-active-view="community"] .hub-rail-heading h3 {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+
+.member-hub[data-active-view="community"] .hub-conversation-preview {
+  margin: 0 0 18px;
+}
+
+.member-hub[data-active-view="community"] .hub-conversation-preview-empty {
+  margin: 0;
+  padding: 10px 0 18px;
+  color: rgba(205, 226, 246, .58);
+  font-size: 11px;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.member-hub[data-active-view="community"] .hub-conversation-preview-button {
+  padding: 12px 0 !important;
+  color: rgba(246, 249, 252, .92) !important;
+  background: transparent !important;
+  border: 0;
+  border-bottom: 1px solid rgba(205, 226, 246, .13);
+  border-radius: 0 !important;
+}
+
+.member-hub[data-active-view="community"] .hub-conversation-preview-button:hover,
+.member-hub[data-active-view="community"] .hub-conversation-preview-button:focus-visible {
+  background: linear-gradient(90deg, rgba(139, 216, 255, .1), transparent 82%) !important;
+}
+
+.member-hub[data-active-view="community"] .hub-conversation-preview-button b { color: #fff; }
+.member-hub[data-active-view="community"] .hub-conversation-preview-button small { color: rgba(205, 226, 246, .58); }
+.member-hub[data-active-view="community"] .hub-conversation-preview-button i { color: var(--cc-control-gold); }
+
+.member-hub[data-active-view="community"] .hub-rail-action {
+  width: fit-content;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  padding: 8px 0 7px;
+  color: var(--cc-control-gold);
+  background: transparent !important;
+  border: 0;
+  border-bottom: 1px solid rgba(233, 184, 76, .52);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-action::after {
+  content: "\2192";
+  font-size: 17px;
+  transition: transform .22s cubic-bezier(.2, .78, .2, 1);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-action:hover,
+.member-hub[data-active-view="community"] .hub-rail-action:focus-visible {
+  color: #ffe4a4;
+  border-bottom-color: #ffe4a4;
+  box-shadow: none;
+  transform: none;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-action:hover::after,
+.member-hub[data-active-view="community"] .hub-rail-action:focus-visible::after {
+  transform: translateX(6px);
+}
+
+.member-hub[data-active-view="profile"] .hub-hero-art,
+.member-hub[data-active-view="profile"] .hub-hero-art img,
+.member-hub[data-active-view="messages"] .hub-hero-art,
+.member-hub[data-active-view="messages"] .hub-hero-art img {
+  animation: none;
+}
+
+@keyframes cc-community-rail-arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1180px) {
+  .member-hub[data-active-view="community"] .hub-community-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr) minmax(0, 1fr);
+    gap: 0;
+    margin: 24px 0 10px;
+    padding: 32px clamp(12px, 3vw, 34px);
+    background: radial-gradient(ellipse 62% 150% at 0 40%, rgba(84, 171, 226, .13), transparent 72%) !important;
+    border-block: 1px solid rgba(205, 226, 246, .12) !important;
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card {
+    min-width: 0;
+    padding: 12px clamp(18px, 2.6vw, 32px);
+    border-right: 1px solid rgba(205, 226, 246, .14);
+    border-bottom: 0;
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card:first-child { padding-top: 12px; }
+  .member-hub[data-active-view="community"] .hub-rail-card:last-child { border-right: 0; }
+}
+
+@media (max-width: 760px) {
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    display: block;
+    margin: 20px 0 0;
+    padding: 28px clamp(6px, 4vw, 22px);
+    background: radial-gradient(ellipse 90% 40% at 0 6%, rgba(84, 171, 226, .13), transparent 76%) !important;
+    border-radius: 0 !important;
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card {
+    padding: 26px clamp(12px, 3vw, 22px);
+    border-right: 0;
+    border-bottom: 1px solid rgba(205, 226, 246, .15);
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card:first-child { padding-top: 6px; }
+  .member-hub[data-active-view="community"] .hub-rail-card:last-child { border-bottom: 0; }
+}
+
+/* All destinations remain visible on narrow screens. The previous nowrap
+   carousel hid its scrollbar, which made Campus Market appear to disappear. */
+@media (max-width: 700px) {
+  .member-hub .hub-navigation {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0 clamp(18px, 6vw, 34px);
+    overflow: visible !important;
+    scroll-snap-type: none;
+  }
+
+  .member-hub .hub-nav-button {
+    width: 100%;
+    min-width: 0 !important;
+    min-height: 46px;
+    flex: none !important;
+    justify-content: flex-start;
+    padding: 10px 0 12px !important;
+    white-space: normal;
+    scroll-snap-align: none;
+  }
+
+  .member-hub .hub-nav-button:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc(50% - clamp(9px, 3vw, 17px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-hub[data-active-view="community"] .hub-community-rail,
+  .member-hub[data-active-view="community"] .hub-profile-progress i,
+  .member-hub[data-active-view="community"] .hub-rail-profile > .btn-ghost,
+  .member-hub[data-active-view="community"] .hub-rail-action::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
 @media print {
   .print-action {
     display: none !important;
@@ -5136,15 +5475,22 @@ body.app-active #landingScreen :is(
 
 /* Planner: chapters separated by rhythm and light instead of stacked cards. */
 body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
+  z-index: 70;
   padding: 0;
   overflow: visible;
-  background: transparent;
+  isolation: isolate;
+  background:
+    linear-gradient(90deg,
+      rgba(235, 243, 249, .985) 0%,
+      rgba(250, 252, 252, .995) 16%,
+      rgba(255, 253, 248, .995) 84%,
+      rgba(241, 246, 248, .985) 100%);
   border: 0;
   border-bottom: 1px solid rgba(7, 29, 50, .15);
   border-radius: 0;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  box-shadow: 0 18px 30px -28px rgba(7, 29, 50, .62);
+  backdrop-filter: blur(18px) saturate(118%);
+  -webkit-backdrop-filter: blur(18px) saturate(118%);
 }
 
 body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a {
@@ -5172,17 +5518,53 @@ body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a:focus
 
 body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel {
   margin: 0 !important;
-  padding: clamp(38px, 5vw, 68px) 2px;
+  padding: clamp(42px, 5vw, 70px) clamp(22px, 3.4vw, 42px);
+  scroll-margin-top: 84px;
   background: transparent;
   border: 0;
-  border-top: 1px solid rgba(7, 29, 50, .13);
   border-radius: 0;
   box-shadow: none;
 }
 
 body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel:hover {
-  background: transparent;
   box-shadow: none;
+}
+
+/* Planner chapters are atmospheric light fields rather than outlined cards.
+   The distinct temperatures keep long scrolling forms easy to locate while
+   every edge still dissolves into the surrounding workspace. */
+body.app-active:not(.schedule-active):not(.hub-active) #courseBuilderPanel {
+  background:
+    radial-gradient(ellipse 118% 104% at 34% 47%,
+      rgba(235, 247, 255, .99) 0 52%,
+      rgba(217, 237, 252, .9) 72%,
+      rgba(197, 225, 248, .28) 91%,
+      transparent 100%);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) #semesterPanel {
+  background:
+    radial-gradient(ellipse 118% 104% at 66% 46%,
+      rgba(255, 252, 238, .995) 0 50%,
+      rgba(251, 239, 202, .9) 72%,
+      rgba(239, 204, 126, .25) 91%,
+      transparent 100%);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) :is(#courseBuilderPanel, #semesterPanel) .panel-heading h2::after {
+  content: "";
+  width: clamp(54px, 6vw, 86px);
+  height: 4px;
+  display: block;
+  margin-top: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2f6df6, #83d4f5);
+  box-shadow: 0 7px 18px rgba(47, 109, 246, .16);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) #semesterPanel .panel-heading h2::after {
+  background: linear-gradient(90deg, #bd811c, var(--cc-control-gold));
+  box-shadow: 0 7px 18px rgba(189, 129, 28, .14);
 }
 
 .configurator-column .panel-index,
@@ -5330,6 +5712,40 @@ body.schedule-active #schedulePage .alt-btn[aria-pressed="true"] {
   box-shadow: inset 0 -3px 0 var(--cc-control-gold);
 }
 
+body.schedule-active #schedulePage .color-bar {
+  gap: clamp(16px, 2.5vw, 30px);
+  padding: 12px 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-block: 1px solid rgba(7, 29, 50, .13);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.schedule-active #schedulePage .color-bar .cm-label {
+  align-self: center;
+  padding: 0;
+  color: #52677a;
+  background: transparent;
+}
+
+body.schedule-active #schedulePage .color-bar .cm-opt {
+  min-height: 38px;
+  padding: 8px 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+
+body.schedule-active #schedulePage .color-bar .cm-opt:has(input:checked) {
+  color: var(--navy-950);
+  background: transparent;
+  border-bottom-color: var(--cc-control-gold);
+  box-shadow: none;
+}
+
 body.schedule-active .final-timetable-bar {
   padding: clamp(32px, 4vw, 48px) clamp(28px, 4vw, 50px);
   background: radial-gradient(ellipse 96% 92% at center,
@@ -5418,6 +5834,33 @@ body.schedule-active .final-timetable-bar {
     rgba(255, 253, 248, .98) 86%,
     transparent) !important;
   border: 0 !important;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link {
+  padding: 16px 2px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(7, 29, 50, .13);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link:hover,
+.member-hub[data-active-view="community"] .hub-rail-link.active,
+.member-hub[data-active-view="community"] .hub-rail-link[aria-pressed="true"] {
+  background: linear-gradient(90deg, rgba(47, 109, 246, .07), transparent 76%);
+  border-bottom-color: rgba(47, 109, 246, .32);
+  box-shadow: inset 3px 0 0 var(--cc-control-blue);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link i {
+  transition: color .2s ease, transform .22s cubic-bezier(.2, .8, .2, 1);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link:hover i,
+.member-hub[data-active-view="community"] .hub-rail-link:focus-visible i {
+  color: var(--cc-control-blue);
+  transform: translateX(5px);
 }
 
 /* Global marketplace message context: secondary, but unmistakably distinct
@@ -5595,9 +6038,46 @@ body.schedule-active .final-timetable-bar {
   to { opacity: 1; transform: scaleX(1); }
 }
 
-@media (max-width: 700px) {
+/* On the single-column planner the app bar and chapter rail are both sticky.
+   Reserve their full combined height for anchor jumps and make the rail field
+   opaque enough that labels never read through it while the form scrolls. */
+@media (max-width: 1050px) {
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
+    top: var(--app-bar-offset);
+    margin-bottom: clamp(18px, 3vw, 28px);
+    padding-inline: clamp(12px, 3vw, 24px);
+    background:
+      linear-gradient(90deg,
+        rgba(232, 242, 249, .995),
+        rgba(252, 253, 251, 1) 15% 85%,
+        rgba(240, 246, 248, .995));
+    box-shadow:
+      0 1px 0 rgba(7, 29, 50, .1),
+      0 18px 30px -25px rgba(7, 29, 50, .56);
+  }
+
   body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel {
-    padding: 34px 0;
+    scroll-margin-top: calc(var(--app-bar-offset) + 84px);
+  }
+}
+
+@media (max-width: 700px) {
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
+    column-gap: clamp(18px, 7vw, 34px);
+    padding-inline: clamp(14px, 5vw, 24px);
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a {
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a + a {
+    margin-left: 0;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel {
+    padding: 38px clamp(17px, 5vw, 25px);
   }
 
   body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel,
@@ -5613,6 +6093,17 @@ body.schedule-active .final-timetable-bar {
   }
 }
 
+@media (max-height: 840px) and (max-width: 1050px) {
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
+    position: relative;
+    top: auto;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .configurator-column .panel {
+    scroll-margin-top: 24px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :is(
     .member-hub .hub-nav-button,
@@ -5620,6 +6111,7 @@ body.schedule-active .final-timetable-bar {
     .member-hub .hub-topic-chip,
     .member-hub .market-scope-button,
     .member-hub .market-mode-tabs > button,
+    .member-hub .hub-rail-link i,
     body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a,
     body.schedule-active #schedulePage .alt-btn
   ),
@@ -5649,5 +6141,131 @@ body.schedule-active .final-timetable-bar {
   .member-hub .market-catalogue {
     background: Canvas !important;
     border: 1px solid CanvasText !important;
+  }
+}
+
+/* Final component lock: these rules intentionally follow every historical
+   Hub skin so the responsive identity rail and destination map cannot be
+   reverted by an older, more card-like cascade. */
+.member-hub[data-active-view="community"] .hub-community-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 378px);
+}
+
+.member-hub[data-active-view="community"] .hub-community-rail {
+  position: sticky;
+  top: calc(var(--app-bar-offset) + 24px);
+  display: block;
+  padding: clamp(18px, 2.4vw, 30px) clamp(8px, 1.8vw, 22px) clamp(28px, 3vw, 40px);
+  color: rgba(246, 249, 252, .94);
+  background: radial-gradient(ellipse 118% 52% at 0 10%, rgba(84, 171, 226, .15), transparent 72%) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-card,
+.member-hub[data-active-view="community"] .hub-community-rail > :not(.hub-rail-links) {
+  display: block !important;
+  color: inherit;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link {
+  color: rgba(246, 249, 252, .92);
+  background: transparent;
+  border-bottom-color: rgba(205, 226, 246, .14);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link:hover,
+.member-hub[data-active-view="community"] .hub-rail-link.active,
+.member-hub[data-active-view="community"] .hub-rail-link[aria-pressed="true"] {
+  color: #fff;
+  background: linear-gradient(90deg, rgba(139, 216, 255, .12), transparent 80%);
+  border-bottom-color: rgba(139, 216, 255, .36);
+  box-shadow: inset 3px 0 0 var(--cc-control-sky);
+}
+
+.member-hub[data-active-view="community"] .hub-rail-link i { color: var(--cc-control-gold); }
+
+@media (max-width: 1180px) {
+  .member-hub[data-active-view="community"] .hub-community-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr) minmax(0, 1fr);
+    gap: 0;
+    margin: 24px 0 10px;
+    padding: 32px clamp(12px, 3vw, 34px);
+    background: radial-gradient(ellipse 62% 150% at 0 40%, rgba(84, 171, 226, .13), transparent 72%) !important;
+    border-block: 1px solid rgba(205, 226, 246, .12) !important;
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card {
+    min-width: 0;
+    padding: 12px clamp(18px, 2.6vw, 32px);
+    border-right: 1px solid rgba(205, 226, 246, .14);
+    border-bottom: 0;
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card:last-child { border-right: 0; }
+}
+
+@media (max-width: 760px) {
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    display: block;
+    margin: 20px 0 0;
+    padding: 28px clamp(6px, 4vw, 22px);
+    background: radial-gradient(ellipse 90% 40% at 0 6%, rgba(84, 171, 226, .13), transparent 76%) !important;
+    border-radius: 0 !important;
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card {
+    padding: 26px clamp(12px, 3vw, 22px);
+    border-right: 0;
+    border-bottom: 1px solid rgba(205, 226, 246, .15);
+  }
+
+  .member-hub[data-active-view="community"] .hub-rail-card:last-child { border-bottom: 0; }
+}
+
+@media (max-width: 700px) {
+  .member-hub .hub-navigation {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0 clamp(18px, 6vw, 34px);
+    overflow: visible !important;
+    scroll-snap-type: none;
+  }
+
+  .member-hub .hub-nav-button {
+    width: 100%;
+    min-width: 0 !important;
+    min-height: 46px;
+    flex: none !important;
+    justify-content: flex-start;
+    padding: 10px 0 12px !important;
+    white-space: normal;
+    scroll-snap-align: none;
+  }
+
+  .member-hub .hub-nav-button:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    width: calc(50% - clamp(9px, 3vw, 17px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-hub[data-active-view="community"] .hub-community-rail,
+  .member-hub[data-active-view="community"] .hub-profile-progress i,
+  .member-hub[data-active-view="community"] .hub-rail-profile > .btn-ghost,
+  .member-hub[data-active-view="community"] .hub-rail-action::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }
