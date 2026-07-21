@@ -1689,7 +1689,7 @@
 <link rel="stylesheet" href="concourse-navy.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
-<link rel="stylesheet" href="academic-tools.css?v=20260721-academic-tools1" />
+<link rel="stylesheet" href="academic-tools.css?v=20260721-academic-tools2" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2231,7 +2231,38 @@
               </div>
             </fieldset>
 
-            <fieldset class="citation-section citation-details-section">
+            <fieldset class="citation-section citation-entry-mode-section" id="citationEntryModeSection" data-citation-sources="website" hidden>
+              <legend data-academic-i18n="citationEntryModeLegend">Add this website</legend>
+              <div class="citation-entry-mode-switch" role="radiogroup" aria-label="Website citation method" data-academic-i18n-aria-label="citationEntryModeLegend">
+                <label class="citation-mode-choice">
+                  <input type="radio" name="citationEntryMode" value="automatic" checked />
+                  <span>
+                    <b data-academic-i18n="citationAutomaticMode">Find automatically</b>
+                    <small data-academic-i18n="citationAutomaticModeHint">Paste a URL and let ConCourse find the source details.</small>
+                  </span>
+                </label>
+                <label class="citation-mode-choice">
+                  <input type="radio" name="citationEntryMode" value="manual" />
+                  <span>
+                    <b data-academic-i18n="citationManualMode">Enter manually</b>
+                    <small data-academic-i18n="citationManualModeHint">Type every source detail yourself.</small>
+                  </span>
+                </label>
+              </div>
+              <div class="citation-automatic-panel" id="citationAutomaticPanel">
+                <div class="citation-field citation-auto-url-field">
+                  <label for="citationAutomaticUrl" data-academic-i18n="citationWebsiteUrl">Website URL</label>
+                  <div class="citation-auto-url-row">
+                    <input id="citationAutomaticUrl" type="url" maxlength="1200" autocomplete="url" inputmode="url" placeholder="https://example.edu/article" data-academic-i18n-placeholder="citationWebsiteUrlPlaceholder" />
+                    <button type="button" class="academic-tool-button primary" id="citationLookupWebsite" data-academic-i18n="citationFindSource">Find source</button>
+                  </div>
+                </div>
+                <p class="citation-lookup-status" id="citationLookupStatus" role="status" aria-live="polite"></p>
+                <p class="citation-lookup-note" data-academic-i18n="citationLookupNote">Automatic lookup reads public page metadata. Review every imported field before using the citation.</p>
+              </div>
+            </fieldset>
+
+            <fieldset class="citation-section citation-details-section" id="citationDetailsSection">
               <legend data-academic-i18n="citationDetailsLegend">Source details</legend>
               <div class="citation-field-grid">
                 <label class="citation-field">
@@ -2318,8 +2349,15 @@
               <b class="citation-preview-style" id="citationPreviewStyle">APA 7</b>
             </div>
             <div class="citation-output-block">
-              <span class="citation-output-label" data-academic-i18n="citationReferenceLabel">Reference-list entry</span>
-              <div class="citation-render is-placeholder" id="citationOutput">Enter a title to begin generating your reference.</div>
+              <div class="citation-output-label-row">
+                <span class="citation-output-label" id="citationReferenceLabel" data-academic-i18n="citationReferenceLabel">Editable reference-list entry</span>
+                <span class="citation-edited-badge" id="citationEditedBadge" data-academic-i18n="citationEdited" hidden>Edited</span>
+              </div>
+              <div class="citation-render citation-editable-reference is-placeholder" id="citationOutput" contenteditable="plaintext-only" role="textbox" aria-multiline="true" aria-labelledby="citationReferenceLabel" aria-describedby="citationEditHint" spellcheck="true" data-academic-i18n-placeholder="citationPreviewPlaceholder" data-placeholder="Enter a title to generate a reference, or type one directly."></div>
+              <div class="citation-edit-controls">
+                <small id="citationEditHint" data-academic-i18n="citationEditHint">You can correct the generated entry directly in this box.</small>
+                <button type="button" class="citation-restore-button" id="restoreCitation" data-academic-i18n="citationRestore" hidden>Restore generated version</button>
+              </div>
             </div>
             <div class="citation-output-block citation-inline-group">
               <span class="citation-output-label" id="citationSecondaryLabel" data-academic-i18n="citationInlineLabel">In-text citation</span>
@@ -4761,6 +4799,6 @@ initializeAccount();
 </script>
 <script src="member-hub.js?v=20260721-academic-tools1"></script>
 <script src="marketplace.js?v=20260721-market-gallery5"></script>
-<script src="academic-tools.js?v=20260721-academic-tools1"></script>
+<script src="academic-tools.js?v=20260721-academic-tools2"></script>
 </body>
 </html>

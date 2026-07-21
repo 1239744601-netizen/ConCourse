@@ -16,6 +16,24 @@
       sourceBook:"Book",
       sourceJournal:"Journal article",
       sourceWebsite:"Website",
+      citationEntryModeLegend:"Add this website",
+      citationAutomaticMode:"Find automatically",
+      citationAutomaticModeHint:"Paste a URL and let ConCourse find the source details.",
+      citationManualMode:"Enter manually",
+      citationManualModeHint:"Type every source detail yourself.",
+      citationWebsiteUrl:"Website URL",
+      citationWebsiteUrlPlaceholder:"https://example.edu/article",
+      citationFindSource:"Find source",
+      citationFindingSource:"Finding public source details…",
+      citationLookupNote:"Automatic lookup reads public page metadata. Review every imported field before using the citation.",
+      citationLookupRequired:"Paste a complete website URL first.",
+      citationLookupInvalid:"Use a complete public http(s) website URL.",
+      citationLookupSuccess:"Source details found. Review and correct the imported fields below.",
+      citationLookupPartial:"Some details were found. Complete the missing fields below before using the citation.",
+      citationLookupFailed:"ConCourse could not read this page. You can still enter the details manually below.",
+      citationLookupUnavailable:"Automatic lookup is not active yet. Deploy the ConCourse citation metadata function, or use manual entry.",
+      citationLookupSignIn:"Sign in before using automatic website lookup.",
+      citationLookupReplaceConfirm:"Finding a new source will replace the current website draft and edited reference. Continue?",
       citationDetailsLegend:"Source details",
       citationAuthorType:"Author entry",
       citationPeople:"Person or people",
@@ -50,11 +68,17 @@
       citationClear:"Clear fields",
       citationPreviewEyebrow:"Live output",
       citationPreviewTitle:"Your reference",
-      citationReferenceLabel:"Reference-list entry",
+      citationReferenceLabel:"Editable reference-list entry",
       citationInlineLabel:"In-text citation",
       citationNoteLabel:"Short note",
-      citationPreviewPlaceholder:"Enter a title to begin generating your reference.",
+      citationPreviewPlaceholder:"Enter a title to generate a reference, or type one directly.",
       citationInlinePlaceholder:"The in-text form will appear here.",
+      citationEdited:"Edited",
+      citationEditHint:"You can correct the generated entry directly in this box.",
+      citationRestore:"Restore generated version",
+      citationRestored:"The generated reference has been restored.",
+      citationEditedStatus:"Your edited reference will be used when you copy or save it.",
+      citationEditedSourceChanged:"Source details changed. Your edited reference is preserved until you restore the generated version.",
       citationCopy:"Copy reference",
       citationAdd:"Add to bibliography",
       citationReady:"Reference updated.",
@@ -106,6 +130,24 @@
       sourceBook:"书籍",
       sourceJournal:"期刊文章",
       sourceWebsite:"网页",
+      citationEntryModeLegend:"添加这个网页",
+      citationAutomaticMode:"自动查找",
+      citationAutomaticModeHint:"粘贴网址，让 ConCourse 查找资料详情。",
+      citationManualMode:"手动输入",
+      citationManualModeHint:"自行填写每一项资料详情。",
+      citationWebsiteUrl:"网页网址",
+      citationWebsiteUrlPlaceholder:"https://example.edu/article",
+      citationFindSource:"查找资料",
+      citationFindingSource:"正在查找公开网页资料…",
+      citationLookupNote:"自动查找会读取网页的公开元数据。使用引用前，请核对所有导入字段。",
+      citationLookupRequired:"请先粘贴完整网页网址。",
+      citationLookupInvalid:"请输入完整且公开的 http(s) 网页网址。",
+      citationLookupSuccess:"已找到资料详情。请核对并修正下方导入字段。",
+      citationLookupPartial:"已找到部分资料。使用引用前，请补全下方缺失字段。",
+      citationLookupFailed:"ConCourse 无法读取此网页。你仍可在下方手动输入资料。",
+      citationLookupUnavailable:"自动查找尚未启用。请部署 ConCourse 引用元数据函数，或改用手动输入。",
+      citationLookupSignIn:"请先登录，再使用网页自动查找。",
+      citationLookupReplaceConfirm:"查找新资料将替换当前网页草稿及已编辑引用。是否继续？",
       citationDetailsLegend:"资料详情",
       citationAuthorType:"作者输入类型",
       citationPeople:"个人作者",
@@ -140,11 +182,17 @@
       citationClear:"清空字段",
       citationPreviewEyebrow:"实时结果",
       citationPreviewTitle:"你的参考文献",
-      citationReferenceLabel:"参考文献条目",
+      citationReferenceLabel:"可编辑的参考文献条目",
       citationInlineLabel:"文内引用",
       citationNoteLabel:"简短脚注",
-      citationPreviewPlaceholder:"输入标题后即可生成参考文献。",
+      citationPreviewPlaceholder:"输入标题以生成参考文献，或直接在此输入。",
       citationInlinePlaceholder:"文内引用将在这里显示。",
+      citationEdited:"已编辑",
+      citationEditHint:"你可以直接在此框中修正生成的参考文献。",
+      citationRestore:"恢复生成版本",
+      citationRestored:"已恢复生成的参考文献。",
+      citationEditedStatus:"复制或保存时将使用你编辑后的参考文献。",
+      citationEditedSourceChanged:"资料详情已改变。编辑后的参考文献会保留，直至你恢复生成版本。",
       citationCopy:"复制引用",
       citationAdd:"加入参考书目",
       citationReady:"引用已更新。",
@@ -196,6 +244,24 @@
       sourceBook:"書籍",
       sourceJournal:"期刊文章",
       sourceWebsite:"網頁",
+      citationEntryModeLegend:"加入呢個網頁",
+      citationAutomaticMode:"自動搵資料",
+      citationAutomaticModeHint:"貼上網址，等 ConCourse 搵出資料詳情。",
+      citationManualMode:"手動輸入",
+      citationManualModeHint:"自行填寫每一項資料詳情。",
+      citationWebsiteUrl:"網頁網址",
+      citationWebsiteUrlPlaceholder:"https://example.edu/article",
+      citationFindSource:"搵資料",
+      citationFindingSource:"正在搵公開網頁資料…",
+      citationLookupNote:"自動查找會讀取網頁嘅公開元資料。使用引用之前，請核對所有匯入欄位。",
+      citationLookupRequired:"請先貼上完整網頁網址。",
+      citationLookupInvalid:"請輸入完整而且公開嘅 http(s) 網頁網址。",
+      citationLookupSuccess:"已經搵到資料詳情。請核對同修正下面匯入嘅欄位。",
+      citationLookupPartial:"已經搵到部分資料。使用引用之前，請補齊下面欠缺嘅欄位。",
+      citationLookupFailed:"ConCourse 未能讀取呢個網頁。你仍然可以喺下面手動輸入資料。",
+      citationLookupUnavailable:"自動查找功能未啟用。請部署 ConCourse 引用元資料函數，或者改用手動輸入。",
+      citationLookupSignIn:"請先登入，再使用網頁自動查找。",
+      citationLookupReplaceConfirm:"搵新資料會取代目前網頁草稿同已編輯引用。係咪繼續？",
       citationDetailsLegend:"資料詳情",
       citationAuthorType:"作者輸入類型",
       citationPeople:"個人作者",
@@ -230,11 +296,17 @@
       citationClear:"清空欄位",
       citationPreviewEyebrow:"即時結果",
       citationPreviewTitle:"你嘅參考文獻",
-      citationReferenceLabel:"參考文獻條目",
+      citationReferenceLabel:"可編輯嘅參考文獻條目",
       citationInlineLabel:"文內引用",
       citationNoteLabel:"簡短註腳",
-      citationPreviewPlaceholder:"輸入標題之後就可以產生參考文獻。",
+      citationPreviewPlaceholder:"輸入標題以產生參考文獻，或者直接喺呢度輸入。",
       citationInlinePlaceholder:"文內引用會喺呢度顯示。",
+      citationEdited:"已編輯",
+      citationEditHint:"你可以直接喺呢個框修正產生嘅參考文獻。",
+      citationRestore:"還原產生版本",
+      citationRestored:"已還原產生嘅參考文獻。",
+      citationEditedStatus:"複製或者儲存時會使用你編輯後嘅參考文獻。",
+      citationEditedSourceChanged:"資料詳情已經改變。編輯後嘅參考文獻會保留，直至你還原產生版本。",
       citationCopy:"複製引用",
       citationAdd:"加入參考書目",
       citationReady:"引用已更新。",
@@ -284,7 +356,11 @@
     storageKey:"",
     preview:null,
     previewTimer:null,
-    initialized:false
+    initialized:false,
+    draftOverrides:Object.create(null),
+    overrideBaseFingerprints:Object.create(null),
+    lookupRequest:0,
+    lookupBusy:false
   };
 
   const byId = id => document.getElementById(id);
@@ -295,7 +371,19 @@
   };
   const tr = (key, variables={}) => replaceVariables(COPY[language()]?.[key] || COPY.en[key] || key, variables);
   const clean = value => String(value || "").normalize("NFC").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").trim();
+  const cleanReference = value => String(value || "")
+    .normalize("NFC")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 5000);
   const escapeHtml = value => clean(value).replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]));
+  const referenceTextHtml = value => cleanReference(value)
+    .replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]))
+    .replace(/\n/g, "<br>");
+  const owns = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
   const stripTerminal = value => clean(value).replace(/[\s.,;:]+$/u, "");
   const sentence = value => {
     const result = clean(value);
@@ -645,12 +733,28 @@
     };
   }
 
+  function effectiveFormat(record, style=selectedStyle(), sequence=1){
+    const generated = formatRecord(record, style, sequence);
+    const override = cleanReference(record.referenceOverrides?.[style]);
+    return override
+      ? {...generated, plain:override, html:referenceTextHtml(override), custom:true}
+      : {...generated, custom:false};
+  }
+
   function currentUserId(){
     try { return typeof currentUser !== "undefined" ? currentUser?.id || "local" : "local"; }
     catch(_error){ return "local"; }
   }
 
   const RECORD_STRING_FIELDS = ["title", "year", "publicationDate", "accessDate", "publisher", "publisherPlace", "edition", "containerTitle", "volume", "issue", "pages", "pinpoint", "locator"];
+
+  function sourceFingerprint(record){
+    return JSON.stringify([
+      record.source,
+      record.authors.map(author => author.kind === "organization" ? ["organization", clean(author.literal)] : ["person", clean(author.family), clean(author.given)]),
+      ...RECORD_STRING_FIELDS.map(field => clean(record[field]))
+    ]);
+  }
 
   function normalizeRecord(item, index=0){
     if(!item || !SOURCE_VALUES.has(item.source)) return null;
@@ -661,6 +765,11 @@
       return null;
     }).filter(Boolean) : [];
     RECORD_STRING_FIELDS.forEach(field => { record[field] = clean(item[field]); });
+    record.referenceOverrides = {};
+    STYLE_VALUES.forEach(style => {
+      const override = cleanReference(item.referenceOverrides?.[style]);
+      if(override) record.referenceOverrides[style] = override;
+    });
     return record.title ? record : null;
   }
 
@@ -687,11 +796,30 @@
     target.className = `citation-engine-state${kind ? ` ${kind}` : ""}`;
   }
 
+  function setLookupStatus(message="", kind=""){
+    const target = byId("citationLookupStatus");
+    if(!target) return;
+    target.textContent = message;
+    target.className = `citation-lookup-status${kind ? ` ${kind}` : ""}`;
+  }
+
+  function updateReferenceEditUi(custom=false){
+    const badge = byId("citationEditedBadge");
+    const restore = byId("restoreCitation");
+    if(badge) badge.hidden = !custom;
+    if(restore) restore.hidden = !custom;
+  }
+
   function setPreviewPlaceholder(){
     const reference = byId("citationOutput");
     const inline = byId("citationInlineOutput");
-    if(reference){ reference.className = "citation-render is-placeholder"; reference.textContent = tr("citationPreviewPlaceholder"); }
+    if(reference){
+      reference.className = "citation-render citation-editable-reference is-placeholder";
+      reference.replaceChildren();
+      reference.dataset.placeholder = tr("citationPreviewPlaceholder");
+    }
     if(inline){ inline.className = "citation-inline-render is-placeholder"; inline.textContent = tr("citationInlinePlaceholder"); }
+    updateReferenceEditUi(false);
     state.preview = null;
     byId("copyCitation") && (byId("copyCitation").disabled = true);
     byId("addCitation") && (byId("addCitation").disabled = true);
@@ -701,30 +829,50 @@
     const record = recordFromForm();
     const style = selectedStyle();
     const validation = validateRecord(record);
+    const hasOverride = owns(state.draftOverrides, style);
+    const override = hasOverride ? cleanReference(state.draftOverrides[style]) : "";
     byId("citationPreviewStyle").textContent = document.querySelector('input[name="citationStyle"]:checked + span')?.textContent || "APA 7";
     byId("citationSecondaryLabel").textContent = tr(style === "chicago" ? "citationNoteLabel" : "citationInlineLabel");
-    if(!record.title){
+    if(!record.title && !hasOverride){
       setPreviewPlaceholder();
       const hasOtherDetails = !!(record.authors.length || record.year || record.publisher || record.containerTitle || record.locator);
       setStatus(hasOtherDetails ? tr("citationMissingTitle") : "", hasOtherDetails ? "error" : "", announce && hasOtherDetails);
       return;
     }
-    if(validation.errors.length){
+    if(validation.errors.length && !hasOverride){
       setPreviewPlaceholder();
       setStatus(tr(validation.errors[0]), "error", announce);
       return;
     }
-    const formatted = formatRecord(record, style, 1);
+    const generated = record.title && !validation.errors.length ? formatRecord(record, style, 1) : null;
+    const formatted = hasOverride
+      ? {plain:override, html:referenceTextHtml(override), inline:generated?.inline || "", custom:true}
+      : {...generated, custom:false};
     const reference = byId("citationOutput");
     const inline = byId("citationInlineOutput");
-    reference.className = "citation-render";
-    reference.innerHTML = `<div class="csl-bib-body"><div class="csl-entry">${formatted.html}</div></div>`;
-    inline.className = "citation-inline-render";
-    inline.textContent = formatted.inline;
-    state.preview = {record, style, ...formatted};
-    byId("copyCitation").disabled = false;
-    byId("addCitation").disabled = false;
-    setStatus(validation.warnings.length ? tr(validation.warnings[0]) : tr("citationReady"), validation.warnings.length ? "" : "success", announce);
+    reference.className = `citation-render citation-editable-reference${formatted.plain ? "" : " is-placeholder"}${hasOverride ? " is-edited" : ""}`;
+    reference.dataset.placeholder = tr("citationPreviewPlaceholder");
+    if(hasOverride) reference.textContent = formatted.plain;
+    else reference.innerHTML = `<div class="csl-bib-body"><div class="csl-entry">${formatted.html}</div></div>`;
+    if(generated){
+      inline.className = "citation-inline-render";
+      inline.textContent = generated.inline;
+    } else {
+      inline.className = "citation-inline-render is-placeholder";
+      inline.textContent = tr("citationInlinePlaceholder");
+    }
+    updateReferenceEditUi(hasOverride);
+    state.preview = {record, style, generated, ...formatted};
+    byId("copyCitation").disabled = !formatted.plain;
+    byId("addCitation").disabled = !formatted.plain || !record.title;
+    if(validation.errors.length){
+      setStatus(tr(validation.errors[0]), "error", announce);
+    } else if(hasOverride){
+      const changed = state.overrideBaseFingerprints[style] && state.overrideBaseFingerprints[style] !== sourceFingerprint(record);
+      setStatus(tr(changed ? "citationEditedSourceChanged" : "citationEditedStatus"), "edited", announce);
+    } else {
+      setStatus(validation.warnings.length ? tr(validation.warnings[0]) : tr("citationReady"), validation.warnings.length ? "" : "success", announce);
+    }
   }
 
   function schedulePreview(){
@@ -734,12 +882,21 @@
 
   function syncSourceFields({render=true}={}){
     const source = document.querySelector('input[name="citationSource"]:checked')?.value || "book";
-    document.querySelectorAll("[data-citation-sources]").forEach(field => {
+    const form = byId("citationForm");
+    form?.querySelectorAll("[data-citation-sources]").forEach(field => {
       const sources = field.dataset.citationSources.split(/\s+/u);
       field.hidden = !sources.includes(source);
-      field.querySelectorAll("input").forEach(input => { input.disabled = field.hidden; });
+      field.querySelectorAll("input, select, textarea, button").forEach(control => { control.disabled = field.hidden; });
     });
+    syncEntryMode();
     if(render) schedulePreview();
+  }
+
+  function syncEntryMode(){
+    const isWebsite = document.querySelector('input[name="citationSource"]:checked')?.value === "website";
+    const automatic = document.querySelector('input[name="citationEntryMode"]:checked')?.value !== "manual";
+    const panel = byId("citationAutomaticPanel");
+    if(panel) panel.hidden = !isWebsite || !automatic;
   }
 
   function syncStyle({render=true}={}){
@@ -755,7 +912,14 @@
 
   function addCurrentCitation(){
     if(!state.preview) return;
-    const next = {...state.preview.record, id:crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`};
+    const referenceOverrides = {};
+    STYLE_VALUES.forEach(style => {
+      if(owns(state.draftOverrides, style)){
+        const override = cleanReference(state.draftOverrides[style]);
+        if(override) referenceOverrides[style] = override;
+      }
+    });
+    const next = {...state.preview.record, referenceOverrides, id:crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`};
     const key = fingerprint(next);
     if(state.library.some(item => fingerprint(item) === key)){
       setStatus(tr("citationDuplicate"), "", true);
@@ -815,7 +979,7 @@
       return;
     }
     ordered.forEach((record, index) => {
-      const formatted = formatRecord(record, selectedStyle(), index + 1);
+      const formatted = effectiveFormat(record, selectedStyle(), index + 1);
       const item = document.createElement("li");
       item.className = "citation-library-item";
       const entry = document.createElement("div");
@@ -857,7 +1021,7 @@
   async function copyBibliography(){
     const ordered = orderedLibrary();
     if(!ordered.length) return;
-    const formatted = ordered.map((record, index) => formatRecord(record, selectedStyle(), index + 1));
+    const formatted = ordered.map((record, index) => effectiveFormat(record, selectedStyle(), index + 1));
     const plain = formatted.map(item => item.plain).join("\n\n");
     const html = `<div>${formatted.map(item => `<div style="margin:0 0 1em;padding-left:2em;text-indent:-2em">${item.html}</div>`).join("")}</div>`;
     const result = await copyRich(plain, html);
@@ -869,12 +1033,151 @@
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
 
+  function normalizedWebsiteUrl(value){
+    let candidate = clean(value);
+    if(!candidate || candidate.length > 2048 || /[\\\u0000-\u001F\u007F]/u.test(candidate)) return "";
+    if(!/^[a-z][a-z\d+.-]*:\/\//iu.test(candidate) && /^[\p{L}\p{N}.-]+\.[\p{L}]{2,}(?:[/:?#]|$)/iu.test(candidate)) candidate = `https://${candidate}`;
+    try {
+      const url = new URL(candidate);
+      if(!["http:", "https:"].includes(url.protocol) || url.username || url.password) return "";
+      if(url.port && !["80", "443"].includes(url.port)) return "";
+      url.hash = "";
+      return url.href;
+    } catch(_error){ return ""; }
+  }
+
+  function setLookupBusy(busy){
+    state.lookupBusy = busy;
+    const button = byId("citationLookupWebsite");
+    if(!button) return;
+    button.disabled = busy;
+    button.textContent = tr(busy ? "citationFindingSource" : "citationFindSource");
+  }
+
+  function websiteDraftHasContent(){
+    return ["citationAuthors", "citationTitle", "citationPublicationDate", "citationSite", "citationLocator"]
+      .some(id => clean(byId(id)?.value)) || Object.keys(state.draftOverrides).length > 0;
+  }
+
+  function applyWebsiteMetadata(metadata){
+    const authors = Array.isArray(metadata.authors) ? metadata.authors.map(clean).filter(Boolean).slice(0, 20) : [];
+    const organisation = clean(metadata.organization);
+    const authorType = metadata.authorType === "organization" || organisation ? "organization" : "person";
+    byId("citationAuthorType").value = authorType;
+    byId("citationAuthors").value = authorType === "organization" ? organisation || authors[0] || "" : authors.join("; ");
+    byId("citationTitle").value = clean(metadata.title);
+    byId("citationPinpoint").value = "";
+    byId("citationPublicationDate").value = /^\d{4}-\d{2}-\d{2}$/u.test(clean(metadata.publicationDate)) ? clean(metadata.publicationDate) : "";
+    byId("citationSite").value = clean(metadata.siteName);
+    const resolvedUrl = normalizedWebsiteUrl(metadata.canonicalUrl || metadata.finalUrl || metadata.sourceUrl || byId("citationAutomaticUrl")?.value);
+    byId("citationLocator").value = resolvedUrl;
+    byId("citationAutomaticUrl").value = resolvedUrl;
+    if(!byId("citationAccessDate").value) byId("citationAccessDate").value = localDateValue();
+    state.draftOverrides = Object.create(null);
+    state.overrideBaseFingerprints = Object.create(null);
+    if(state.previewTimer){ clearTimeout(state.previewTimer); state.previewTimer = null; }
+    renderPreview({announce:true});
+    const partial = !metadata.title || !(organisation || authors.length) || !metadata.siteName || !metadata.publicationDate;
+    setLookupStatus(tr(partial ? "citationLookupPartial" : "citationLookupSuccess"), partial ? "warning" : "success");
+    byId("citationTitle")?.focus();
+  }
+
+  async function lookupWebsiteMetadata(){
+    if(state.lookupBusy) return;
+    const raw = clean(byId("citationAutomaticUrl")?.value);
+    if(!raw){ setLookupStatus(tr("citationLookupRequired"), "error"); return; }
+    const url = normalizedWebsiteUrl(raw);
+    if(!url){ setLookupStatus(tr("citationLookupInvalid"), "error"); return; }
+    const client = typeof authClient !== "undefined" ? authClient : null;
+    const user = typeof currentUser !== "undefined" ? currentUser : null;
+    if(!client || !user){ setLookupStatus(tr("citationLookupSignIn"), "error"); return; }
+    if(websiteDraftHasContent() && !window.confirm(tr("citationLookupReplaceConfirm"))) return;
+
+    const request = ++state.lookupRequest;
+    byId("citationAutomaticUrl").value = url;
+    setLookupBusy(true);
+    setLookupStatus(tr("citationFindingSource"), "loading");
+    try {
+      let timeoutId;
+      const timeout = new Promise((_, reject) => { timeoutId = window.setTimeout(() => reject(new Error("citation_lookup_timeout")), 16000); });
+      const invocation = client.functions.invoke("fetch-citation-metadata", {body:{url}});
+      const {data, error} = await Promise.race([invocation, timeout]);
+      clearTimeout(timeoutId);
+      if(request !== state.lookupRequest) return;
+      if(error){
+        const status = Number(error?.context?.status || 0);
+        const message = clean(error?.message).toLocaleLowerCase();
+        const unavailable = status === 404 || message.includes("not found") || message.includes("failed to send");
+        setLookupStatus(tr(unavailable ? "citationLookupUnavailable" : "citationLookupFailed"), "error");
+        return;
+      }
+      if(!data || typeof data !== "object" || !(clean(data.title) || clean(data.siteName) || normalizedWebsiteUrl(data.canonicalUrl || data.finalUrl || data.sourceUrl))){
+        setLookupStatus(tr("citationLookupFailed"), "error");
+        return;
+      }
+      applyWebsiteMetadata(data);
+    } catch(_error){
+      if(request === state.lookupRequest) setLookupStatus(tr("citationLookupFailed"), "error");
+    } finally {
+      if(request === state.lookupRequest) setLookupBusy(false);
+    }
+  }
+
+  function editCurrentReference(){
+    const reference = byId("citationOutput");
+    if(!reference) return;
+    const style = selectedStyle();
+    const record = recordFromForm();
+    if(!owns(state.overrideBaseFingerprints, style)) state.overrideBaseFingerprints[style] = sourceFingerprint(record);
+    const override = cleanReference(reference.innerText);
+    state.draftOverrides[style] = override;
+    const validation = validateRecord(record);
+    const generated = record.title && !validation.errors.length ? formatRecord(record, style, 1) : null;
+    state.preview = {record, style, generated, plain:override, html:referenceTextHtml(override), inline:generated?.inline || "", custom:true};
+    reference.className = `citation-render citation-editable-reference is-edited${override ? "" : " is-placeholder"}`;
+    updateReferenceEditUi(true);
+    byId("copyCitation").disabled = !override;
+    byId("addCitation").disabled = !override || !record.title;
+    setStatus(tr("citationEditedStatus"), "edited", false);
+  }
+
+  function restoreGeneratedReference(){
+    const style = selectedStyle();
+    delete state.draftOverrides[style];
+    delete state.overrideBaseFingerprints[style];
+    renderPreview({announce:true});
+    if(state.preview) setStatus(tr("citationRestored"), "success", true);
+    byId("citationOutput")?.focus();
+  }
+
+  function pastePlainReference(event){
+    const text = cleanReference(event.clipboardData?.getData("text/plain"));
+    if(!text) return;
+    event.preventDefault();
+    const selection = window.getSelection?.();
+    if(!selection?.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    const node = document.createTextNode(text);
+    range.insertNode(node);
+    range.setStartAfter(node);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    byId("citationOutput")?.dispatchEvent(new Event("input", {bubbles:true}));
+  }
+
   function resetFormState(){
+    state.lookupRequest += 1;
+    state.draftOverrides = Object.create(null);
+    state.overrideBaseFingerprints = Object.create(null);
+    setLookupBusy(false);
     byId("citationForm")?.reset();
     if(byId("citationAccessDate")) byId("citationAccessDate").value = localDateValue();
     syncSourceFields({render:false});
     syncStyle({render:false});
     setPreviewPlaceholder();
+    setLookupStatus("");
     setStatus("");
   }
 
@@ -894,13 +1197,18 @@
     }
     renderLibrary();
     byId("citationTitle")?.focus();
-    setStatus(tr("bibliographyCleared"), "success", true);
+    setStatus(tr("citationEditedStatus"), "edited", true);
   }
 
   function refreshLanguage(){
     document.querySelectorAll("[data-academic-i18n]").forEach(element => { element.textContent = tr(element.dataset.academicI18n); });
-    document.querySelectorAll("[data-academic-i18n-placeholder]").forEach(element => { element.placeholder = tr(element.dataset.academicI18nPlaceholder); });
+    document.querySelectorAll("[data-academic-i18n-placeholder]").forEach(element => {
+      const value = tr(element.dataset.academicI18nPlaceholder);
+      if(element.hasAttribute("contenteditable")) element.dataset.placeholder = value;
+      else element.placeholder = value;
+    });
     document.querySelectorAll("[data-academic-i18n-aria-label]").forEach(element => { element.setAttribute("aria-label", tr(element.dataset.academicI18nAriaLabel)); });
+    setLookupBusy(state.lookupBusy);
     syncStyle();
   }
 
@@ -929,14 +1237,26 @@
     state.initialized = true;
     loadLibrary();
     if(byId("citationAccessDate") && !byId("citationAccessDate").value) byId("citationAccessDate").value = localDateValue();
-    byId("citationForm").addEventListener("submit", event => event.preventDefault());
-    byId("citationForm").addEventListener("input", schedulePreview);
+    byId("citationForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const isAutomaticWebsite = document.querySelector('input[name="citationSource"]:checked')?.value === "website"
+        && document.querySelector('input[name="citationEntryMode"]:checked')?.value !== "manual";
+      if(isAutomaticWebsite) void lookupWebsiteMetadata();
+    });
+    byId("citationForm").addEventListener("input", event => {
+      if(event.target.id !== "citationAutomaticUrl") schedulePreview();
+    });
     byId("citationForm").addEventListener("change", event => {
       if(event.target.name === "citationSource") syncSourceFields();
       else if(event.target.name === "citationStyle") syncStyle();
+      else if(event.target.name === "citationEntryMode") syncEntryMode();
       else schedulePreview();
     });
     byId("clearCitation")?.addEventListener("click", clearForm);
+    byId("citationLookupWebsite")?.addEventListener("click", () => void lookupWebsiteMetadata());
+    byId("citationOutput")?.addEventListener("input", editCurrentReference);
+    byId("citationOutput")?.addEventListener("paste", pastePlainReference);
+    byId("restoreCitation")?.addEventListener("click", restoreGeneratedReference);
     byId("copyCitation")?.addEventListener("click", () => void copyCurrentCitation());
     byId("addCitation")?.addEventListener("click", addCurrentCitation);
     byId("copyBibliography")?.addEventListener("click", () => void copyBibliography());
@@ -968,7 +1288,7 @@
     activate,
     reset,
     refreshLanguage,
-    __test:Object.freeze({formatRecord, parseAuthors, normalizeDoi, validateRecord})
+    __test:Object.freeze({formatRecord, effectiveFormat, parseAuthors, normalizeDoi, normalizedWebsiteUrl, validateRecord})
   });
 
   bind();
