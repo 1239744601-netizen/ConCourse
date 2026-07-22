@@ -690,6 +690,29 @@
     box-shadow: 0 2px 9px rgba(0,0,0,.08);
   }
   .auth-submit { width: 100%; margin-top: 18px; }
+  .auth-resend-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    color: var(--muted-2);
+    font-size: 12px;
+    text-align: center;
+  }
+  .auth-resend {
+    padding: 4px 2px;
+    color: var(--accent);
+    background: transparent;
+    border: 0;
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .auth-resend:disabled { cursor: wait; opacity: .58; }
   .registration-fields {
     margin-top: 14px;
     padding-top: 2px;
@@ -1837,6 +1860,10 @@
     </div>
     <button type="button" class="btn-primary auth-submit" id="authSubmitBtn">Sign in</button>
     <p class="auth-message" id="authMessage" aria-live="polite"></p>
+    <div class="auth-resend-row" id="authResendRow">
+      <span data-i18n="verificationEmailMissing">Still waiting for a verification email?</span>
+      <button type="button" class="auth-resend" id="authResendBtn" data-i18n="resendVerification">Resend verification email</button>
+    </div>
     <p class="auth-note" id="authNote">Your schedules are encrypted in transit and isolated by account-level database policies.</p>
   </section>
 </div>
@@ -2921,7 +2948,11 @@ const TRANSLATIONS = {
     usernameInvalid:"请选择由 3–24 位大小写字母、数字或下划线组成的用户名。", realNameRequired:"请输入名字和姓氏。",
     usernameTaken:"该用户名已被使用，请选择其他用户名。", usernameCheckFailed:"无法检查用户名是否可用。请运行最新的 Supabase 设置 SQL，然后重试。",
     schoolRequired:"请输入学校或大学名称。", majorRequired:"请输入专业或研究领域。", creatingAccount:"正在创建账户…", signingIn:"正在登录…",
-    accountCreated:"账户已创建。请检查邮箱，然后返回登录。", signedInSuccess:"登录成功。", authRequestFailed:"登录服务暂时无法连接。请检查网络后重试。", signedInReady:"已以 {email} 登录。你的课程规划器已准备就绪。",
+    accountCreated:"注册请求已接收。如果该邮箱符合发送条件，系统会发送验证邮件；若未收到，请使用“重新发送验证邮件”。", signedInSuccess:"登录成功。", authRequestFailed:"登录服务暂时无法连接。请检查网络后重试。", signedInReady:"已以 {email} 登录。你的课程规划器已准备就绪。",
+    verificationEmailMissing:"仍未收到验证邮件？", resendVerification:"重新发送验证邮件", resendingVerification:"正在重新发送…", resendCooldown:"{seconds} 秒后可重新发送",
+    invalidEmailForResend:"请输入有效邮箱，以重新发送验证邮件。", resendRequested:"如果此邮箱存在待验证账户，系统已请求发送新的验证邮件。请同时检查垃圾邮件文件夹。", resendFailed:"暂时无法重新发送验证邮件。请稍后重试。",
+    authEmailNotAuthorized:"当前邮件服务无法向此邮箱发送验证邮件。网站所有者必须先启用自定义 SMTP，公众邮箱验证才能使用。", authEmailRateLimited:"验证邮件发送次数已达到限制。请稍后再试；重复点击不会更快。", authAlreadyRegistered:"此邮箱可能已有账户。请尝试登录；若尚未验证，请使用“重新发送验证邮件”。",
+    authEmailNotConfirmed:"此邮箱尚未验证。请使用下方按钮重新发送验证邮件，然后通过最新的链接完成验证。", authInvalidLogin:"邮箱或密码不正确。若刚注册，请先完成邮箱验证。", authLinkExpired:"此验证链接已过期或已经使用。请输入邮箱，然后重新发送验证邮件。", authLinkInvalid:"无法使用此验证链接。请重新发送验证邮件，并只打开最新的一封。", authEmailProviderDisabled:"邮箱注册暂时未启用。请联系网站所有者。", authSignUpFailed:"暂时无法创建账户。请稍后重试。", authSignInFailed:"暂时无法登录。请稍后重试。",
     saving:"正在保存…", saveFailed:"保存失败", saved:"已保存", unsaved:"未保存", loading:"正在加载…", loadFailed:"加载失败",
     emptySchedule:"添加课程、设置学期条件并生成排名方案，即可查看课表。", sessionLabelOne:"添加上课时段（日期 + 时间）", sessionLabelTwo:"添加两个上课时段（日期 + 时间）",
     sessionOnce:"此课程每周上课一次。", sessionTwice:"此课程每周在不同日期上课两次。", multiSessionHint:"{base} 请先建立完整时间选项（共 {count} 个时段），按“保存时间选项”，再添加教师提供的其他选项。ConCourse 每次会保留一个完整选项。",
@@ -3015,7 +3046,11 @@ const TRANSLATIONS = {
     usernameInvalid:"請用 3–24 個大小寫英文字母、數字或底線建立用戶名稱。", realNameRequired:"請輸入名字同姓氏。",
     usernameTaken:"呢個用戶名稱已經有人用，請揀另一個。", usernameCheckFailed:"無法檢查用戶名稱。請執行最新 Supabase 設定 SQL，然後再試。",
     schoolRequired:"請輸入學校或大學名稱。", majorRequired:"請輸入主修或研究範疇。", creatingAccount:"正在建立帳戶…", signingIn:"正在登入…",
-    accountCreated:"帳戶已建立。請檢查電郵，之後返嚟登入。", signedInSuccess:"登入成功。", authRequestFailed:"登入服務暫時連接唔到。請檢查網絡再試。", signedInReady:"已用 {email} 登入。你嘅課程規劃器已經準備好。",
+    accountCreated:"註冊要求已收到。如果呢個電郵符合發送條件，系統會發送驗證郵件；如果收唔到，請用「重新發送驗證電郵」。", signedInSuccess:"登入成功。", authRequestFailed:"登入服務暫時連接唔到。請檢查網絡再試。", signedInReady:"已用 {email} 登入。你嘅課程規劃器已經準備好。",
+    verificationEmailMissing:"仲未收到驗證電郵？", resendVerification:"重新發送驗證電郵", resendingVerification:"正在重新發送…", resendCooldown:"{seconds} 秒後可以再發送",
+    invalidEmailForResend:"請輸入有效電郵，以重新發送驗證郵件。", resendRequested:"如果呢個電郵有待驗證帳戶，系統已要求發送新嘅驗證電郵。請同時檢查垃圾郵件資料夾。", resendFailed:"暫時未能重新發送驗證電郵，請稍後再試。",
+    authEmailNotAuthorized:"目前嘅郵件服務無法向呢個電郵發送驗證郵件。網站擁有人要先啟用自訂 SMTP，公眾電郵驗證先可以使用。", authEmailRateLimited:"驗證郵件發送次數已達上限。請稍後再試；重複撳掣唔會加快。", authAlreadyRegistered:"呢個電郵可能已經有帳戶。請嘗試登入；如果仲未驗證，請用「重新發送驗證電郵」。",
+    authEmailNotConfirmed:"呢個電郵仲未驗證。請用下面嘅按鈕重新發送驗證電郵，再打開最新嘅連結完成驗證。", authInvalidLogin:"電郵或密碼唔正確。如果啱啱註冊，請先完成電郵驗證。", authLinkExpired:"呢條驗證連結已過期或者用過。請輸入電郵，再重新發送驗證郵件。", authLinkInvalid:"呢條驗證連結無法使用。請重新發送驗證電郵，並只打開最新嗰封。", authEmailProviderDisabled:"電郵註冊暫時未啟用，請聯絡網站擁有人。", authSignUpFailed:"暫時未能建立帳戶，請稍後再試。", authSignInFailed:"暫時未能登入，請稍後再試。",
     saving:"正在儲存…", saveFailed:"儲存失敗", saved:"已儲存", unsaved:"未儲存", loading:"正在載入…", loadFailed:"載入失敗",
     emptySchedule:"加入課程、設定學期條件，再產生排序方案，就可以查看時間表。", sessionLabelOne:"加入上堂時段（日子 + 時間）", sessionLabelTwo:"加入兩個上堂時段（日子 + 時間）",
     sessionOnce:"呢科每星期上堂一次。", sessionTwice:"呢科每星期喺唔同日子上堂兩次。", multiSessionHint:"{base} 請先建立完整時間選項（共 {count} 個時段），按「儲存時間選項」，再加入教授提供嘅其他選項。ConCourse 每次會保留一個完整選項。",
@@ -3075,7 +3110,11 @@ function t(key, variables={}){
     usernameInvalid:"Choose a username using 3–24 uppercase or lowercase letters, numbers, or underscores.", realNameRequired:"Enter your given and family names.",
     usernameTaken:"That username is already in use. Choose another one.", usernameCheckFailed:"Username availability could not be checked. Run the latest Supabase setup SQL, then try again.",
     schoolRequired:"Enter your school or university name.", majorRequired:"Enter your major or field of study.",
-    creatingAccount:"Creating your account…", signingIn:"Signing you in…", accountCreated:"Account created. Check your email, then return here to sign in.", signedInSuccess:"Signed in successfully.", authRequestFailed:"The sign-in service could not be reached. Check your connection and try again.",
+    creatingAccount:"Creating your account…", signingIn:"Signing you in…", accountCreated:"Registration request accepted. If this address is eligible, a verification message will be sent. If it does not arrive, use Resend verification email.", signedInSuccess:"Signed in successfully.", authRequestFailed:"The sign-in service could not be reached. Check your connection and try again.",
+    verificationEmailMissing:"Still waiting for a verification email?", resendVerification:"Resend verification email", resendingVerification:"Requesting another email…", resendCooldown:"Resend in {seconds}s",
+    invalidEmailForResend:"Enter a valid email address to resend verification.", resendRequested:"If a pending account exists for this address, a new verification message has been requested. Check your spam folder too.", resendFailed:"A new verification email could not be requested. Please try again later.",
+    authEmailNotAuthorized:"This project's current email service cannot send to that address. The website owner must enable custom SMTP before public email verification will work.", authEmailRateLimited:"The verification-email sending limit has been reached. Try again later; repeated clicks will not make it arrive sooner.", authAlreadyRegistered:"An account may already exist for this address. Try signing in, or use Resend verification email if it has not been confirmed.",
+    authEmailNotConfirmed:"This email has not been verified. Use the button below to resend verification, then open only the newest link.", authInvalidLogin:"The email or password is incorrect. If you just registered, verify your email before signing in.", authLinkExpired:"This verification link has expired or was already used. Enter your email, then resend verification.", authLinkInvalid:"This verification link could not be used. Resend verification and open only the newest email.", authEmailProviderDisabled:"Email registration is temporarily disabled. Please contact the website owner.", authSignUpFailed:"Your account could not be created right now. Please try again later.", authSignInFailed:"You could not be signed in right now. Please try again later.",
     signedInReady:"Signed in as {email}. Your planner is ready.", saving:"Saving…", saveFailed:"Save failed", saved:"Saved", unsaved:"Unsaved", loading:"Loading…", loadFailed:"Load failed",
     supabaseRequired:"Supabase setup required", configureLogin:"Configure login", connectSupabase:"Connect Supabase to enable sign-in and start planning.",
     monday:"Mon", tuesday:"Tue", wednesday:"Wed", thursday:"Thu", friday:"Fri", saturday:"Sat",
@@ -3141,7 +3180,8 @@ function applyLanguage(language, {persist=true}={}){
   if(persist){
     try { localStorage.setItem("concourse_language", currentLanguage); } catch(_error){}
   }
-  setAuthMode(authMode);
+  setAuthMode(authMode, {clearMessage:false});
+  renderAuthResendButton();
   if(!SUPABASE_CONFIGURED || !window.supabase){
     $("authUser").textContent = t("supabaseRequired");
     $("authAcademic").hidden = true;
@@ -3197,6 +3237,7 @@ function invalidateSchedules(){
 // The publishable key is safe in browser code when Row Level Security is enabled.
 const SUPABASE_URL = "https://uqnwvxceznsxbxhkspeo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Sl_mKACQoAp70JNH3og2uw_hMFXSZn4";
+const AUTH_EMAIL_REDIRECT_URL = "https://1239744601-netizen.github.io/ConCourse/";
 const SUPABASE_CONFIGURED =
   /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL) &&
   !SUPABASE_PUBLISHABLE_KEY.startsWith("PASTE_");
@@ -3210,6 +3251,10 @@ let loadingUserState = false;
 let accountSaveTimer = null;
 let authMode = "signin";
 let authRequestInFlight = false;
+let authResendRequestInFlight = false;
+let authResendAvailableAt = 0;
+let authResendCooldownTimer = null;
+let authMessageState = null;
 let selectedSchool = null;
 let schoolSearchTimer = null;
 let schoolLookupController = null;
@@ -3285,10 +3330,169 @@ function renderFinalTimetableStatus(){
   window.ConCourseHub?.syncAccess();
 }
 
-function setAuthMessage(message, isError=false){
+function renderAuthMessageState(){
   const el = $("authMessage");
-  el.textContent = message || "";
-  el.style.color = isError ? "var(--danger)" : "var(--muted)";
+  if(!el) return;
+  const state = authMessageState;
+  el.textContent = state
+    ? (state.key ? t(state.key, state.variables) : state.message)
+    : "";
+  el.style.color = state?.isError ? "var(--danger)" : "var(--muted)";
+}
+
+function setAuthMessage(message, isError=false){
+  authMessageState = message ? { message, isError, key:null, variables:{} } : null;
+  renderAuthMessageState();
+}
+
+function setAuthMessageKey(key, isError=false, variables={}){
+  authMessageState = key ? { message:"", isError, key, variables } : null;
+  renderAuthMessageState();
+}
+
+function authErrorTranslationKey(error){
+  const code = String(error?.code || error?.error_code || error?.error || "").trim().toLowerCase();
+  const message = String(error?.message || error?.error_description || "").trim().toLowerCase();
+  const details = `${code} ${message}`;
+
+  if(code === "email_address_not_authorized" || /email address.*not authorized/.test(details)) return "authEmailNotAuthorized";
+  if(
+    Number(error?.status) === 429 ||
+    code === "over_email_send_rate_limit" ||
+    code === "email_rate_limit_exceeded" ||
+    /email.*rate limit|rate limit.*email|too many.*email/.test(details)
+  ) return "authEmailRateLimited";
+  if(
+    ["user_already_exists", "email_exists", "email_already_registered"].includes(code) ||
+    /already (?:been )?registered|user already exists|email.*already.*exists/.test(details)
+  ) return "authAlreadyRegistered";
+  if(code === "email_not_confirmed" || /email not confirmed|email.*not verified/.test(details)) return "authEmailNotConfirmed";
+  if(code === "invalid_credentials" || /invalid login credentials|invalid email or password/.test(details)) return "authInvalidLogin";
+  if(["signup_disabled", "email_provider_disabled"].includes(code) || /email signups? (?:are )?disabled/.test(details)) return "authEmailProviderDisabled";
+  if(["otp_expired", "token_expired", "email_link_expired"].includes(code) || /(?:otp|token|link).*expired|expired.*(?:otp|token|link)/.test(details)) return "authLinkExpired";
+  if(["otp_disabled", "bad_code_verifier", "flow_state_expired", "flow_state_not_found"].includes(code)) return "authLinkInvalid";
+  if(code === "access_denied" && /confirm|verify|otp|token|link/.test(details)) return "authLinkInvalid";
+  return null;
+}
+
+function friendlyAuthError(error, fallbackKey="authRequestFailed"){
+  return t(authErrorTranslationKey(error) || fallbackKey);
+}
+
+function setFriendlyAuthError(error, fallbackKey="authRequestFailed"){
+  setAuthMessageKey(authErrorTranslationKey(error) || fallbackKey, true);
+}
+
+function readAuthCallbackError(){
+  const locations = [
+    new URLSearchParams(window.location.search),
+    new URLSearchParams(window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash)
+  ];
+  for(const params of locations){
+    const code = params.get("error_code") || params.get("error");
+    const message = params.get("error_description") || params.get("error_message");
+    if(code || message) return { code:code || "access_denied", message:message || "" };
+  }
+  return null;
+}
+
+function clearAuthCallbackError(){
+  const url = new URL(window.location.href);
+  const errorKeys = ["error", "error_code", "error_description", "error_message"];
+  let changed = false;
+  for(const key of errorKeys){
+    if(url.searchParams.has(key)){
+      url.searchParams.delete(key);
+      changed = true;
+    }
+  }
+
+  const rawHash = url.hash.startsWith("#") ? url.hash.slice(1) : url.hash;
+  const hashParams = new URLSearchParams(rawHash);
+  const hasHashError = errorKeys.some(key => hashParams.has(key));
+  if(hasHashError){
+    for(const key of errorKeys) hashParams.delete(key);
+    url.hash = hashParams.toString() ? `#${hashParams.toString()}` : "";
+    changed = true;
+  }
+
+  if(changed){
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+}
+
+function showAuthCallbackError(error){
+  if(!error) return;
+  setAuthMode("signin");
+  $("authModal").hidden = false;
+  setFriendlyAuthError(error, "authLinkInvalid");
+  clearAuthCallbackError();
+  setTimeout(() => $("authEmail").focus(), 0);
+}
+
+function renderAuthResendButton(){
+  const button = $("authResendBtn");
+  if(!button) return;
+  const seconds = Math.max(0, Math.ceil((authResendAvailableAt - Date.now()) / 1000));
+  button.disabled = authRequestInFlight || authResendRequestInFlight || seconds > 0;
+  button.setAttribute("aria-busy", String(authResendRequestInFlight));
+  button.textContent = authResendRequestInFlight
+    ? t("resendingVerification")
+    : seconds > 0
+      ? t("resendCooldown", {seconds:String(seconds)})
+      : t("resendVerification");
+}
+
+function startAuthResendCooldown(seconds=60){
+  authResendAvailableAt = Date.now() + seconds * 1000;
+  clearInterval(authResendCooldownTimer);
+  renderAuthResendButton();
+  authResendCooldownTimer = window.setInterval(() => {
+    renderAuthResendButton();
+    if(Date.now() >= authResendAvailableAt){
+      clearInterval(authResendCooldownTimer);
+      authResendCooldownTimer = null;
+    }
+  }, 1000);
+}
+
+function validAuthEmail(email){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function resendVerificationEmail(){
+  if(!authClient || authRequestInFlight || authResendRequestInFlight || Date.now() < authResendAvailableAt) return;
+  const email = $("authEmail").value.trim();
+  if(!validAuthEmail(email)){
+    setAuthMessageKey("invalidEmailForResend", true);
+    $("authEmail").focus();
+    return;
+  }
+
+  authResendRequestInFlight = true;
+  renderAuthResendButton();
+  setAuthMessageKey("resendingVerification");
+  try {
+    const { error } = await authClient.auth.resend({
+      type:"signup",
+      email,
+      options:{ emailRedirectTo:AUTH_EMAIL_REDIRECT_URL }
+    });
+    if(error){
+      const key = authErrorTranslationKey(error);
+      if(key === "authEmailRateLimited") startAuthResendCooldown(60);
+      setAuthMessageKey(key || "resendFailed", true);
+      return;
+    }
+    startAuthResendCooldown(60);
+    setAuthMessageKey("resendRequested");
+  } catch(error){
+    setAuthMessageKey("authRequestFailed", true);
+    console.error("Verification email resend failed:", error);
+  } finally {
+    authResendRequestInFlight = false;
+    renderAuthResendButton();
+  }
 }
 
 function openAuthModal(){
@@ -3305,7 +3509,7 @@ function closeAuthModal(){
   $("schoolResults").hidden = true;
 }
 
-function setAuthMode(mode){
+function setAuthMode(mode, {clearMessage=true}={}){
   authMode = mode === "signup" ? "signup" : "signin";
   const signingUp = authMode === "signup";
   $("registrationFields").hidden = !signingUp;
@@ -3317,7 +3521,9 @@ function setAuthMode(mode){
   $("signUpBtn").classList.toggle("active", signingUp);
   $("signInBtn").setAttribute("aria-pressed", String(!signingUp));
   $("signUpBtn").setAttribute("aria-pressed", String(signingUp));
-  setAuthMessage("");
+  if(clearMessage) setAuthMessage("");
+  else renderAuthMessageState();
+  renderAuthResendButton();
   if(signingUp) setTimeout(() => $("authUsername").focus(), 0);
 }
 
@@ -3878,17 +4084,18 @@ function applySession(session){
 }
 
 async function submitAuth(mode){
-  if(authRequestInFlight) return;
+  if(authRequestInFlight || authResendRequestInFlight) return;
   authRequestInFlight = true;
   const submitButton = $("authSubmitBtn");
   submitButton.disabled = true;
   submitButton.setAttribute("aria-busy", "true");
+  renderAuthResendButton();
 
   try {
     const email = $("authEmail").value.trim();
     const password = $("authPassword").value;
-    if(!email || password.length < 8){
-      setAuthMessage(t("invalidCredentials"), true);
+    if(!validAuthEmail(email) || password.length < 8){
+      setAuthMessageKey("invalidCredentials", true);
       return;
     }
 
@@ -3900,44 +4107,42 @@ async function submitAuth(mode){
     const schoolName = $("schoolName").value.trim();
     const majorStudy = $("majorStudy").value.trim();
     if(signingUp && !validUsername(username)){
-      setAuthMessage(t("usernameInvalid"), true);
+      setAuthMessageKey("usernameInvalid", true);
       $("authUsername").focus();
       return;
     }
     if(signingUp && (usernameAvailable !== true || usernameCheckedValue !== username)){
       const available = await checkUsernameAvailability(username);
       if(available !== true){
-        setAuthMessage(available === false
-          ? t("usernameTaken")
-          : t("usernameCheckFailed"), true);
+        setAuthMessageKey(available === false ? "usernameTaken" : "usernameCheckFailed", true);
         $("authUsername").focus();
         return;
       }
     }
     if(signingUp && (givenName.length < 1 || familyName.length < 1)){
-      setAuthMessage(t("realNameRequired"), true);
+      setAuthMessageKey("realNameRequired", true);
       (givenName ? $("authFamilyName") : $("authGivenName")).focus();
       return;
     }
     if(signingUp && schoolName.length < 3){
-      setAuthMessage(t("schoolRequired"), true);
+      setAuthMessageKey("schoolRequired", true);
       $("schoolName").focus();
       return;
     }
     if(signingUp && majorStudy.length < 2){
-      setAuthMessage(t("majorRequired"), true);
+      setAuthMessageKey("majorRequired", true);
       $("majorStudy").focus();
       return;
     }
 
-    setAuthMessage(t(signingUp ? "creatingAccount" : "signingIn"));
+    setAuthMessageKey(signingUp ? "creatingAccount" : "signingIn");
 
     const result = signingUp
       ? await authClient.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: "https://1239744601-netizen.github.io/ConCourse/",
+            emailRedirectTo: AUTH_EMAIL_REDIRECT_URL,
             data: {
               username,
               given_name: givenName,
@@ -3958,19 +4163,25 @@ async function submitAuth(mode){
       : await authClient.auth.signInWithPassword({ email, password });
 
     if(result.error){
-      setAuthMessage(result.error.message, true);
+      setFriendlyAuthError(result.error, signingUp ? "authSignUpFailed" : "authSignInFailed");
       return;
     }
-    setAuthMessage(signingUp && !result.data.session
-      ? t("accountCreated")
-      : t("signedInSuccess"));
+    if(signingUp && !result.data.session){
+      // Avoid an immediate duplicate request consuming Supabase's email quota.
+      startAuthResendCooldown(60);
+      $("authPassword").value = "";
+      setAuthMessageKey("accountCreated");
+    } else {
+      setAuthMessageKey("signedInSuccess");
+    }
   } catch(error){
-    setAuthMessage(t("authRequestFailed"), true);
+    setAuthMessageKey("authRequestFailed", true);
     console.error("Authentication request failed:", error);
   } finally {
     authRequestInFlight = false;
     submitButton.disabled = false;
     submitButton.removeAttribute("aria-busy");
+    renderAuthResendButton();
   }
 }
 
@@ -4011,18 +4222,22 @@ function initializeAccount(){
   }
 
   authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const callbackError = readAuthCallbackError();
   $("signInBtn").onclick = () => setAuthMode("signin");
   $("signUpBtn").onclick = () => setAuthMode("signup");
   $("authSubmitBtn").onclick = () => submitAuth(authMode);
+  $("authResendBtn").onclick = resendVerificationEmail;
+  renderAuthResendButton();
   $("saveAccountBtn").onclick = () => saveUserState();
   $("signOutBtn").onclick = async () => {
     const { error } = await authClient.auth.signOut();
-    if(error) setAuthMessage(error.message, true);
+    if(error) setFriendlyAuthError(error);
   };
 
   authClient.auth.getSession().then(({data,error}) => {
-    if(error) setAuthMessage(error.message, true);
+    if(error) setFriendlyAuthError(error);
     applySession(data?.session || null);
+    if(callbackError) showAuthCallbackError(callbackError);
   });
   authClient.auth.onAuthStateChange((_event, session) => {
     // Return from Supabase's auth callback before starting profile/state reads.
