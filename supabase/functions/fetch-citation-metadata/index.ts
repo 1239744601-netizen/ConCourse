@@ -1,6 +1,7 @@
 // ConCourse automatic website citation metadata lookup.
-// Authentication is enforced below by createSupabaseContext({ auth: "user" }).
-// Keep the platform's legacy verify_jwt switch disabled for this function.
+// This endpoint is only for signed-in users. Keep Supabase's platform
+// verify_jwt check enabled (the default); createSupabaseContext below also
+// validates the user and creates an RLS-scoped client for the request.
 
 import { createSupabaseContext } from "jsr:@supabase/server@1.4.0";
 
