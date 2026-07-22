@@ -11,7 +11,7 @@
     en: Object.freeze({
       toolsWorkspaceTitle:"Citation Studio",
       toolsWorkspaceIntro:"Build a polished reference, check its in-text form, and keep a bibliography for your current project.",
-      toolsLocalNote:"Manual entries and saved bibliographies stay on this device. Broad keyword results are provided by Brave Search; selected pages are checked by ConCourse.",
+      toolsLocalNote:"Manual entries and saved bibliographies stay on this device. Scholarly keyword results use Crossref’s free public metadata; selected pages are checked by ConCourse.",
       citationStyleLegend:"Citation style",
       sourceTypeLegend:"Source type",
       sourceBook:"Book",
@@ -19,7 +19,7 @@
       sourceWebsite:"Website",
       citationEntryModeLegend:"Add this website",
       citationAutomaticMode:"Find automatically",
-      citationAutomaticModeHint:"Paste a URL or search by title, author, or topic.",
+      citationAutomaticModeHint:"Paste any public URL, or search scholarly works by title, author, DOI, or ISBN.",
       citationManualMode:"Enter manually",
       citationManualModeHint:"Type every source detail yourself.",
       citationSearchLabel:"Website URL or search words",
@@ -27,8 +27,8 @@
       citationWebsiteUrl:"Website URL or search words",
       citationWebsiteUrlPlaceholder:"Paste a URL, or search by title, author, or topic",
       citationFindSource:"Search sources",
-      citationFindingSource:"Searching public sources…",
-      citationLookupNote:"Broad keyword results are provided by Brave Search. Selecting a result lets ConCourse check that public page and import its metadata. Review every imported field.",
+      citationFindingSource:"Searching public citation metadata…",
+      citationLookupNote:"A pasted URL is checked directly. Keyword searches use Crossref’s free public scholarly metadata. Selecting a result lets ConCourse verify it before importing. Review every field.",
       citationLookupRequired:"Enter a website URL or search words first.",
       citationLookupInvalid:"Enter at least two characters, or use a complete public http(s) website URL.",
       citationLookupSuccess:"Source details found. Review and correct the imported fields below.",
@@ -36,7 +36,7 @@
       citationLookupFailed:"ConCourse could not read this page. You can still enter the details manually below.",
       citationLookupUnavailable:"Automatic lookup is temporarily unavailable. Enter the source details manually below.",
       citationLookupRateLimited:"You have made several lookups in a short time. Wait a minute, then try again.",
-      citationLookupDailyLimited:"You have reached today’s website-search limit. Try again tomorrow, or enter the source manually.",
+      citationLookupDailyLimited:"You have reached today’s source-search limit. Try again tomorrow, paste an exact URL, or enter the source manually.",
       citationLookupSessionExpired:"Your session has expired. Sign in again before using automatic lookup.",
       citationLookupUnsupported:"This page cannot be read automatically. Enter the source details manually below.",
       citationLookupTimedOut:"The selected page took too long to respond. No citation details were changed. Try again or enter the source manually.",
@@ -45,14 +45,14 @@
       citationSearchResultsTitle:"Choose the correct source",
       citationSearchResultCount:"{count} results found",
       citationSearchNoResults:"No matching sources were found. Try a more specific title, author, or URL, or enter the source manually.",
-      citationSearchExactOnly:"The exact page was found. Broader search is unavailable, but you can still select this result.",
-      citationSearchUnavailable:"Broader web search is not configured yet. Paste a complete URL for exact-page lookup, or enter the source manually.",
+      citationSearchExactOnly:"The exact page was found. Select it to import and review its details.",
+      citationSearchUnavailable:"Scholarly keyword search is temporarily unavailable. Paste a complete public URL for exact lookup, or enter the source manually.",
       citationSearchReview:"Compare the title, author, website, date, and URL before selecting a source.",
       citationSelectSource:"Select source",
       citationSelectingSource:"Checking the selected page…",
       citationResultUnknownAuthor:"Author not listed",
       citationResultExact:"Exact URL match",
-      citationSearchAttribution:"Web results provided by Brave Search",
+      citationSearchAttribution:"Scholarly metadata provided by Crossref",
       citationDetailsLegend:"Source details",
       citationAuthorType:"Author entry",
       citationPeople:"Person or people",
@@ -146,7 +146,7 @@
     "zh-CN": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"创建规范参考文献、查看文内引用，并为当前项目整理参考书目。",
-      toolsLocalNote:"手动输入和已保存的参考书目只保存在此设备。广泛关键词搜索结果由 Brave Search 提供；所选网页由 ConCourse 检查。",
+      toolsLocalNote:"手动输入和已保存的参考书目只保存在此设备。学术关键词结果使用 Crossref 免费公共元数据；所选网页由 ConCourse 核对。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"资料类型",
       sourceBook:"书籍",
@@ -154,7 +154,7 @@
       sourceWebsite:"网页",
       citationEntryModeLegend:"添加这个网页",
       citationAutomaticMode:"自动查找",
-      citationAutomaticModeHint:"粘贴网址，或按标题、作者或主题搜索。",
+      citationAutomaticModeHint:"粘贴任何公开网址，或按标题、作者、DOI 或 ISBN 搜索学术资料。",
       citationManualMode:"手动输入",
       citationManualModeHint:"自行填写每一项资料详情。",
       citationSearchLabel:"网页网址或搜索词",
@@ -162,8 +162,8 @@
       citationWebsiteUrl:"网页网址或搜索词",
       citationWebsiteUrlPlaceholder:"粘贴网址，或按标题、作者或主题搜索",
       citationFindSource:"搜索资料",
-      citationFindingSource:"正在搜索公开资料…",
-      citationLookupNote:"广泛关键词搜索结果由 Brave Search 提供。选择结果后，ConCourse 会检查该公开网页并导入元数据。请核对所有导入字段。",
+      citationFindingSource:"正在搜索公共引用元数据…",
+      citationLookupNote:"粘贴的网址会被直接核对；关键词搜索使用 Crossref 免费公共学术元数据。选择结果后，ConCourse 会先验证再导入。请核对所有字段。",
       citationLookupRequired:"请先输入网页网址或搜索词。",
       citationLookupInvalid:"请输入至少两个字符，或使用完整且公开的 http(s) 网页网址。",
       citationLookupSuccess:"已找到资料详情。请核对并修正下方导入字段。",
@@ -171,7 +171,7 @@
       citationLookupFailed:"ConCourse 无法读取此网页。你仍可在下方手动输入资料。",
       citationLookupUnavailable:"自动查找暂时不可用，请在下方手动输入资料。",
       citationLookupRateLimited:"你在短时间内进行了多次查找。请等待一分钟后再试。",
-      citationLookupDailyLimited:"你已达到今天的网页搜索限额。请明天再试，或手动输入资料。",
+      citationLookupDailyLimited:"你已达到今天的资料搜索限额。请明天再试、粘贴精确网址，或手动输入资料。",
       citationLookupSessionExpired:"登录状态已过期。请重新登录后使用自动查找。",
       citationLookupUnsupported:"此网页无法自动读取，请在下方手动输入资料。",
       citationLookupTimedOut:"所选网页响应时间过长，引用资料未作任何更改。请重试或手动输入资料。",
@@ -180,14 +180,14 @@
       citationSearchResultsTitle:"选择正确的资料",
       citationSearchResultCount:"找到 {count} 个结果",
       citationSearchNoResults:"未找到匹配资料。请尝试更具体的标题、作者或网址，或手动输入资料。",
-      citationSearchExactOnly:"已找到该网页。广泛搜索暂不可用，但你仍可选择这个精确结果。",
-      citationSearchUnavailable:"广泛网页搜索尚未设置。请粘贴完整网址进行精确查找，或手动输入资料。",
+      citationSearchExactOnly:"已找到该精确网页。请选择并导入，再核对其资料。",
+      citationSearchUnavailable:"学术关键词搜索暂时不可用。请粘贴完整公开网址进行精确查找，或手动输入资料。",
       citationSearchReview:"选择前，请比较标题、作者、网站、日期和网址。",
       citationSelectSource:"选择资料",
       citationSelectingSource:"正在核对所选网页…",
       citationResultUnknownAuthor:"未列出作者",
       citationResultExact:"网址完全匹配",
-      citationSearchAttribution:"网页结果由 Brave Search 提供",
+      citationSearchAttribution:"学术元数据由 Crossref 提供",
       citationDetailsLegend:"资料详情",
       citationAuthorType:"作者输入类型",
       citationPeople:"个人作者",
@@ -281,7 +281,7 @@
     "zh-HK": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"建立規範參考文獻、查看文內引用，並為而家嘅項目整理參考書目。",
-      toolsLocalNote:"手動輸入同已儲存嘅參考書目只會留喺呢部裝置。廣泛關鍵字搜尋結果由 Brave Search 提供；所選網頁由 ConCourse 檢查。",
+      toolsLocalNote:"手動輸入同已儲存嘅參考書目只會留喺呢部裝置。學術關鍵字結果使用 Crossref 免費公共元資料；所選網頁由 ConCourse 核對。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"資料類型",
       sourceBook:"書籍",
@@ -289,7 +289,7 @@
       sourceWebsite:"網頁",
       citationEntryModeLegend:"加入呢個網頁",
       citationAutomaticMode:"自動搵資料",
-      citationAutomaticModeHint:"貼上網址，或者按標題、作者或主題搜尋。",
+      citationAutomaticModeHint:"貼上任何公開網址，或者按標題、作者、DOI 或 ISBN 搜尋學術資料。",
       citationManualMode:"手動輸入",
       citationManualModeHint:"自行填寫每一項資料詳情。",
       citationSearchLabel:"網頁網址或者搜尋字詞",
@@ -297,8 +297,8 @@
       citationWebsiteUrl:"網頁網址或者搜尋字詞",
       citationWebsiteUrlPlaceholder:"貼上網址，或者按標題、作者或主題搜尋",
       citationFindSource:"搜尋資料",
-      citationFindingSource:"正在搜尋公開資料…",
-      citationLookupNote:"廣泛關鍵字搜尋結果由 Brave Search 提供。揀選結果之後，ConCourse 會檢查該公開網頁並匯入元資料。請核對所有匯入欄位。",
+      citationFindingSource:"正在搜尋公共引用元資料…",
+      citationLookupNote:"貼上嘅網址會直接核對；關鍵字搜尋使用 Crossref 免費公共學術元資料。揀選結果之後，ConCourse 會先驗證再匯入。請核對所有欄位。",
       citationLookupRequired:"請先輸入網頁網址或者搜尋字詞。",
       citationLookupInvalid:"請輸入至少兩個字元，或者使用完整而且公開嘅 http(s) 網頁網址。",
       citationLookupSuccess:"已經搵到資料詳情。請核對同修正下面匯入嘅欄位。",
@@ -306,7 +306,7 @@
       citationLookupFailed:"ConCourse 未能讀取呢個網頁。你仍然可以喺下面手動輸入資料。",
       citationLookupUnavailable:"自動查找暫時用唔到，請喺下面手動輸入資料。",
       citationLookupRateLimited:"你喺短時間內查找咗多次。請等一分鐘再試。",
-      citationLookupDailyLimited:"你已經用完今日嘅網頁搜尋限額。請聽日再試，或者手動輸入資料。",
+      citationLookupDailyLimited:"你已經用完今日嘅資料搜尋限額。請聽日再試、貼上精確網址，或者手動輸入資料。",
       citationLookupSessionExpired:"登入狀態已過期。請重新登入先使用自動查找。",
       citationLookupUnsupported:"呢個網頁未能自動讀取，請喺下面手動輸入資料。",
       citationLookupTimedOut:"所選網頁回應時間過長，引用資料冇任何更改。請再試一次或者手動輸入資料。",
@@ -315,14 +315,14 @@
       citationSearchResultsTitle:"揀選正確資料",
       citationSearchResultCount:"搵到 {count} 個結果",
       citationSearchNoResults:"搵唔到相符資料。請試更具體嘅標題、作者或網址，或者手動輸入資料。",
-      citationSearchExactOnly:"已經搵到該網頁。廣泛搜尋暫時用唔到，但你仍然可以揀呢個精確結果。",
-      citationSearchUnavailable:"廣泛網頁搜尋仲未設定。請貼上完整網址作精確查找，或者手動輸入資料。",
+      citationSearchExactOnly:"已經搵到該精確網頁。請揀選並匯入，再核對資料。",
+      citationSearchUnavailable:"學術關鍵字搜尋暫時用唔到。請貼上完整公開網址作精確查找，或者手動輸入資料。",
       citationSearchReview:"揀選之前，請比較標題、作者、網站、日期同網址。",
       citationSelectSource:"揀選資料",
       citationSelectingSource:"正在核對所選網頁…",
       citationResultUnknownAuthor:"未列出作者",
       citationResultExact:"網址完全相符",
-      citationSearchAttribution:"網頁結果由 Brave Search 提供",
+      citationSearchAttribution:"學術元資料由 Crossref 提供",
       citationDetailsLegend:"資料詳情",
       citationAuthorType:"作者輸入類型",
       citationPeople:"個人作者",
@@ -1237,7 +1237,8 @@
       publicationDate,
       publicationYear,
       displayDate,
-      exactMatch:value.exactMatch === true
+      exactMatch:value.exactMatch === true,
+      provider:clean(value.provider).slice(0, 40)
     };
   }
 
@@ -1279,7 +1280,7 @@
     if(title) title.textContent = tr("citationSearchResultsTitle");
     if(countLabel) countLabel.textContent = tr("citationSearchResultCount", {count});
     if(attribution){
-      attribution.textContent = state.searchProvider.toLocaleLowerCase().includes("brave") ? tr("citationSearchAttribution") : "";
+      attribution.textContent = state.searchProvider.toLocaleLowerCase().includes("crossref") ? tr("citationSearchAttribution") : "";
       attribution.hidden = !attribution.textContent;
     }
     state.searchResults.forEach((result, index) => {
@@ -1461,8 +1462,8 @@
       setLookupStatus(tr("citationSearchNoResults"), "warning");
       return false;
     }
-    const exactOnly = results.length === 1 && results[0].exactMatch && !state.searchProvider.toLocaleLowerCase().includes("brave");
-    setLookupStatus(tr(exactOnly ? "citationSearchExactOnly" : "citationSearchReview"), exactOnly ? "warning" : "success");
+    const exactOnly = data?.exactMatchOnly === true || (results.length === 1 && results[0].exactMatch);
+    setLookupStatus(tr(exactOnly ? "citationSearchExactOnly" : "citationSearchReview"), "success");
     return true;
   }
 

@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 
 const source = fs.readFileSync(new URL("../academic-tools.js", import.meta.url), "utf8");
+const edgeSource = fs.readFileSync(new URL("../supabase/functions/fetch-citation-metadata/index.ts", import.meta.url), "utf8");
 const document = {
   documentElement:{lang:"en"},
   getElementById:() => null,
@@ -144,13 +145,15 @@ test("search candidates keep safe public URLs and display-only result dates", ()
     authors:["Ada Ng"],
     resultDate:"Updated two days ago",
     publicationDate:"",
-    exactMatch:true
+    exactMatch:true,
+    provider:"crossref"
   });
   assert.equal(result.url, "https://example.edu/article");
   assert.equal(result.displayDate, "Updated two days ago");
   assert.equal(result.publicationYear, "");
   assert.equal(result.publicationDate, "");
   assert.equal(result.exactMatch, true);
+  assert.equal(result.provider, "crossref");
   const explicitDisplayDate = tools.normalizeSearchResult({
     url:"https://example.edu/second",
     title:"A second source",
@@ -175,4 +178,19 @@ test("daily search limits are mapped before generic rate limits", () => {
   const genericBranch = source.indexOf('status === 429 || code.includes("RATE_LIMIT")');
   assert.ok(dailyBranch >= 0 && genericBranch > dailyBranch);
   assert.equal(source.match(/citationLookupDailyLimited:/gu)?.length, 3);
+});
+
+test("zero-cost source search uses Crossref without a paid API secret", () => {
+  assert.match(edgeSource, /https:\/\/api\.crossref\.org\/works/u);
+  assert.match(edgeSource, /query\.bibliographic/u);
+  assert.match(edgeSource, /searchProvider: "crossref"/u);
+  assert.doesNotMatch(edgeSource, /BRAVE_SEARCH_API_KEY|api\.search\.brave\.com/u);
+  assert.doesNotMatch(source, /Brave Search/u);
+});
+
+test("exact-result messaging follows the backend flag and Crossref is attributed", () => {
+  assert.match(source, /data\?\.exactMatchOnly === true/u);
+  assert.match(source, /includes\("crossref"\) \? tr\("citationSearchAttribution"\)/u);
+  assert.equal(source.match(/citationSearchAttribution:"Scholarly metadata provided by Crossref"/gu)?.length, 1);
+  assert.equal(source.match(/citationSearchAttribution:/gu)?.length, 3);
 });

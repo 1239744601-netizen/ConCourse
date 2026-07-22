@@ -2,8 +2,9 @@
 // This endpoint is only for signed-in users. Keep Supabase's platform
 // verify_jwt check enabled (the default); createSupabaseContext below also
 // validates the user and creates an RLS-scoped client for the request.
-// Broad candidate search additionally requires the BRAVE_SEARCH_API_KEY Edge
-// Function secret. The key is read only on the server and is never returned.
+// Exact public-URL lookup and scholarly candidate search are both keyless.
+// Keyword results use Crossref's public metadata API; selected pages are still
+// verified by this function before any citation fields are imported.
 
 import { createSupabaseContext } from "jsr:@supabase/server@1.4.0";
 
@@ -17,10 +18,12 @@ const CHARSET_SNIFF_BYTES = 16 * 1024;
 const FETCH_TIMEOUT_MS = 8000;
 const DNS_TIMEOUT_MS = 2500;
 const SEARCH_TIMEOUT_MS = 12000;
-const SEARCH_PROVIDER_TIMEOUT_MS = 5000;
+const SEARCH_PROVIDER_TIMEOUT_MS = 7500;
 const MAX_SEARCH_RESULTS = 10;
 const MAX_SEARCH_RESPONSE_BYTES = 512 * 1024;
-const BRAVE_SEARCH_ENDPOINT = "https://api.search.brave.com/res/v1/web/search";
+const CROSSREF_SEARCH_ENDPOINT = "https://api.crossref.org/works";
+const CROSSREF_WORK_ENDPOINT = "https://api.crossref.org/works/";
+const SEARCH_USER_AGENT = "ConCourseCitationBot/1.0 (+https://1239744601-netizen.github.io/ConCourse/)";
 
 type MetadataResult = {
   sourceUrl: string;
@@ -49,6 +52,7 @@ type CitationCandidate = {
   publicationDate: string;
   publicationYear: string;
   exactMatch: boolean;
+  provider: "exact" | "crossref";
 };
 
 type LookupRequest = {
@@ -128,9 +132,11 @@ async function consumeQuota(supabase: UserSupabaseClient): Promise<void> {
   if (data !== true) throw new HttpError(429, "rate_limited", "Too many lookups. Wait one minute and try again.");
 }
 
-async function consumePaidSearchQuota(supabase: UserSupabaseClient): Promise<void> {
+async function consumeSearchQuota(supabase: UserSupabaseClient): Promise<void> {
+  // The RPC keeps its historical name so already-deployed projects do not need
+  // another migration. It now caps free provider traffic rather than spend.
   const { data, error } = await supabase.rpc("consume_citation_paid_search_quota");
-  if (error) throw new HttpError(503, "search_not_configured", "Paid citation search limits are not configured.");
+  if (error) throw new HttpError(503, "search_not_configured", "Citation source-search limits are not configured.");
   if (data !== true) throw new HttpError(429, "daily_rate_limited", "The daily citation search limit has been reached. Try again tomorrow.");
 }
 
@@ -759,7 +765,12 @@ function candidateId(url: string): string {
   return `source-${(hash >>> 0).toString(36)}`;
 }
 
-function candidateFromMetadata(metadata: MetadataResult, description: string, exactMatch: boolean): CitationCandidate {
+function candidateFromMetadata(
+  metadata: MetadataResult,
+  description: string,
+  exactMatch: boolean,
+  provider: "exact" | "crossref" = "exact",
+): CitationCandidate {
   const url = parsePublicUrl(metadata.canonicalUrl || metadata.finalUrl || metadata.sourceUrl);
   const siteName = cleanCandidateText(metadata.siteName, 250) || url.hostname.replace(/^www\./u, "");
   const authors = Array.isArray(metadata.authors) ? metadata.authors.map((author) => cleanCandidateText(author, 250)).filter(Boolean).slice(0, 20) : [];
@@ -776,37 +787,101 @@ function candidateFromMetadata(metadata: MetadataResult, description: string, ex
     publicationDate: normalizedDate(metadata.publicationDate),
     publicationYear: normalizedYear(metadata.publicationYear || metadata.publicationDate),
     exactMatch,
+    provider,
   };
 }
 
-function candidateFromBrave(value: unknown): CitationCandidate | null {
-  const result = asRecord(value);
-  if (typeof result.url !== "string") return null;
-  let url: URL;
+function crossrefDoi(value: unknown): string {
+  const raw = cleanCandidateText(value, 300)
+    .replace(/^doi:\s*/iu, "")
+    .replace(/^https?:\/\/(?:dx\.)?doi\.org\//iu, "");
+  if (!/^10\.\d{4,9}\/[^\s<>"?#\\]+$/iu.test(raw)) return "";
+  return raw;
+}
+
+function doiFromUrl(url: URL): string {
+  const hostname = url.hostname.toLocaleLowerCase().replace(/^www\./u, "");
+  if (hostname !== "doi.org" && hostname !== "dx.doi.org") return "";
   try {
-    url = parsePublicUrl(result.url.trim());
+    return crossrefDoi(decodeURIComponent(url.pathname.replace(/^\/+/, "")));
   } catch (_error) {
-    return null;
+    return "";
   }
-  const profile = asRecord(result.profile);
-  const siteName = cleanCandidateText(profile.long_name || profile.name, 250) || url.hostname.replace(/^www\./u, "");
-  const title = cleanCandidateText(result.title, 600);
-  if (!title) return null;
+}
+
+function firstCrossrefText(value: unknown, limit: number): string {
+  if (!Array.isArray(value)) return cleanCandidateText(value, limit);
+  for (const item of value) {
+    const text = cleanCandidateText(item, limit);
+    if (text) return text;
+  }
+  return "";
+}
+
+function crossrefPublication(value: Record<string, unknown>): { date: string; year: string } {
+  const fields = [value.published, value.issued, value["published-print"], value["published-online"]];
+  for (const field of fields) {
+    const parts = asRecord(field)["date-parts"];
+    if (!Array.isArray(parts) || !Array.isArray(parts[0])) continue;
+    const [yearValue, monthValue, dayValue] = parts[0];
+    const year = Number(yearValue);
+    if (!Number.isInteger(year) || year < 1 || year > 9999) continue;
+    const yearText = String(year).padStart(4, "0");
+    const date = monthValue !== undefined && dayValue !== undefined
+      ? exactDate(yearText, Number(monthValue), String(dayValue))
+      : "";
+    return { date, year: yearText };
+  }
+  return { date: "", year: "" };
+}
+
+function crossrefAuthors(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const authors = value.map((entry) => {
+    const person = asRecord(entry);
+    const family = cleanCandidateText(person.family, 120);
+    const given = cleanCandidateText(person.given, 120);
+    return cleanCandidateText(person.name, 250) || [family, given].filter(Boolean).join(", ");
+  }).filter(Boolean);
+  return [...new Set(authors)].slice(0, 20);
+}
+
+function crossrefMetadata(value: unknown, sourceUrl?: URL): MetadataResult | null {
+  const item = asRecord(value);
+  const doi = crossrefDoi(item.DOI);
+  const title = firstCrossrefText(item.title, 600);
+  if (!doi || !title) return null;
+  const canonical = parsePublicUrl(`https://doi.org/${doi}`);
+  const publication = crossrefPublication(item);
+  const authors = crossrefAuthors(item.author);
+  const publisher = cleanCandidateText(item.publisher, 250);
+  const siteName = firstCrossrefText(item["container-title"], 250) || publisher || "Crossref";
+  const warnings: string[] = [];
+  if (!authors.length) warnings.push("missing_author");
+  if (!publication.date) warnings.push(publication.year ? "partial_publication_date" : "missing_publication_date");
   return {
-    id: candidateId(url.href),
-    url: url.href,
+    sourceUrl: (sourceUrl || canonical).href,
+    finalUrl: canonical.href,
+    canonicalUrl: canonical.href,
     title,
-    description: cleanCandidateText(result.description, 1000),
-    siteName,
-    authors: [],
+    authors,
     organization: "",
     authorType: "person",
-    // Search-index freshness is not necessarily the source publication date.
-    // Citation dates are populated only by the authoritative URL lookup.
-    publicationDate: "",
-    publicationYear: "",
-    exactMatch: false,
+    siteName,
+    publicationDate: publication.date,
+    publicationYear: publication.year,
+    language: cleanCandidateText(item.language, 30),
+    warnings,
   };
+}
+
+function candidateFromCrossref(value: unknown): CitationCandidate | null {
+  const item = asRecord(value);
+  const metadata = crossrefMetadata(item);
+  if (!metadata) return null;
+  const type = cleanCandidateText(item.type, 80).replace(/-/gu, " ");
+  const publisher = cleanCandidateText(item.publisher, 250);
+  return candidateFromMetadata(metadata, [type, publisher].filter(Boolean).join(" · "), false, "crossref");
 }
 
 function uniqueCandidates(values: CitationCandidate[]): CitationCandidate[] {
@@ -888,18 +963,10 @@ function validateSearchInput(value: unknown): { query: string; exactUrl: URL | n
   if (typeof value !== "string") throw new HttpError(400, "invalid_query", "Enter a search query.");
   const raw = value.trim();
   // URL lookup uses the existing 2,048-character URL limit. It is deliberately
-  // classified before applying Brave's smaller 400-character keyword limit.
+  // classified before applying the smaller 400-character keyword limit.
   const exactUrl = searchQueryUrl(raw);
   if (exactUrl) return { query: raw, exactUrl };
   return { query: validateSearchQuery(value), exactUrl: null };
-}
-
-function braveApiKey(): string {
-  try {
-    return (Deno.env.get("BRAVE_SEARCH_API_KEY") || "").trim();
-  } catch (_error) {
-    return "";
-  }
 }
 
 async function readLimitedJson(response: Response, deadline: number): Promise<unknown> {
@@ -942,15 +1009,7 @@ async function readLimitedJson(response: Response, deadline: number): Promise<un
   }
 }
 
-async function searchBrave(query: string, language: string, key: string, deadline: number): Promise<CitationCandidate[]> {
-  const endpoint = new URL(BRAVE_SEARCH_ENDPOINT);
-  endpoint.searchParams.set("q", query);
-  endpoint.searchParams.set("count", String(MAX_SEARCH_RESULTS));
-  endpoint.searchParams.set("safesearch", "strict");
-  endpoint.searchParams.set("text_decorations", "false");
-  endpoint.searchParams.set("result_filter", "web");
-  if (language) endpoint.searchParams.set("search_lang", language);
-
+async function fetchCrossrefJson(endpoint: URL, deadline: number): Promise<unknown> {
   let response: Response;
   try {
     response = await fetch(endpoint, {
@@ -960,25 +1019,28 @@ async function searchBrave(query: string, language: string, key: string, deadlin
       headers: {
         Accept: "application/json",
         "Accept-Encoding": "gzip",
-        "X-Subscription-Token": key,
+        "User-Agent": SEARCH_USER_AGENT,
       },
     });
     remainingTime(deadline);
-  } catch (_error) {
-    throw new HttpError(502, "search_failed", "Search is temporarily unavailable.");
+  } catch (error) {
+    if (isAbortError(error) || performance.now() >= deadline) {
+      throw new HttpError(504, "lookup_timeout", "The source search took too long to respond.");
+    }
+    throw new HttpError(502, "search_failed", "Scholarly source search is temporarily unavailable.");
   }
 
   if (response.status === 429) {
     await cancelBody(response);
     throw new HttpError(429, "rate_limited", "Search is busy. Wait one minute and try again.");
   }
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 404) {
     await cancelBody(response);
-    throw new HttpError(503, "search_not_configured", "Citation search is not configured.");
+    throw new HttpError(404, "metadata_not_found", "No matching scholarly record was found.");
   }
   if (!response.ok) {
     await cancelBody(response);
-    throw new HttpError(502, "search_failed", "Search is temporarily unavailable.");
+    throw new HttpError(502, "search_failed", "Scholarly source search is temporarily unavailable.");
   }
   const contentType = (response.headers.get("content-type") || "").split(";", 1)[0].trim().toLocaleLowerCase();
   if (contentType !== "application/json" && !contentType.endsWith("+json")) {
@@ -986,10 +1048,28 @@ async function searchBrave(query: string, language: string, key: string, deadlin
     throw new HttpError(502, "search_failed", "The search provider returned an unreadable response.");
   }
 
-  const payload = asRecord(await readLimitedJson(response, deadline));
-  const web = asRecord(payload.web);
-  const results = Array.isArray(web.results) ? web.results : [];
-  return uniqueCandidates(results.slice(0, MAX_SEARCH_RESULTS).map(candidateFromBrave).filter((candidate): candidate is CitationCandidate => !!candidate));
+  return readLimitedJson(response, deadline);
+}
+
+async function searchCrossref(query: string, deadline: number): Promise<CitationCandidate[]> {
+  const endpoint = new URL(CROSSREF_SEARCH_ENDPOINT);
+  endpoint.searchParams.set("query.bibliographic", query);
+  endpoint.searchParams.set("rows", String(MAX_SEARCH_RESULTS));
+  endpoint.searchParams.set("select", "DOI,title,author,published,issued,published-print,published-online,container-title,publisher,URL,type,ISBN");
+  const payload = asRecord(await fetchCrossrefJson(endpoint, deadline));
+  const items = asRecord(payload.message).items;
+  if (!Array.isArray(items)) throw new HttpError(502, "search_failed", "The scholarly search response was incomplete.");
+  return uniqueCandidates(items.slice(0, MAX_SEARCH_RESULTS)
+    .map(candidateFromCrossref)
+    .filter((candidate): candidate is CitationCandidate => !!candidate));
+}
+
+async function fetchCrossrefMetadata(doi: string, sourceUrl: URL, deadline: number): Promise<MetadataResult> {
+  const endpoint = new URL(`${CROSSREF_WORK_ENDPOINT}${encodeURIComponent(doi)}`);
+  const payload = asRecord(await fetchCrossrefJson(endpoint, deadline));
+  const metadata = crossrefMetadata(payload.message, sourceUrl);
+  if (!metadata) throw new HttpError(422, "metadata_not_found", "The DOI record did not include reliable citation metadata.");
+  return metadata;
 }
 
 function descriptionFromHtml(html: string): string {
@@ -997,19 +1077,43 @@ function descriptionFromHtml(html: string): string {
   return firstMeta(meta, ["description", "og:description", "twitter:description", "dc.description", "dcterms.description"]);
 }
 
-async function fetchCandidate(url: URL, exactMatch: boolean, deadline: number, timeout: number, fallbackDescription = ""): Promise<CitationCandidate> {
+async function fetchUrlMetadata(url: URL, deadline: number, timeout: number): Promise<{
+  metadata: MetadataResult;
+  description: string;
+  provider: "exact" | "crossref";
+}> {
   const itemDeadline = Math.min(deadline, performance.now() + timeout);
+  const doi = doiFromUrl(url);
+  if (doi) {
+    try {
+      const metadata = await fetchCrossrefMetadata(doi, url, itemDeadline);
+      return { metadata, description: "Scholarly DOI metadata", provider: "crossref" };
+    } catch (error) {
+      // A DOI landing page can still be readable when Crossref is briefly busy
+      // or the record is incomplete, so fall back to the ordinary safe fetch.
+      if (!(error instanceof HttpError)) throw error;
+      remainingTime(itemDeadline);
+    }
+  }
   const { html, finalUrl } = await fetchHtml(url, itemDeadline);
-  const metadata = extractMetadata(html, url, finalUrl);
+  return {
+    metadata: extractMetadata(html, url, finalUrl),
+    description: descriptionFromHtml(html),
+    provider: "exact",
+  };
+}
+
+async function fetchCandidate(url: URL, exactMatch: boolean, deadline: number, timeout: number, fallbackDescription = ""): Promise<CitationCandidate> {
+  const { metadata, description, provider } = await fetchUrlMetadata(url, deadline, timeout);
   if (!cleanCandidateText(metadata.title, 600)) {
     throw new HttpError(422, "metadata_not_found", "No reliable citation title was found at this URL.");
   }
-  return candidateFromMetadata(metadata, descriptionFromHtml(html) || fallbackDescription, exactMatch);
+  return candidateFromMetadata(metadata, description || fallbackDescription, exactMatch, provider);
 }
 
 async function searchCandidates(query: string, language: string, supabase: UserSupabaseClient, preclassifiedUrl: URL | null = searchQueryUrl(query)): Promise<{
   results: CitationCandidate[];
-  searchProvider: "brave" | "exact";
+  searchProvider: "crossref" | "exact";
   exactMatchOnly: boolean;
 }> {
   const deadline = performance.now() + SEARCH_TIMEOUT_MS;
@@ -1017,19 +1121,21 @@ async function searchCandidates(query: string, language: string, supabase: UserS
   if (exactUrl) {
     // URL inputs may contain private tokens in their path or query string. They
     // are fetched only by the exact SSRF-safe lookup and are never sent to a
-    // third-party search provider.
+    // keyword-search provider. Plain doi.org identifiers may use Crossref's
+    // exact registry endpoint, which receives only the DOI itself.
     const exact = await fetchCandidate(exactUrl, true, deadline, FETCH_TIMEOUT_MS);
     return { results: [exact], searchProvider: "exact", exactMatchOnly: true };
   }
   if (containsUrlToken(query)) {
-    throw new HttpError(400, "invalid_query", "Search a website URL by itself so it is not shared with a search provider.");
+    throw new HttpError(400, "invalid_query", "Search a website URL by itself so it is not shared with a scholarly index.");
   }
 
-  const key = braveApiKey();
-  if (!key) throw new HttpError(503, "search_not_configured", "Citation search is not configured.");
-  await consumePaidSearchQuota(supabase);
-  const results = await searchBrave(query, language, key, deadline);
-  return { results, searchProvider: "brave", exactMatchOnly: false };
+  // Language is accepted for API compatibility and future localized indexes;
+  // Crossref ranks the bibliographic query independently of UI language.
+  void language;
+  await consumeSearchQuota(supabase);
+  const results = await searchCrossref(query, deadline);
+  return { results, searchProvider: "crossref", exactMatchOnly: false };
 }
 
 async function readJsonRequest(request: Request): Promise<LookupRequest> {
@@ -1110,8 +1216,8 @@ export default {
       const raw = typeof body.url === "string" ? body.url.trim() : "";
       const sourceUrl = parsePublicUrl(raw);
       await consumeQuota(context.supabase);
-      const { html, finalUrl } = await fetchHtml(sourceUrl);
-      const result = extractMetadata(html, sourceUrl, finalUrl);
+      const deadline = performance.now() + FETCH_TIMEOUT_MS;
+      const { metadata: result } = await fetchUrlMetadata(sourceUrl, deadline, FETCH_TIMEOUT_MS);
       if (!result.title && !result.siteName) throw new HttpError(422, "metadata_not_found", "No useful citation metadata was found.");
       return jsonResponse(origin, result);
     } catch (error) {

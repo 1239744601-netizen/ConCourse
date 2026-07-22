@@ -1,6 +1,7 @@
--- ConCourse paid citation-search daily cost ceilings
+-- ConCourse citation source-search daily traffic ceilings
 -- Run after supabase-citation-metadata-setup.sql.
--- Defaults: 25 Brave searches per user per UTC day and 200 for the project.
+-- Defaults: 25 public-index searches per user per UTC day and 200 for the project.
+-- Historical object names retain "paid" so existing deployments stay compatible.
 -- Re-running this file is safe and does not overwrite later threshold changes.
 
 begin;
@@ -59,7 +60,7 @@ begin
     return false;
   end if;
 
-  -- Serialize paid-search reservations for this UTC day. This makes checking
+  -- Serialize source-search reservations for this UTC day. This makes checking
   -- and incrementing the user and project counters one atomic operation.
   perform pg_advisory_xact_lock(
     hashtext('concourse-paid-citation-search'),
@@ -122,7 +123,7 @@ grant execute on function public.consume_citation_paid_search_quota()
 to authenticated;
 
 comment on function public.consume_citation_paid_search_quota() is
-  'Atomically enforces configurable per-user and project-wide UTC daily ceilings for paid citation keyword search.';
+  'Atomically enforces configurable per-user and project-wide UTC daily ceilings for citation source search.';
 
 commit;
 
