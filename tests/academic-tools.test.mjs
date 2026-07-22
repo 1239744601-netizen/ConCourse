@@ -114,3 +114,65 @@ test("DOIs and URLs are normalized safely", () => {
   assert.equal(tools.normalizedWebsiteUrl("https://user:pass@example.edu/article"), "");
   assert.equal(tools.normalizedWebsiteUrl("https://example.edu:8443/article"), "");
 });
+
+test("citation search accepts URLs and meaningful keywords but rejects malformed input", () => {
+  assert.equal(tools.searchInputInfo("example.edu/article").url, "https://example.edu/article");
+  assert.equal(tools.searchInputInfo("artificial intelligence ethics").valid, true);
+  assert.equal(tools.searchInputInfo("a").valid, false);
+  assert.equal(tools.searchInputInfo("a".repeat(400)).valid, true);
+  assert.equal(tools.searchInputInfo("a".repeat(401)).valid, false);
+  assert.equal(tools.searchInputInfo(Array(51).fill("word").join(" ")).valid, false);
+  assert.deepEqual(
+    {...tools.searchInputInfo("https://example.edu:8443/article")},
+    {query:"https://example.edu:8443/article", url:"", kind:"url", valid:false}
+  );
+  const urlPrefix = "https://example.edu/article?query=";
+  const urlSuffix = "&tail=end";
+  const longUrl = `${urlPrefix}${"a".repeat(2048 - urlPrefix.length - urlSuffix.length)}${urlSuffix}`;
+  assert.equal(longUrl.length, 2048);
+  const longUrlInput = tools.searchInputInfo(longUrl);
+  assert.equal(longUrlInput.valid, true);
+  assert.equal(longUrlInput.kind, "url");
+  assert.equal(longUrlInput.query, longUrl);
+  assert.equal(longUrlInput.url, longUrl);
+});
+
+test("search candidates keep safe public URLs and display-only result dates", () => {
+  const result = tools.normalizeSearchResult({
+    url:"https://example.edu/article#summary",
+    title:"A useful source",
+    authors:["Ada Ng"],
+    resultDate:"Updated two days ago",
+    publicationDate:"",
+    exactMatch:true
+  });
+  assert.equal(result.url, "https://example.edu/article");
+  assert.equal(result.displayDate, "Updated two days ago");
+  assert.equal(result.publicationYear, "");
+  assert.equal(result.publicationDate, "");
+  assert.equal(result.exactMatch, true);
+  const explicitDisplayDate = tools.normalizeSearchResult({
+    url:"https://example.edu/second",
+    title:"A second source",
+    displayDate:"Spring 2025",
+    resultDate:"Ignored fallback date"
+  });
+  assert.equal(explicitDisplayDate.displayDate, "Spring 2025");
+  assert.equal(explicitDisplayDate.publicationYear, "");
+  assert.equal(explicitDisplayDate.publicationDate, "");
+  assert.equal(tools.normalizeSearchResult({url:"javascript:alert(1)", title:"Unsafe"}), null);
+});
+
+test("selecting a result never imports the unverified search candidate", () => {
+  const selectionSource = source.match(/async function selectSearchResult\(index\)\{[\s\S]*?(?=\n  function editCurrentReference)/u)?.[0] || "";
+  assert.ok(selectionSource, "selectSearchResult source should be present");
+  assert.doesNotMatch(selectionSource, /applyWebsiteMetadata\(candidate/u);
+  assert.match(selectionSource, /applyWebsiteMetadata\(data\)/u);
+});
+
+test("daily search limits are mapped before generic rate limits", () => {
+  const dailyBranch = source.indexOf('code.includes("DAILY_RATE_LIMIT")');
+  const genericBranch = source.indexOf('status === 429 || code.includes("RATE_LIMIT")');
+  assert.ok(dailyBranch >= 0 && genericBranch > dailyBranch);
+  assert.equal(source.match(/citationLookupDailyLimited:/gu)?.length, 3);
+});

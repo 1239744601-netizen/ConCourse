@@ -2,6 +2,8 @@
 // This endpoint is only for signed-in users. Keep Supabase's platform
 // verify_jwt check enabled (the default); createSupabaseContext below also
 // validates the user and creates an RLS-scoped client for the request.
+// Broad candidate search additionally requires the BRAVE_SEARCH_API_KEY Edge
+// Function secret. The key is read only on the server and is never returned.
 
 import { createSupabaseContext } from "jsr:@supabase/server@1.4.0";
 
@@ -14,6 +16,11 @@ const MAX_HEAD_CHARACTERS = 512 * 1024;
 const CHARSET_SNIFF_BYTES = 16 * 1024;
 const FETCH_TIMEOUT_MS = 8000;
 const DNS_TIMEOUT_MS = 2500;
+const SEARCH_TIMEOUT_MS = 12000;
+const SEARCH_PROVIDER_TIMEOUT_MS = 5000;
+const MAX_SEARCH_RESULTS = 10;
+const MAX_SEARCH_RESPONSE_BYTES = 512 * 1024;
+const BRAVE_SEARCH_ENDPOINT = "https://api.search.brave.com/res/v1/web/search";
 
 type MetadataResult = {
   sourceUrl: string;
@@ -28,6 +35,27 @@ type MetadataResult = {
   publicationYear: string;
   language: string;
   warnings: string[];
+};
+
+type CitationCandidate = {
+  id: string;
+  url: string;
+  title: string;
+  description: string;
+  siteName: string;
+  authors: string[];
+  organization: string;
+  authorType: "person" | "organization";
+  publicationDate: string;
+  publicationYear: string;
+  exactMatch: boolean;
+};
+
+type LookupRequest = {
+  action?: unknown;
+  url?: unknown;
+  query?: unknown;
+  language?: unknown;
 };
 
 class HttpError extends Error {
@@ -98,6 +126,21 @@ async function consumeQuota(supabase: UserSupabaseClient): Promise<void> {
   const { data, error } = await supabase.rpc("consume_citation_fetch_quota");
   if (error) throw new HttpError(503, "quota_unavailable", "Citation lookup is not configured.");
   if (data !== true) throw new HttpError(429, "rate_limited", "Too many lookups. Wait one minute and try again.");
+}
+
+async function consumePaidSearchQuota(supabase: UserSupabaseClient): Promise<void> {
+  const { data, error } = await supabase.rpc("consume_citation_paid_search_quota");
+  if (error) throw new HttpError(503, "search_not_configured", "Paid citation search limits are not configured.");
+  if (data !== true) throw new HttpError(429, "daily_rate_limited", "The daily citation search limit has been reached. Try again tomorrow.");
+}
+
+function secondsUntilNextUtcDay(now = new Date()): number {
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  return Math.max(1, Math.ceil((next - now.getTime()) / 1000));
+}
+
+function rateLimitRetryAfter(code: string, now = new Date()): string {
+  return code === "daily_rate_limited" ? String(secondsUntilNextUtcDay(now)) : "60";
 }
 
 function parseIpv4(value: string): number[] | null {
@@ -407,8 +450,7 @@ async function readHtml(response: Response, contentType: string, deadline: numbe
   }
 }
 
-async function fetchHtml(source: URL): Promise<{ html: string; finalUrl: URL }> {
-  const deadline = performance.now() + FETCH_TIMEOUT_MS;
+async function fetchHtml(source: URL, deadline = performance.now() + FETCH_TIMEOUT_MS): Promise<{ html: string; finalUrl: URL }> {
   let current = source;
   for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
     current = await validatePublicUrl(current.href, deadline);
@@ -700,7 +742,297 @@ function extractMetadata(html: string, sourceUrl: URL, finalUrl: URL): MetadataR
   };
 }
 
-async function readJsonRequest(request: Request): Promise<{ url?: unknown }> {
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function cleanCandidateText(value: unknown, limit: number): string {
+  return cleanText(value, limit).replace(/[<>]/gu, " ").replace(/\s+/gu, " ").trim().slice(0, limit);
+}
+
+function candidateId(url: string): string {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < url.length; index += 1) {
+    hash ^= url.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `source-${(hash >>> 0).toString(36)}`;
+}
+
+function candidateFromMetadata(metadata: MetadataResult, description: string, exactMatch: boolean): CitationCandidate {
+  const url = parsePublicUrl(metadata.canonicalUrl || metadata.finalUrl || metadata.sourceUrl);
+  const siteName = cleanCandidateText(metadata.siteName, 250) || url.hostname.replace(/^www\./u, "");
+  const authors = Array.isArray(metadata.authors) ? metadata.authors.map((author) => cleanCandidateText(author, 250)).filter(Boolean).slice(0, 20) : [];
+  const organization = cleanCandidateText(metadata.organization, 250);
+  return {
+    id: candidateId(url.href),
+    url: url.href,
+    title: cleanCandidateText(metadata.title, 600),
+    description: cleanCandidateText(description, 1000),
+    siteName,
+    authors,
+    organization,
+    authorType: metadata.authorType === "organization" && organization ? "organization" : "person",
+    publicationDate: normalizedDate(metadata.publicationDate),
+    publicationYear: normalizedYear(metadata.publicationYear || metadata.publicationDate),
+    exactMatch,
+  };
+}
+
+function candidateFromBrave(value: unknown): CitationCandidate | null {
+  const result = asRecord(value);
+  if (typeof result.url !== "string") return null;
+  let url: URL;
+  try {
+    url = parsePublicUrl(result.url.trim());
+  } catch (_error) {
+    return null;
+  }
+  const profile = asRecord(result.profile);
+  const siteName = cleanCandidateText(profile.long_name || profile.name, 250) || url.hostname.replace(/^www\./u, "");
+  const title = cleanCandidateText(result.title, 600);
+  if (!title) return null;
+  return {
+    id: candidateId(url.href),
+    url: url.href,
+    title,
+    description: cleanCandidateText(result.description, 1000),
+    siteName,
+    authors: [],
+    organization: "",
+    authorType: "person",
+    // Search-index freshness is not necessarily the source publication date.
+    // Citation dates are populated only by the authoritative URL lookup.
+    publicationDate: "",
+    publicationYear: "",
+    exactMatch: false,
+  };
+}
+
+function uniqueCandidates(values: CitationCandidate[]): CitationCandidate[] {
+  const output: CitationCandidate[] = [];
+  const positions = new Map<string, number>();
+  values.forEach((candidate) => {
+    const position = positions.get(candidate.url);
+    if (position === undefined) {
+      positions.set(candidate.url, output.length);
+      output.push(candidate);
+      return;
+    }
+    const current = output[position];
+    const genericTitle = !current.title || current.title === current.siteName;
+    const genericSite = !current.siteName || current.siteName === new URL(current.url).hostname.replace(/^www\./u, "");
+    output[position] = {
+      ...current,
+      title: genericTitle && candidate.title ? candidate.title : current.title,
+      description: current.description || candidate.description,
+      siteName: genericSite && candidate.siteName ? candidate.siteName : current.siteName,
+      authors: current.authors.length ? current.authors : [...candidate.authors],
+      organization: current.organization || candidate.organization,
+      authorType: current.organization ? current.authorType : candidate.authorType,
+      publicationDate: current.publicationDate || candidate.publicationDate,
+      publicationYear: current.publicationYear || candidate.publicationYear,
+      exactMatch: current.exactMatch || candidate.exactMatch,
+    };
+  });
+  return output;
+}
+
+function validateSearchQuery(value: unknown): string {
+  if (typeof value !== "string") throw new HttpError(400, "invalid_query", "Enter a search query.");
+  const query = value.normalize("NFKC")
+    .replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+  const length = Array.from(query).length;
+  const wordCount = query ? query.split(/\s+/u).length : 0;
+  if (length < 2 || length > 400 || wordCount > 50) {
+    throw new HttpError(400, "invalid_query", "Use a search query between 2 and 400 characters and no more than 50 words.");
+  }
+  return query;
+}
+
+function normalizeSearchLanguage(value: unknown): string {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value !== "string") throw new HttpError(400, "invalid_language", "Use a supported search language.");
+  const raw = value.trim().toLocaleLowerCase().replace(/_/gu, "-");
+  const aliases: Record<string, string> = {
+    english: "en", "en-us": "en", "en-gb": "en",
+    mandarin: "zh-hans", "zh-cn": "zh-hans", "zh-sg": "zh-hans", "zh-hans": "zh-hans",
+    cantonese: "zh-hant", yue: "zh-hant", "zh-hk": "zh-hant", "zh-mo": "zh-hant", "zh-tw": "zh-hant", "zh-hant": "zh-hant",
+  };
+  const language = aliases[raw] || raw;
+  if (!/^[a-z]{2,3}(?:-[a-z]{2,4})?$/u.test(language) || language.length > 12) {
+    throw new HttpError(400, "invalid_language", "Use a supported search language.");
+  }
+  return language;
+}
+
+function searchQueryUrl(query: string): URL | null {
+  const anyScheme = /^[a-z][a-z0-9+.-]*:\/\//iu.test(query);
+  const complete = /^https?:\/\//iu.test(query);
+  const protocolRelative = /^\/\//u.test(query);
+  const bareDomain = !/\s/u.test(query)
+    && /^(?:www\.)?[\p{L}\p{N}](?:[\p{L}\p{N}.-]*[\p{L}\p{N}])?\.[\p{L}]{2,63}(?::\d+)?(?:[/?#].*)?$/iu.test(query);
+  if (anyScheme && !complete) return parsePublicUrl(query);
+  if (!complete && !protocolRelative && !bareDomain) return null;
+  return parsePublicUrl(complete ? query : protocolRelative ? `https:${query}` : `https://${query}`);
+}
+
+function containsUrlToken(query: string): boolean {
+  return /[a-z][a-z0-9+.-]*:\/\/\S+/iu.test(query)
+    || /(?:^|\s)(?:www\.)?[\p{L}\p{N}](?:[\p{L}\p{N}.-]*[\p{L}\p{N}])?\.[\p{L}]{2,63}(?::\d+)?(?:[/?#][^\s]*)?/iu.test(query);
+}
+
+function validateSearchInput(value: unknown): { query: string; exactUrl: URL | null } {
+  if (typeof value !== "string") throw new HttpError(400, "invalid_query", "Enter a search query.");
+  const raw = value.trim();
+  // URL lookup uses the existing 2,048-character URL limit. It is deliberately
+  // classified before applying Brave's smaller 400-character keyword limit.
+  const exactUrl = searchQueryUrl(raw);
+  if (exactUrl) return { query: raw, exactUrl };
+  return { query: validateSearchQuery(value), exactUrl: null };
+}
+
+function braveApiKey(): string {
+  try {
+    return (Deno.env.get("BRAVE_SEARCH_API_KEY") || "").trim();
+  } catch (_error) {
+    return "";
+  }
+}
+
+async function readLimitedJson(response: Response, deadline: number): Promise<unknown> {
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > MAX_SEARCH_RESPONSE_BYTES) {
+    await cancelBody(response);
+    throw new HttpError(502, "search_failed", "The search provider returned too much data.");
+  }
+  if (!response.body) throw new HttpError(502, "search_failed", "The search provider returned an empty response.");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  let bytes = 0;
+  let text = "";
+  const cancel = async (): Promise<void> => {
+    try {
+      await reader.cancel();
+    } catch (_error) {
+      // The provider connection may already be closed.
+    }
+  };
+  try {
+    while (true) {
+      remainingTime(deadline);
+      const { value, done } = await reader.read();
+      remainingTime(deadline);
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_SEARCH_RESPONSE_BYTES) {
+        await cancel();
+        throw new HttpError(502, "search_failed", "The search provider returned too much data.");
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    return JSON.parse(text);
+  } catch (error) {
+    await cancel();
+    if (error instanceof HttpError && error.code === "search_failed") throw error;
+    throw new HttpError(502, "search_failed", "The search provider returned an unreadable response.");
+  }
+}
+
+async function searchBrave(query: string, language: string, key: string, deadline: number): Promise<CitationCandidate[]> {
+  const endpoint = new URL(BRAVE_SEARCH_ENDPOINT);
+  endpoint.searchParams.set("q", query);
+  endpoint.searchParams.set("count", String(MAX_SEARCH_RESULTS));
+  endpoint.searchParams.set("safesearch", "strict");
+  endpoint.searchParams.set("text_decorations", "false");
+  endpoint.searchParams.set("result_filter", "web");
+  if (language) endpoint.searchParams.set("search_lang", language);
+
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: "GET",
+      redirect: "error",
+      signal: AbortSignal.timeout(remainingTime(deadline, SEARCH_PROVIDER_TIMEOUT_MS)),
+      headers: {
+        Accept: "application/json",
+        "Accept-Encoding": "gzip",
+        "X-Subscription-Token": key,
+      },
+    });
+    remainingTime(deadline);
+  } catch (_error) {
+    throw new HttpError(502, "search_failed", "Search is temporarily unavailable.");
+  }
+
+  if (response.status === 429) {
+    await cancelBody(response);
+    throw new HttpError(429, "rate_limited", "Search is busy. Wait one minute and try again.");
+  }
+  if (response.status === 401 || response.status === 403) {
+    await cancelBody(response);
+    throw new HttpError(503, "search_not_configured", "Citation search is not configured.");
+  }
+  if (!response.ok) {
+    await cancelBody(response);
+    throw new HttpError(502, "search_failed", "Search is temporarily unavailable.");
+  }
+  const contentType = (response.headers.get("content-type") || "").split(";", 1)[0].trim().toLocaleLowerCase();
+  if (contentType !== "application/json" && !contentType.endsWith("+json")) {
+    await cancelBody(response);
+    throw new HttpError(502, "search_failed", "The search provider returned an unreadable response.");
+  }
+
+  const payload = asRecord(await readLimitedJson(response, deadline));
+  const web = asRecord(payload.web);
+  const results = Array.isArray(web.results) ? web.results : [];
+  return uniqueCandidates(results.slice(0, MAX_SEARCH_RESULTS).map(candidateFromBrave).filter((candidate): candidate is CitationCandidate => !!candidate));
+}
+
+function descriptionFromHtml(html: string): string {
+  const meta = metadataMap(html);
+  return firstMeta(meta, ["description", "og:description", "twitter:description", "dc.description", "dcterms.description"]);
+}
+
+async function fetchCandidate(url: URL, exactMatch: boolean, deadline: number, timeout: number, fallbackDescription = ""): Promise<CitationCandidate> {
+  const itemDeadline = Math.min(deadline, performance.now() + timeout);
+  const { html, finalUrl } = await fetchHtml(url, itemDeadline);
+  const metadata = extractMetadata(html, url, finalUrl);
+  if (!cleanCandidateText(metadata.title, 600)) {
+    throw new HttpError(422, "metadata_not_found", "No reliable citation title was found at this URL.");
+  }
+  return candidateFromMetadata(metadata, descriptionFromHtml(html) || fallbackDescription, exactMatch);
+}
+
+async function searchCandidates(query: string, language: string, supabase: UserSupabaseClient, preclassifiedUrl: URL | null = searchQueryUrl(query)): Promise<{
+  results: CitationCandidate[];
+  searchProvider: "brave" | "exact";
+  exactMatchOnly: boolean;
+}> {
+  const deadline = performance.now() + SEARCH_TIMEOUT_MS;
+  const exactUrl = preclassifiedUrl;
+  if (exactUrl) {
+    // URL inputs may contain private tokens in their path or query string. They
+    // are fetched only by the exact SSRF-safe lookup and are never sent to a
+    // third-party search provider.
+    const exact = await fetchCandidate(exactUrl, true, deadline, FETCH_TIMEOUT_MS);
+    return { results: [exact], searchProvider: "exact", exactMatchOnly: true };
+  }
+  if (containsUrlToken(query)) {
+    throw new HttpError(400, "invalid_query", "Search a website URL by itself so it is not shared with a search provider.");
+  }
+
+  const key = braveApiKey();
+  if (!key) throw new HttpError(503, "search_not_configured", "Citation search is not configured.");
+  await consumePaidSearchQuota(supabase);
+  const results = await searchBrave(query, language, key, deadline);
+  return { results, searchProvider: "brave", exactMatchOnly: false };
+}
+
+async function readJsonRequest(request: Request): Promise<LookupRequest> {
   const contentType = (request.headers.get("content-type") || "").split(";", 1)[0].trim().toLocaleLowerCase();
   if (!/^application\/(?:[a-z0-9._-]+\+)?json$/u.test(contentType)) {
     throw new HttpError(415, "unsupported_request", "Send the lookup request as JSON.");
@@ -747,7 +1079,7 @@ async function readJsonRequest(request: Request): Promise<{ url?: unknown }> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new HttpError(400, "invalid_json", "Send a JSON object containing a website URL.");
   }
-  return value as { url?: unknown };
+  return value as LookupRequest;
 }
 
 export default {
@@ -767,6 +1099,14 @@ export default {
 
     try {
       const body = await readJsonRequest(request);
+      const action = body.action === undefined ? "lookup" : body.action;
+      if (action === "search") {
+        const search = validateSearchInput(body.query);
+        const language = normalizeSearchLanguage(body.language);
+        await consumeQuota(context.supabase);
+        return jsonResponse(origin, await searchCandidates(search.query, language, context.supabase, search.exactUrl));
+      }
+      if (action !== "lookup") throw new HttpError(400, "invalid_action", "Use lookup or search.");
       const raw = typeof body.url === "string" ? body.url.trim() : "";
       const sourceUrl = parsePublicUrl(raw);
       await consumeQuota(context.supabase);
@@ -777,7 +1117,7 @@ export default {
     } catch (error) {
       if (error instanceof HttpError) {
         const headers = responseHeaders(origin) as Record<string, string>;
-        if (error.status === 429) headers["Retry-After"] = "60";
+        if (error.status === 429) headers["Retry-After"] = rateLimitRetryAfter(error.code);
         return new Response(JSON.stringify({ error: error.code, message: error.message }), { status: error.status, headers });
       }
       const timeout = error instanceof DOMException && error.name === "TimeoutError";

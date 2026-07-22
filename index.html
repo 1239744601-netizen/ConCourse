@@ -1689,7 +1689,7 @@
 <link rel="stylesheet" href="concourse-navy.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
-<link rel="stylesheet" href="academic-tools.css?v=20260721-academic-tools3" />
+<link rel="stylesheet" href="academic-tools.css?v=20260722-citation-search1" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2204,9 +2204,9 @@
           <div>
             <h2 id="academicToolsWorkspaceTitle" data-academic-i18n="toolsWorkspaceTitle">Citation Studio</h2>
             <span class="academic-tools-local-note academic-localized-copy">
-              <span lang="en">Manual entries and your bibliography stay on this device. Automatic lookup sends only the website URL to ConCourse’s lookup service.</span>
-              <span lang="zh-CN">手动输入的资料和参考书目仅保存在此设备。使用自动查找时，只有网页网址会发送至 ConCourse 的查找服务。</span>
-              <span lang="zh-HK">手動輸入嘅資料同參考書目只會儲存喺呢部裝置。使用自動查找時，只有網頁網址會傳送去 ConCourse 嘅查找服務。</span>
+              <span lang="en">Manual entries and your bibliography stay on this device. Broad keyword results are provided by Brave Search; selected pages are checked by ConCourse.</span>
+              <span lang="zh-CN">手动输入的资料和参考书目仅保存在此设备。广泛关键词搜索结果由 Brave Search 提供；所选网页由 ConCourse 检查。</span>
+              <span lang="zh-HK">手動輸入嘅資料同參考書目只會儲存喺呢部裝置。廣泛關鍵字搜尋結果由 Brave Search 提供；所選網頁由 ConCourse 檢查。</span>
             </span>
           </div>
           <p data-academic-i18n="toolsWorkspaceIntro">Build a polished reference, check its in-text form, and keep a bibliography for your current project.</p>
@@ -2242,7 +2242,7 @@
                   <input type="radio" name="citationEntryMode" value="automatic" checked />
                   <span>
                     <b data-academic-i18n="citationAutomaticMode">Find automatically</b>
-                    <small data-academic-i18n="citationAutomaticModeHint">Paste a URL and let ConCourse find the source details.</small>
+                    <small data-academic-i18n="citationAutomaticModeHint">Paste a URL or search by title, author, DOI or ISBN.</small>
                   </span>
                 </label>
                 <label class="citation-mode-choice">
@@ -2255,14 +2255,35 @@
               </div>
               <div class="citation-automatic-panel" id="citationAutomaticPanel" aria-busy="false" aria-describedby="citationLookupNote citationLookupStatus">
                 <div class="citation-field citation-auto-url-field">
-                  <label for="citationAutomaticUrl" data-academic-i18n="citationWebsiteUrl">Website URL</label>
+                  <label for="citationAutomaticUrl" data-academic-i18n="citationSearchLabel">Website URL or keywords</label>
                   <div class="citation-auto-url-row">
-                    <input id="citationAutomaticUrl" type="url" maxlength="1200" autocomplete="url" inputmode="url" placeholder="https://example.edu/article" data-academic-i18n-placeholder="citationWebsiteUrlPlaceholder" aria-describedby="citationLookupNote citationLookupStatus" aria-errormessage="citationLookupStatus" />
-                    <button type="button" class="academic-tool-button primary" id="citationLookupWebsite" data-academic-i18n="citationFindSource" aria-controls="citationDetailsSection citationPreview">Find source</button>
+                    <input id="citationAutomaticUrl" type="search" maxlength="2048" autocomplete="off" enterkeyhint="search" placeholder="Paste a URL or search by title, author, DOI or ISBN" data-academic-i18n-placeholder="citationSearchPlaceholder" aria-describedby="citationLookupNote citationLookupStatus" aria-errormessage="citationLookupStatus" aria-controls="citationSearchResults" />
+                    <button type="button" class="academic-tool-button primary" id="citationLookupWebsite" data-academic-i18n="citationFindSource" aria-controls="citationSearchResults citationDetailsSection citationPreview">Find source</button>
                   </div>
                 </div>
                 <p class="citation-lookup-status" id="citationLookupStatus" role="status" aria-live="polite" aria-atomic="true"></p>
-                <p class="citation-lookup-note" id="citationLookupNote" data-academic-i18n="citationLookupNote">Automatic lookup reads public page metadata. Review every imported field before using the citation.</p>
+                <p class="citation-lookup-note" id="citationLookupNote" data-academic-i18n="citationLookupNote">Broad keyword results are provided by Brave Search. Selecting a result lets ConCourse check that public page and import its metadata. Review every imported field.</p>
+                <section class="citation-search-results" id="citationSearchResults" role="region" aria-labelledby="citationSearchResultsTitle" aria-busy="false" hidden>
+                  <header class="citation-search-results-head">
+                    <h3 id="citationSearchResultsTitle" data-academic-i18n="citationSearchResultsTitle">Search results</h3>
+                    <span class="citation-search-results-count" id="citationSearchResultsCount" role="status" aria-live="polite" aria-atomic="true">0 results</span>
+                  </header>
+                  <p class="citation-search-message" id="citationSearchMessage" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+                  <div class="citation-search-loading" id="citationSearchLoading" aria-hidden="true" hidden>
+                    <div class="citation-search-skeleton-card">
+                      <span class="citation-search-skeleton-line title"></span>
+                      <span class="citation-search-skeleton-line meta"></span>
+                      <span class="citation-search-skeleton-line body"></span>
+                    </div>
+                    <div class="citation-search-skeleton-card">
+                      <span class="citation-search-skeleton-line title"></span>
+                      <span class="citation-search-skeleton-line meta"></span>
+                      <span class="citation-search-skeleton-line body"></span>
+                    </div>
+                  </div>
+                  <ol class="citation-search-results-list" id="citationSearchResultsList"></ol>
+                  <p class="citation-search-attribution" id="citationSearchAttribution" hidden></p>
+                </section>
               </div>
             </fieldset>
 
@@ -4814,6 +4835,6 @@ initializeAccount();
 </script>
 <script src="member-hub.js?v=20260721-academic-tools2"></script>
 <script src="marketplace.js?v=20260721-market-gallery5"></script>
-<script src="academic-tools.js?v=20260721-academic-tools3"></script>
+<script src="academic-tools.js?v=20260722-citation-search1"></script>
 </body>
 </html>

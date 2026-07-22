@@ -11,7 +11,7 @@
     en: Object.freeze({
       toolsWorkspaceTitle:"Citation Studio",
       toolsWorkspaceIntro:"Build a polished reference, check its in-text form, and keep a bibliography for your current project.",
-      toolsLocalNote:"Manual entries and saved bibliographies stay on this device. Automatic lookup sends only the submitted URL to ConCourse’s lookup service.",
+      toolsLocalNote:"Manual entries and saved bibliographies stay on this device. Broad keyword results are provided by Brave Search; selected pages are checked by ConCourse.",
       citationStyleLegend:"Citation style",
       sourceTypeLegend:"Source type",
       sourceBook:"Book",
@@ -19,25 +19,40 @@
       sourceWebsite:"Website",
       citationEntryModeLegend:"Add this website",
       citationAutomaticMode:"Find automatically",
-      citationAutomaticModeHint:"Paste a URL and let ConCourse find the source details.",
+      citationAutomaticModeHint:"Paste a URL or search by title, author, or topic.",
       citationManualMode:"Enter manually",
       citationManualModeHint:"Type every source detail yourself.",
-      citationWebsiteUrl:"Website URL",
-      citationWebsiteUrlPlaceholder:"https://example.edu/article",
-      citationFindSource:"Find source",
-      citationFindingSource:"Finding public source details…",
-      citationLookupNote:"Automatic lookup reads public page metadata. Review every imported field before using the citation.",
-      citationLookupRequired:"Paste a complete website URL first.",
-      citationLookupInvalid:"Use a complete public http(s) website URL.",
+      citationSearchLabel:"Website URL or search words",
+      citationSearchPlaceholder:"Paste a URL, or search by title, author, DOI, or ISBN",
+      citationWebsiteUrl:"Website URL or search words",
+      citationWebsiteUrlPlaceholder:"Paste a URL, or search by title, author, or topic",
+      citationFindSource:"Search sources",
+      citationFindingSource:"Searching public sources…",
+      citationLookupNote:"Broad keyword results are provided by Brave Search. Selecting a result lets ConCourse check that public page and import its metadata. Review every imported field.",
+      citationLookupRequired:"Enter a website URL or search words first.",
+      citationLookupInvalid:"Enter at least two characters, or use a complete public http(s) website URL.",
       citationLookupSuccess:"Source details found. Review and correct the imported fields below.",
       citationLookupPartial:"Some details were found. Complete the missing fields below before using the citation.",
       citationLookupFailed:"ConCourse could not read this page. You can still enter the details manually below.",
       citationLookupUnavailable:"Automatic lookup is temporarily unavailable. Enter the source details manually below.",
       citationLookupRateLimited:"You have made several lookups in a short time. Wait a minute, then try again.",
+      citationLookupDailyLimited:"You have reached today’s website-search limit. Try again tomorrow, or enter the source manually.",
       citationLookupSessionExpired:"Your session has expired. Sign in again before using automatic lookup.",
       citationLookupUnsupported:"This page cannot be read automatically. Enter the source details manually below.",
+      citationLookupTimedOut:"The selected page took too long to respond. No citation details were changed. Try again or enter the source manually.",
       citationLookupSignIn:"Sign in before using automatic website lookup.",
       citationLookupReplaceConfirm:"Finding a new source will replace the current website draft and edited reference. Continue?",
+      citationSearchResultsTitle:"Choose the correct source",
+      citationSearchResultCount:"{count} results found",
+      citationSearchNoResults:"No matching sources were found. Try a more specific title, author, or URL, or enter the source manually.",
+      citationSearchExactOnly:"The exact page was found. Broader search is unavailable, but you can still select this result.",
+      citationSearchUnavailable:"Broader web search is not configured yet. Paste a complete URL for exact-page lookup, or enter the source manually.",
+      citationSearchReview:"Compare the title, author, website, date, and URL before selecting a source.",
+      citationSelectSource:"Select source",
+      citationSelectingSource:"Checking the selected page…",
+      citationResultUnknownAuthor:"Author not listed",
+      citationResultExact:"Exact URL match",
+      citationSearchAttribution:"Web results provided by Brave Search",
       citationDetailsLegend:"Source details",
       citationAuthorType:"Author entry",
       citationPeople:"Person or people",
@@ -131,7 +146,7 @@
     "zh-CN": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"创建规范参考文献、查看文内引用，并为当前项目整理参考书目。",
-      toolsLocalNote:"手动输入和已保存的参考书目只保存在此设备。自动查找只会把你提交的网址发送至 ConCourse 查找服务。",
+      toolsLocalNote:"手动输入和已保存的参考书目只保存在此设备。广泛关键词搜索结果由 Brave Search 提供；所选网页由 ConCourse 检查。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"资料类型",
       sourceBook:"书籍",
@@ -139,25 +154,40 @@
       sourceWebsite:"网页",
       citationEntryModeLegend:"添加这个网页",
       citationAutomaticMode:"自动查找",
-      citationAutomaticModeHint:"粘贴网址，让 ConCourse 查找资料详情。",
+      citationAutomaticModeHint:"粘贴网址，或按标题、作者或主题搜索。",
       citationManualMode:"手动输入",
       citationManualModeHint:"自行填写每一项资料详情。",
-      citationWebsiteUrl:"网页网址",
-      citationWebsiteUrlPlaceholder:"https://example.edu/article",
-      citationFindSource:"查找资料",
-      citationFindingSource:"正在查找公开网页资料…",
-      citationLookupNote:"自动查找会读取网页的公开元数据。使用引用前，请核对所有导入字段。",
-      citationLookupRequired:"请先粘贴完整网页网址。",
-      citationLookupInvalid:"请输入完整且公开的 http(s) 网页网址。",
+      citationSearchLabel:"网页网址或搜索词",
+      citationSearchPlaceholder:"粘贴网址，或按标题、作者、DOI 或 ISBN 搜索",
+      citationWebsiteUrl:"网页网址或搜索词",
+      citationWebsiteUrlPlaceholder:"粘贴网址，或按标题、作者或主题搜索",
+      citationFindSource:"搜索资料",
+      citationFindingSource:"正在搜索公开资料…",
+      citationLookupNote:"广泛关键词搜索结果由 Brave Search 提供。选择结果后，ConCourse 会检查该公开网页并导入元数据。请核对所有导入字段。",
+      citationLookupRequired:"请先输入网页网址或搜索词。",
+      citationLookupInvalid:"请输入至少两个字符，或使用完整且公开的 http(s) 网页网址。",
       citationLookupSuccess:"已找到资料详情。请核对并修正下方导入字段。",
       citationLookupPartial:"已找到部分资料。使用引用前，请补全下方缺失字段。",
       citationLookupFailed:"ConCourse 无法读取此网页。你仍可在下方手动输入资料。",
       citationLookupUnavailable:"自动查找暂时不可用，请在下方手动输入资料。",
       citationLookupRateLimited:"你在短时间内进行了多次查找。请等待一分钟后再试。",
+      citationLookupDailyLimited:"你已达到今天的网页搜索限额。请明天再试，或手动输入资料。",
       citationLookupSessionExpired:"登录状态已过期。请重新登录后使用自动查找。",
       citationLookupUnsupported:"此网页无法自动读取，请在下方手动输入资料。",
+      citationLookupTimedOut:"所选网页响应时间过长，引用资料未作任何更改。请重试或手动输入资料。",
       citationLookupSignIn:"请先登录，再使用网页自动查找。",
       citationLookupReplaceConfirm:"查找新资料将替换当前网页草稿及已编辑引用。是否继续？",
+      citationSearchResultsTitle:"选择正确的资料",
+      citationSearchResultCount:"找到 {count} 个结果",
+      citationSearchNoResults:"未找到匹配资料。请尝试更具体的标题、作者或网址，或手动输入资料。",
+      citationSearchExactOnly:"已找到该网页。广泛搜索暂不可用，但你仍可选择这个精确结果。",
+      citationSearchUnavailable:"广泛网页搜索尚未设置。请粘贴完整网址进行精确查找，或手动输入资料。",
+      citationSearchReview:"选择前，请比较标题、作者、网站、日期和网址。",
+      citationSelectSource:"选择资料",
+      citationSelectingSource:"正在核对所选网页…",
+      citationResultUnknownAuthor:"未列出作者",
+      citationResultExact:"网址完全匹配",
+      citationSearchAttribution:"网页结果由 Brave Search 提供",
       citationDetailsLegend:"资料详情",
       citationAuthorType:"作者输入类型",
       citationPeople:"个人作者",
@@ -251,7 +281,7 @@
     "zh-HK": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"建立規範參考文獻、查看文內引用，並為而家嘅項目整理參考書目。",
-      toolsLocalNote:"手動輸入同已儲存嘅參考書目只會留喺呢部裝置。自動查找只會將你提交嘅網址傳送去 ConCourse 查找服務。",
+      toolsLocalNote:"手動輸入同已儲存嘅參考書目只會留喺呢部裝置。廣泛關鍵字搜尋結果由 Brave Search 提供；所選網頁由 ConCourse 檢查。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"資料類型",
       sourceBook:"書籍",
@@ -259,25 +289,40 @@
       sourceWebsite:"網頁",
       citationEntryModeLegend:"加入呢個網頁",
       citationAutomaticMode:"自動搵資料",
-      citationAutomaticModeHint:"貼上網址，等 ConCourse 搵出資料詳情。",
+      citationAutomaticModeHint:"貼上網址，或者按標題、作者或主題搜尋。",
       citationManualMode:"手動輸入",
       citationManualModeHint:"自行填寫每一項資料詳情。",
-      citationWebsiteUrl:"網頁網址",
-      citationWebsiteUrlPlaceholder:"https://example.edu/article",
-      citationFindSource:"搵資料",
-      citationFindingSource:"正在搵公開網頁資料…",
-      citationLookupNote:"自動查找會讀取網頁嘅公開元資料。使用引用之前，請核對所有匯入欄位。",
-      citationLookupRequired:"請先貼上完整網頁網址。",
-      citationLookupInvalid:"請輸入完整而且公開嘅 http(s) 網頁網址。",
+      citationSearchLabel:"網頁網址或者搜尋字詞",
+      citationSearchPlaceholder:"貼上網址，或者按標題、作者、DOI 或 ISBN 搜尋",
+      citationWebsiteUrl:"網頁網址或者搜尋字詞",
+      citationWebsiteUrlPlaceholder:"貼上網址，或者按標題、作者或主題搜尋",
+      citationFindSource:"搜尋資料",
+      citationFindingSource:"正在搜尋公開資料…",
+      citationLookupNote:"廣泛關鍵字搜尋結果由 Brave Search 提供。揀選結果之後，ConCourse 會檢查該公開網頁並匯入元資料。請核對所有匯入欄位。",
+      citationLookupRequired:"請先輸入網頁網址或者搜尋字詞。",
+      citationLookupInvalid:"請輸入至少兩個字元，或者使用完整而且公開嘅 http(s) 網頁網址。",
       citationLookupSuccess:"已經搵到資料詳情。請核對同修正下面匯入嘅欄位。",
       citationLookupPartial:"已經搵到部分資料。使用引用之前，請補齊下面欠缺嘅欄位。",
       citationLookupFailed:"ConCourse 未能讀取呢個網頁。你仍然可以喺下面手動輸入資料。",
       citationLookupUnavailable:"自動查找暫時用唔到，請喺下面手動輸入資料。",
       citationLookupRateLimited:"你喺短時間內查找咗多次。請等一分鐘再試。",
+      citationLookupDailyLimited:"你已經用完今日嘅網頁搜尋限額。請聽日再試，或者手動輸入資料。",
       citationLookupSessionExpired:"登入狀態已過期。請重新登入先使用自動查找。",
       citationLookupUnsupported:"呢個網頁未能自動讀取，請喺下面手動輸入資料。",
+      citationLookupTimedOut:"所選網頁回應時間過長，引用資料冇任何更改。請再試一次或者手動輸入資料。",
       citationLookupSignIn:"請先登入，再使用網頁自動查找。",
       citationLookupReplaceConfirm:"搵新資料會取代目前網頁草稿同已編輯引用。係咪繼續？",
+      citationSearchResultsTitle:"揀選正確資料",
+      citationSearchResultCount:"搵到 {count} 個結果",
+      citationSearchNoResults:"搵唔到相符資料。請試更具體嘅標題、作者或網址，或者手動輸入資料。",
+      citationSearchExactOnly:"已經搵到該網頁。廣泛搜尋暫時用唔到，但你仍然可以揀呢個精確結果。",
+      citationSearchUnavailable:"廣泛網頁搜尋仲未設定。請貼上完整網址作精確查找，或者手動輸入資料。",
+      citationSearchReview:"揀選之前，請比較標題、作者、網站、日期同網址。",
+      citationSelectSource:"揀選資料",
+      citationSelectingSource:"正在核對所選網頁…",
+      citationResultUnknownAuthor:"未列出作者",
+      citationResultExact:"網址完全相符",
+      citationSearchAttribution:"網頁結果由 Brave Search 提供",
       citationDetailsLegend:"資料詳情",
       citationAuthorType:"作者輸入類型",
       citationPeople:"個人作者",
@@ -380,7 +425,11 @@
     overrideBaseFingerprints:Object.create(null),
     lookupRequest:0,
     lookupBusy:false,
-    lookupAbortController:null
+    lookupAbortController:null,
+    lookupMode:"search",
+    searchQuery:"",
+    searchProvider:"",
+    searchResults:[]
   };
 
   const byId = id => document.getElementById(id);
@@ -956,7 +1005,7 @@
     const active = isWebsite && automatic;
     const panel = byId("citationAutomaticPanel");
     if(panel) panel.hidden = !active;
-    if(!active && state.lookupBusy) cancelLookup({clearStatus:true});
+    if(!active) cancelLookup({clearStatus:true, clearResults:true});
   }
 
   function syncStyle({render=true}={}){
@@ -1150,21 +1199,171 @@
     } catch(_error){ return ""; }
   }
 
-  function setLookupBusy(busy){
-    state.lookupBusy = busy;
-    byId("citationAutomaticPanel")?.setAttribute("aria-busy", String(busy));
-    const button = byId("citationLookupWebsite");
-    if(!button) return;
-    button.disabled = busy;
-    button.textContent = tr(busy ? "citationFindingSource" : "citationFindSource");
+  function searchInputInfo(value){
+    const raw = clean(value);
+    const urlIntent = /^[a-z][a-z\d+.-]*:\/\//iu.test(raw)
+      || /^[\p{L}\p{N}.-]+\.[\p{L}]{2,}(?:[/:?#]|$)/iu.test(raw);
+    if(urlIntent){
+      const url = normalizedWebsiteUrl(raw);
+      return {query:url || raw, url, kind:"url", valid:!!url};
+    }
+    const query = raw.replace(/\s+/gu, " ");
+    const wordCount = query ? query.split(/\s+/u).length : 0;
+    return {query, url:"", kind:"keywords", valid:query.length >= 2 && query.length <= 400 && wordCount <= 50};
   }
 
-  function cancelLookup({clearStatus=false}={}){
+  function normalizeSearchResult(value, index=0){
+    if(!value || typeof value !== "object") return null;
+    const url = normalizedWebsiteUrl(value.url || value.canonicalUrl || value.finalUrl || value.sourceUrl);
+    if(!url) return null;
+    const authors = Array.isArray(value.authors) ? value.authors.map(author => clean(author).slice(0, 250)).filter(Boolean).slice(0, 20) : [];
+    const organization = clean(value.organization).slice(0, 250);
+    const publicationDate = dateParts(value.publicationDate) ? clean(value.publicationDate) : "";
+    const publicationYear = /^\d{4}$/u.test(clean(value.publicationYear))
+      ? clean(value.publicationYear)
+      : publicationDate ? publicationDate.slice(0, 4) : "";
+    const displayDate = clean(value.displayDate || value.resultDate).replace(/\s+/gu, " ").slice(0, 80);
+    let hostname = "";
+    try { hostname = new URL(url).hostname.replace(/^www\./iu, ""); } catch(_error){}
+    return {
+      id:clean(value.id).slice(0, 120) || `source-${index + 1}`,
+      url,
+      title:clean(value.title).slice(0, 600) || hostname || url,
+      description:clean(value.description).slice(0, 1000),
+      siteName:clean(value.siteName).slice(0, 250) || hostname,
+      authors,
+      organization,
+      authorType:value.authorType === "organization" && organization ? "organization" : "person",
+      publicationDate,
+      publicationYear,
+      displayDate,
+      exactMatch:value.exactMatch === true
+    };
+  }
+
+  function clearSearchResults(){
+    state.searchQuery = "";
+    state.searchProvider = "";
+    state.searchResults = [];
+    const region = byId("citationSearchResults");
+    const list = byId("citationSearchResultsList");
+    const loading = byId("citationSearchLoading");
+    if(list) list.replaceChildren();
+    if(loading) loading.hidden = true;
+    if(region) region.hidden = true;
+  }
+
+  function resultAuthorLabel(result){
+    if(result.authorType === "organization" && result.organization) return result.organization;
+    return result.authors.length ? result.authors.join(", ") : result.organization || tr("citationResultUnknownAuthor");
+  }
+
+  function visibleResultUrl(value){
+    try {
+      const url = new URL(value);
+      return `${url.hostname.replace(/^www\./iu, "")}${url.pathname === "/" ? "" : url.pathname}${url.search}`.slice(0, 180);
+    } catch(_error){ return ""; }
+  }
+
+  function renderSearchResults({focus=false}={}){
+    const region = byId("citationSearchResults");
+    const list = byId("citationSearchResultsList");
+    if(!region || !list) return;
+    list.replaceChildren();
+    const count = state.searchResults.length;
+    region.hidden = !count;
+    if(!count) return;
+    const title = byId("citationSearchResultsTitle");
+    const countLabel = byId("citationSearchResultsCount");
+    const attribution = byId("citationSearchAttribution");
+    if(title) title.textContent = tr("citationSearchResultsTitle");
+    if(countLabel) countLabel.textContent = tr("citationSearchResultCount", {count});
+    if(attribution){
+      attribution.textContent = state.searchProvider.toLocaleLowerCase().includes("brave") ? tr("citationSearchAttribution") : "";
+      attribution.hidden = !attribution.textContent;
+    }
+    state.searchResults.forEach((result, index) => {
+      const item = document.createElement("li");
+      item.className = "citation-search-result citation-search-card";
+      if(result.exactMatch) item.dataset.exact = "true";
+
+      const body = document.createElement("div");
+      body.className = "citation-search-result-body";
+      const headingRow = document.createElement("div");
+      headingRow.className = "citation-search-result-heading";
+      const resultTitle = document.createElement("h4");
+      resultTitle.className = "citation-search-title";
+      resultTitle.textContent = result.title;
+      headingRow.append(resultTitle);
+      if(result.exactMatch){
+        const badge = document.createElement("span");
+        badge.className = "citation-search-result-badge";
+        badge.textContent = tr("citationResultExact");
+        headingRow.append(badge);
+      }
+      body.append(headingRow);
+
+      const byline = document.createElement("p");
+      byline.className = "citation-search-byline";
+      const date = result.displayDate || result.publicationDate || result.publicationYear;
+      byline.textContent = [resultAuthorLabel(result), result.siteName, date].filter(Boolean).join(" · ");
+      body.append(byline);
+      if(result.description){
+        const description = document.createElement("p");
+        description.className = "citation-search-description";
+        description.textContent = result.description;
+        body.append(description);
+      }
+      const url = document.createElement("a");
+      url.className = "citation-search-url";
+      url.href = result.url;
+      url.target = "_blank";
+      url.rel = "noopener noreferrer";
+      url.textContent = visibleResultUrl(result.url);
+      body.append(url);
+
+      const actions = document.createElement("div");
+      actions.className = "citation-search-actions";
+      const select = document.createElement("button");
+      select.type = "button";
+      select.className = "academic-tool-button citation-search-result-select";
+      select.dataset.citationResultIndex = String(index);
+      select.textContent = tr("citationSelectSource");
+      select.disabled = state.lookupBusy;
+      actions.append(select);
+      item.append(body, actions);
+      list.append(item);
+    });
+    if(focus && title){
+      title.tabIndex = -1;
+      title.focus();
+    }
+  }
+
+  function setLookupBusy(busy, mode=state.lookupMode){
+    state.lookupBusy = busy;
+    state.lookupMode = mode;
+    byId("citationAutomaticPanel")?.setAttribute("aria-busy", String(busy));
+    const region = byId("citationSearchResults");
+    const loading = byId("citationSearchLoading");
+    if(region) region.setAttribute("aria-busy", String(busy && mode === "search"));
+    if(loading) loading.hidden = !(busy && mode === "search");
+    if(region && busy && mode === "search") region.hidden = false;
+    const button = byId("citationLookupWebsite");
+    if(button){
+      button.disabled = busy;
+      button.textContent = tr(busy ? (mode === "select" ? "citationSelectingSource" : "citationFindingSource") : "citationFindSource");
+    }
+    byId("citationSearchResultsList")?.querySelectorAll("[data-citation-result-index]").forEach(control => { control.disabled = busy; });
+  }
+
+  function cancelLookup({clearStatus=false, clearResults=false}={}){
     state.lookupRequest += 1;
     state.lookupAbortController?.abort();
     state.lookupAbortController = null;
     setLookupBusy(false);
     if(clearStatus) setLookupStatus("");
+    if(clearResults) clearSearchResults();
   }
 
   function websiteDraftHasContent(){
@@ -1172,7 +1371,7 @@
       .some(id => clean(byId(id)?.value)) || Object.keys(state.draftOverrides).length > 0;
   }
 
-  function applyWebsiteMetadata(metadata){
+  function applyWebsiteMetadata(metadata, {statusKey="", focus=true}={}){
     const authors = Array.isArray(metadata.authors) ? metadata.authors.map(clean).filter(Boolean).slice(0, 20) : [];
     const organisation = clean(metadata.organization);
     const authorType = metadata.authorType === "person" && authors.length
@@ -1191,7 +1390,7 @@
     byId("citationPublicationDate").value = publicationDate;
     byId("citationYear").value = publicationYear;
     byId("citationSite").value = clean(metadata.siteName);
-    const resolvedUrl = normalizedWebsiteUrl(metadata.canonicalUrl || metadata.finalUrl || metadata.sourceUrl || byId("citationAutomaticUrl")?.value);
+    const resolvedUrl = normalizedWebsiteUrl(metadata.canonicalUrl || metadata.finalUrl || metadata.sourceUrl || metadata.url || byId("citationAutomaticUrl")?.value);
     byId("citationLocator").value = resolvedUrl;
     byId("citationAutomaticUrl").value = resolvedUrl;
     if(!byId("citationAccessDate").value) byId("citationAccessDate").value = localDateValue();
@@ -1200,11 +1399,11 @@
     if(state.previewTimer){ clearTimeout(state.previewTimer); state.previewTimer = null; }
     renderPreview({announce:true});
     const partial = !metadata.title || !(organisation || authors.length) || !metadata.siteName || !(publicationDate || publicationYear);
-    setLookupStatus(tr(partial ? "citationLookupPartial" : "citationLookupSuccess"), partial ? "warning" : "success");
-    byId("citationTitle")?.focus();
+    setLookupStatus(tr(statusKey || (partial ? "citationLookupPartial" : "citationLookupSuccess")), statusKey || partial ? "warning" : "success");
+    if(focus) byId("citationTitle")?.focus();
   }
 
-  async function lookupErrorKey(error){
+  async function lookupErrorDetails(error){
     const status = Number(error?.context?.status || 0);
     let details = null;
     try {
@@ -1214,44 +1413,101 @@
     } catch(_error){}
     const code = clean(details?.code || details?.error).toLocaleUpperCase();
     const message = clean(`${details?.message || ""} ${error?.message || ""}`).toLocaleLowerCase();
-    if(status === 401 || code === "INVALID_CREDENTIALS") return "citationLookupSessionExpired";
-    if(status === 429 || code.includes("RATE_LIMIT")) return "citationLookupRateLimited";
-    if([413, 415, 422].includes(status) || code.includes("UNSUPPORTED") || code.includes("TOO_LARGE")) return "citationLookupUnsupported";
-    if(status === 404 || message.includes("not found") || message.includes("failed to send")) return "citationLookupUnavailable";
-    return "citationLookupFailed";
+    const key = status === 401 || code === "INVALID_CREDENTIALS"
+      ? "citationLookupSessionExpired"
+      : code.includes("DAILY_RATE_LIMIT")
+        ? "citationLookupDailyLimited"
+        : status === 429 || code.includes("RATE_LIMIT")
+        ? "citationLookupRateLimited"
+        : code.includes("TIMEOUT") || message.includes("citation_lookup_timeout") || message.includes("timed out")
+          ? "citationLookupTimedOut"
+        : code.includes("SEARCH_NOT_CONFIGURED")
+          ? "citationSearchUnavailable"
+          : [413, 415, 422].includes(status) || code.includes("UNSUPPORTED") || code.includes("TOO_LARGE")
+            ? "citationLookupUnsupported"
+            : status === 404 || message.includes("not found") || message.includes("failed to send")
+              ? "citationLookupUnavailable"
+              : "citationLookupFailed";
+    return {status, code, message, key};
   }
 
-  async function lookupWebsiteMetadata(){
-    if(state.lookupBusy) return;
-    const raw = clean(byId("citationAutomaticUrl")?.value);
-    if(!raw){ setLookupStatus(tr("citationLookupRequired"), "error"); return; }
-    const url = normalizedWebsiteUrl(raw);
-    if(!url){ setLookupStatus(tr("citationLookupInvalid"), "error"); return; }
-    const client = typeof authClient !== "undefined" ? authClient : null;
-    const user = typeof currentUser !== "undefined" ? currentUser : null;
-    if(!client || !user){ setLookupStatus(tr("citationLookupSignIn"), "error"); return; }
-    if(websiteDraftHasContent() && !window.confirm(tr("citationLookupReplaceConfirm"))) return;
+  async function lookupErrorKey(error){
+    return (await lookupErrorDetails(error)).key;
+  }
 
-    state.lookupAbortController?.abort();
-    const controller = new AbortController();
-    state.lookupAbortController = controller;
-    const request = ++state.lookupRequest;
-    byId("citationAutomaticUrl").value = url;
-    setLookupBusy(true);
-    setLookupStatus(tr("citationFindingSource"), "loading");
+  async function invokeCitationFunction(client, body, controller, timeoutMs){
     let timeoutId;
     try {
       const timeout = new Promise((_, reject) => {
         timeoutId = window.setTimeout(() => {
           controller.abort();
           reject(new Error("citation_lookup_timeout"));
-        }, 16000);
+        }, Math.max(1, timeoutMs));
       });
-      const invocation = client.functions.invoke("fetch-citation-metadata", {body:{url}, signal:controller.signal});
-      const {data, error} = await Promise.race([invocation, timeout]);
-      clearTimeout(timeoutId);
+      return await Promise.race([
+        client.functions.invoke("fetch-citation-metadata", {body, signal:controller.signal}),
+        timeout
+      ]);
+    } finally { clearTimeout(timeoutId); }
+  }
+
+  function acceptSearchResponse(data){
+    const rawResults = Array.isArray(data?.results) ? data.results : [];
+    const results = rawResults.map(normalizeSearchResult).filter(Boolean).slice(0, 10);
+    state.searchResults = results;
+    state.searchProvider = clean(data?.searchProvider);
+    renderSearchResults({focus:results.length > 0});
+    if(!results.length){
+      setLookupStatus(tr("citationSearchNoResults"), "warning");
+      return false;
+    }
+    const exactOnly = results.length === 1 && results[0].exactMatch && !state.searchProvider.toLocaleLowerCase().includes("brave");
+    setLookupStatus(tr(exactOnly ? "citationSearchExactOnly" : "citationSearchReview"), exactOnly ? "warning" : "success");
+    return true;
+  }
+
+  async function lookupWebsiteMetadata(){
+    if(state.lookupBusy) return;
+    const input = searchInputInfo(byId("citationAutomaticUrl")?.value);
+    if(!input.query){ setLookupStatus(tr("citationLookupRequired"), "error"); return; }
+    if(!input.valid){ setLookupStatus(tr("citationLookupInvalid"), "error"); return; }
+    const client = typeof authClient !== "undefined" ? authClient : null;
+    const user = typeof currentUser !== "undefined" ? currentUser : null;
+    if(!client || !user){ setLookupStatus(tr("citationLookupSignIn"), "error"); return; }
+
+    state.lookupAbortController?.abort();
+    const controller = new AbortController();
+    state.lookupAbortController = controller;
+    const request = ++state.lookupRequest;
+    const deadline = Date.now() + 18000;
+    state.searchQuery = input.query;
+    state.searchProvider = "";
+    state.searchResults = [];
+    renderSearchResults();
+    byId("citationAutomaticUrl").value = input.url || input.query;
+    setLookupBusy(true, "search");
+    setLookupStatus(tr("citationFindingSource"), "loading");
+    try {
+      let {data, error} = await invokeCitationFunction(client, {
+        action:"search",
+        query:input.query,
+        language:language()
+      }, controller, deadline - Date.now());
       if(request !== state.lookupRequest) return;
+
+      // An older deployed function will not understand search requests yet.
+      // Keep exact-URL search useful while the new function is being deployed.
+      if(error && input.url && !controller.signal.aborted && Date.now() < deadline){
+        const fallback = await invokeCitationFunction(client, {url:input.url}, controller, deadline - Date.now());
+        if(request !== state.lookupRequest) return;
+        if(!fallback.error && fallback.data){
+          const exact = normalizeSearchResult({...fallback.data, url:input.url, exactMatch:true}, 0);
+          data = exact ? {results:[exact], searchProvider:"exact-url"} : null;
+          error = null;
+        } else error = fallback.error || error;
+      }
       if(error){
+        clearSearchResults();
         setLookupStatus(tr(await lookupErrorKey(error)), "error");
         return;
       }
@@ -1259,15 +1515,59 @@
         && document.querySelector('input[name="citationEntryMode"]:checked')?.value !== "manual"
         && !byId("hubAcademicToolsView")?.hidden;
       if(!stillActive) return;
-      if(!data || typeof data !== "object" || !(clean(data.title) || clean(data.siteName) || normalizedWebsiteUrl(data.canonicalUrl || data.finalUrl || data.sourceUrl))){
+      if(!data || typeof data !== "object"){
+        clearSearchResults();
         setLookupStatus(tr("citationLookupFailed"), "error");
         return;
       }
-      applyWebsiteMetadata(data);
+      acceptSearchResponse(data);
     } catch(_error){
-      if(request === state.lookupRequest) setLookupStatus(tr("citationLookupFailed"), "error");
+      if(request === state.lookupRequest){
+        clearSearchResults();
+        setLookupStatus(tr("citationLookupFailed"), "error");
+      }
     } finally {
-      clearTimeout(timeoutId);
+      if(request === state.lookupRequest){
+        state.lookupAbortController = null;
+        setLookupBusy(false);
+      }
+    }
+  }
+
+  async function selectSearchResult(index){
+    if(state.lookupBusy) return;
+    const candidate = state.searchResults[index];
+    if(!candidate) return;
+    if(websiteDraftHasContent() && !window.confirm(tr("citationLookupReplaceConfirm"))) return;
+    const client = typeof authClient !== "undefined" ? authClient : null;
+    const user = typeof currentUser !== "undefined" ? currentUser : null;
+    if(!client || !user){ setLookupStatus(tr("citationLookupSignIn"), "error"); return; }
+
+    state.lookupAbortController?.abort();
+    const controller = new AbortController();
+    state.lookupAbortController = controller;
+    const request = ++state.lookupRequest;
+    setLookupBusy(true, "select");
+    setLookupStatus(tr("citationSelectingSource"), "loading");
+    try {
+      const {data, error} = await invokeCitationFunction(client, {url:candidate.url}, controller, 16000);
+      if(request !== state.lookupRequest) return;
+      if(error){
+        setLookupStatus(tr(await lookupErrorKey(error)), "error");
+        return;
+      }
+      const metadataUrl = normalizedWebsiteUrl(data?.canonicalUrl || data?.finalUrl || data?.sourceUrl);
+      if(!data || typeof data !== "object" || !clean(data.title) || !metadataUrl){
+        setLookupStatus(tr("citationLookupFailed"), "error");
+        return;
+      }
+      clearSearchResults();
+      applyWebsiteMetadata(data);
+    } catch(error){
+      if(request === state.lookupRequest){
+        setLookupStatus(tr(await lookupErrorKey(error)), "error");
+      }
+    } finally {
       if(request === state.lookupRequest){
         state.lookupAbortController = null;
         setLookupBusy(false);
@@ -1338,7 +1638,7 @@
   }
 
   function resetFormState(){
-    cancelLookup();
+    cancelLookup({clearResults:true});
     state.draftOverrides = Object.create(null);
     state.overrideBaseFingerprints = Object.create(null);
     setLookupBusy(false);
@@ -1382,7 +1682,8 @@
       else element.placeholder = value;
     });
     document.querySelectorAll("[data-academic-i18n-aria-label]").forEach(element => { element.setAttribute("aria-label", tr(element.dataset.academicI18nAriaLabel)); });
-    setLookupBusy(state.lookupBusy);
+    setLookupBusy(state.lookupBusy, state.lookupMode);
+    renderSearchResults();
     syncStyle();
   }
 
@@ -1399,7 +1700,7 @@
   }
 
   function deactivate(){
-    cancelLookup();
+    cancelLookup({clearResults:true});
   }
 
   function reset(nextUserId){
@@ -1424,7 +1725,13 @@
       void lookupWebsiteMetadata();
     });
     byId("citationForm").addEventListener("input", event => {
-      if(event.target.id !== "citationAutomaticUrl") schedulePreview();
+      if(event.target.id === "citationAutomaticUrl"){
+        if(state.lookupBusy) cancelLookup({clearStatus:true, clearResults:true});
+        else {
+          if(state.searchResults.length) clearSearchResults();
+          setLookupStatus("");
+        }
+      } else schedulePreview();
     });
     byId("citationForm").addEventListener("change", event => {
       if(event.target.name === "citationSource") syncSourceFields();
@@ -1434,6 +1741,12 @@
     });
     byId("clearCitation")?.addEventListener("click", clearForm);
     byId("citationLookupWebsite")?.addEventListener("click", () => void lookupWebsiteMetadata());
+    byId("citationSearchResultsList")?.addEventListener("click", event => {
+      const button = event.target.closest?.("[data-citation-result-index]");
+      if(!button) return;
+      const index = Number(button.dataset.citationResultIndex);
+      if(Number.isInteger(index)) void selectSearchResult(index);
+    });
     byId("citationOutput")?.addEventListener("input", editCurrentReference);
     byId("citationOutput")?.addEventListener("paste", pastePlainReference);
     byId("restoreCitation")?.addEventListener("click", restoreGeneratedReference);
@@ -1469,7 +1782,7 @@
     deactivate,
     reset,
     refreshLanguage,
-    __test:Object.freeze({formatRecord, effectiveFormat, parseAuthors, normalizeDoi, normalizedWebsiteUrl, validateRecord, fingerprint, sourceFingerprint})
+    __test:Object.freeze({formatRecord, effectiveFormat, parseAuthors, normalizeDoi, normalizedWebsiteUrl, searchInputInfo, normalizeSearchResult, validateRecord, fingerprint, sourceFingerprint})
   });
 
   bind();
