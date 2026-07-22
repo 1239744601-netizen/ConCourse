@@ -23,7 +23,8 @@ test("Supabase email and sign-in failures map to clear user messages", () => {
 
   assert.equal(mapError({code:"email_address_not_authorized"}), "authEmailNotAuthorized");
   assert.equal(mapError({code:"over_email_send_rate_limit"}), "authEmailRateLimited");
-  assert.equal(mapError({status:429}), "authEmailRateLimited");
+  assert.equal(mapError({status:429}), "authRateLimited");
+  assert.equal(mapError({status:429, code:"over_email_send_rate_limit"}), "authEmailRateLimited");
   assert.equal(mapError({message:"Email rate limit exceeded"}), "authEmailRateLimited");
   assert.equal(mapError({code:"user_already_exists"}), "authAlreadyRegistered");
   assert.equal(mapError({message:"User already registered"}), "authAlreadyRegistered");
