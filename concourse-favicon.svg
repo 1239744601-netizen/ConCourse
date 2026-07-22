@@ -1,0 +1,16 @@
+<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="concourse-favicon-title">
+  <title id="concourse-favicon-title">ConCourse</title>
+  <style>
+    .concourse-primary { stroke: #061A30; }
+    .concourse-secondary { stroke: #2BA6D1; }
+    @media (prefers-color-scheme: dark) {
+      .concourse-primary { stroke: #FAF8F2; }
+      .concourse-secondary { stroke: #69D2F1; }
+    }
+  </style>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path class="concourse-primary" d="M62 28H37C19 28 10 39 10 54S19 80 37 80H62" stroke-width="15"/>
+    <path class="concourse-secondary" d="M34 18H59C77 18 86 29 86 44S77 70 59 70H34" stroke-width="15" transform="rotate(-6 60 44)"/>
+    <path class="concourse-primary" d="M34 80H62" stroke-width="15"/>
+  </g>
+</svg>

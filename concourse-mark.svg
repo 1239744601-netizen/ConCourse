@@ -1,0 +1,9 @@
+<svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="concourse-mark-title concourse-mark-description">
+  <title id="concourse-mark-title">ConCourse</title>
+  <desc id="concourse-mark-description">Two interwoven course ribbons form a rising double C around a shared concourse.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M62 28H37C19 28 10 39 10 54S19 80 37 80H62" stroke="#FAF8F2" stroke-width="13"/>
+    <path d="M34 18H59C77 18 86 29 86 44S77 70 59 70H34" stroke="#61C9EA" stroke-width="13" transform="rotate(-6 60 44)"/>
+    <path d="M34 80H62" stroke="#FAF8F2" stroke-width="13"/>
+  </g>
+</svg>

@@ -271,10 +271,14 @@ body:not(.app-active) #landingScreen::after {
 #landingScreen .brand-mark {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  clip-path: circle(49% at 50% 50%);
+  display: block;
+  flex: none;
+  object-fit: contain;
+  overflow: visible;
+  border-radius: 0;
+  clip-path: none;
   box-shadow: none;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .28));
+  filter: none;
 }
 
 #landingScreen .brand-name {

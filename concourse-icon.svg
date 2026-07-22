@@ -1,36 +1,9 @@
 <svg viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="concourse-icon-title concourse-icon-description">
   <title id="concourse-icon-title">ConCourse</title>
-  <desc id="concourse-icon-description">Three course paths converge inside an open C and rise together toward a gold summit.</desc>
-  <defs>
-    <radialGradient id="concourse-icon-field" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(70 20) rotate(132) scale(82)">
-      <stop stop-color="#123B61"/>
-      <stop offset="0.52" stop-color="#08243F"/>
-      <stop offset="1" stop-color="#041426"/>
-    </radialGradient>
-    <linearGradient id="concourse-icon-course" x1="24" y1="67" x2="52" y2="42" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8BE2FF"/>
-      <stop offset="1" stop-color="#4CB6E8"/>
-    </linearGradient>
-    <linearGradient id="concourse-icon-summit" x1="46" y1="50" x2="74" y2="29" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F7D77D"/>
-      <stop offset="1" stop-color="#F0B83D"/>
-    </linearGradient>
-  </defs>
-
-  <circle cx="48" cy="48" r="45" fill="url(#concourse-icon-field)"/>
-  <circle cx="48" cy="48" r="44" fill="none" stroke="#79D8F7" stroke-opacity=".18" stroke-width="2"/>
-
-  <!-- The open arc is both the initial C and a shared campus concourse. -->
-  <path d="M69.5 24.5A32.5 32.5 0 1 0 70.5 70.5" fill="none" stroke="#FAF4E8" stroke-width="8.5" stroke-linecap="round"/>
-
-  <!-- Separate courses and students arrive from three directions. -->
-  <g fill="none" stroke="url(#concourse-icon-course)" stroke-width="5" stroke-linecap="round">
-    <path d="M28 32C34.5 36 39.5 43 46 49"/>
-    <path d="M23.5 49H46"/>
-    <path d="M28 66C34.5 62 39.5 55 46 49"/>
+  <desc id="concourse-icon-description">Two interwoven course ribbons form a rising double C around a shared concourse.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M62 28H37C19 28 10 39 10 54S19 80 37 80H62" stroke="#061A30" stroke-width="13"/>
+    <path d="M34 18H59C77 18 86 29 86 44S77 70 59 70H34" stroke="#61C9EA" stroke-width="13" transform="rotate(-6 60 44)"/>
+    <path d="M34 80H62" stroke="#061A30" stroke-width="13"/>
   </g>
-
-  <!-- One shared route rises from the concourse into an abstract summit. -->
-  <path d="M46 49C56 49 62 42 67 34L72.5 27.5 77.5 34" fill="none" stroke="url(#concourse-icon-summit)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M46 44.5 50.5 49 46 53.5 41.5 49Z" fill="#FAF4E8"/>
 </svg>

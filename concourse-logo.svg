@@ -1,35 +1,10 @@
-<svg viewBox="0 0 470 112" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="concourse-logo-title concourse-logo-description">
+<svg viewBox="0 0 410 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="concourse-logo-title concourse-logo-description">
   <title id="concourse-logo-title">ConCourse</title>
-  <desc id="concourse-logo-description">The ConCourse convergence summit symbol with the words ConCourse and Courses converge, students rise.</desc>
-  <defs>
-    <radialGradient id="concourse-logo-field" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(78 22) rotate(132) scale(91)">
-      <stop stop-color="#123B61"/>
-      <stop offset="0.52" stop-color="#08243F"/>
-      <stop offset="1" stop-color="#041426"/>
-    </radialGradient>
-    <linearGradient id="concourse-logo-course" x1="28" y1="75" x2="58" y2="46" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8BE2FF"/>
-      <stop offset="1" stop-color="#4CB6E8"/>
-    </linearGradient>
-    <linearGradient id="concourse-logo-summit" x1="51" y1="56" x2="82" y2="33" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F7D77D"/>
-      <stop offset="1" stop-color="#F0B83D"/>
-    </linearGradient>
-  </defs>
-
-  <g transform="translate(8 8)">
-    <circle cx="48" cy="48" r="45" fill="url(#concourse-logo-field)"/>
-    <circle cx="48" cy="48" r="44" fill="none" stroke="#79D8F7" stroke-opacity=".18" stroke-width="2"/>
-    <path d="M69.5 24.5A32.5 32.5 0 1 0 70.5 70.5" fill="none" stroke="#FAF4E8" stroke-width="8.5" stroke-linecap="round"/>
-    <g fill="none" stroke="url(#concourse-logo-course)" stroke-width="5" stroke-linecap="round">
-      <path d="M28 32C34.5 36 39.5 43 46 49"/>
-      <path d="M23.5 49H46"/>
-      <path d="M28 66C34.5 62 39.5 55 46 49"/>
-    </g>
-    <path d="M46 49C56 49 62 42 67 34L72.5 27.5 77.5 34" fill="none" stroke="url(#concourse-logo-summit)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M46 44.5 50.5 49 46 53.5 41.5 49Z" fill="#FAF4E8"/>
+  <desc id="concourse-logo-description">The ConCourse interwoven ribbon symbol and wordmark.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M62 28H37C19 28 10 39 10 54S19 80 37 80H62" stroke="#061A30" stroke-width="13"/>
+    <path d="M34 18H59C77 18 86 29 86 44S77 70 59 70H34" stroke="#61C9EA" stroke-width="13" transform="rotate(-6 60 44)"/>
+    <path d="M34 80H62" stroke="#061A30" stroke-width="13"/>
   </g>
-
-  <text x="126" y="62" fill="#071C33" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Arial, sans-serif" font-size="43" font-weight="760" letter-spacing="-1.8">ConCourse</text>
-  <text x="129" y="86" fill="#47647D" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="2.05">COURSES CONVERGE · STUDENTS RISE</text>
+  <text x="112" y="62" fill="#061A30" font-family="'Avenir Next', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="43" font-weight="700" letter-spacing="-1.9">ConCourse</text>
 </svg>
