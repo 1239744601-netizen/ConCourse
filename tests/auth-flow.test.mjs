@@ -16,6 +16,22 @@ test("verification email can be resent without re-entering registration details"
   assert.match(html, /authClient\.auth\.resend\(\{\s*type:"signup",\s*email,/);
   assert.match(html, /emailRedirectTo:AUTH_EMAIL_REDIRECT_URL/);
   assert.match(html, /startAuthResendCooldown\(60\)/);
+  assert.match(html, /setAuthMode\("verify", \{clearMessage:false\}\)/);
+});
+
+test("signup verification uses a manual six-digit OTP instead of consuming an email link", () => {
+  assert.match(html, /id="authVerificationCode"[^>]*inputmode="numeric"[^>]*autocomplete="one-time-code"[^>]*maxlength="6"/);
+  assert.match(html, /authClient\.auth\.verifyOtp\(\{ email, token, type:"email" \}\)/);
+  assert.match(html, /mode === "signup" \|\| mode === "verify"/);
+  assert.match(html, /authMode === "verify" \? pendingVerificationEmail/);
+  assert.match(html, /\$\("authEmail"\)\.readOnly = verifying/);
+
+  const submitBody = functionBody("submitAuth", "initializeAccount");
+  assert.ok(
+    submitBody.indexOf('if(mode === "verify")') < submitBody.indexOf('password.length < 8'),
+    "OTP verification must run before password validation because the password field is hidden"
+  );
+  assert.match(submitBody, /pendingVerificationEmail = "";[\s\S]*applySession\(result\.data\.session\)/);
 });
 
 test("Supabase email and sign-in failures map to clear user messages", () => {
@@ -37,7 +53,7 @@ test("signup acknowledgement does not promise that an email was delivered", () =
   const english = html.match(/accountCreated:"([^"]+)"[^\n]*signedInSuccess:"Signed in successfully\."/);
   assert.ok(english, "English registration acknowledgement should exist");
   assert.doesNotMatch(english[1], /check your email|email (?:was|has been) sent/i);
-  assert.match(english[1], /if this address is eligible/i);
+  assert.match(english[1], /if .* is eligible/i);
 
   assert.equal((html.match(/verificationEmailMissing:/g) || []).length, 3);
   assert.equal((html.match(/authEmailNotAuthorized:/g) || []).length, 3);
@@ -86,8 +102,25 @@ test("handled callback errors are removed without disturbing unrelated URL state
 });
 
 test("auth status survives a language switch and invalid emails never reach Supabase", () => {
-  assert.match(html, /setAuthMode\(authMode, \{clearMessage:false\}\)/);
+  assert.match(html, /setAuthMode\(authMode, \{clearMessage:false, focus:false\}\)/);
   assert.match(html, /function setAuthMessageKey\(/);
   assert.match(html, /if\(!validAuthEmail\(email\) \|\| password\.length < 8\)/);
   assert.match(html, /\$\("authPassword"\)\.value = "";/);
+});
+
+test("OTP instructions are translated in English, Mandarin, and Cantonese", () => {
+  for(const key of [
+    "verificationSubtitle",
+    "verificationNote",
+    "verificationCodeTitle",
+    "verificationCodeHelp",
+    "verifyEmail",
+    "verifyingEmail",
+    "invalidVerificationCode",
+    "verificationCodeExpired",
+    "emailVerified",
+    "useDifferentEmail"
+  ]){
+    assert.equal((html.match(new RegExp(`${key}:`, "g")) || []).length, 3, `${key} should exist in all three languages`);
+  }
 });

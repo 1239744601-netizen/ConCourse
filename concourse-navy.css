@@ -1089,6 +1089,115 @@ body.app-active #landingScreen .landing-cinema {
   border-radius: 14px;
 }
 
+.auth-verification-panel {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid rgba(47, 109, 246, .18);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139, 216, 255, .18), transparent 13rem),
+    rgba(237, 247, 252, .72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .86);
+}
+
+.auth-verification-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.auth-verification-heading > div {
+  min-width: 0;
+}
+
+.auth-verification-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  color: var(--navy-950);
+  border: 1px solid rgba(139, 216, 255, .9);
+  border-radius: 14px;
+  background: var(--sky-300);
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 0 8px 22px rgba(36, 151, 204, .18);
+}
+
+.auth-verification-heading b,
+.auth-verification-heading span {
+  display: block;
+}
+
+.auth-verification-heading b {
+  color: var(--navy-950);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.auth-verification-heading div > span {
+  max-width: 330px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-card .auth-verification-code {
+  min-height: 64px;
+  padding: 12px 16px 12px 23px;
+  color: var(--navy-950);
+  border-color: rgba(37, 93, 132, .3);
+  background: rgba(255, 255, 255, .94);
+  font-size: 28px;
+  font-weight: 760;
+  letter-spacing: .3em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.auth-card .auth-verification-code::placeholder {
+  color: rgba(57, 82, 101, .32);
+  opacity: 1;
+}
+
+.auth-card .auth-verification-help {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 18px;
+}
+
+.auth-change-email {
+  min-height: 0;
+  margin-top: 8px;
+  padding: 4px 0;
+  color: var(--cobalt-600);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.auth-card #authEmail[readonly] {
+  color: var(--ink-soft);
+  background: rgba(230, 237, 242, .7);
+  cursor: default;
+}
+
+@media (max-width: 520px) {
+  .auth-verification-panel { padding: 17px; border-radius: 18px; }
+  .auth-card .auth-verification-code { font-size: 25px; letter-spacing: .24em; }
+}
+
 /* Planner workspace */
 
 body.app-active:not(.schedule-active):not(.hub-active) {
