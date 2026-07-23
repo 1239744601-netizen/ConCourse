@@ -1918,3 +1918,807 @@ html[data-theme="day"] .member-hub[data-active-view="marketplace"]
     aspect-ratio: 4 / 3;
   }
 }
+
+/* ==========================================================================
+   Selected direction B — Ribbon Concourse
+   The Hub is a continuous artwork-and-paper landscape. Every animated layer
+   below is a crop of the active destination artwork; no unrelated orbit,
+   sparkle, or decorative dot is introduced.
+   ========================================================================== */
+
+.member-hub {
+  --ribbon-night: #061a2e;
+  --ribbon-night-soft: #0b2947;
+  --ribbon-paper: #fffdf8;
+  --ribbon-paper-blue: #edf8ff;
+  --ribbon-line: rgba(130, 174, 204, .24);
+  --ribbon-gold: #efbd4c;
+  --ribbon-cyan: #79d5ff;
+  --hub-art-image: url("concourse-art-community.jpg");
+  --hub-fragment-primary-position: 82% 44%;
+  --hub-fragment-secondary-position: 18% 58%;
+}
+
+.member-hub[data-active-view="community"] {
+  --hub-art-image: url("concourse-art-community.jpg");
+  --hub-fragment-primary-position: 78% 46%;
+  --hub-fragment-secondary-position: 22% 60%;
+}
+
+.member-hub[data-active-view="marketplace"] {
+  --hub-art-image: url("concourse-art-market.jpg");
+  --hub-fragment-primary-position: 84% 48%;
+  --hub-fragment-secondary-position: 16% 57%;
+}
+
+.member-hub[data-active-view="messages"] {
+  --hub-art-image: url("concourse-art-messages.jpg");
+  --hub-fragment-primary-position: 80% 40%;
+  --hub-fragment-secondary-position: 20% 62%;
+}
+
+.member-hub[data-active-view="academic-tools"] {
+  --hub-art-image: url("concourse-art-citations.jpg");
+  --hub-fragment-primary-position: 82% 58%;
+  --hub-fragment-secondary-position: 18% 44%;
+}
+
+.member-hub[data-active-view="overview"] {
+  --hub-art-image: url("concourse-art-insights.jpg");
+  --hub-fragment-primary-position: 78% 48%;
+  --hub-fragment-secondary-position: 20% 58%;
+}
+
+.member-hub[data-active-view="profile"] {
+  --hub-art-image: url("concourse-art-profile.jpg");
+  --hub-fragment-primary-position: 82% 42%;
+  --hub-fragment-secondary-position: 18% 62%;
+}
+
+/* The navigation belongs to the page field, with a fine active trace instead
+   of an enclosing navigation box. */
+.member-hub .hub-sidebar {
+  padding-bottom: 12px !important;
+  box-shadow: inset 0 -1px 0 rgba(127, 216, 255, .2) !important;
+}
+
+.member-hub .hub-nav-button {
+  position: relative;
+  min-height: 54px !important;
+  padding-block: 13px !important;
+}
+
+.member-hub .hub-nav-button::after {
+  content: "";
+  position: absolute;
+  right: 18%;
+  bottom: 0;
+  left: 18%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ribbon-gold), var(--ribbon-cyan));
+  border-radius: 999px;
+  opacity: 0;
+  transform: scaleX(.35);
+  transition: opacity .2s ease, transform .28s cubic-bezier(.2, .8, .2, 1);
+}
+
+.member-hub .hub-nav-button:is(.active, [aria-current="page"])::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* A larger product-style artwork field. Its asymmetrical radius supplies the
+   silhouette; the two moving spans reproduce selected strips of the original
+   image and make the artwork itself appear to articulate. */
+.member-hub .hub-page-header,
+.member-hub[data-active-view] .hub-page-header,
+.member-hub[data-active-view="marketplace"] .hub-page-header {
+  width: min(1440px, calc(100% - 2 * var(--hub-content-gutter))) !important;
+  min-height: clamp(320px, 31vw, 448px) !important;
+  margin-bottom: -64px !important;
+  overflow: hidden !important;
+  background: var(--ribbon-night) !important;
+  border: 1px solid rgba(127, 216, 255, .22) !important;
+  border-radius:
+    clamp(42px, 5vw, 74px)
+    clamp(130px, 15vw, 220px)
+    clamp(52px, 7vw, 96px)
+    clamp(96px, 12vw, 180px) /
+    clamp(38px, 5vw, 72px)
+    clamp(84px, 10vw, 150px)
+    clamp(48px, 6vw, 88px)
+    clamp(70px, 9vw, 128px) !important;
+  box-shadow:
+    0 34px 84px rgba(0, 0, 0, .24),
+    inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+}
+
+.member-hub .hub-page-header::after {
+  display: none !important;
+  content: none !important;
+}
+
+.member-hub .hub-page-header-copy,
+.member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+  width: min(59%, 760px) !important;
+  padding:
+    clamp(42px, 5vw, 72px)
+    clamp(34px, 4.6vw, 70px) !important;
+}
+
+.member-hub .hub-page-header .hub-kicker,
+.member-hub[data-active-view="marketplace"] .hub-page-header .hub-kicker {
+  display: block !important;
+  margin-bottom: 13px !important;
+  color: #f6ce72 !important;
+}
+
+.member-hub .hub-page-header h1,
+.member-hub[data-active-view="community"] .hub-page-header h1,
+.member-hub[data-active-view="marketplace"] .hub-page-header h1 {
+  max-width: 12.5ch !important;
+  font-size: clamp(43px, 4.7vw, 68px) !important;
+  font-weight: 760 !important;
+  line-height: .94 !important;
+  letter-spacing: -.062em !important;
+  text-wrap: balance;
+}
+
+.member-hub .hub-page-header-copy > p:not(.hub-kicker),
+.member-hub[data-active-view="marketplace"]
+  .hub-page-header-copy > p:not(.hub-kicker) {
+  display: block !important;
+  max-width: 46ch !important;
+  margin-top: 18px !important;
+  color: rgba(229, 241, 250, .78) !important;
+  font-size: clamp(13px, 1.15vw, 16px) !important;
+  line-height: 1.55 !important;
+}
+
+.member-hub .hub-page-header-copy::after {
+  width: 74px !important;
+  margin-top: 20px !important;
+}
+
+.member-hub .hub-live-badge {
+  display: none !important;
+}
+
+.member-hub .hub-hero-art,
+.member-hub[data-active-view="marketplace"] .hub-hero-art {
+  overflow: hidden !important;
+  border-radius: inherit !important;
+  contain: paint;
+  isolation: isolate !important;
+}
+
+.member-hub .hub-hero-art::before {
+  z-index: 4 !important;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3, 17, 31, .98) 0%,
+      rgba(3, 17, 31, .91) 25%,
+      rgba(3, 17, 31, .62) 43%,
+      rgba(3, 17, 31, .17) 66%,
+      transparent 86%
+    ),
+    linear-gradient(0deg, rgba(2, 13, 24, .3), transparent 62%) !important;
+}
+
+.member-hub .hub-hero-art::after {
+  display: none !important;
+  content: none !important;
+}
+
+.member-hub .hub-hero-art img {
+  z-index: 0 !important;
+  object-position: var(--hub-art-position) !important;
+  animation: ribbon-art-base-drift 18s cubic-bezier(.42, 0, .24, 1) infinite alternate !important;
+}
+
+.member-hub .hub-art-fragment {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  pointer-events: none;
+  background-image: var(--hub-art-image);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: var(--hub-art-position);
+  filter: saturate(1.06) contrast(1.035);
+  opacity: .92;
+  will-change: transform, background-position;
+  backface-visibility: hidden;
+}
+
+.member-hub .hub-art-fragment-primary {
+  inset: 0;
+  clip-path: none;
+  -webkit-mask-image:
+    linear-gradient(
+      108deg,
+      transparent 0 55%,
+      rgba(0, 0, 0, .16) 61%,
+      #000 71% 100%
+    );
+  mask-image:
+    linear-gradient(
+      108deg,
+      transparent 0 55%,
+      rgba(0, 0, 0, .16) 61%,
+      #000 71% 100%
+    );
+  animation: ribbon-art-primary 12s cubic-bezier(.45, 0, .22, 1) infinite alternate;
+}
+
+.member-hub .hub-art-fragment-secondary {
+  inset: 0;
+  clip-path: none;
+  -webkit-mask-image:
+    linear-gradient(
+      72deg,
+      #000 0 34%,
+      rgba(0, 0, 0, .14) 45%,
+      transparent 55% 100%
+    );
+  mask-image:
+    linear-gradient(
+      72deg,
+      #000 0 34%,
+      rgba(0, 0, 0, .14) 45%,
+      transparent 55% 100%
+    );
+  opacity: .96;
+  animation: ribbon-art-secondary 15s cubic-bezier(.4, 0, .22, 1) infinite alternate;
+}
+
+@keyframes ribbon-art-base-drift {
+  from { transform: translate3d(-.8%, .2%, 0) scale(1.075); }
+  to { transform: translate3d(.9%, -.35%, 0) scale(1.115); }
+}
+
+@keyframes ribbon-art-primary {
+  from {
+    transform: translate3d(-.28%, .18%, 0) scale(1.074);
+  }
+  to {
+    transform: translate3d(.72%, -.36%, 0) scale(1.105);
+  }
+}
+
+@keyframes ribbon-art-secondary {
+  from {
+    transform: translate3d(-.48%, -.18%, 0) scale(1.076);
+  }
+  to {
+    transform: translate3d(.58%, .32%, 0) scale(1.108);
+  }
+}
+
+/* The functional area rises as a broad paper ribbon. It gives controls a
+   shared visual ground without enclosing every feature in a rectangle. */
+.member-hub .hub-view {
+  width: min(1440px, calc(100% - 2 * var(--hub-content-gutter)));
+  max-width: none !important;
+  margin: 0 auto !important;
+  padding:
+    clamp(102px, 10vw, 146px)
+    clamp(24px, 4.2vw, 64px)
+    clamp(56px, 6vw, 88px) !important;
+  overflow: visible;
+  background:
+    radial-gradient(ellipse at 22% 6%, rgba(255, 255, 255, .99), transparent 54%),
+    linear-gradient(135deg, var(--ribbon-paper) 0 58%, var(--ribbon-paper-blue) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, .7) !important;
+  border-radius:
+    48% 52% 44px 56px /
+    clamp(62px, 8vw, 112px) clamp(76px, 9vw, 132px) 44px 56px !important;
+  box-shadow:
+    0 -24px 68px rgba(4, 22, 40, .14),
+    0 34px 80px rgba(4, 22, 40, .12),
+    inset 0 1px 0 rgba(255, 255, 255, .96) !important;
+}
+
+html[data-theme="night"] .member-hub .hub-view {
+  color: #e9f3fb;
+  background:
+    radial-gradient(ellipse at 24% 4%, rgba(29, 72, 108, .42), transparent 48%),
+    linear-gradient(135deg, rgba(7, 30, 52, .985), rgba(9, 39, 67, .985) 62%, rgba(5, 25, 44, .99)) !important;
+  border-color: rgba(127, 216, 255, .13) !important;
+  box-shadow:
+    0 -24px 68px rgba(0, 0, 0, .28),
+    0 34px 82px rgba(0, 0, 0, .24),
+    inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+}
+
+/* Marketplace search: one complete capsule with generous leading space.
+   Explicit clipping and box sizing prevent a corner from disappearing. */
+.member-hub[data-active-view="marketplace"] .market-discovery-bar {
+  position: sticky !important;
+  z-index: 24;
+  top: calc(var(--app-bar-offset) + 8px) !important;
+  box-sizing: border-box;
+  gap: 10px;
+  margin: 0 0 26px !important;
+  padding: 9px !important;
+  overflow: visible !important;
+  clip-path: none !important;
+  background: rgba(255, 253, 248, .94) !important;
+  border: 2px solid rgba(75, 112, 142, .22) !important;
+  border-radius: 999px !important;
+  box-shadow:
+    0 18px 42px rgba(6, 43, 72, .12),
+    inset 0 1px 0 rgba(255, 255, 255, .96) !important;
+  backdrop-filter: blur(24px) saturate(1.18);
+  -webkit-backdrop-filter: blur(24px) saturate(1.18);
+}
+
+.member-hub[data-active-view="marketplace"] .market-search {
+  box-sizing: border-box;
+  min-height: 58px;
+  padding: 7px 14px 7px 24px !important;
+  overflow: hidden !important;
+  clip-path: none !important;
+  background: rgba(238, 247, 252, .9) !important;
+  border: 1px solid rgba(75, 112, 142, .2) !important;
+  border-radius: 999px !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-search > span {
+  width: 25px !important;
+  color: #3c5f7d !important;
+  font-size: 25px !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-search > input {
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 8px 16px 8px 10px !important;
+  color: #0a2138 !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-search > input::placeholder {
+  color: #5e7285 !important;
+  opacity: 1;
+}
+
+.member-hub[data-active-view="marketplace"] .market-filter-select > select,
+.member-hub[data-active-view="marketplace"] .market-sell-button {
+  min-height: 54px !important;
+  border-radius: 999px !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-filter-select > select {
+  padding-inline: 19px 38px !important;
+  background-color: #edf6fb !important;
+  border: 1px solid rgba(75, 112, 142, .15) !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-sell-button {
+  min-width: 104px;
+  color: #fff !important;
+  background: linear-gradient(145deg, #245dcc, #092b4c) !important;
+  border: 0 !important;
+  box-shadow: 0 12px 28px rgba(23, 77, 191, .22) !important;
+}
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"] .market-discovery-bar {
+  background: rgba(6, 28, 49, .93) !important;
+  border-color: rgba(127, 216, 255, .24) !important;
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+}
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"] .market-search {
+  background: rgba(12, 47, 78, .9) !important;
+  border-color: rgba(127, 216, 255, .2) !important;
+}
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"] .market-search > input {
+  color: #f4f9fd !important;
+  -webkit-text-fill-color: #f4f9fd !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"] .market-search > input::placeholder {
+  color: #b9d6e9 !important;
+  -webkit-text-fill-color: #b9d6e9 !important;
+  opacity: .94 !important;
+}
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"] .market-search > span {
+  color: #a9dfff !important;
+}
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"] .market-filter-select > select {
+  color: #eaf4fb !important;
+  background-color: rgba(12, 47, 78, .92) !important;
+  border-color: rgba(127, 216, 255, .16) !important;
+}
+
+/* Listings become a photograph and a separate organic information ribbon. */
+.member-hub[data-active-view="marketplace"] .market-grid {
+  gap: clamp(26px, 3vw, 44px) !important;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card {
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-media-button {
+  overflow: hidden !important;
+  border: 1px solid rgba(127, 216, 255, .16) !important;
+  border-radius:
+    44% 56% 42% 58% /
+    36% 45% 55% 64% !important;
+  box-shadow: 0 22px 50px rgba(4, 22, 40, .18);
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-card-body {
+  position: relative;
+  z-index: 2;
+  margin-top: -16px;
+  padding: clamp(22px, 2.7vw, 34px) !important;
+  background: linear-gradient(145deg, rgba(255, 253, 248, .98), rgba(236, 247, 253, .97)) !important;
+  border: 1px solid rgba(87, 126, 155, .16);
+  border-radius:
+    34px 84px 38px 64px /
+    30px 58px 36px 50px !important;
+  box-shadow: 0 20px 46px rgba(6, 43, 72, .11);
+}
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"] .marketplace-card-body {
+  background: linear-gradient(145deg, rgba(10, 42, 71, .98), rgba(5, 29, 51, .98)) !important;
+  border-color: rgba(127, 216, 255, .15);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, .25);
+}
+
+.member-hub[data-active-view="marketplace"]
+  .market-grid.is-single-result .marketplace-card {
+  grid-template-columns: minmax(250px, .82fr) minmax(300px, 1.18fr) !important;
+  align-items: center;
+}
+
+.member-hub[data-active-view="marketplace"]
+  .market-grid.is-single-result .marketplace-card-media-button {
+  min-height: 330px;
+}
+
+.member-hub[data-active-view="marketplace"]
+  .market-grid.is-single-result .marketplace-card-body {
+  margin: 20px 0 20px -34px;
+  padding-left: clamp(38px, 4vw, 58px) !important;
+}
+
+/* Empty inventory uses the marketplace artwork itself. */
+.member-hub[data-active-view="marketplace"] .marketplace-empty-visual {
+  overflow: hidden;
+  background:
+    url("concourse-art-market.jpg")
+    var(--hub-fragment-secondary-position) / 175% auto no-repeat !important;
+  border: 1px solid rgba(127, 216, 255, .22);
+  border-radius: 42% 58% 46% 54% / 56% 42% 58% 44%;
+  filter: drop-shadow(0 24px 44px rgba(0, 0, 0, .24));
+  animation: ribbon-empty-art 13s ease-in-out infinite alternate;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-empty-visual::before {
+  inset: -12%;
+  background:
+    url("concourse-art-market.jpg")
+    var(--hub-fragment-primary-position) / 188% auto no-repeat;
+  border: 0;
+  border-radius: inherit;
+  box-shadow: none;
+  clip-path: polygon(0 12%, 100% 0, 88% 46%, 100% 100%, 18% 82%);
+  animation: ribbon-empty-fragment 9s ease-in-out infinite alternate;
+}
+
+.member-hub[data-active-view="marketplace"] .marketplace-empty-visual::after,
+.member-hub[data-active-view="marketplace"] .marketplace-empty-orbit {
+  display: none !important;
+  content: none !important;
+}
+
+@keyframes ribbon-empty-art {
+  from { background-position: 14% 58%; transform: translate3d(-3px, 2px, 0) rotate(-1deg); }
+  to { background-position: 24% 50%; transform: translate3d(4px, -3px, 0) rotate(1deg); }
+}
+
+@keyframes ribbon-empty-fragment {
+  from { transform: translate3d(-5%, 2%, 0) scale(1.02); }
+  to { transform: translate3d(5%, -2%, 0) scale(1.08); }
+}
+
+/* The transaction sequence remains unboxed and gains clear organic markers. */
+.member-hub[data-active-view="marketplace"] .market-rail {
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+.member-hub[data-active-view="marketplace"] .market-protection-steps > li {
+  grid-template-columns: 44px minmax(0, 1fr) !important;
+  column-gap: 18px !important;
+  min-height: 104px;
+}
+
+.member-hub[data-active-view="marketplace"]
+  .market-protection-steps > li::before {
+  width: 42px !important;
+  height: 42px !important;
+  color: #07213a !important;
+  background: linear-gradient(145deg, #ffe9ad, #efbd4c) !important;
+  border: 2px solid rgba(255, 250, 232, .82) !important;
+  border-radius: 58% 42% 56% 44% / 45% 60% 40% 55% !important;
+  box-shadow:
+    0 0 0 5px rgba(239, 189, 76, .12),
+    0 13px 28px rgba(4, 22, 40, .18) !important;
+}
+
+.member-hub[data-active-view="marketplace"]
+  .market-protection-steps > li:not(:last-child)::after {
+  left: 20px !important;
+  width: 2px !important;
+  background: linear-gradient(180deg, #efbd4c, #79d5ff) !important;
+}
+
+/* Supporting information adopts varied curves while posts and form rows stay
+   editorial and readable. */
+.member-hub .hub-view[data-hub-view="overview"] :is(.hub-metric-card, .hub-card),
+.member-hub .hub-view[data-hub-view="profile"] > .hub-profile-grid > .hub-card,
+.member-hub .hub-view[data-hub-view="messages"] .hub-chat-card {
+  border-radius:
+    34px 78px 38px 62px /
+    30px 56px 36px 48px !important;
+}
+
+.member-hub .hub-view[data-hub-view="overview"] .hub-metric-card:nth-child(even),
+.member-hub .hub-view[data-hub-view="profile"] > .hub-profile-grid > .hub-card:nth-child(even) {
+  border-radius:
+    74px 34px 64px 40px /
+    52px 30px 48px 36px !important;
+}
+
+/* Day mode keeps the selected light-blue contrast, while the navy artwork
+   remains strong enough to carry white hero text. */
+html[data-theme="day"] .member-hub .hub-page-header {
+  background: #08243f !important;
+  border-color: rgba(16, 75, 116, .24) !important;
+  box-shadow:
+    0 30px 72px rgba(16, 75, 116, .18),
+    inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+}
+
+html[data-theme="day"] .member-hub .hub-view {
+  color: #071a2e;
+  background:
+    radial-gradient(ellipse at 22% 6%, #fff, transparent 54%),
+    linear-gradient(135deg, #fffdf8 0 58%, #e5f5ff 100%) !important;
+  border-color: rgba(255, 255, 255, .86) !important;
+}
+
+html[data-theme="day"] .member-hub .hub-page-header .hub-kicker {
+  color: #f8d788 !important;
+}
+
+html[lang^="zh"] .member-hub .hub-page-header h1 {
+  max-width: 9ch !important;
+  font-size: clamp(38px, 4.4vw, 62px) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.045em !important;
+}
+
+@media (max-width: 1100px) {
+  .member-hub .hub-page-header,
+  .member-hub[data-active-view] .hub-page-header {
+    min-height: clamp(292px, 39vw, 380px) !important;
+    margin-bottom: -50px !important;
+  }
+
+  .member-hub .hub-page-header-copy,
+  .member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+    width: min(62%, 620px) !important;
+  }
+
+  .member-hub .hub-view {
+    padding-top: clamp(82px, 10vw, 112px) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .member-hub .hub-page-header,
+  .member-hub[data-active-view] .hub-page-header,
+  .member-hub[data-active-view="marketplace"] .hub-page-header {
+    min-height: 300px !important;
+    border-radius:
+      38px 92px 46px 74px /
+      34px 64px 42px 58px !important;
+  }
+
+  .member-hub .hub-page-header-copy,
+  .member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+    width: min(72%, 600px) !important;
+    padding: 34px 38px !important;
+  }
+
+  .member-hub .hub-page-header h1,
+  .member-hub[data-active-view="marketplace"] .hub-page-header h1 {
+    font-size: clamp(36px, 6.5vw, 56px) !important;
+  }
+
+  .member-hub .hub-art-fragment-primary {
+    inset: 0 !important;
+  }
+
+  .member-hub .hub-art-fragment-secondary {
+    inset: 0 !important;
+  }
+
+  .member-hub .hub-view {
+    width: min(100%, calc(100% - 2 * var(--hub-content-gutter)));
+    padding-inline: clamp(18px, 4vw, 38px) !important;
+    border-radius:
+      48% 52% 34px 38px /
+      62px 76px 34px 38px !important;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-discovery-bar {
+    position: static !important;
+    grid-template-columns: minmax(0, 1fr) minmax(150px, .34fr) auto !important;
+    border-radius: 34px !important;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-search {
+    grid-column: 1 / -1;
+  }
+
+  .member-hub[data-active-view="marketplace"]
+    .market-grid.is-single-result .marketplace-card-body {
+    margin-left: -22px;
+    padding-left: 38px !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .member-hub .hub-page-header,
+  .member-hub[data-active-view] .hub-page-header,
+  .member-hub[data-active-view="marketplace"] .hub-page-header {
+    min-height: 276px !important;
+    margin-bottom: -38px !important;
+    border-radius:
+      28px 62px 34px 48px /
+      26px 48px 32px 42px !important;
+  }
+
+  .member-hub .hub-page-header-copy,
+  .member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+    width: 100% !important;
+    padding: 30px 26px !important;
+  }
+
+  .member-hub .hub-page-header h1,
+  .member-hub[data-active-view="marketplace"] .hub-page-header h1,
+  html[lang^="zh"] .member-hub .hub-page-header h1 {
+    max-width: 12ch !important;
+    font-size: clamp(32px, 9.5vw, 44px) !important;
+  }
+
+  .member-hub .hub-page-header-copy > p:not(.hub-kicker) {
+    max-width: 34ch !important;
+    font-size: 12.5px !important;
+  }
+
+  .member-hub .hub-hero-art::before {
+    background:
+      linear-gradient(90deg, rgba(3, 17, 31, .96), rgba(3, 17, 31, .78) 58%, rgba(3, 17, 31, .34)),
+      linear-gradient(0deg, rgba(2, 13, 24, .26), transparent 60%) !important;
+  }
+
+  .member-hub .hub-art-fragment-primary {
+    inset: 0 !important;
+    opacity: .7;
+  }
+
+  .member-hub .hub-art-fragment-secondary {
+    inset: 0 !important;
+    opacity: .42;
+  }
+
+  .member-hub .hub-view {
+    padding:
+      68px 16px 46px !important;
+    border-radius:
+      46% 54% 24px 28px /
+      44px 58px 24px 28px !important;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-discovery-bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 8px;
+    padding: 8px !important;
+    border-radius: 28px !important;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-search {
+    min-height: 54px;
+    padding-left: 20px !important;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-filter-select {
+    min-width: 0;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-sell-button {
+    width: 100%;
+  }
+
+  .member-hub[data-active-view="marketplace"]
+    .market-grid.is-single-result .marketplace-card {
+    display: flex !important;
+  }
+
+  .member-hub[data-active-view="marketplace"]
+    .market-grid.is-single-result .marketplace-card-media-button {
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+  }
+
+  .member-hub[data-active-view="marketplace"]
+    .market-grid.is-single-result .marketplace-card-body {
+    margin: -18px 0 0;
+    padding: 30px 22px 24px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .member-hub .hub-page-header {
+    min-height: 252px !important;
+  }
+
+  .member-hub .hub-page-header-copy > p:not(.hub-kicker) {
+    display: none !important;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-discovery-bar {
+    grid-template-columns: minmax(0, 1fr) !important;
+    border-radius: 24px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-hub .hub-hero-art img,
+  .member-hub .hub-art-fragment,
+  .member-hub[data-active-view="marketplace"] .marketplace-empty-visual,
+  .member-hub[data-active-view="marketplace"] .marketplace-empty-visual::before {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .member-hub .hub-art-fragment {
+    display: none !important;
+  }
+
+  .member-hub .hub-view,
+  .member-hub[data-active-view="marketplace"] .market-discovery-bar,
+  .member-hub[data-active-view="marketplace"] .marketplace-card-body {
+    color: CanvasText !important;
+    background: Canvas !important;
+    border: 1px solid CanvasText !important;
+  }
+}
