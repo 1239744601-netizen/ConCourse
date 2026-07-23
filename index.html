@@ -19,6 +19,17 @@
 <meta name="twitter:image" content="https://concoursehk.pages.dev/concourse-marketplace-og.png" />
 <meta name="twitter:image:alt" content="ConCourse Campus Market — notes, textbooks, tech, and campus essentials" />
 <meta name="theme-color" content="#061526" />
+<script>
+  (() => {
+    let theme = "night";
+    try {
+      const savedTheme = localStorage.getItem("concourse_theme");
+      if(savedTheme === "day" || savedTheme === "night") theme = savedTheme;
+    } catch(_error){}
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]').content = theme === "day" ? "#dff2ff" : "#061526";
+  })();
+</script>
 <link rel="icon" type="image/svg+xml" sizes="any" href="concourse-favicon.svg?v=20260722-keystone" />
 <link rel="preload" as="image" type="image/webp" href="concourse-course-odyssey.webp" fetchpriority="high" />
 <style>
@@ -1713,6 +1724,7 @@
 <link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="academic-tools.css?v=20260722-citation-search1" />
+<link rel="stylesheet" href="concourse-theme.css?v=20260723-daynight1" />
 </head>
 <body>
 <header id="landingScreen">
@@ -1736,6 +1748,16 @@
     </div>
     <button class="btn-primary" id="authOpenBtn" data-i18n="signIn">Sign in</button>
     <button class="btn-ghost" id="signOutBtn" hidden data-i18n="signOut">Sign out</button>
+    <div class="theme-control" role="group" aria-label="Page appearance" data-i18n-aria-label="appearance">
+      <button class="theme-option" id="dayThemeBtn" type="button" data-theme-value="day" aria-pressed="false" aria-label="Use day appearance" data-i18n-aria-label="useDayMode">
+        <span class="theme-symbol theme-symbol-day" aria-hidden="true"></span>
+        <span class="theme-option-label" data-i18n="dayMode">Day</span>
+      </button>
+      <button class="theme-option" id="nightThemeBtn" type="button" data-theme-value="night" aria-pressed="true" aria-label="Use night appearance" data-i18n-aria-label="useNightMode">
+        <span class="theme-symbol theme-symbol-night" aria-hidden="true"></span>
+        <span class="theme-option-label" data-i18n="nightMode">Night</span>
+      </button>
+    </div>
     <label class="language-control" for="languageSelect">
       <span class="language-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none">
@@ -2915,7 +2937,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出价仅为非约束性的价格提议。请通过私信商定下一步；ConCourse 不会收取款项。",
     marketplaceMarkSoldConfirm:"仅在已完成线下交付后将商品标记为售出。此操作会关闭商品，但不能作为已付款的证明。",
     marketplaceMarkClaimed:"标记为已领取", marketplaceMarkClaimedConfirm:"仅在免费物品已完成交付后标记为已领取。", marketplaceCloseRequest:"关闭求购", marketplaceCloseRequestConfirm:"仅在你不再需要该物品时关闭这项求购。", marketplaceStatusClaimed:"已领取", marketplaceStatusRequestClosed:"求购已关闭",
-    brandTag:"轻松规划课程注册", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", language:"语言", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
+    brandTag:"轻松规划课程注册", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", language:"语言", appearance:"页面外观", dayMode:"日间", nightMode:"夜间", useDayMode:"使用日间外观", useNightMode:"使用夜间外观", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
     heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
     startPlanning:"开始规划",
@@ -3014,7 +3036,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出價只係冇約束力嘅價錢建議。請用私訊商議下一步；ConCourse 唔會收取款項。",
     marketplaceMarkSoldConfirm:"只可以喺完成線下交收之後標記做已售出。呢個操作會關閉商品，但唔代表已經付款。",
     marketplaceMarkClaimed:"標記做已領取", marketplaceMarkClaimedConfirm:"只可以喺免費物品完成交收之後標記做已領取。", marketplaceCloseRequest:"關閉求購", marketplaceCloseRequestConfirm:"只可以喺你唔再需要件物品時關閉呢項求購。", marketplaceStatusClaimed:"已領取", marketplaceStatusRequestClosed:"求購已關閉",
-    brandTag:"輕鬆規劃課程註冊", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", language:"語言", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
+    brandTag:"輕鬆規劃課程註冊", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", language:"語言", appearance:"頁面外觀", dayMode:"日間", nightMode:"夜間", useDayMode:"使用日間外觀", useNightMode:"使用夜間外觀", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
     heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
     startPlanning:"開始規劃",
@@ -3113,7 +3135,7 @@ const TRANSLATIONS = {
 
 function t(key, variables={}){
   const english = {
-    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
+    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", appearance:"Page appearance", dayMode:"Day", nightMode:"Night", useDayMode:"Use day appearance", useNightMode:"Use night appearance", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
     signInSubtitle:"Sign in to continue to your planning workspace.", signUpSubtitle:"Create your academic profile and planning workspace.", verificationSubtitle:"Enter the code from your email to finish creating your account.",
     signUpNote:"Institution matching confirms that a school exists; it does not verify current enrollment.",
     signInNote:"Your schedules are encrypted in transit and isolated by account-level database policies.", verificationNote:"Your code is used only after you enter it, so an email security scanner cannot verify the account for you.",
@@ -3237,6 +3259,27 @@ function initializeLanguage(){
   try { savedLanguage = localStorage.getItem("concourse_language") || "en"; } catch(_error){}
   $("languageSelect").addEventListener("change", event => applyLanguage(event.target.value));
   applyLanguage(savedLanguage, {persist:false});
+}
+
+function applyTheme(theme, {persist=true}={}){
+  const nextTheme = theme === "day" ? "day" : "night";
+  document.documentElement.dataset.theme = nextTheme;
+  document.querySelectorAll("[data-theme-value]").forEach(button => {
+    button.setAttribute("aria-pressed", String(button.dataset.themeValue === nextTheme));
+  });
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if(themeColor) themeColor.content = nextTheme === "day" ? "#dff2ff" : "#061526";
+  if(persist){
+    try { localStorage.setItem("concourse_theme", nextTheme); } catch(_error){}
+  }
+}
+
+function initializeTheme(){
+  const savedTheme = document.documentElement.dataset.theme === "day" ? "day" : "night";
+  document.querySelectorAll("[data-theme-value]").forEach(button => {
+    button.addEventListener("click", () => applyTheme(button.dataset.themeValue));
+  });
+  applyTheme(savedTheme, {persist:false});
 }
 
 function invalidateSchedules(){
@@ -5137,6 +5180,7 @@ $("appWrap").addEventListener("change", e => {
 renderPending();
 renderCourses();
 updateSessionUi();
+initializeTheme();
 initializeLanguage();
 initializeAccount();
 </script>
