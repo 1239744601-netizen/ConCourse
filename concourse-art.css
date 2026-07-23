@@ -2722,3 +2722,674 @@ html[lang^="zh"] .member-hub .hub-page-header h1 {
     border: 1px solid CanvasText !important;
   }
 }
+
+/* ==========================================================================
+   Hub polish — calm learning motion, organic social spaces and night contrast
+   ========================================================================== */
+
+/* The source-search action is a clear blue call to action in both themes. */
+#citationLookupWebsite {
+  color: #fff !important;
+  background: linear-gradient(135deg, #1f58cb 0%, #2d82de 58%, #58bde9 100%) !important;
+  border: 1px solid rgba(23, 77, 191, .36) !important;
+  box-shadow:
+    0 14px 30px rgba(23, 77, 191, .22),
+    inset 0 1px 0 rgba(255, 255, 255, .3) !important;
+}
+
+#citationLookupWebsite:is(:hover, :focus-visible) {
+  color: #fff !important;
+  background: linear-gradient(135deg, #174ab4 0%, #2878d0 56%, #50b5e2 100%) !important;
+  border-color: rgba(23, 77, 191, .62) !important;
+  box-shadow:
+    0 18px 38px rgba(23, 77, 191, .28),
+    inset 0 1px 0 rgba(255, 255, 255, .34) !important;
+}
+
+html[data-theme="night"] #citationLookupWebsite {
+  color: #041a2d !important;
+  background: linear-gradient(135deg, #a9e8ff 0%, #72d0f6 48%, #efc65f 100%) !important;
+  border-color: rgba(169, 232, 255, .62) !important;
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, .28),
+    0 0 0 1px rgba(127, 216, 255, .12) !important;
+}
+
+html[data-theme="night"] #citationLookupWebsite:is(:hover, :focus-visible) {
+  color: #031728 !important;
+  background: linear-gradient(135deg, #c1efff 0%, #87dafa 48%, #f4d37e 100%) !important;
+}
+
+/* The requested explanatory copy is gone; retain only its accessible heading
+   without leaving an empty visual band above the citation workspace. */
+.member-hub[data-active-view="academic-tools"] .academic-tools-intro {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.member-hub[data-active-view="academic-tools"] .academic-tools-intro::before,
+.member-hub[data-active-view="academic-tools"] .academic-tools-intro::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Academic imagery uses a constant-scale horizontal pan. There is no zoom,
+   vertical drift or competing fragment motion to trigger visual discomfort. */
+.member-hub[data-active-view="academic-tools"]
+  .hub-hero-art img[data-hub-hero="academic-tools"],
+.member-hub[data-active-view="overview"]
+  .hub-hero-art img[data-hub-hero="overview"] {
+  transform-origin: center center !important;
+  animation: ribbon-art-calm-pan 38s ease-in-out infinite alternate both !important;
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment,
+.member-hub[data-active-view="overview"] .hub-art-fragment {
+  display: none !important;
+  animation: none !important;
+}
+
+@keyframes ribbon-art-calm-pan {
+  from { transform: translate3d(-.3%, 0, 0) scale(1.045); }
+  to { transform: translate3d(.3%, 0, 0) scale(1.045); }
+}
+
+/* Community becomes two softly sculpted paper fields instead of square
+   dashboard frames. Individual posts remain editorial and easy to scan. */
+.member-hub[data-active-view="community"] .hub-community-layout {
+  max-width: 1280px;
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 320px);
+  gap: clamp(18px, 2.6vw, 36px);
+}
+
+.member-hub[data-active-view="community"] .hub-community-stream {
+  padding: clamp(28px, 4vw, 54px) clamp(22px, 4vw, 56px) !important;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 14% 5%, rgba(255, 255, 255, .96), transparent 48%),
+    linear-gradient(145deg, rgba(255, 253, 248, .96), rgba(229, 244, 253, .92)) !important;
+  border: 1px solid rgba(90, 132, 161, .14) !important;
+  border-radius:
+    58px 126px 64px 92px /
+    54px 88px 72px 110px !important;
+  box-shadow:
+    0 26px 64px rgba(6, 43, 72, .1),
+    inset 0 1px 0 rgba(255, 255, 255, .9) !important;
+}
+
+.member-hub[data-active-view="community"] .hub-community-rail {
+  padding: clamp(24px, 3vw, 38px) !important;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(88, 190, 239, .16), transparent 17rem),
+    linear-gradient(155deg, rgba(239, 249, 255, .96), rgba(255, 253, 248, .94)) !important;
+  border: 1px solid rgba(90, 132, 161, .14) !important;
+  border-radius:
+    82px 42px 72px 48px /
+    56px 38px 76px 62px !important;
+  box-shadow:
+    0 24px 58px rgba(6, 43, 72, .09),
+    inset 0 1px 0 rgba(255, 255, 255, .9) !important;
+}
+
+.member-hub[data-active-view="community"] .hub-community-discovery {
+  padding-bottom: clamp(18px, 2vw, 26px) !important;
+  background: transparent !important;
+}
+
+.member-hub[data-active-view="community"] .hub-community-search {
+  border-radius: 999px !important;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-card {
+  padding: clamp(22px, 3vw, 34px) !important;
+  background:
+    radial-gradient(circle at 90% 5%, rgba(91, 192, 239, .12), transparent 17rem),
+    linear-gradient(145deg, rgba(255, 253, 248, .98), rgba(235, 247, 254, .96)) !important;
+  border: 1px solid rgba(78, 120, 151, .15) !important;
+  border-radius:
+    62px 28px 76px 38px /
+    42px 68px 48px 60px !important;
+  box-shadow:
+    0 22px 52px rgba(6, 43, 72, .1),
+    inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+}
+
+/* Messages are split into an organic conversation pool and a separate chat
+   canvas. The interface no longer reads as one large rectangular window. */
+.member-hub[data-active-view="messages"] .hub-view[data-hub-view="messages"] {
+  background:
+    radial-gradient(ellipse at 85% 8%, rgba(92, 194, 239, .12), transparent 30rem),
+    linear-gradient(145deg, rgba(255, 253, 248, .98), rgba(234, 247, 254, .94)) !important;
+  border: 1px solid rgba(78, 120, 151, .12) !important;
+  border-radius:
+    132px 58px 116px 84px /
+    76px 118px 92px 108px !important;
+  box-shadow:
+    0 26px 72px rgba(6, 43, 72, .09),
+    inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+}
+
+.member-hub[data-active-view="messages"] .hub-chat-card {
+  padding: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="messages"] .hub-chat-start {
+  width: min(920px, 100%);
+  max-width: none;
+  margin: 0 auto clamp(22px, 3vw, 34px);
+  padding: 8px !important;
+  background: linear-gradient(145deg, rgba(234, 246, 253, .96), rgba(255, 253, 248, .98)) !important;
+  border: 1px solid rgba(79, 118, 148, .18);
+  border-radius: 999px;
+  box-shadow:
+    0 18px 42px rgba(6, 43, 72, .1),
+    inset 0 1px 0 rgba(255, 255, 255, .92);
+}
+
+.member-hub[data-active-view="messages"] .hub-chat-start input {
+  min-height: 54px;
+  padding-inline: 22px;
+  color: #08223a;
+  background: rgba(255, 255, 255, .86);
+  border: 1px solid rgba(69, 108, 138, .18);
+  border-radius: 999px;
+}
+
+.member-hub[data-active-view="messages"] .hub-chat-start .btn-primary {
+  min-width: 132px;
+  border-radius: 999px;
+}
+
+.member-hub[data-active-view="messages"] .hub-chat-layout {
+  height: min(660px, calc(100svh - 210px));
+  min-height: 560px;
+  grid-template-columns: minmax(240px, .34fr) minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub[data-active-view="messages"] .hub-conversation-list {
+  padding: clamp(20px, 2.4vw, 30px) clamp(14px, 1.8vw, 22px) !important;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(82, 181, 234, .15), transparent 15rem),
+    linear-gradient(150deg, rgba(232, 246, 254, .98), rgba(248, 252, 255, .96)) !important;
+  border: 1px solid rgba(77, 119, 151, .16) !important;
+  border-radius:
+    66px 34px 72px 42px /
+    48px 36px 82px 58px !important;
+  box-shadow:
+    0 22px 54px rgba(6, 43, 72, .09),
+    inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+.member-hub[data-active-view="messages"] .hub-message-pane {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 6%, rgba(87, 187, 239, .11), transparent 20rem),
+    linear-gradient(145deg, rgba(255, 253, 248, .99), rgba(238, 248, 254, .98)) !important;
+  border: 1px solid rgba(77, 119, 151, .16);
+  border-radius:
+    38px 98px 54px 82px /
+    40px 68px 76px 58px;
+  box-shadow:
+    0 26px 66px rgba(6, 43, 72, .11),
+    inset 0 1px 0 rgba(255, 255, 255, .94);
+}
+
+.member-hub[data-active-view="messages"] :is(
+  .hub-message-heading,
+  .hub-message-list,
+  .hub-message-compose
+) {
+  background: transparent !important;
+}
+
+.member-hub[data-active-view="messages"] .hub-message-heading {
+  margin-inline: clamp(18px, 3vw, 34px);
+  padding-inline: 0 !important;
+  border-bottom-color: rgba(77, 119, 151, .15);
+}
+
+.member-hub[data-active-view="messages"] .hub-message-compose {
+  margin: 0 clamp(18px, 3vw, 32px) 18px;
+  padding: 12px !important;
+  background: rgba(235, 246, 253, .88) !important;
+  border: 1px solid rgba(77, 119, 151, .15);
+  border-radius: 999px;
+}
+
+.member-hub[data-active-view="messages"] .hub-message-compose input,
+.member-hub[data-active-view="messages"] .hub-message-compose button {
+  border-radius: 999px;
+}
+
+/* Strong night variables repair the inherited dark-on-dark text in Messages,
+   Academic Insights and Profile. */
+html[data-theme="night"] .member-hub:is(
+  [data-active-view="messages"],
+  [data-active-view="overview"],
+  [data-active-view="profile"]
+) {
+  --hub-editorial-ink: #f3f8fc;
+  --hub-editorial-muted: #adc3d3;
+  --hub-editorial-line: rgba(166, 207, 235, .22);
+  --hub-ink: #f3f8fc;
+  --hub-ink-soft: #c8dbe8;
+  --hub-line: rgba(166, 207, 235, .22);
+  --muted: #adc3d3;
+  --muted-2: #8ea9bc;
+  color-scheme: dark;
+}
+
+html[data-theme="night"] .member-hub :is(
+  .hub-view[data-hub-view="messages"],
+  .hub-view[data-hub-view="overview"],
+  .hub-view[data-hub-view="profile"]
+) {
+  --hub-ink: #f4f9fd;
+  --muted: #afc6d8;
+  --hub-line: rgba(137, 204, 241, .22);
+  --hub-blue: #82d8ff;
+  --hub-blue-deep: #bcecff;
+  color: #eaf4fb !important;
+}
+
+html[data-theme="night"] .member-hub :is(
+  .hub-view[data-hub-view="messages"],
+  .hub-view[data-hub-view="overview"],
+  .hub-view[data-hub-view="profile"]
+) :is(
+  .hub-section-heading h2,
+  .hub-card-heading h2,
+  .hub-message-heading b,
+  .hub-chart-empty b,
+  .hub-final-course b,
+  .hub-final-stat b,
+  .hub-avatar-editor-copy > b,
+  .hub-provider-copy b,
+  .hub-wechat-row > label > span,
+  .hub-toggle-label span
+) {
+  color: #f7fbff !important;
+}
+
+html[data-theme="night"] .member-hub :is(
+  .hub-view[data-hub-view="messages"],
+  .hub-view[data-hub-view="overview"],
+  .hub-view[data-hub-view="profile"]
+) :is(
+  .hub-section-heading > p,
+  .hub-card-heading p,
+  .hub-inline-status,
+  .hub-message-heading span,
+  .hub-message-empty,
+  .hub-chart-empty,
+  .hub-final-course small,
+  .hub-final-stat span,
+  .hub-form-grid label > span,
+  .hub-social-list label > span,
+  .hub-avatar-editor-copy > small,
+  .hub-provider-copy > span,
+  .hub-provider-copy small,
+  .hub-provider-disclosure,
+  .hub-social-list small,
+  .hub-wechat-row small
+) {
+  color: #afc6d8 !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"]
+  .hub-view[data-hub-view="messages"] {
+  background:
+    radial-gradient(ellipse at 86% 8%, rgba(87, 197, 247, .1), transparent 31rem),
+    linear-gradient(145deg, rgba(8, 37, 63, .98), rgba(5, 26, 46, .97)) !important;
+  border-color: rgba(127, 216, 255, .16) !important;
+  box-shadow:
+    0 28px 76px rgba(0, 0, 0, .24),
+    inset 0 1px 0 rgba(255, 255, 255, .04) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-chat-start {
+  background: linear-gradient(145deg, rgba(9, 39, 66, .98), rgba(12, 54, 88, .96)) !important;
+  border-color: rgba(127, 216, 255, .25);
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, .28),
+    inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-chat-start input {
+  color: #f5faff !important;
+  -webkit-text-fill-color: #f5faff !important;
+  background: rgba(15, 61, 96, .94) !important;
+  border-color: rgba(127, 216, 255, .26) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-chat-start input::placeholder {
+  color: #bed4e4 !important;
+  -webkit-text-fill-color: #bed4e4 !important;
+  opacity: .94;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-conversation-list {
+  color: #edf7fd;
+  background:
+    radial-gradient(circle at 16% 8%, rgba(87, 197, 247, .13), transparent 15rem),
+    linear-gradient(155deg, rgba(8, 37, 63, .98), rgba(10, 48, 79, .96)) !important;
+  border-color: rgba(127, 216, 255, .2) !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, .23);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-message-pane {
+  color: #edf7fd;
+  background:
+    radial-gradient(circle at 90% 7%, rgba(87, 197, 247, .1), transparent 20rem),
+    linear-gradient(145deg, rgba(7, 32, 55, .99), rgba(11, 49, 79, .97)) !important;
+  border-color: rgba(127, 216, 255, .2);
+  box-shadow: 0 26px 66px rgba(0, 0, 0, .25);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-message-compose {
+  background: rgba(14, 56, 90, .92) !important;
+  border-color: rgba(127, 216, 255, .2);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-message-compose input {
+  color: #f5faff !important;
+  -webkit-text-fill-color: #f5faff !important;
+  background: rgba(5, 29, 50, .92) !important;
+  border-color: rgba(127, 216, 255, .18) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] .hub-message-compose input::placeholder {
+  color: #a9c5d8 !important;
+  -webkit-text-fill-color: #a9c5d8 !important;
+  opacity: 1;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] :is(
+  .hub-conversation-button b,
+  .hub-message-empty,
+  .hub-feed-empty
+) {
+  color: #f4f9fd !important;
+  -webkit-text-fill-color: #f4f9fd !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"] :is(
+  .hub-conversation-button span,
+  #chatSubheading
+) {
+  color: #afc6d8 !important;
+  -webkit-text-fill-color: #afc6d8 !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"]
+  .hub-message-safety .btn-ghost {
+  color: #dcecf6 !important;
+  background: rgba(255, 255, 255, .045) !important;
+  border-color: rgba(166, 207, 235, .24) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"]
+  .hub-message-safety .btn-ghost:disabled {
+  color: #91aabd !important;
+  border-color: rgba(166, 207, 235, .13) !important;
+  opacity: .76 !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="messages"]
+  #sendChatMessage:disabled {
+  color: #bed0dc !important;
+  background: #28506e !important;
+  border-color: rgba(166, 207, 235, .14) !important;
+  opacity: .78 !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] .hub-metric-card {
+  color: #eef8fe;
+  background: linear-gradient(145deg, rgba(12, 52, 84, .9), rgba(6, 31, 54, .92)) !important;
+  border-color: rgba(127, 216, 255, .18) !important;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .2) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] .hub-metric-card > b {
+  color: #f7fbff !important;
+  -webkit-text-fill-color: #f7fbff !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"]
+  .hub-metric-card > :is(span, small) {
+  color: #afc6d8 !important;
+  -webkit-text-fill-color: #afc6d8 !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] :is(
+  .hub-filter-row,
+  .hub-final-stat,
+  .hub-final-course-panel
+) {
+  color: #eef8fe;
+  background: rgba(13, 55, 88, .78) !important;
+  border-color: rgba(127, 216, 255, .18) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] :is(
+  .hub-filter-row select,
+  .hub-filter-row input
+) {
+  color: #f5faff !important;
+  color-scheme: dark;
+  background: rgba(5, 29, 50, .94) !important;
+  border-color: rgba(127, 216, 255, .24) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"]
+  .hub-filter-row select option,
+html[data-theme="night"] .member-hub[data-active-view="profile"] select option {
+  color: #071a2e !important;
+  -webkit-text-fill-color: #071a2e !important;
+  background: #fff !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] .hub-chart-track {
+  background: rgba(189, 224, 245, .18);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="profile"] .hub-card {
+  color: #edf7fd;
+  background: linear-gradient(145deg, rgba(11, 47, 78, .78), rgba(6, 30, 52, .76)) !important;
+  border: 1px solid rgba(127, 216, 255, .14) !important;
+  box-shadow: 0 20px 52px rgba(0, 0, 0, .18) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="profile"] :is(
+  input,
+  select,
+  textarea
+) {
+  color: #f5faff !important;
+  -webkit-text-fill-color: #f5faff !important;
+  color-scheme: dark;
+  background: rgba(5, 29, 50, .9) !important;
+  border-color: rgba(127, 216, 255, .22) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="profile"] :is(
+  input,
+  textarea
+)::placeholder {
+  color: #a9c5d8 !important;
+  -webkit-text-fill-color: #a9c5d8 !important;
+  opacity: 1;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="profile"] :is(
+  .hub-connect-button:disabled,
+  .hub-avatar-actions .btn-ghost,
+  .hub-profile-save .btn-ghost
+) {
+  color: #c9dce8 !important;
+  background: rgba(255, 255, 255, .045) !important;
+  border-color: rgba(166, 207, 235, .2) !important;
+  opacity: .82 !important;
+}
+
+html[data-theme="night"] .member-hub:is(
+  [data-active-view="messages"],
+  [data-active-view="overview"],
+  [data-active-view="profile"]
+) .hub-inline-status {
+  color: #adc3d3;
+}
+
+html[data-theme="night"] .member-hub:is(
+  [data-active-view="messages"],
+  [data-active-view="overview"],
+  [data-active-view="profile"]
+) .hub-inline-status.success {
+  color: #69e0b4;
+}
+
+html[data-theme="night"] .member-hub:is(
+  [data-active-view="messages"],
+  [data-active-view="overview"],
+  [data-active-view="profile"]
+) .hub-inline-status.error {
+  color: #ff9eac;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="profile"] :is(
+  .hub-connection-tab,
+  .hub-social-list label,
+  .hub-wechat-row,
+  .hub-provider-connection
+) {
+  color: #eaf4fb;
+  background: rgba(11, 48, 79, .7) !important;
+  border-color: rgba(127, 216, 255, .15) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="profile"] .hub-connection-tab:is(
+  .active,
+  [aria-selected="true"]
+) {
+  color: #fff !important;
+  background: rgba(36, 101, 151, .76) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="community"] .hub-community-stream,
+html[data-theme="night"] .member-hub[data-active-view="community"] .hub-community-rail,
+html[data-theme="night"] .member-hub[data-active-view="community"] .hub-compose-card {
+  --hub-editorial-ink: #f2f8fc;
+  --hub-editorial-line: rgba(127, 216, 255, .18);
+  color: #edf7fd !important;
+  background:
+    radial-gradient(circle at 16% 7%, rgba(87, 197, 247, .1), transparent 18rem),
+    linear-gradient(150deg, rgba(8, 37, 63, .98), rgba(10, 48, 79, .96)) !important;
+  border-color: rgba(127, 216, 255, .18) !important;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, .22) !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="community"] :is(
+  .hub-feed-toolbar b,
+  .hub-rail-card b,
+  .hub-rail-heading h3,
+  .hub-rail-link b
+) {
+  color: #f4f9fd !important;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="community"] :is(
+  .hub-topic-chip,
+  .hub-rail-card span,
+  .hub-rail-card small,
+  .hub-rail-link,
+  .hub-conversation-preview-empty
+) {
+  color: #adc6d8 !important;
+}
+
+@media (max-width: 960px) {
+  .member-hub[data-active-view="community"] .hub-community-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    position: static;
+  }
+
+  .member-hub[data-active-view="messages"] .hub-chat-layout {
+    grid-template-columns: minmax(210px, .32fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .member-hub[data-active-view="community"] .hub-community-stream,
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    border-radius:
+      36px 66px 42px 54px /
+      34px 48px 52px 64px !important;
+  }
+
+  .member-hub[data-active-view="messages"] .hub-chat-start {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 30px;
+  }
+
+  .member-hub[data-active-view="messages"] .hub-view[data-hub-view="messages"] {
+    border-radius:
+      44px 28px 52px 34px /
+      36px 48px 40px 56px !important;
+  }
+
+  .member-hub[data-active-view="messages"] .hub-chat-start .btn-primary {
+    width: 100%;
+  }
+
+  .member-hub[data-active-view="messages"] .hub-chat-layout {
+    height: auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(160px, 230px) minmax(500px, 1fr);
+  }
+
+  .member-hub[data-active-view="messages"] .hub-conversation-list,
+  .member-hub[data-active-view="messages"] .hub-message-pane {
+    border-radius:
+      34px 58px 40px 50px /
+      32px 46px 52px 60px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-hub[data-active-view="academic-tools"] .hub-hero-art img,
+  .member-hub[data-active-view="overview"] .hub-hero-art img {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  #citationLookupWebsite,
+  .member-hub[data-active-view="community"] :is(.hub-community-stream, .hub-community-rail, .hub-compose-card),
+  .member-hub[data-active-view="messages"] .hub-view[data-hub-view="messages"],
+  .member-hub[data-active-view="messages"] :is(.hub-chat-start, .hub-conversation-list, .hub-message-pane) {
+    color: ButtonText !important;
+    background: Canvas !important;
+    border: 1px solid CanvasText !important;
+    box-shadow: none !important;
+  }
+}
