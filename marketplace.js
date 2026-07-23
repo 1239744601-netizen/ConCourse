@@ -885,6 +885,8 @@
     const grid = byId("marketplaceGrid");
     if(!grid) return;
     unloadRenderedMedia(grid);
+    grid.classList.remove("is-single-result");
+    delete grid.dataset.resultCount;
     const loading = element("div", "marketplace-loading");
     loading.setAttribute("aria-hidden", "true");
     loading.append(element("span", "marketplace-loading-orbit"));
@@ -900,6 +902,8 @@
     const grid = byId("marketplaceGrid");
     if(!grid) return;
     unloadRenderedMedia(grid);
+    grid.classList.remove("is-single-result");
+    delete grid.dataset.resultCount;
     const error = element("div", "marketplace-feed-error");
     error.setAttribute("aria-hidden", "true");
     error.append(element("span", "marketplace-feed-error-mark", "!"), element("strong", "", message));
@@ -919,6 +923,9 @@
     if(!grid) return;
     unloadRenderedMedia(grid);
     grid.replaceChildren();
+    const singleListing = state.mode !== "orders" && state.items.length === 1;
+    grid.classList.toggle("is-single-result", singleListing);
+    grid.dataset.resultCount = String(state.items.length);
     const catalogue = byId("marketplaceCatalogue");
     if(catalogue){
       catalogue.dataset.empty = state.items.length ? "false" : "true";

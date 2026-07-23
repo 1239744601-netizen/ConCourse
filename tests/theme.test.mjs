@@ -6,6 +6,7 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../concourse-theme.css", import.meta.url), "utf8");
 const artCss = readFileSync(new URL("../concourse-art.css", import.meta.url), "utf8");
 const memberHubJs = readFileSync(new URL("../member-hub.js", import.meta.url), "utf8");
+const marketplaceJs = readFileSync(new URL("../marketplace.js", import.meta.url), "utf8");
 const academicToolsJs = readFileSync(new URL("../academic-tools.js", import.meta.url), "utf8");
 const dayMark = readFileSync(new URL("../concourse-icon.svg", import.meta.url), "utf8");
 
@@ -140,10 +141,10 @@ test("Hub geometry stays identical when translated", () => {
     artCss,
     /grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\)\s*!important/
   );
-  assert.match(artCss, /min-height:\s*clamp\(132px,\s*12vw,\s*164px\)\s*!important/);
+  assert.match(artCss, /min-height:\s*clamp\(168px,\s*16vw,\s*208px\)\s*!important/);
   assert.match(
     artCss,
-    /\.member-hub \.hub-hero-art,[\s\S]*?position:\s*absolute\s*!important[\s\S]*?bottom:\s*-74px\s*!important/
+    /\.member-hub \.hub-hero-art,[\s\S]*?position:\s*absolute\s*!important[\s\S]*?opacity:\s*1\s*!important[\s\S]*?-webkit-mask-image:\s*none\s*!important/
   );
   assert.match(artCss, /html\[lang\^="zh"\] \.member-hub \.hub-nav-button b/);
   assert.match(memberHubJs, /const headingKey = view === "community"/);
@@ -162,8 +163,8 @@ test("functional content begins directly beneath compact artwork headers", () =>
     /\.member-hub\[data-active-view="academic-tools"\] \.academic-tools-view\s*\{[\s\S]*?padding-top:\s*8px\s*!important/
   );
   assert.match(
-    artCss,
-    /\.member-hub\[data-active-view="academic-tools"\] \.academic-tools-intro h2\s*\{[\s\S]*?font-size:\s*clamp\(28px,\s*3\.2vw,\s*42px\)/
+    html,
+    /id="academicToolsWorkspaceTitle"\s+class="academic-tools-sr-only"/
   );
   assert.match(
     artCss,
@@ -173,6 +174,21 @@ test("functional content begins directly beneath compact artwork headers", () =>
     artCss,
     /@media \(max-width:\s*900px\)[\s\S]*?\.member-hub\[data-active-view="marketplace"\] \.market-discovery-bar\s*\{[\s\S]*?position:\s*static\s*!important[\s\S]*?top:\s*auto\s*!important/
   );
+});
+
+test("solid Hub artwork uses accessible motion and marketplace cards stay readable", () => {
+  assert.match(artCss, /@keyframes atlas-masthead-orbit/);
+  assert.match(artCss, /@keyframes atlas-masthead-spark/);
+  assert.match(
+    artCss,
+    /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.member-hub \.hub-page-header::after,[\s\S]*?animation:\s*none\s*!important/
+  );
+  assert.match(
+    artCss,
+    /html\[data-theme="night"\][\s\S]*?\.marketplace-card-title:hover[\s\S]*?color:\s*#f7fbff\s*!important/
+  );
+  assert.match(marketplaceJs, /grid\.classList\.toggle\("is-single-result", singleListing\)/);
+  assert.match(artCss, /\.market-grid\.is-single-result/);
 });
 
 test("Chinese copy distinguishes saving from bookmarking and uses academic terminology", () => {

@@ -11,16 +11,6 @@
   object-position: center 45%;
 }
 
-.member-hub[data-active-view="academic-tools"] .hub-page-header {
-  min-height: clamp(210px, 20vw, 250px);
-  margin-bottom: clamp(24px, 3vw, 34px);
-  padding-block: 24px;
-}
-
-.member-hub[data-active-view="academic-tools"] .hub-hero-art {
-  height: clamp(170px, 18vw, 220px);
-}
-
 .academic-tools-view {
   --tools-sky: #8bd8ff;
   --tools-gold: var(--hub-editorial-gold, #e9b84c);
@@ -188,16 +178,24 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
 }
 
 .citation-choice-rail {
-  display: flex;
+  display: grid;
   gap: 7px;
   margin: 0;
   padding: 6px;
-  overflow-x: auto;
+  overflow: visible;
   background: rgba(2, 17, 29, .48);
   border: 1px solid rgba(139, 216, 255, .12);
   border-radius: 18px;
   box-shadow: inset 0 1px 8px rgba(0, 0, 0, .18);
   scrollbar-width: none;
+}
+
+.citation-style-rail {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.citation-source-rail {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .citation-choice-rail::-webkit-scrollbar {
@@ -206,8 +204,10 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
 
 .citation-choice {
   position: relative;
-  flex: 1 0 auto;
-  min-width: max-content;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  flex: none;
   min-height: 44px;
   cursor: pointer;
 }
@@ -223,8 +223,11 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
 
 .citation-choice span {
   position: relative;
-  display: block;
+  display: grid;
+  place-items: center;
+  height: 100%;
   min-height: 44px;
+  min-width: 0;
   padding: 12px 16px;
   color: rgba(228, 241, 250, .82);
   border: 1px solid transparent;
@@ -1279,7 +1282,7 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
   line-height: 1.65;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1080px) {
   .citation-studio {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1318,17 +1321,6 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
 @media (max-width: 760px) {
   .member-hub .hub-sidebar {
     margin-bottom: max(0px, calc(var(--app-bar-offset) - 12px));
-  }
-
-  .member-hub[data-active-view="academic-tools"] .hub-page-header {
-    min-height: 0;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .member-hub[data-active-view="academic-tools"] .hub-hero-art {
-    height: 220px;
-    min-height: 0;
-    max-height: 220px;
   }
 
   .academic-tools-intro {
@@ -1486,7 +1478,7 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
 
   .citation-source-rail {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     overflow: visible;
   }
 
@@ -1532,6 +1524,15 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
     padding: 0 0 20px;
     border: 0;
     border-bottom: 1px solid rgba(139, 216, 255, .12);
+  }
+}
+
+@media (min-width: 1081px) {
+  .citation-preview {
+    top: calc(var(--app-bar-offset, 0px) + 24px);
+    max-height: calc(100dvh - var(--app-bar-offset, 0px) - 48px);
+    overflow: auto;
+    overscroll-behavior: contain;
   }
 }
 
