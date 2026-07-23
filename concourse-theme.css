@@ -7,6 +7,34 @@
   --theme-control-width: 142px;
 }
 
+/* The symbol has separate artwork for dark and light surfaces. */
+.brand-mark {
+  position: relative;
+  display: block;
+}
+
+.brand-mark-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.brand-mark-day {
+  display: none;
+}
+
+html[data-theme="day"] .brand-mark-night {
+  display: none;
+}
+
+html[data-theme="day"] .brand-mark-day {
+  display: block;
+}
+
 /* Appearance selector ----------------------------------------------------- */
 
 .theme-control {
@@ -230,6 +258,21 @@ html[data-theme="day"] :where(input, select, textarea) {
   color-scheme: light;
 }
 
+html[data-theme="day"] :where(input, textarea)::placeholder {
+  color: var(--day-muted);
+  opacity: 1;
+}
+
+html[data-theme="day"] :where(
+  button,
+  [role="button"],
+  .btn-primary,
+  .btn-ghost,
+  .primary-navigation-button
+) :is(b, strong) {
+  color: inherit;
+}
+
 html[data-theme="day"] :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline-color: rgba(11, 92, 173, .58);
 }
@@ -424,6 +467,27 @@ html[data-theme="day"] #wishlistPanel .wishlist-profile {
   border-block-color: var(--day-line);
 }
 
+html[data-theme="day"] #wishlistPanel .wishlist-header {
+  border-color: var(--day-line);
+}
+
+html[data-theme="day"] #wishlistPanel .wishlist-profile-title {
+  color: var(--day-cyan-text) !important;
+}
+
+html[data-theme="day"] #wishlistPanel .wishlist-profile :is(label, .wishlist-profile-note) {
+  color: var(--day-muted) !important;
+}
+
+html[data-theme="day"] #wishlistPanel #courseList > .empty-note {
+  color: var(--day-muted) !important;
+  background:
+    linear-gradient(rgba(248, 252, 255, .72), rgba(248, 252, 255, .72)),
+    repeating-linear-gradient(90deg, transparent 0 19%, rgba(11, 100, 148, .07) 19% calc(19% + 1px)),
+    repeating-linear-gradient(0deg, transparent 0 68px, rgba(11, 100, 148, .07) 68px 69px);
+  border-color: var(--day-line) !important;
+}
+
 html[data-theme="day"] #wishlistPanel .wishlist-toolbar {
   border-top-color: var(--day-line);
 }
@@ -516,12 +580,31 @@ html[data-theme="day"] .member-hub .hub-member-copy span {
 
 html[data-theme="day"] .member-hub .hub-navigation {
   color: var(--day-muted);
-  border-bottom-color: var(--day-line);
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--day-line) !important;
+  border-radius: 0 !important;
+}
+
+html[data-theme="day"] .member-hub .hub-sidebar .hub-back-button {
+  color: var(--day-blue);
+  background: rgba(248, 252, 255, .68);
+  border-color: var(--day-line);
+}
+
+html[data-theme="day"] .member-hub .hub-sidebar .hub-back-button:hover {
+  color: var(--day-blue-hover);
+  background: var(--day-surface);
+  border-color: rgba(23, 77, 191, .38);
 }
 
 html[data-theme="day"] .member-hub .hub-nav-button,
 html[data-theme="day"] .member-hub .hub-nav-button span {
   color: var(--day-muted);
+}
+
+html[data-theme="day"] .member-hub .hub-nav-button b {
+  color: inherit;
 }
 
 html[data-theme="day"] .member-hub .hub-nav-button:hover {
@@ -621,13 +704,25 @@ html[data-theme="day"] .member-hub :is(
 }
 
 html[data-theme="day"] .member-hub :is(input, textarea)::placeholder {
-  color: #627b90;
+  color: var(--day-muted);
+  opacity: 1;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] .hub-compose-card textarea::placeholder,
+html[data-theme="day"] .member-hub #chatMessageInput::placeholder,
+html[data-theme="day"] .member-hub .hub-comment-form input::placeholder {
+  color: var(--day-muted) !important;
+  -webkit-text-fill-color: var(--day-muted) !important;
+  opacity: 1;
 }
 
 html[data-theme="day"] .member-hub .hub-community-rail {
   color: var(--day-ink) !important;
-  background: radial-gradient(ellipse 118% 52% at 0 10%, rgba(79, 178, 235, .13), transparent 72%) !important;
+  background:
+    radial-gradient(circle at 95% 7%, rgba(79, 178, 235, .17), transparent 22rem),
+    linear-gradient(150deg, rgba(248, 252, 255, .98), rgba(210, 234, 249, .94)) !important;
   border-color: var(--day-line) !important;
+  box-shadow: inset 1px 0 0 rgba(6, 48, 82, .08), 0 22px 58px rgba(6, 48, 82, .1) !important;
 }
 
 html[data-theme="day"] .member-hub[data-active-view="community"] .hub-rail-card,
@@ -646,6 +741,66 @@ html[data-theme="day"] .member-hub[data-active-view="community"] .hub-rail-link[
   color: var(--day-blue);
   background: linear-gradient(90deg, rgba(23, 77, 191, .08), transparent 80%);
   border-bottom-color: rgba(23, 77, 191, .34);
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] :is(
+  .hub-rail-profile-row b,
+  .hub-rail-heading h3,
+  .hub-rail-link b,
+  .hub-conversation-preview-button b
+) {
+  color: var(--day-ink) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] :is(
+  .hub-rail-profile-row span,
+  .hub-profile-progress > span,
+  .hub-rail-link small,
+  .hub-conversation-preview-empty,
+  .hub-conversation-preview-button small
+) {
+  color: var(--day-muted) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] .hub-profile-progress strong {
+  color: var(--day-gold-text) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] .hub-profile-progress > div {
+  background: var(--day-line) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] .hub-conversation-preview-button {
+  color: var(--day-ink-soft) !important;
+  border-bottom-color: var(--day-line) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] :is(
+  .hub-rail-profile > .btn-ghost,
+  .hub-rail-action
+) {
+  color: var(--day-blue) !important;
+  border-bottom-color: rgba(23, 77, 191, .38) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] :is(
+  .hub-rail-profile > .btn-ghost,
+  .hub-rail-action
+):is(:hover, :focus-visible) {
+  color: var(--day-blue-hover) !important;
+  border-bottom-color: var(--day-blue) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="community"] .hub-rail-link:is(
+  :hover,
+  .active,
+  [aria-pressed="true"]
+) :is(b, small) {
+  color: var(--day-blue) !important;
+}
+
+html[data-theme="day"] .member-hub .hub-conversation-button.active :is(b, strong) {
+  color: #fff !important;
 }
 
 html[data-theme="day"] .hub-insight-controls,
@@ -670,6 +825,30 @@ html[data-theme="day"] .member-hub .hub-view[data-hub-view="overview"] .hub-fina
 html[data-theme="day"] .member-hub .hub-view[data-hub-view="overview"] .hub-final-summary,
 html[data-theme="day"] .member-hub .hub-view[data-hub-view="overview"] .hub-final-stat {
   border-color: var(--day-line);
+}
+
+html[data-theme="day"] .member-hub .hub-view[data-hub-view="overview"] .hub-filter-row select {
+  color: var(--day-ink) !important;
+  color-scheme: light;
+  background-color: var(--day-surface) !important;
+  border-color: var(--day-line-strong) !important;
+  box-shadow: inset 0 1px 4px rgba(6, 48, 82, .06) !important;
+}
+
+html[data-theme="day"] .member-hub .hub-view[data-hub-view="overview"] .hub-filter-row select:is(:hover, :focus) {
+  color: var(--day-ink) !important;
+  background-color: #fff !important;
+  border-color: var(--day-blue) !important;
+}
+
+html[data-theme="day"] .member-hub .hub-view[data-hub-view="overview"] .hub-filter-row select:disabled {
+  color: var(--day-muted) !important;
+  background-color: var(--day-surface-soft) !important;
+}
+
+html[data-theme="day"] .member-hub .hub-view[data-hub-view="overview"] .hub-filter-row select option {
+  color: var(--day-ink);
+  background: #fff;
 }
 
 /* Day Campus Market ------------------------------------------------------ */
@@ -728,6 +907,39 @@ html[data-theme="day"] .member-hub[data-active-view="marketplace"] .market-rail-
 html[data-theme="day"] .member-hub[data-active-view="marketplace"] .market-policy-card p,
 html[data-theme="day"] .member-hub[data-active-view="marketplace"] .market-protection-steps > li span {
   color: var(--day-muted) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="marketplace"] :is(
+  .market-mode-tabs,
+  .market-trust-strip,
+  .market-scope-description
+) {
+  color: var(--day-muted) !important;
+  border-color: var(--day-line) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="marketplace"] :is(
+  .market-mode-tabs > button,
+  .market-scope-button
+) {
+  color: var(--day-muted) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="marketplace"] :is(
+  .market-mode-tabs > button,
+  .market-scope-button
+):is(:hover, .active, [aria-selected="true"], [aria-pressed="true"]) {
+  color: var(--day-blue) !important;
+  background: rgba(23, 77, 191, .07) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="marketplace"] .market-trust-strip b {
+  color: var(--day-cyan-text) !important;
+}
+
+html[data-theme="day"] .member-hub[data-active-view="marketplace"] .hub-marketplace-action.secondary {
+  color: var(--day-blue) !important;
+  border-bottom-color: rgba(23, 77, 191, .38) !important;
 }
 
 html[data-theme="day"] .member-hub :is(
@@ -842,11 +1054,36 @@ html[data-theme="day"] .citation-field :is(input, select, textarea):focus {
 }
 
 html[data-theme="day"] .citation-field :is(input, textarea)::placeholder {
-  color: #627b90;
+  color: var(--day-muted);
+  opacity: 1;
 }
 
 html[data-theme="day"] .citation-field small {
   color: var(--day-muted);
+}
+
+html[data-theme="day"] .citation-field > :is(span, label) {
+  color: var(--day-ink-soft);
+}
+
+html[data-theme="day"] .citation-lookup-status {
+  color: var(--day-ink-soft);
+}
+
+html[data-theme="day"] .citation-lookup-status.loading {
+  color: var(--day-cyan-text);
+}
+
+html[data-theme="day"] .citation-lookup-status.success {
+  color: #17643d;
+}
+
+html[data-theme="day"] .citation-lookup-status.warning {
+  color: var(--day-gold-text);
+}
+
+html[data-theme="day"] .citation-lookup-status.error {
+  color: #9e2639;
 }
 
 html[data-theme="day"] .citation-search-results-count {
@@ -855,10 +1092,112 @@ html[data-theme="day"] .citation-search-results-count {
   border-color: rgba(23, 77, 191, .22);
 }
 
+html[data-theme="day"] .citation-search-result-badge {
+  color: var(--day-gold-text);
+  background: rgba(239, 195, 106, .24);
+  border-color: rgba(122, 77, 0, .3);
+}
+
+html[data-theme="day"] :is(.citation-search-url, .citation-search-result-url) {
+  color: var(--day-blue);
+}
+
+html[data-theme="day"] .citation-search-result-url:is(:hover, :focus-visible) {
+  color: var(--day-blue-hover);
+}
+
+html[data-theme="day"] .citation-search-message {
+  color: var(--day-ink-soft);
+  background: rgba(23, 77, 191, .055);
+  border-color: rgba(23, 77, 191, .2);
+}
+
+html[data-theme="day"] .citation-search-message.error {
+  color: #8f2435;
+  background: #fff0f2;
+  border-color: rgba(143, 36, 53, .32);
+}
+
+html[data-theme="day"] .citation-search-attribution {
+  color: var(--day-muted);
+}
+
+html[data-theme="day"] .citation-search-skeleton-card {
+  background: rgba(218, 238, 251, .76);
+  border-color: var(--day-line);
+}
+
+html[data-theme="day"] .citation-search-skeleton-line {
+  background: linear-gradient(90deg, rgba(23, 77, 191, .07), rgba(23, 77, 191, .2), rgba(23, 77, 191, .07));
+  background-size: 220% 100%;
+}
+
 html[data-theme="day"] .citation-preview {
   color: #071a2e;
   background: #fffdf8;
   border-color: rgba(6, 21, 38, .18);
+}
+
+html[data-theme="day"] .academic-tools-view .academic-tool-button:not(.primary) {
+  color: var(--day-blue);
+  background: rgba(248, 252, 255, .72);
+  border-color: rgba(23, 77, 191, .34);
+}
+
+html[data-theme="day"] .academic-tools-view .academic-tool-button:not(.primary):hover {
+  color: var(--day-blue-hover);
+  background: rgba(23, 77, 191, .08);
+  border-color: var(--day-blue);
+}
+
+html[data-theme="day"] :is(
+  .citation-search-actions,
+  .citation-search-result-actions
+) .academic-tool-button {
+  color: var(--day-ink);
+  background: var(--day-gold);
+  border-color: var(--day-gold);
+}
+
+html[data-theme="day"] .citation-preview .academic-tool-button:not(.primary) {
+  color: #0a2944;
+  background: transparent;
+  border-color: rgba(7, 26, 46, .24);
+}
+
+html[data-theme="day"] .citation-preview .academic-tool-button:not(.primary):hover {
+  color: #0a2944;
+  background: rgba(7, 26, 46, .06);
+  border-color: rgba(7, 26, 46, .4);
+}
+
+html[data-theme="day"] :is(
+  .citation-library-head h2,
+  .citation-library-entry,
+  .citation-style-compass > h2
+) {
+  color: var(--day-ink);
+}
+
+html[data-theme="day"] :is(
+  .citation-library-empty,
+  .citation-style-guide p,
+  .citation-disclaimer,
+  .citation-formatting-note
+) {
+  color: var(--day-muted);
+}
+
+html[data-theme="day"] :is(.citation-library, .citation-library-item, .citation-style-compass) {
+  border-color: var(--day-line);
+}
+
+html[data-theme="day"] .citation-library-remove {
+  color: var(--day-muted);
+}
+
+html[data-theme="day"] .citation-library-remove:hover {
+  color: #8f2435;
 }
 
 /* Day dialogs, overlays and status surfaces ------------------------------ */
@@ -866,6 +1205,7 @@ html[data-theme="day"] .citation-preview {
 html[data-theme="day"] :is(
   .auth-card,
   .hub-profile-dialog,
+  .hub-profile-preview,
   .hub-action-dialog,
   .marketplace-dialog,
   .marketplace-modal-dialog
@@ -877,6 +1217,7 @@ html[data-theme="day"] :is(
 
 html[data-theme="day"] :is(
   .hub-profile-dialog,
+  .hub-profile-preview,
   .hub-action-dialog,
   .marketplace-dialog,
   .marketplace-modal-dialog

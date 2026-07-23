@@ -4,6 +4,7 @@ import test from "node:test";
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../concourse-theme.css", import.meta.url), "utf8");
+const dayMark = readFileSync(new URL("../concourse-icon.svg", import.meta.url), "utf8");
 
 test("appearance choice is applied before styles render and persists locally", () => {
   const bootstrap = html.indexOf('localStorage.getItem("concourse_theme")');
@@ -43,4 +44,34 @@ test("the final theme layer covers every major ConCourse destination", () => {
   assert.match(css, /@media \(max-width: 520px\)/);
   assert.match(css, /@media \(forced-colors: active\)/);
   assert.match(css, /@media print/);
+});
+
+test("Day mode uses the navy ConCourse mark while Night keeps the ivory mark", () => {
+  assert.match(html, /class="brand-mark-image brand-mark-night"[^>]+concourse-mark\.svg/);
+  assert.match(html, /class="brand-mark-image brand-mark-day"[^>]+concourse-icon\.svg/);
+  assert.match(dayMark, /#061A30/i);
+  assert.match(css, /html\[data-theme="day"\] \.brand-mark-night\s*\{\s*display:\s*none/);
+  assert.match(css, /html\[data-theme="day"\] \.brand-mark-day\s*\{\s*display:\s*block/);
+});
+
+test("Day contrast lock covers Hub rails, controls, market, and citation surfaces", () => {
+  for(const selector of [
+    ".hub-rail-profile-row b",
+    ".hub-conversation-preview-button b",
+    ".hub-filter-row select",
+    ".market-scope-button",
+    ".citation-field > :is(span, label)",
+    ".citation-library-entry",
+    ".citation-style-compass > h2",
+    ".hub-profile-preview"
+  ]){
+    assert.ok(css.includes(selector), `Day contrast layer should cover ${selector}`);
+  }
+
+  assert.match(css, /#chatMessageInput::placeholder[\s\S]*-webkit-text-fill-color:\s*var\(--day-muted\)/);
+});
+
+test("English community search never exposes its translation key", () => {
+  assert.match(html, /searchCommunity:"Search recent campus conversations"/);
+  assert.match(html, /searchAcrossCampuses:"Search posts, universities and topics worldwide"/);
 });
