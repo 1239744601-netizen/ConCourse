@@ -155,6 +155,7 @@ test("Hub geometry stays identical when translated", () => {
   );
   assert.doesNotMatch(html, /id="hubMarketplaceActions"/);
   assert.doesNotMatch(html, /VISUAL_QA_HARNESS/);
+  assert.doesNotMatch(html, /MOTION_QA_HARNESS/);
 });
 
 test("functional content begins directly beneath compact artwork headers", () => {
@@ -179,13 +180,23 @@ test("functional content begins directly beneath compact artwork headers", () =>
 test("solid Hub artwork uses accessible motion and marketplace cards stay readable", () => {
   assert.match(artCss, /@keyframes atlas-masthead-orbit/);
   assert.match(artCss, /@keyframes atlas-masthead-spark/);
+  assert.match(artCss, /@keyframes atlas-art-cinematic-glide/);
   assert.match(
     artCss,
-    /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.member-hub \.hub-page-header::after,[\s\S]*?animation:\s*none\s*!important/
+    /\.member-hub\[data-active-view="community"\][\s\S]*?animation:[\s\S]*?atlas-art-cinematic-glide[\s\S]*?var\(--hub-art-duration\)/
+  );
+  assert.match(artCss, /--hub-art-duration:\s*13\.5s/);
+  assert.match(
+    artCss,
+    /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.member-hub \.hub-page-header::after,[\s\S]*?\.member-hub \.hub-hero-art img[\s\S]*?animation:\s*none\s*!important/
   );
   assert.match(
     artCss,
     /html\[data-theme="night"\][\s\S]*?\.marketplace-card-title:hover[\s\S]*?color:\s*#f7fbff\s*!important/
+  );
+  assert.match(
+    artCss,
+    /html\[data-theme="day"\][\s\S]*?\.market-protection-steps > li::before[\s\S]*?background:\s*linear-gradient\(145deg,\s*#3678ff,\s*#174dbf\)/
   );
   assert.match(marketplaceJs, /grid\.classList\.toggle\("is-single-result", singleListing\)/);
   assert.match(artCss, /\.market-grid\.is-single-result/);
