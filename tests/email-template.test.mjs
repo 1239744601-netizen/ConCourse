@@ -9,12 +9,12 @@ test("confirmation email is branded, accessible, and uses scanner-safe OTP verif
   assert.match(template, /<title>Verify your email for ConCourse<\/title>/);
   assert.match(template, /\{\{ \.Token \}\}/);
   assert.match(template, /\{\{ \.Email \}\}/);
-  assert.match(template, /https:\/\/1239744601-netizen\.github\.io\/ConCourse\/concourse-email-mark\.png/);
-  assert.match(template, /<img[^>]*alt=""[^>]*role="presentation"/);
+  assert.match(template, /class="email-native-mark"/);
+  assert.match(template, /color:#fff9ef[^>]*>C<\/span><span[^>]*color:#69d4f2[^>]*>C<\/span>/);
   assert.match(template, /Open ConCourse/);
   assert.match(template, /Never share this code/);
   assert.doesNotMatch(template, /\{\{ \.ConfirmationURL \}\}/);
-  assert.doesNotMatch(template, /<svg|data:image|@import/i);
+  assert.doesNotMatch(template, /<img|<svg|data:image|@import/i);
 });
 
 test("confirmation email includes responsive and dark-mode safeguards", () => {
@@ -33,9 +33,9 @@ test("invitation email uses the ConCourse navy identity and an invitation-only a
   assert.match(inviteTemplate, /bgcolor="#061625"/);
   assert.match(inviteTemplate, /bgcolor="#0b2238"/);
   assert.match(inviteTemplate, /bgcolor="#f1be4f"/);
-  assert.match(inviteTemplate, /concourse-email-mark\.png/);
+  assert.match(inviteTemplate, /class="email-native-mark"/);
   assert.doesNotMatch(inviteTemplate, /\{\{ \.Token \}\}/);
-  assert.doesNotMatch(inviteTemplate, /<svg|data:image|@import/i);
+  assert.doesNotMatch(inviteTemplate, /<img|<svg|data:image|@import/i);
 });
 
 test("invitation email remains responsive and resists automatic link recoloring", () => {
