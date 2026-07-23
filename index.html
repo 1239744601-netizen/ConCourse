@@ -1725,7 +1725,7 @@
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="academic-tools.css?v=20260722-citation-search1" />
 <link rel="stylesheet" href="concourse-theme.css?v=20260723-daycontrast2" />
-<link rel="stylesheet" href="concourse-art.css?v=20260723-atlas2" />
+<link rel="stylesheet" href="concourse-art.css?v=20260723-atlas4" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2186,9 +2186,6 @@
           <p class="hub-kicker" id="hubPageKicker">ConCourse Community</p>
           <h1 id="hubGreeting">Campus community</h1>
           <p id="hubPageIntroduction">Discover what students at your university are asking, sharing, and planning.</p>
-          <div class="hub-marketplace-actions" id="hubMarketplaceActions" hidden>
-            <button type="button" class="hub-marketplace-action primary" data-market-action="sell" aria-controls="marketplaceListingEditorModal" aria-haspopup="dialog" data-i18n="marketplaceSell">Sell</button>
-          </div>
         </div>
         <figure class="hub-hero-art" aria-hidden="true">
           <img src="concourse-art-community.jpg" width="1536" height="1024" alt="" data-hub-hero="community" decoding="async" fetchpriority="high" />
@@ -2274,7 +2271,7 @@
             <span class="academic-tools-local-note academic-localized-copy">
               <span lang="en">Manual entries and your bibliography stay on this device. Scholarly keyword results use Crossref’s free public metadata; selected pages are checked by ConCourse.</span>
               <span lang="zh-CN">手动输入的资料和参考书目仅保存在此设备。学术关键词结果使用 Crossref 免费公共元数据；所选网页由 ConCourse 核对。</span>
-              <span lang="zh-HK">手動輸入嘅資料同參考書目只會儲存喺呢部裝置。學術關鍵字結果使用 Crossref 免費公共元資料；所選網頁由 ConCourse 核對。</span>
+              <span lang="zh-HK">手動輸入的資料及參考書目只會儲存在此裝置。學術關鍵字結果使用 Crossref 免費公開中繼資料；所選網頁由 ConCourse 核對。</span>
             </span>
           </div>
           <p data-academic-i18n="toolsWorkspaceIntro">Build a polished reference, check its in-text form, and keep a bibliography for your current project.</p>
@@ -2456,7 +2453,7 @@
               <span class="academic-tools-sr-only academic-localized-copy" id="citationReferencePlaceholderHelp">
                 <span lang="en">Enter a title to generate a reference, or type the complete reference directly.</span>
                 <span lang="zh-CN">输入标题以生成参考文献，或直接输入完整的参考文献。</span>
-                <span lang="zh-HK">輸入標題以產生參考文獻，或者直接輸入完整嘅參考文獻。</span>
+                <span lang="zh-HK">輸入標題以建立參考文獻，或直接輸入完整的參考文獻。</span>
               </span>
               <div class="citation-edit-controls">
                 <small id="citationEditHint" data-academic-i18n="citationEditHint">You can correct the generated entry directly in this box.</small>
@@ -3137,9 +3134,206 @@ const TRANSLATIONS = {
   }
 };
 
+/* Context-reviewed Chinese copy.
+   Keep interface terminology consistent without making translated labels
+   determine the layout geometry. */
+Object.assign(TRANSLATIONS["zh-CN"], {
+  saved:"已保存",
+  postSaved:"已收藏",
+  brandTag:"掌控选课，成就每个学期",
+  criteria:"学期要求",
+  professor:"任课教师",
+  sessionsPerWeek:"每周课次（固定安排）",
+  multipleTimes:"该教师提供<b>多个上课时段</b> — 请分别添加每个时段方案。",
+  saveTimeOption:"保存时段方案",
+  semesterCriteria:"学期要求",
+  semesterCriteriaDescription:"设置学分目标、科目数量与可上课时间。",
+  maximumCredits:"最高学分 — 选填",
+  freeWeekdays:"希望保留的无课日（周末除外）",
+  noFreeDayPreference:"不限制",
+  oneFreeWeekday:"至少保留 1 个工作日无课",
+  twoFreeWeekdays:"至少保留 2 个工作日无课",
+  courseWishlist:"选课清单",
+  wishlistDescription:"所有已选课程都会显示在这里。生成最终课表前，请确认选课内容。",
+  bestScheduleDescription:"当前显示排名最高的完整课表方案。",
+  showingRankedOption:"当前显示排名第 {option} 的方案。",
+  compareAlternatives:"点击上方方案按钮比较其他课表。",
+  completeWishlistTitle:"已满足全部选课：",
+  completeWishlistMessage:"所有已选课程都能排入此方案，且没有时间冲突。",
+  noValidTimetable:"未找到符合条件的课表。",
+  totalGapsStat:"课间总空档",
+  hubNavigation:"学生中心导航",
+  hubMessages:"消息",
+  hubInsights:"选课洞察",
+  hubCommunityIntro:"了解同校同学正在讨论、分享和筹划什么。",
+  hubMessagesTitle:"自在联系，免受打扰",
+  hubMessagesIntro:"与通过校园验证的同学进行专注、私密的一对一交流。",
+  hubInsightsTitle:"看清趋势，规划选课",
+  hubInsightsIntro:"查看匿名选课趋势，并保存你最终确认的学期课表。",
+  hubAcademicToolsTitle:"更快生成规范、可核对的参考文献",
+  hubAcademicToolsIntro:"生成格式一致的参考文献和文内引用，并整理项目参考书目。",
+  hubProfileTitle:"建立可信的校园身份",
+  savedDecisionSummary:"保存最终课表后，即可开启完整的 ConCourse 校园体验。",
+  compareStudents:"对比范围",
+  sameMajorYear:"同专业、同年级",
+  courseChoiceParticipants:"基于约 {count} 名学生的匿名化汇总数据",
+  fromFinalTimetable:"按最终课表统计",
+  messagesDescription:"你可以通过用户名联系同校学生，也可以从全球市集商品页联系其他高校的卖家。拉黑和举报功能为双方提供保护。",
+  conversationReadOnly:"此对话记录目前仅供查看",
+  yourCampus:"本校",
+  acrossCampuses:"全球高校",
+  communityReach:"浏览范围",
+  verificationPending:"用户填写 · 未通过平台授权验证",
+  marketplaceDiscover:"逛市集",
+  marketplaceCampusOnly:"仅限通过校园验证的用户",
+  marketplaceTransactionFlow:"交易保障流程",
+  marketplaceStepAgree:"确认交易",
+  marketplaceStepAgreeText:"确认商品、价格和交付方式。",
+  marketplaceStepReview:"收货验收",
+  marketplaceStepReviewText:"交付后检查商品或学习资料。",
+  marketplaceStepRelease:"确认放款",
+  marketplaceStepReleaseText:"接入支付服务商后，款项只会在买家确认验收后支付给卖家。",
+  marketplaceRightsTitle:"诚信交易",
+  marketplaceSellerStudio:"卖家中心",
+  marketplaceDigital:"数字资料",
+  marketplaceDigitalDelivery:"在线交付",
+  marketplaceConditionUsed:"二手",
+  marketplaceRightsBasis:"发布授权依据",
+  marketplaceChooseRightsBasis:"选择授权依据",
+  marketplaceUnfavorite:"取消收藏",
+  marketplaceOrderRoleBuyer:"买家",
+  marketplaceOrderRoleSeller:"卖家",
+  marketplacePaymentHeld:"款项由支付服务商暂存中",
+  marketplaceReleased:"款项已支付给卖家",
+  usernameUnavailable:"暂时无法检查用户名，请稍后重试或联系 ConCourse 支持。",
+  usernameCheckFailed:"暂时无法检查用户名，请稍后重试或联系 ConCourse 支持。",
+  memberSetupRequired:"学生中心暂时无法使用，请稍后重试或联系 ConCourse 支持。",
+  marketplaceUnavailable:"校园市集暂时无法使用，请稍后重试或联系 ConCourse 支持。",
+  mediaSetupRequired:"图片上传暂时无法使用，请稍后重试或联系 ConCourse 支持。",
+  postPublishedCampusOnly:"动态已在本校发布，但全球分享暂未开放。",
+  supabaseRequired:"登录服务暂时不可用",
+  connectSupabase:"登录服务暂时无法连接，请稍后重试或联系 ConCourse 支持。"
+});
+
+Object.assign(TRANSLATIONS["zh-HK"], {
+  saved:"已儲存",
+  postSaved:"已收藏",
+  brandTag:"輕鬆規劃選科",
+  heroTitle:"規劃你最理想的<span>學期</span>",
+  heroDescription:"加入所有想修讀的課程。ConCourse 會找出沒有時間衝突並符合學分目標的組合，再按你的生活需要排列時間表。",
+  accountTitle:"你的 ConCourse 帳戶",
+  realNamePrivacy:"這些資料會與公開資料分開儲存，只有網站擁有人可以在受保護的資料庫中查看。",
+  configuratorTitle:"選擇詳細條件。<br>建立選科清單。",
+  configuratorDescription:"加入課程選項並設定學期偏好。準備好後，ConCourse 會在獨立的全畫面頁面顯示已排名的時間表。",
+  criteria:"學期要求",
+  courseBuilderDescription:"設定每科課程及可選的上課時段。",
+  professor:"導師",
+  sessionsPerWeek:"每星期上課次數（課程固定安排）",
+  oneSession:"1 次 — 每星期一堂（例如 3 小時）",
+  twoSessions:"2 次 — 在不同日子上兩堂（例如 2 小時 + 1 小時）",
+  multipleTimes:"這位導師在<b>多個時段</b>教授此課程 — 請逐一加入時段方案。",
+  addSessionTime:"加入上課時段（日期 + 時間）",
+  saveTimeOption:"儲存時段方案",
+  sessionHint:"加入此課程的上課日期和時間。所有時段會一併儲存為固定的每星期安排。",
+  semesterCriteria:"學期要求",
+  semesterCriteriaDescription:"設定學分目標、科目數量和空閒時間。",
+  requiredCredits:"本學期所需學分",
+  courseCount:"你希望修讀多少科？",
+  generateTimetable:"建立時間表",
+  fewestCourses:"<b>以最少科目達到學分要求</b> — 盡量以較少科目滿足所需學分。",
+  freeWeekdays:"全日沒有課堂的平日",
+  noFreeDayPreference:"沒有特別偏好",
+  oneFreeWeekday:"最少 1 個全日沒有課堂的平日",
+  twoFreeWeekdays:"最少 2 個全日沒有課堂的平日",
+  compactClasses:"優先安排緊湊時間表（減少每日課堂之間的等候時間）",
+  fewerDays:"優先減少回校日數",
+  courseWishlist:"選科清單",
+  wishlistDescription:"你加入的課程都會在此顯示。建立最終時間表前請先檢查。",
+  weeklyTimetable:"每星期時間表",
+  timetableDescription:"比較已排名的方案、了解各項取捨，再儲存最適合你的時間表。",
+  bestSchedule:"最佳無時間衝突時間表",
+  bestScheduleDescription:"排名最高的方案會以完整尺寸顯示。",
+  daysOnCampusStat:"個回校日",
+  freeWeekdayStat:"個沒有課堂的平日（{days}）",
+  freeWeekdaysStat:"個沒有課堂的平日（{days}）",
+  none:"沒有",
+  totalGapsStat:"課堂之間的總空檔",
+  optionButton:"方案 {option} · {count}科/{credits}學分/{days}日",
+  optionTitle:"{count} 科，{credits} 學分，{days} 個回校日",
+  showingRankedOption:"目前顯示排名第 {option} 的方案。",
+  compareAlternatives:"使用上方的方案按鈕比較其他選擇。",
+  completeWishlistMessage:"所有已選課程都可在沒有時間衝突的情況下加入此時間表。",
+  noValidTimetable:"找不到符合條件的時間表。",
+  hubNavigation:"學生中心導覽",
+  closeProfile:"關閉個人資料",
+  hubCommunity:"校園社區",
+  hubMessages:"訊息",
+  hubInsights:"選科洞察",
+  hubProfile:"個人資料",
+  editProfile:"編輯資料",
+  hubCommunityIntro:"看看你所屬大學的同學正在討論、分享和籌劃甚麼。",
+  hubMessagesTitle:"保持聯繫，不受打擾",
+  hubMessagesIntro:"與已驗證的同校同學進行專注而私密的一對一交流。",
+  hubInsightsTitle:"掌握趨勢，規劃選科",
+  hubInsightsIntro:"查看匿名選科趨勢，並保存你的最終學期決定。",
+  hubAcademicToolsTitle:"引用和參考文獻，一站完成",
+  hubAcademicToolsIntro:"毋須離開 ConCourse，即可建立格式一致的參考文獻、文內引用和項目參考書目。",
+  hubProfileTitle:"建立可信賴的校園身份",
+  hubProfileIntro:"管理頭像、個人資料、社交連接和私隱設定。",
+  profileStrength:"個人資料完整度",
+  completeProfilePrompt:"完善個人資料，建立信任",
+  savedDecisionSummary:"保存最終時間表後，即可開啟完整的 ConCourse 校園體驗。",
+  compareStudents:"比較範圍",
+  sameMajorYear:"同一專業、同一年級",
+  courseChoiceParticipants:"根據約 {count} 位學生的匿名化匯總資料",
+  fromFinalTimetable:"按最終時間表統計",
+  messagesDescription:"你可以使用用戶名稱聯絡同校同學，亦可透過全球市集商品聯絡其他大學的學生。封鎖和舉報功能有助保障雙方。",
+  conversationReadOnly:"此對話記錄目前只供查看",
+  profileDescription:"加入選填資料，方便同學辨認你。你可以控制個人資料的可見範圍，以及是否允許其他人向你發送訊息。",
+  selfReportedProfiles:"用戶自行提供的個人資料連結",
+  yourCampus:"本校",
+  acrossCampuses:"全球院校",
+  communityReach:"瀏覽範圍",
+  searchCommunity:"搜尋最近的校園討論",
+  topicCareers:"升學及就業",
+  verificationPending:"用戶填寫 · 未經平台授權驗證",
+  marketplaceDiscover:"逛市集",
+  marketplaceMyListings:"我的商品",
+  marketplaceCampusOnly:"只限已驗證的校園成員",
+  marketplaceTransactionFlow:"交易保障流程",
+  marketplaceStepAgree:"確認交易",
+  marketplaceStepAgreeText:"確認商品、價格和交付方式。",
+  marketplaceStepReview:"收貨驗收",
+  marketplaceStepReviewText:"交付後檢查商品或學習資料。",
+  marketplaceStepRelease:"確認放款",
+  marketplaceStepReleaseText:"日後接入支付服務商後，款項只會在買家確認驗收後發放給賣家。",
+  marketplaceRightsTitle:"負責任地交易",
+  marketplaceSellerStudio:"賣家專區",
+  marketplaceDigital:"數碼資料",
+  marketplaceDigitalDelivery:"數碼交付",
+  marketplaceConditionUsed:"二手",
+  marketplaceRightsBasis:"再分發權利",
+  marketplaceChooseRightsBasis:"選擇權利依據",
+  marketplaceUnfavorite:"取消收藏",
+  marketplaceOrderRoleBuyer:"買家",
+  marketplaceOrderRoleSeller:"賣家",
+  marketplacePaymentHeld:"款項已由支付服務商託管",
+  marketplaceReleased:"款項已發放",
+  profilePhotoHint:"支援 JPG、PNG、WebP、GIF、AVIF、BMP 及 HEIC/HEIF。ConCourse 會移除中繼資料，並儲存為私人且兼容瀏覽器的副本；SVG 將被封鎖。",
+  usernameUnavailable:"暫時無法檢查用戶名稱，請稍後再試或聯絡 ConCourse 支援。",
+  usernameCheckFailed:"暫時無法檢查用戶名稱，請稍後再試或聯絡 ConCourse 支援。",
+  memberSetupRequired:"學生中心暫時無法使用，請稍後再試或聯絡 ConCourse 支援。",
+  marketplaceUnavailable:"校園市集暫時無法使用，請稍後再試或聯絡 ConCourse 支援。",
+  mediaSetupRequired:"圖片上載暫時無法使用，請稍後再試或聯絡 ConCourse 支援。",
+  postPublishedCampusOnly:"貼文已在本校發佈，但全球分享暫未開放。",
+  supabaseRequired:"登入服務暫時無法使用",
+  connectSupabase:"登入服務暫時無法連接，請稍後再試或聯絡 ConCourse 支援。"
+});
+
 function t(key, variables={}){
   const english = {
     signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", appearance:"Page appearance", dayMode:"Day", nightMode:"Night", useDayMode:"Use day appearance", useNightMode:"Use night appearance", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
+    hubCommunity:"Campus community", hubMarketplace:"Campus market", hubMessages:"Messages", hubAcademicTools:"Academic tools", hubInsights:"Academic insights", hubProfile:"Profile",
     signInSubtitle:"Sign in to continue to your planning workspace.", signUpSubtitle:"Create your academic profile and planning workspace.", verificationSubtitle:"Enter the code from your email to finish creating your account.",
     signUpNote:"Institution matching confirms that a school exists; it does not verify current enrollment.",
     signInNote:"Your schedules are encrypted in transit and isolated by account-level database policies.", verificationNote:"Your code is used only after you enter it, so an email security scanner cannot verify the account for you.",
@@ -3163,7 +3357,7 @@ function t(key, variables={}){
     invalidEmailForResend:"Enter a valid email address to resend the code.", resendRequested:"If a pending account exists for this address, a new code has been requested. Use the newest email and check your spam folder too.", resendFailed:"A new verification code could not be requested. Please try again later.",
     authEmailNotAuthorized:"This project's current email service cannot send to that address. The website owner must enable custom SMTP before public email verification will work.", authEmailRateLimited:"The verification-email sending limit has been reached. Try again later; repeated clicks will not make it arrive sooner.", authAlreadyRegistered:"An account may already exist for this address. Try signing in, or use Resend verification email if it has not been confirmed.",
     authEmailNotConfirmed:"This email has not been verified. Resend a code, then enter the six digits from the newest email.", authInvalidLogin:"The email or password is incorrect. If you just registered, verify your email before signing in.", authRateLimited:"Too many authentication attempts were made. Wait a while before trying again.", authLinkExpired:"This verification link has expired or was already used. Enter your email, then request a new code.", authLinkInvalid:"This verification link could not be used. Request a new code and use the newest email.", authEmailProviderDisabled:"Email registration is temporarily disabled. Please contact the website owner.", authSignUpFailed:"Your account could not be created right now. Please try again later.", authSignInFailed:"You could not be signed in right now. Please try again later.",
-    signedInReady:"Signed in as {email}. Your planner is ready.", saving:"Saving…", saveFailed:"Save failed", saved:"Saved", unsaved:"Unsaved", loading:"Loading…", loadFailed:"Load failed",
+    signedInReady:"Signed in as {email}. Your planner is ready.", saving:"Saving…", saveFailed:"Save failed", saved:"Saved", postSaved:"Saved", unsaved:"Unsaved", loading:"Loading…", loadFailed:"Load failed",
     supabaseRequired:"Supabase setup required", configureLogin:"Configure login", connectSupabase:"Connect Supabase to enable sign-in and start planning.",
     monday:"Mon", tuesday:"Tue", wednesday:"Wed", thursday:"Thu", friday:"Fri", saturday:"Sat",
     rankedOf:"Ranked #{rank} of {total}", coursesTakenStat:"courses taken", creditsStat:"credits", daysOnCampusStat:"days on campus",
@@ -5188,8 +5382,8 @@ initializeTheme();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260723-cloudflare1"></script>
+<script src="member-hub.js?v=20260723-i18n2"></script>
 <script src="marketplace.js?v=20260721-market-gallery5"></script>
-<script src="academic-tools.js?v=20260722-crossref1"></script>
+<script src="academic-tools.js?v=20260723-i18n2"></script>
 </body>
 </html>

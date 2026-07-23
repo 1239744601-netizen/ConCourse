@@ -5,6 +5,8 @@ import test from "node:test";
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../concourse-theme.css", import.meta.url), "utf8");
 const artCss = readFileSync(new URL("../concourse-art.css", import.meta.url), "utf8");
+const memberHubJs = readFileSync(new URL("../member-hub.js", import.meta.url), "utf8");
+const academicToolsJs = readFileSync(new URL("../academic-tools.js", import.meta.url), "utf8");
 const dayMark = readFileSync(new URL("../concourse-icon.svg", import.meta.url), "utf8");
 
 test("appearance choice is applied before styles render and persists locally", () => {
@@ -131,4 +133,56 @@ test("Day contrast lock covers Hub rails, controls, market, and citation surface
 test("English community search never exposes its translation key", () => {
   assert.match(html, /searchCommunity:"Search recent campus conversations"/);
   assert.match(html, /searchAcrossCampuses:"Search posts, universities and topics worldwide"/);
+});
+
+test("Hub geometry stays identical when translated", () => {
+  assert.match(
+    artCss,
+    /grid-template-columns:\s*repeat\(6,\s*minmax\(0,\s*1fr\)\)\s*!important/
+  );
+  assert.match(artCss, /min-height:\s*clamp\(132px,\s*12vw,\s*164px\)\s*!important/);
+  assert.match(
+    artCss,
+    /\.member-hub \.hub-hero-art,[\s\S]*?position:\s*absolute\s*!important[\s\S]*?bottom:\s*-74px\s*!important/
+  );
+  assert.match(artCss, /html\[lang\^="zh"\] \.member-hub \.hub-nav-button b/);
+  assert.match(memberHubJs, /const headingKey = view === "community"/);
+  assert.match(memberHubJs, /\$\("hubGreeting"\)\.textContent = t\(headingKey\)/);
+  assert.match(
+    html,
+    /hubCommunity:"Campus community",\s*hubMarketplace:"Campus market",\s*hubMessages:"Messages",\s*hubAcademicTools:"Academic tools",\s*hubInsights:"Academic insights",\s*hubProfile:"Profile"/
+  );
+  assert.doesNotMatch(html, /id="hubMarketplaceActions"/);
+  assert.doesNotMatch(html, /VISUAL_QA_HARNESS/);
+});
+
+test("functional content begins directly beneath compact artwork headers", () => {
+  assert.match(
+    artCss,
+    /\.member-hub\[data-active-view="academic-tools"\] \.academic-tools-view\s*\{[\s\S]*?padding-top:\s*8px\s*!important/
+  );
+  assert.match(
+    artCss,
+    /\.member-hub\[data-active-view="academic-tools"\] \.academic-tools-intro h2\s*\{[\s\S]*?font-size:\s*clamp\(28px,\s*3\.2vw,\s*42px\)/
+  );
+  assert.match(
+    artCss,
+    /\.member-hub\[data-active-view="marketplace"\] \.market-discovery-bar\s*\{[\s\S]*?position:\s*sticky\s*!important[\s\S]*?top:\s*calc\(var\(--app-bar-offset\) \+ 8px\)\s*!important/
+  );
+  assert.match(
+    artCss,
+    /@media \(max-width:\s*900px\)[\s\S]*?\.member-hub\[data-active-view="marketplace"\] \.market-discovery-bar\s*\{[\s\S]*?position:\s*static\s*!important[\s\S]*?top:\s*auto\s*!important/
+  );
+});
+
+test("Chinese copy distinguishes saving from bookmarking and uses academic terminology", () => {
+  assert.match(html, /Object\.assign\(TRANSLATIONS\["zh-CN"\]/);
+  assert.match(html, /Object\.assign\(TRANSLATIONS\["zh-HK"\]/);
+  assert.match(html, /saved:"已保存",\s*postSaved:"已收藏"/);
+  assert.match(html, /saved:"已儲存",\s*postSaved:"已收藏"/);
+  assert.equal((memberHubJs.match(/t\("postSaved"\)/g) || []).length, 2);
+  assert.match(academicToolsJs, /toolsWorkspaceTitle:"参考文献工作室"/);
+  assert.match(academicToolsJs, /toolsWorkspaceTitle:"參考文獻工作室"/);
+  assert.match(academicToolsJs, /citationCopy:"复制参考文献"/);
+  assert.match(academicToolsJs, /citationCopy:"複製參考文獻"/);
 });

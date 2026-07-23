@@ -1173,3 +1173,355 @@ html[lang^="zh"] .member-hub .hub-page-header h1 {
     display: none !important;
   }
 }
+
+/* -----------------------------------------------------------------------
+   Multilingual functional masthead
+   Keep all six destinations on one shared geometry. The artwork now acts as
+   the functional page banner instead of occupying a second oversized column.
+   -------------------------------------------------------------------- */
+
+.member-hub {
+  --hub-feature-accent: var(--atlas-cyan);
+  --hub-art-position: 52% 48%;
+  --hub-art-opacity: .34;
+  --hub-art-veil: var(--atlas-navy-1000);
+}
+
+.member-hub[data-active-view="community"] {
+  --hub-feature-accent: #7fd8ff;
+  --hub-art-position: 54% 48%;
+}
+
+.member-hub[data-active-view="marketplace"] {
+  --hub-feature-accent: #efbd4c;
+  --hub-art-position: 50% 50%;
+}
+
+.member-hub[data-active-view="messages"] {
+  --hub-feature-accent: #9db9ff;
+  --hub-art-position: 50% 46%;
+}
+
+.member-hub[data-active-view="academic-tools"] {
+  --hub-feature-accent: #79d5ff;
+  --hub-art-position: 52% 52%;
+}
+
+.member-hub[data-active-view="overview"] {
+  --hub-feature-accent: #efc76d;
+  --hub-art-position: 55% 48%;
+}
+
+.member-hub[data-active-view="profile"] {
+  --hub-feature-accent: #9ee6ff;
+  --hub-art-position: 58% 45%;
+}
+
+@media (min-width: 901px) {
+  .member-hub .hub-sidebar {
+    grid-template-columns: minmax(200px, 252px) minmax(0, 1fr) !important;
+  }
+
+  .member-hub .hub-navigation {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+
+  .member-hub .hub-nav-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: clamp(6px, .8vw, 14px) !important;
+  }
+}
+
+.member-hub .hub-nav-button b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: clamp(11px, .83vw, 13px) !important;
+  line-height: 1.3;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-hub .hub-page-header,
+.member-hub[data-active-view] .hub-page-header,
+.member-hub[data-active-view="marketplace"] .hub-page-header {
+  position: relative !important;
+  z-index: 0;
+  width: min(1360px, calc(100% - 2 * var(--hub-content-gutter))) !important;
+  min-height: clamp(132px, 12vw, 164px) !important;
+  height: auto !important;
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center !important;
+  margin: 0 auto 10px !important;
+  padding: clamp(20px, 2.5vw, 32px) 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  isolation: isolate;
+}
+
+.member-hub .hub-page-header::before,
+.member-hub .hub-page-header::after {
+  content: none !important;
+}
+
+.member-hub .hub-page-header-copy,
+.member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+  position: relative !important;
+  z-index: 2 !important;
+  width: min(54%, 620px) !important;
+  max-width: none !important;
+  min-height: 0;
+  display: grid !important;
+  align-content: center;
+  align-items: flex-start !important;
+  padding: 0 !important;
+}
+
+.member-hub .hub-page-header-copy::after {
+  width: 52px !important;
+  height: 3px !important;
+  margin-top: 12px !important;
+  background: linear-gradient(90deg, var(--hub-feature-accent), var(--atlas-gold)) !important;
+}
+
+.member-hub .hub-page-header h1,
+.member-hub[data-active-view="community"] .hub-page-header h1,
+.member-hub[data-active-view="marketplace"] .hub-page-header h1 {
+  order: 2;
+  max-width: none !important;
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: clamp(30px, 3.2vw, 44px) !important;
+  font-weight: 750 !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.035em !important;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, .2) !important;
+}
+
+.member-hub .hub-hero-art,
+.member-hub[data-active-view="marketplace"] .hub-hero-art {
+  position: absolute !important;
+  z-index: 0 !important;
+  top: -28px !important;
+  right: 0 !important;
+  bottom: -74px !important;
+  left: auto !important;
+  width: min(68%, 820px) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none;
+  opacity: var(--hub-art-opacity) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-mask-image: radial-gradient(
+    ellipse 94% 118% at 74% 34%,
+    #000 0 44%,
+    rgba(0, 0, 0, .8) 61%,
+    transparent 84%
+  ) !important;
+  mask-image: radial-gradient(
+    ellipse 94% 118% at 74% 34%,
+    #000 0 44%,
+    rgba(0, 0, 0, .8) 61%,
+    transparent 84%
+  ) !important;
+}
+
+.member-hub .hub-hero-art::before {
+  z-index: 2;
+  background:
+    linear-gradient(90deg, var(--hub-art-veil), transparent 46%),
+    linear-gradient(0deg, var(--hub-art-veil), transparent 48%) !important;
+}
+
+.member-hub .hub-hero-art::after {
+  content: none !important;
+}
+
+.member-hub .hub-hero-art img {
+  object-position: var(--hub-art-position) !important;
+  filter: saturate(.88) contrast(1.02) !important;
+}
+
+.member-hub .hub-view {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-theme="day"] .member-hub {
+  --hub-art-opacity: .22;
+  --hub-art-veil: #eaf6fd;
+}
+
+html[data-theme="day"] .member-hub .hub-hero-art::before {
+  background:
+    linear-gradient(90deg, var(--hub-art-veil), transparent 46%),
+    linear-gradient(0deg, var(--hub-art-veil), transparent 48%) !important;
+}
+
+html[data-theme="day"] .member-hub .hub-page-header h1 {
+  color: #061a30 !important;
+  text-shadow: none !important;
+}
+
+html[data-theme="day"] .member-hub .hub-hero-art img {
+  filter: saturate(.72) contrast(.92) brightness(1.06) !important;
+}
+
+html[lang^="zh"] .member-hub .hub-nav-button b {
+  font-weight: 720;
+  letter-spacing: .01em;
+}
+
+html[lang^="zh"] .member-hub .hub-page-header h1 {
+  max-width: none !important;
+  font-size: clamp(30px, 3.2vw, 44px) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.035em !important;
+  word-break: keep-all;
+}
+
+/* The Hub header already names Academic tools. Keep the studio title as a
+   compact working label so the citation controls begin inside the artwork's
+   dissolve instead of repeating a second oversized hero. */
+.member-hub[data-active-view="academic-tools"] .academic-tools-view {
+  padding-top: 8px !important;
+}
+
+.member-hub[data-active-view="academic-tools"] .academic-tools-intro {
+  align-items: center;
+  margin-bottom: clamp(24px, 3vw, 38px);
+  padding-bottom: 18px;
+}
+
+.member-hub[data-active-view="academic-tools"] .academic-tools-intro h2 {
+  max-width: none;
+  font-size: clamp(28px, 3.2vw, 42px);
+  line-height: 1.04;
+  letter-spacing: -.04em;
+}
+
+.member-hub[data-active-view="academic-tools"] .academic-tools-local-note {
+  max-width: 68ch;
+  margin-top: 9px;
+}
+
+.member-hub[data-active-view="marketplace"] .market-discovery-bar {
+  position: sticky !important;
+  top: calc(var(--app-bar-offset) + 8px) !important;
+}
+
+@media (max-width: 900px) {
+  .member-hub .hub-navigation {
+    display: flex !important;
+    grid-template-columns: none !important;
+    gap: 0 !important;
+    overflow-x: auto !important;
+  }
+
+  .member-hub .hub-nav-button {
+    flex: 0 0 150px !important;
+    width: 150px !important;
+    min-width: 150px !important;
+    padding-inline: 10px !important;
+  }
+
+  .member-hub .hub-page-header,
+  .member-hub[data-active-view] .hub-page-header,
+  .member-hub[data-active-view="marketplace"] .hub-page-header {
+    min-height: 126px !important;
+    height: auto !important;
+    padding-block: 20px !important;
+  }
+
+  .member-hub .hub-page-header-copy,
+  .member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+    width: min(62%, 520px) !important;
+    padding: 0 !important;
+  }
+
+  .member-hub .hub-page-header h1,
+  .member-hub[data-active-view="marketplace"] .hub-page-header h1 {
+    max-width: none !important;
+    font-size: clamp(29px, 5vw, 39px) !important;
+  }
+
+  .member-hub .hub-hero-art,
+  .member-hub[data-active-view="marketplace"] .hub-hero-art {
+    top: -18px !important;
+    bottom: -60px !important;
+    width: 76% !important;
+  }
+
+  .member-hub[data-active-view="marketplace"] .market-discovery-bar {
+    position: static !important;
+    top: auto !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .member-hub .hub-nav-button {
+    flex-basis: 132px !important;
+    width: 132px !important;
+    min-width: 132px !important;
+  }
+
+  .member-hub .hub-page-header,
+  .member-hub[data-active-view] .hub-page-header,
+  .member-hub[data-active-view="marketplace"] .hub-page-header {
+    min-height: 108px !important;
+    height: auto !important;
+    margin-bottom: 4px !important;
+    padding-block: 18px !important;
+    border-radius: 0 !important;
+  }
+
+  .member-hub .hub-page-header-copy,
+  .member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+    width: 100% !important;
+    padding: 0 8px 0 0 !important;
+  }
+
+  .member-hub .hub-page-header h1,
+  .member-hub[data-active-view="marketplace"] .hub-page-header h1,
+  html[lang^="zh"] .member-hub .hub-page-header h1 {
+    max-width: none !important;
+    font-size: clamp(28px, 8.5vw, 34px) !important;
+  }
+
+  .member-hub .hub-hero-art,
+  .member-hub[data-active-view="marketplace"] .hub-hero-art {
+    top: -10px !important;
+    right: -18% !important;
+    bottom: -44px !important;
+    width: 94% !important;
+    -webkit-mask-image: radial-gradient(
+      ellipse 90% 115% at 80% 38%,
+      #000 0 38%,
+      rgba(0, 0, 0, .72) 58%,
+      transparent 82%
+    ) !important;
+    mask-image: radial-gradient(
+      ellipse 90% 115% at 80% 38%,
+      #000 0 38%,
+      rgba(0, 0, 0, .72) 58%,
+      transparent 82%
+    ) !important;
+  }
+
+  .member-hub[data-active-view="academic-tools"] .academic-tools-intro {
+    margin-bottom: 24px;
+  }
+}

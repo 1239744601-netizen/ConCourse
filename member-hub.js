@@ -505,7 +505,7 @@
 
   function renderOwnAvatars(){
     if(!currentUser) return;
-    const username = currentUser.user_metadata?.username || currentUser.email?.split("@")[0] || "Student";
+    const username = currentUser.user_metadata?.username || currentUser.email?.split("@")[0] || t("anonymousStudent");
     const name = hubState.profile?.display_name || username;
     const path = hubState.avatarDeleteRequested ? null : hubState.profile?.avatar_path;
     const revision = hubState.profile?.avatar_revision || 0;
@@ -543,8 +543,19 @@
             : view === "academic-tools"
               ? "hubAcademicTools"
               : "hubProfile";
+    const headingKey = view === "community"
+      ? (worldwideCommunity ? "acrossCampusFeed" : "hubCommunity")
+      : view === "marketplace"
+        ? (worldwideMarketplace ? "hubMarketplaceGlobalTitle" : "hubMarketplace")
+        : view === "messages"
+          ? "hubMessages"
+          : view === "academic-tools"
+            ? "hubAcademicTools"
+            : view === "overview"
+              ? "hubInsights"
+              : "hubProfile";
     $("hubPageKicker").textContent = t(`${prefix}Kicker`);
-    $("hubGreeting").textContent = t(`${prefix}Title`);
+    $("hubGreeting").textContent = t(headingKey);
     $("hubPageIntroduction").textContent = t(`${prefix}Intro`);
     const marketplaceActions = $("hubMarketplaceActions");
     if(marketplaceActions) marketplaceActions.hidden = view !== "marketplace";
@@ -552,7 +563,7 @@
 
   function renderIdentity(){
     if(!currentUser) return;
-    const username = currentUser.user_metadata?.username || currentUser.email?.split("@")[0] || "Student";
+    const username = currentUser.user_metadata?.username || currentUser.email?.split("@")[0] || t("anonymousStudent");
     const name = hubState.profile?.display_name?.trim() || `@${username}`;
     $("hubUserName").textContent = name;
     $("hubUserAcademic").textContent = academicLabel();
@@ -2052,7 +2063,7 @@
     const optimisticButton = document.querySelector(`[data-bookmark-post="${postId}"]`);
     if(optimisticButton){
       optimisticButton.disabled = true;
-      optimisticButton.textContent = post.bookmarked_by_me ? t("saved") : t("savePost");
+      optimisticButton.textContent = post.bookmarked_by_me ? t("postSaved") : t("savePost");
       optimisticButton.classList.toggle("bookmarked", post.bookmarked_by_me);
       optimisticButton.setAttribute("aria-pressed", post.bookmarked_by_me ? "true" : "false");
     }
@@ -2718,7 +2729,7 @@
       likeButton.disabled = hubState.likeBusy.has(post.post_id);
       likeButton.setAttribute("aria-pressed", post.liked_by_me ? "true" : "false");
       likeButton.onclick = () => togglePostLike(post.post_id);
-      const bookmarkButton = node("button", post.bookmarked_by_me ? "bookmarked" : "", post.bookmarked_by_me ? t("saved") : t("savePost"));
+      const bookmarkButton = node("button", post.bookmarked_by_me ? "bookmarked" : "", post.bookmarked_by_me ? t("postSaved") : t("savePost"));
       bookmarkButton.type = "button";
       bookmarkButton.dataset.bookmarkPost = post.post_id;
       bookmarkButton.disabled = hubState.bookmarkBusy.has(post.post_id);
