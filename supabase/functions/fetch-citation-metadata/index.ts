@@ -8,7 +8,7 @@
 
 import { createSupabaseContext } from "jsr:@supabase/server@1.4.0";
 
-const PRODUCTION_ORIGIN = "https://1239744601-netizen.github.io";
+const PRODUCTION_ORIGIN = "https://concoursehk.pages.dev";
 const MAX_URL_LENGTH = 2048;
 const MAX_REDIRECTS = 4;
 const MAX_REQUEST_BYTES = 4 * 1024;
@@ -23,7 +23,7 @@ const MAX_SEARCH_RESULTS = 10;
 const MAX_SEARCH_RESPONSE_BYTES = 512 * 1024;
 const CROSSREF_SEARCH_ENDPOINT = "https://api.crossref.org/works";
 const CROSSREF_WORK_ENDPOINT = "https://api.crossref.org/works/";
-const SEARCH_USER_AGENT = "ConCourseCitationBot/1.0 (+https://1239744601-netizen.github.io/ConCourse/)";
+const SEARCH_USER_AGENT = "ConCourseCitationBot/1.0 (+https://concoursehk.pages.dev/)";
 
 type MetadataResult = {
   sourceUrl: string;
@@ -469,7 +469,7 @@ async function fetchHtml(source: URL, deadline = performance.now() + FETCH_TIMEO
         headers: {
           Accept: "text/html,application/xhtml+xml;q=0.9",
           "Accept-Language": "en;q=0.8",
-          "User-Agent": "ConCourseCitationBot/1.0 (+https://1239744601-netizen.github.io/ConCourse/)",
+          "User-Agent": "ConCourseCitationBot/1.0 (+https://concoursehk.pages.dev/)",
         },
       });
       remainingTime(deadline);
