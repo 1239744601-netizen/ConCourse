@@ -4,6 +4,7 @@ import test from "node:test";
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../concourse-theme.css", import.meta.url), "utf8");
+const artCss = readFileSync(new URL("../concourse-art.css", import.meta.url), "utf8");
 const dayMark = readFileSync(new URL("../concourse-icon.svg", import.meta.url), "utf8");
 
 test("appearance choice is applied before styles render and persists locally", () => {
@@ -26,11 +27,13 @@ test("day and night controls are accessible and translated", () => {
   assert.match(html, /initializeTheme\(\);\s*initializeLanguage\(\);/);
 });
 
-test("the final theme layer covers every major ConCourse destination", () => {
+test("the theme and Atlas layers cover every major ConCourse destination", () => {
   const themeLink = html.indexOf('href="concourse-theme.css');
+  const artLink = html.indexOf('href="concourse-art.css');
   const academicLink = html.indexOf('href="academic-tools.css');
 
-  assert.ok(themeLink > academicLink, "theme stylesheet should be the final external visual layer");
+  assert.ok(themeLink > academicLink, "theme stylesheet should follow feature styles");
+  assert.ok(artLink > themeLink, "Atlas stylesheet should be the final external visual layer");
   for(const selector of [
     'body:not(.app-active) #landingScreen',
     'body.app-active:not(.schedule-active):not(.hub-active)',
@@ -44,6 +47,60 @@ test("the final theme layer covers every major ConCourse destination", () => {
   assert.match(css, /@media \(max-width: 520px\)/);
   assert.match(css, /@media \(forced-colors: active\)/);
   assert.match(css, /@media print/);
+});
+
+test("each Hub destination has one original artwork and one visible-image rule", () => {
+  const artworkMap = {
+    community: "concourse-art-community.jpg",
+    marketplace: "concourse-art-market.jpg",
+    messages: "concourse-art-messages.jpg",
+    overview: "concourse-art-insights.jpg",
+    "academic-tools": "concourse-art-citations.jpg",
+    profile: "concourse-art-profile.jpg"
+  };
+
+  for(const [destination, filename] of Object.entries(artworkMap)){
+    assert.match(
+      html,
+      new RegExp(`src="${filename.replace(".", "\\.")}"[^>]+data-hub-hero="${destination}"`),
+      `${destination} should use ${filename}`
+    );
+    assert.match(
+      artCss,
+      new RegExp(`data-active-view="${destination}"[^}]+data-hub-hero="${destination}"`),
+      `${destination} should have an explicit visible-image rule`
+    );
+  }
+
+  assert.match(artCss, /background-image:\s*none\s*!important/);
+  assert.match(artCss, /overflow:\s*hidden\s*!important/);
+  assert.match(artCss, /-webkit-mask-image:\s*none\s*!important/);
+});
+
+test("planner, timetable, and authentication use restrained Atlas artwork fields", () => {
+  for(const filename of [
+    "concourse-art-planner.jpg",
+    "concourse-art-timetable.jpg",
+    "concourse-art-auth.jpg"
+  ]){
+    assert.ok(artCss.includes(filename), `${filename} should be used by the final art layer`);
+  }
+
+  assert.match(artCss, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(artCss, /@media \(max-width: 1120px\)/);
+  assert.match(artCss, /overflow-x:\s*clip/);
+});
+
+test("Atlas navigation uses a single active indicator without filled Day tabs", () => {
+  assert.match(
+    artCss,
+    /html\[data-theme="day"\] \.member-hub \.hub-nav-button\.active[\s\S]*?background:\s*transparent\s*!important[\s\S]*?box-shadow:\s*none\s*!important/
+  );
+  assert.match(
+    artCss,
+    /\.member-hub\[data-active-view="marketplace"\] \.market-mode-tabs > button[\s\S]*?flex:\s*0 0 auto\s*!important/
+  );
+  assert.match(artCss, /linear-gradient\(90deg,\s*var\(--atlas-cobalt\),\s*var\(--atlas-cyan\)/);
 });
 
 test("Day mode uses the navy ConCourse mark while Night keeps the ivory mark", () => {
