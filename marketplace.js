@@ -963,6 +963,20 @@
         edit.addEventListener("click", () => void openListingEditor(listing, edit));
         actions.append(edit);
       }
+      if(["draft", "active", "paused", "sold"].includes(String(listing.status))){
+        const remove = element("button", "marketplace-card-action danger", tr("marketplaceDelete"));
+        remove.type = "button";
+        remove.addEventListener("click", async () => {
+          const confirmed = await ask({
+            title:tr("marketplaceDelete"),
+            message:tr("marketplaceDeleteConfirm"),
+            confirmLabel:tr("marketplaceDelete"),
+            danger:true
+          });
+          if(confirmed) await updateListingStatus(id, "deleted", remove);
+        });
+        actions.append(remove);
+      }
     } else {
       const favorite = element("button", `marketplace-card-action${listing.favorited_by_me || listing.viewer?.favorited ? " active" : ""}`, listing.favorited_by_me || listing.viewer?.favorited ? tr("marketplaceUnfavorite") : tr("marketplaceFavorite"));
       favorite.type = "button";
@@ -1218,29 +1232,15 @@
     if(!grid) return;
     unloadRenderedMedia(grid);
     grid.replaceChildren();
-    const showSeedListings = (
-      !state.items.length
-      && marketplaceSeedAvailable()
-    );
+    const showSeedListings = marketplaceSeedAvailable();
+    const seedCount = showSeedListings ? MARKETPLACE_SEED_LISTINGS.length : 0;
+    const renderedCount = state.items.length + seedCount;
     const singleListing = !showSeedListings && state.mode !== "orders" && state.items.length === 1;
     grid.classList.toggle("is-single-result", singleListing);
-    grid.dataset.resultCount = String(showSeedListings ? MARKETPLACE_SEED_LISTINGS.length : state.items.length);
+    grid.dataset.resultCount = String(renderedCount);
     const catalogue = byId("marketplaceCatalogue");
-    if(showSeedListings){
-      if(catalogue){
-        catalogue.dataset.empty = "false";
-        catalogue.dataset.feedState = "ready";
-      }
-      MARKETPLACE_SEED_LISTINGS.forEach(seed => grid.append(marketplaceSeedCard(seed)));
-      const resultsLabel = byId("marketplaceResultsLabel");
-      if(resultsLabel){
-        resultsLabel.textContent = tr("marketplaceResults", {count:MARKETPLACE_SEED_LISTINGS.length});
-      }
-      updateLoadMore();
-      return;
-    }
     if(catalogue){
-      catalogue.dataset.empty = state.items.length ? "false" : "true";
+      catalogue.dataset.empty = renderedCount ? "false" : "true";
       catalogue.dataset.feedState = "ready";
     }
     if(state.mode === "orders"){
@@ -1248,9 +1248,23 @@
       if(!state.items.length) grid.append(emptyState(tr("marketplaceNoOrders")));
     } else {
       state.items.forEach(listing => grid.append(listingCard(listing)));
-      if(!state.items.length) grid.append(emptyState(state.scope === "global" ? tr("marketplaceGlobalEmpty") : state.mode === "mine" ? tr("marketplaceNoOwnListings") : tr("marketplaceEmpty")));
+      if(showSeedListings){
+        MARKETPLACE_SEED_LISTINGS.forEach(seed => grid.append(marketplaceSeedCard(seed)));
+      }
+      if(!renderedCount){
+        grid.append(emptyState(state.scope === "global" ? tr("marketplaceGlobalEmpty") : state.mode === "mine" ? tr("marketplaceNoOwnListings") : tr("marketplaceEmpty")));
+      }
     }
-    updateResultsLabel();
+    if(showSeedListings){
+      const resultsLabel = byId("marketplaceResultsLabel");
+      const liveTotal =
+        state.total !== null && Number.isFinite(Number(state.total))
+          ? Number(state.total)
+          : state.items.length;
+      if(resultsLabel) resultsLabel.textContent = tr("marketplaceResults", {count:liveTotal + seedCount});
+    } else {
+      updateResultsLabel();
+    }
     updateLoadMore();
   }
 
@@ -1289,7 +1303,9 @@
       if(!contextIsCurrent(context) || request !== state.feedRequest) return;
       if(response.error) throw response.error;
       const result = collection(response.data);
-      const incoming = result.items.filter(item => state.mode === "orders" ? UUID_RE.test(orderId(item)) : UUID_RE.test(listingId(item)));
+      const incoming = result.items
+        .filter(item => state.mode === "orders" ? UUID_RE.test(orderId(item)) : UUID_RE.test(listingId(item)))
+        .filter(item => state.mode !== "mine" || String(item.status || "") !== "deleted");
       if(state.scope === "global") incoming.forEach(item => { item._crossCampus = true; });
       if(["mine", "orders"].includes(state.mode)){
         state.localItems = incoming;

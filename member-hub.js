@@ -109,6 +109,7 @@
       key:"finance-revision",
       initials:"MC",
       author:"Maya Chen",
+      avatar:Object.freeze({src:"concourse-community-library.jpg", position:"53% 30%"}),
       meta:Object.freeze({
         en:"Hong Kong Baptist University · Finance · 24 min",
         "zh-CN":"香港浸会大学 · 金融学 · 24 分钟前",
@@ -128,7 +129,35 @@
       tags:Object.freeze(["FIN3010", "revision"]),
       likeCount:46,
       commentCount:8,
-      comments:Object.freeze(["I can bring the practice set from last week."]),
+      comments:Object.freeze([
+        Object.freeze({
+          author:"Jason Ho",
+          body:Object.freeze({
+            en:"I can bring last week's practice set. Should we start with the DCF questions?",
+            "zh-CN":"我可以带上周的练习题。我们要不要先从 DCF 题目开始？",
+            "zh-HK":"我可以帶上星期嘅練習題。我哋不如先由 DCF 題目開始？"
+          }),
+          time:Object.freeze({en:"12 min", "zh-CN":"12 分钟前", "zh-HK":"12 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Chloe Lam",
+          body:Object.freeze({
+            en:"Wednesday at 16:00 works for me. I have reserved a discussion room on level 4.",
+            "zh-CN":"周三 16:00 我可以。我已经预订了四楼的讨论室。",
+            "zh-HK":"星期三 16:00 我可以。我已經預訂咗四樓嘅討論室。"
+          }),
+          time:Object.freeze({en:"8 min", "zh-CN":"8 分钟前", "zh-HK":"8 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Ethan Wong",
+          body:Object.freeze({
+            en:"Could someone share the WACC checklist after the session? It would help me review.",
+            "zh-CN":"活动结束后可以分享 WACC 检查清单吗？这对我复习很有帮助。",
+            "zh-HK":"活動完咗之後可唔可以分享 WACC 檢查清單？會幫到我溫習。"
+          }),
+          time:Object.freeze({en:"3 min", "zh-CN":"3 分钟前", "zh-HK":"3 分鐘前"})
+        })
+      ]),
       poll:Object.freeze({
         question:Object.freeze({
           en:"When should the next session run?",
@@ -146,6 +175,7 @@
       key:"campus-plant-swap",
       initials:"AR",
       author:"Aisha Rahman",
+      avatar:Object.freeze({src:"concourse-community-club.jpg", position:"35% 28%"}),
       meta:Object.freeze({
         en:"HKBU Sustainability Society · 42 min",
         "zh-CN":"浸大可持续发展学会 · 42 分钟前",
@@ -165,12 +195,41 @@
       tags:Object.freeze(["campuslife", "sustainability"]),
       likeCount:83,
       commentCount:14,
-      comments:Object.freeze(["I have two mint cuttings to share!"])
+      comments:Object.freeze([
+        Object.freeze({
+          author:"Priya Shah",
+          body:Object.freeze({
+            en:"I have two mint cuttings and three small pots to share.",
+            "zh-CN":"我有两株薄荷扦插苗和三个小花盆可以交换。",
+            "zh-HK":"我有兩株薄荷插枝同三個小花盆可以交換。"
+          }),
+          time:Object.freeze({en:"21 min", "zh-CN":"21 分钟前", "zh-HK":"21 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Toby Lee",
+          body:Object.freeze({
+            en:"Can I join if I do not have a plant yet? I can bring clean reusable jars.",
+            "zh-CN":"我还没有植物也可以参加吗？我可以带干净的可重复使用玻璃罐。",
+            "zh-HK":"我仲未有植物都可以參加嗎？我可以帶乾淨嘅可重用玻璃樽。"
+          }),
+          time:Object.freeze({en:"16 min", "zh-CN":"16 分钟前", "zh-HK":"16 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Hana Kim",
+          body:Object.freeze({
+            en:"I will label the herbs so first-time growers know the light and watering routine.",
+            "zh-CN":"我会给香草加上标签，方便新手了解光照和浇水方式。",
+            "zh-HK":"我會幫香草加標籤，等新手知道光照同淋水方法。"
+          }),
+          time:Object.freeze({en:"9 min", "zh-CN":"9 分钟前", "zh-HK":"9 分鐘前"})
+        })
+      ])
     }),
     Object.freeze({
       key:"project-courtyard",
       initials:"LK",
       author:"Leo Kwok",
+      avatar:Object.freeze({src:"concourse-campus-community.jpg", position:"82% 34%"}),
       meta:Object.freeze({
         en:"Hong Kong Baptist University · Computer Science · 1 h",
         "zh-CN":"香港浸会大学 · 计算机科学 · 1 小时前",
@@ -190,7 +249,35 @@
       tags:Object.freeze(["studyspot", "campustips"]),
       likeCount:31,
       commentCount:5,
-      comments:Object.freeze(["This is exactly the kind of quiet spot I needed."])
+      comments:Object.freeze([
+        Object.freeze({
+          author:"Emma Lau",
+          body:Object.freeze({
+            en:"This is exactly the quiet spot I needed. Are the power sockets working?",
+            "zh-CN":"这正是我需要的安静学习地点。那里的电源插座可以用吗？",
+            "zh-HK":"呢度正正係我需要嘅安靜溫習位。嗰度啲插座用唔用到？"
+          }),
+          time:Object.freeze({en:"38 min", "zh-CN":"38 分钟前", "zh-HK":"38 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Marcus Yip",
+          body:Object.freeze({
+            en:"The sockets beside the long table work. It starts getting busy after 13:00.",
+            "zh-CN":"长桌旁边的插座可以用，13:00 后人会开始多起来。",
+            "zh-HK":"長枱旁邊啲插座用到，13:00 之後會開始多人。"
+          }),
+          time:Object.freeze({en:"29 min", "zh-CN":"29 分钟前", "zh-HK":"29 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Sophie Ng",
+          body:Object.freeze({
+            en:"Adding this to my study-spot list. Thanks for checking the Wi-Fi.",
+            "zh-CN":"已加入我的学习地点清单，谢谢你测试无线网络。",
+            "zh-HK":"已經加咗落我嘅溫習地點清單，多謝你測試 Wi-Fi。"
+          }),
+          time:Object.freeze({en:"17 min", "zh-CN":"17 分钟前", "zh-HK":"17 分鐘前"})
+        })
+      ])
     })
   ]);
   const INSIGHT_DEMO = Object.freeze({
@@ -3177,6 +3264,41 @@
     renderCommunityFeed(hubState.feed);
   }
 
+  function communitySeedAvatar(seed, extraClass=""){
+    const avatar = node("div", `hub-avatar hub-community-example-avatar${extraClass ? ` ${extraClass}` : ""}`, seed.initials);
+    avatar.setAttribute("aria-hidden", "true");
+    if(seed.avatar?.src){
+      const image = node("img", "hub-community-example-avatar-image");
+      image.src = seed.avatar.src;
+      image.alt = "";
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.style.objectPosition = seed.avatar.position || "center";
+      avatar.append(image);
+    }
+    return avatar;
+  }
+
+  function communitySeedCommentRow(comment, {own=false}={}){
+    const author = own
+      ? communitySeedText({en:"You", "zh-CN":"你", "zh-HK":"你"})
+      : String(comment?.author || t("anonymousStudent"));
+    const body = own ? String(comment || "") : communitySeedText(comment?.body || comment);
+    const time = own
+      ? communitySeedText({en:"now", "zh-CN":"刚刚", "zh-HK":"啱啱"})
+      : communitySeedText(comment?.time || "");
+    const row = node("article", "hub-community-example-comment");
+    const avatar = node("span", "hub-community-example-comment-avatar", initialsFor(author));
+    avatar.setAttribute("aria-hidden", "true");
+    const copy = node("div");
+    const heading = node("p");
+    heading.append(node("b", "", author));
+    if(time) heading.append(node("time", "", time));
+    copy.append(heading, node("span", "", body));
+    row.append(avatar, copy);
+    return row;
+  }
+
   function renderCommunitySeedPosts(feed){
     const collection = node("section", "hub-community-example hub-community-seed-feed");
     collection.setAttribute("aria-label", t("campusFeed"));
@@ -3187,8 +3309,7 @@
       post.dataset.communitySeed = seed.key;
 
       const author = node("div", "hub-post-author");
-      const avatar = node("div", "hub-avatar hub-community-example-avatar", seed.initials);
-      avatar.setAttribute("aria-hidden", "true");
+      const avatar = communitySeedAvatar(seed);
       const authorCopy = node("div");
       authorCopy.append(
         node("b", "", seed.author),
@@ -3282,17 +3403,10 @@
 
       const commentArea = node("div", "hub-community-example-comments");
       seed.comments.forEach(comment => {
-        const row = node("p");
-        row.append(node("b", "", t("anonymousStudent")), document.createTextNode(` ${comment}`));
-        commentArea.append(row);
+        commentArea.append(communitySeedCommentRow(comment));
       });
       state.comments.forEach(comment => {
-        const row = node("p");
-        row.append(
-          node("b", "", communitySeedText({en:"You", "zh-CN":"你", "zh-HK":"你"})),
-          document.createTextNode(` ${comment}`)
-        );
-        commentArea.append(row);
+        commentArea.append(communitySeedCommentRow(comment, {own:true}));
       });
       const form = node("div", "hub-community-example-comment-form");
       const input = node("input", "hub-community-example-comment-input");
@@ -3431,6 +3545,7 @@
       feed.append(card);
       if(commentsVisible) void loadPostComments(post.post_id, comments);
     });
+    if(showSeedPosts) renderCommunitySeedPosts(feed);
     const hashPostId = String(window.location.hash || "").replace(/^#(?:cross-)?post-/, "");
     if(hashPostId && hashPostId !== hubState.highlightedPostId){
       const target = document.getElementById(`post-${hashPostId}`);
@@ -3746,8 +3861,13 @@
   function appendMessageExampleLauncher(list){
     const launcher = node("button", `hub-conversation-button hub-message-demo-launcher${hubState.messageDemoMode ? " active" : ""}`);
     launcher.type = "button";
-    const mark = node("span", "hub-message-demo-avatar", "AW");
-    mark.setAttribute("aria-hidden", "true");
+    const mark = createAvatar("Alex Wong", null, 0, "hub-message-demo-avatar");
+    const photo = node("img", "hub-message-demo-photo");
+    photo.src = "concourse-campus-community.jpg";
+    photo.alt = "";
+    photo.loading = "eager";
+    photo.decoding = "async";
+    mark.append(photo);
     const copy = node("div");
     copy.append(node("b", "", t("messageExampleName")), node("span", "", t("messageExampleOne")));
     launcher.append(mark, copy);
@@ -3780,6 +3900,28 @@
       list.append(button);
     });
     renderConversationPreview();
+  }
+
+  const CONVERSATION_RENDER_FIELDS = Object.freeze([
+    "conversation_id",
+    "other_user_id",
+    "other_username",
+    "other_display_name",
+    "other_avatar_path",
+    "other_avatar_revision",
+    "last_message",
+    "last_message_at",
+    "conversation_context",
+    "marketplace_listing_id",
+    "marketplace_listing_title",
+    "other_school_name",
+    "can_send"
+  ]);
+
+  function conversationRenderSignature(conversations=[]){
+    return JSON.stringify(
+      conversations.map(conversation => CONVERSATION_RENDER_FIELDS.map(field => conversation?.[field] ?? null))
+    );
   }
 
   function renderConversationPreview(){
@@ -3842,7 +3984,11 @@
     const context = requestContext();
     const request = ++hubState.conversationListRequest;
     hubState.loadingConversations = true;
-    if(!hubState.conversations.length) $("conversationList").replaceChildren(node("div", "hub-feed-empty", t("messagesLoading")));
+    const conversationList = $("conversationList");
+    const listHasStableRows = !!conversationList?.querySelector(".hub-conversation-button");
+    if(!hubState.conversations.length && !listHasStableRows){
+      conversationList.replaceChildren(node("div", "hub-feed-empty", t("messagesLoading")));
+    }
     let data = null;
     let error = null;
     try {
@@ -3855,14 +4001,24 @@
     if(!contextIsCurrent(context) || request !== hubState.conversationListRequest) return;
     hubState.loadingConversations = false;
     if(error){
-      $("conversationList").replaceChildren(node("div", "hub-feed-empty", featureError(error)));
+      if(!conversationList?.querySelector(".hub-conversation-button")){
+        conversationList.replaceChildren(node("div", "hub-feed-empty", featureError(error)));
+      }
       if(!suppressStatus) setStatus("chatStatus", featureError(error), "error");
       return null;
     }
-    hubState.conversations = Array.isArray(data) ? data : [];
-    renderConversations(hubState.conversations);
+    const nextConversations = Array.isArray(data) ? data : [];
+    const conversationListChanged = (
+      conversationRenderSignature(hubState.conversations)
+      !== conversationRenderSignature(nextConversations)
+    );
+    hubState.conversations = nextConversations;
+    const shouldRenderConversationList = (
+      conversationListChanged
+      || !conversationList?.querySelector(".hub-conversation-button")
+    );
+    if(shouldRenderConversationList) renderConversations(hubState.conversations);
     if(hubState.messageDemoMode){
-      renderMessageExample();
       return hubState.conversations;
     }
     let active = hubState.activeConversationId

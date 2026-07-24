@@ -184,6 +184,89 @@ test("Community, Market, and Messages seed interactions stay client-only", () =>
   assert.match(nightIncomingMessage, /background:\s*#edf2f6\s*!important/);
 });
 
+test("live Community posts and Market listings coexist with realistic seeded content", () => {
+  const communityRender = sourceSection(
+    hub,
+    "function renderCommunityFeed(posts){",
+    "function updateCommunityLoadMore(){"
+  );
+  assert.match(
+    communityRender,
+    /orderedPosts\.forEach[\s\S]*?feed\.append\(card\)[\s\S]*?if\(showSeedPosts\) renderCommunitySeedPosts\(feed\)/
+  );
+  assert.match(hub, /avatar:Object\.freeze\(\{src:"concourse-community-library\.jpg"/);
+  assert.match(hub, /author:"Jason Ho"[\s\S]*?author:"Chloe Lam"[\s\S]*?author:"Ethan Wong"/);
+  assert.match(hub, /function communitySeedCommentRow\(/);
+  assert.match(hub, /hub-community-example-avatar-image/);
+
+  const marketRender = sourceSection(
+    marketplace,
+    "function renderGrid(){",
+    "function feedParams(){"
+  );
+  assert.match(marketRender, /const showSeedListings = marketplaceSeedAvailable\(\)/);
+  assert.match(
+    marketRender,
+    /state\.items\.forEach\(listing => grid\.append\(listingCard\(listing\)\)\)[\s\S]*?MARKETPLACE_SEED_LISTINGS\.forEach/
+  );
+  assert.match(marketRender, /const renderedCount = state\.items\.length \+ seedCount/);
+  assert.match(marketRender, /liveTotal \+ seedCount/);
+});
+
+test("owners can remove listings from cards and deleted listings stay removed", () => {
+  const listingCardSource = sourceSection(
+    marketplace,
+    "function listingCard(listing, options={}){",
+    "function marketplaceSeedText("
+  );
+  assert.match(listingCardSource, /marketplace-card-action danger/);
+  assert.match(listingCardSource, /marketplaceDeleteConfirm/);
+  assert.match(listingCardSource, /updateListingStatus\(id, "deleted", remove\)/);
+
+  const marketLoader = sourceSection(
+    marketplace,
+    "async function loadMarketplace(",
+    "function loadNextLocalPage("
+  );
+  assert.match(
+    marketLoader,
+    /state\.mode !== "mine" \|\| String\(item\.status \|\| ""\) !== "deleted"/
+  );
+});
+
+test("message polling preserves stable rows and uses a real circular demo portrait", () => {
+  const messageLauncher = sourceSection(
+    hub,
+    "function appendMessageExampleLauncher(list){",
+    "function renderConversations(conversations){"
+  );
+  assert.match(messageLauncher, /createAvatar\("Alex Wong", null, 0, "hub-message-demo-avatar"\)/);
+  assert.match(messageLauncher, /photo\.src = "concourse-campus-community\.jpg"/);
+
+  const conversationLoader = sourceSection(
+    hub,
+    "async function loadConversations(",
+    "function renderMessages(messages){"
+  );
+  assert.match(conversationLoader, /querySelector\("\.hub-conversation-button"\)/);
+  assert.match(conversationLoader, /conversationRenderSignature\(hubState\.conversations\)/);
+  assert.match(conversationLoader, /conversationRenderSignature\(nextConversations\)/);
+  assert.match(conversationLoader, /if\(shouldRenderConversationList\) renderConversations/);
+  assert.doesNotMatch(
+    conversationLoader,
+    /if\(hubState\.messageDemoMode\)\{\s*renderMessageExample\(\)/
+  );
+  for(const field of [
+    "conversation_id",
+    "other_avatar_path",
+    "other_avatar_revision",
+    "last_message",
+    "can_send"
+  ]){
+    assert.match(hub, new RegExp(`"${field}"`), `conversation signature should include ${field}`);
+  }
+});
+
 test("Community and Market preserve realistic seed content during feed RPC failures", () => {
   const communityLoader = sourceSection(
     hub,
@@ -291,4 +374,27 @@ test("the sticky Hub destination rail has an opaque background in both themes", 
     hub,
     /document\.querySelectorAll\("\[data-hub-target\]"\)[\s\S]*?window\.scrollTo\(\{[\s\S]*?prefers-reduced-motion/
   );
+});
+
+test("transaction steps connect continuously and the sticky Hub row spans the viewport", () => {
+  assert.match(
+    css,
+    /\.market-protection-steps > li:not\(:last-child\)::after\s*\{[\s\S]*?display:\s*block\s*!important[\s\S]*?height:\s*auto\s*!important/
+  );
+  assert.match(
+    css,
+    /\.market-protection-steps > li:last-child::after\s*\{[\s\S]*?display:\s*none\s*!important[\s\S]*?content:\s*none\s*!important/
+  );
+
+  const fullBleed = sourceSection(
+    css,
+    "/* Full-bleed Hub landscape",
+    ".member-hub .hub-page-header,"
+  );
+  assert.match(fullBleed, /width:\s*100%\s*!important/);
+  assert.match(fullBleed, /max-width:\s*none\s*!important/);
+  assert.match(fullBleed, /margin-inline:\s*0\s*!important/);
+  assert.match(fullBleed, /--hub-rail-inner-pad:\s*clamp\(12px,\s*1\.6vw,\s*22px\)/);
+  assert.match(fullBleed, /calc\(\(100% - 1440px\) \/ 2 \+ var\(--hub-rail-inner-pad\)\)/);
+  assert.doesNotMatch(fullBleed, /width:\s*min\(1440px/);
 });
