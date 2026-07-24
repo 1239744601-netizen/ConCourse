@@ -1618,7 +1618,12 @@
     const builder = $("communityPollBuilder");
     const question = $("communityPollQuestion");
     const list = $("communityPollOptions");
+    const trigger = $("addCommunityPoll");
     if(builder) builder.hidden = true;
+    if(trigger){
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.classList.remove("is-active");
+    }
     if(question) question.value = "";
     if(list) list.replaceChildren(createPollOptionInput("", 1), createPollOptionInput("", 2));
     if(restoreFocus) requestAnimationFrame(() => $("addCommunityPoll")?.focus());
@@ -2710,7 +2715,7 @@
       if(linkedListing) card.append(linkedListing);
 
       const actions = node("div", "hub-post-actions");
-      const commentButton = node("button", "", `${t("comment")} · ${Number(post.comment_count || 0)}`);
+      const commentButton = node("button", "hub-post-action hub-post-action--comment", `${t("comment")} · ${Number(post.comment_count || 0)}`);
       commentButton.type = "button";
       const comments = node("div", "hub-comments");
       let commentsVisible = hubState.openCommentPostIds.has(post.post_id);
@@ -2723,19 +2728,19 @@
         commentButton.setAttribute("aria-expanded", commentsVisible ? "true" : "false");
         if(commentsVisible) await loadPostComments(post.post_id, comments);
       };
-      const likeButton = node("button", post.liked_by_me ? "liked" : "", `${post.liked_by_me ? t("unlike") : t("like")} · ${Number(post.like_count || 0)}`);
+      const likeButton = node("button", `hub-post-action hub-post-action--like${post.liked_by_me ? " liked" : ""}`, `${post.liked_by_me ? t("unlike") : t("like")} · ${Number(post.like_count || 0)}`);
       likeButton.type = "button";
       likeButton.dataset.likePost = post.post_id;
       likeButton.disabled = hubState.likeBusy.has(post.post_id);
       likeButton.setAttribute("aria-pressed", post.liked_by_me ? "true" : "false");
       likeButton.onclick = () => togglePostLike(post.post_id);
-      const bookmarkButton = node("button", post.bookmarked_by_me ? "bookmarked" : "", post.bookmarked_by_me ? t("postSaved") : t("savePost"));
+      const bookmarkButton = node("button", `hub-post-action hub-post-action--save${post.bookmarked_by_me ? " bookmarked" : ""}`, post.bookmarked_by_me ? t("postSaved") : t("savePost"));
       bookmarkButton.type = "button";
       bookmarkButton.dataset.bookmarkPost = post.post_id;
       bookmarkButton.disabled = hubState.bookmarkBusy.has(post.post_id);
       bookmarkButton.setAttribute("aria-pressed", post.bookmarked_by_me ? "true" : "false");
       bookmarkButton.onclick = () => togglePostBookmark(post.post_id);
-      const shareButton = node("button", "", t("share"));
+      const shareButton = node("button", "hub-post-action hub-post-action--share", t("share"));
       shareButton.type = "button";
       shareButton.onclick = () => shareCommunityPost(post.post_id);
       actions.append(commentButton, likeButton, bookmarkButton, shareButton);
@@ -3389,12 +3394,59 @@
   $("communityPostBody")?.addEventListener("input", updateCommunityPostCounter);
   $("addCommunityMedia")?.addEventListener("click", () => $("communityMediaInput").click());
   $("communityMediaInput")?.addEventListener("change", event => void prepareCommunityMedia(event.target.files));
-  $("addCommunityPoll")?.addEventListener("click", () => {
-    $("communityPollBuilder").hidden = false;
-    $("communityPollQuestion").focus();
+  $("communityPostBody")?.addEventListener("paste", event => {
+    const files = [...(event.clipboardData?.files || [])].filter(file => (
+      String(file.type || "").startsWith("image/") ||
+      String(file.type || "").startsWith("video/")
+    ));
+    if(!files.length) return;
+    event.preventDefault();
+    void prepareCommunityMedia(files);
+  });
+  $("addCommunityPoll")?.addEventListener("click", event => {
+    const builder = $("communityPollBuilder");
+    if(!builder) return;
+    builder.hidden = false;
+    event.currentTarget.setAttribute("aria-expanded", "true");
+    event.currentTarget.classList.add("is-active");
+    $("communityPollQuestion")?.focus();
   });
   $("removeCommunityPoll")?.addEventListener("click", () => resetCommunityPoll({restoreFocus:true}));
   $("addCommunityPollOption")?.addEventListener("click", addCommunityPollOption);
+  {
+    const composer = $("communityComposer");
+    let dragDepth = 0;
+    const hasFiles = event => [...(event.dataTransfer?.types || [])].includes("Files");
+    const clearDragState = () => {
+      dragDepth = 0;
+      composer?.classList.remove("is-media-dragging");
+    };
+    composer?.addEventListener("dragenter", event => {
+      if(!hasFiles(event)) return;
+      event.preventDefault();
+      dragDepth += 1;
+      composer.classList.add("is-media-dragging");
+    });
+    composer?.addEventListener("dragover", event => {
+      if(!hasFiles(event)) return;
+      event.preventDefault();
+      if(event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    });
+    composer?.addEventListener("dragleave", event => {
+      if(!hasFiles(event)) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if(!dragDepth) composer.classList.remove("is-media-dragging");
+    });
+    composer?.addEventListener("drop", event => {
+      if(!hasFiles(event)) return;
+      event.preventDefault();
+      const files = event.dataTransfer?.files;
+      clearDragState();
+      void prepareCommunityMedia(files);
+    });
+    window.addEventListener("dragend", clearDragState);
+    window.addEventListener("drop", clearDragState);
+  }
   $("refreshCommunityFeed")?.addEventListener("click", () => loadCommunityFeed({force:true}));
   $("communityLoadMore")?.addEventListener("click", () => loadCommunityFeed({append:true}));
   $("communitySearch")?.addEventListener("input", event => {
