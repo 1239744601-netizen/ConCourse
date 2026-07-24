@@ -104,6 +104,40 @@
   const COMMUNITY_FEED_PAGE_SIZE = 30;
   const COMMUNITY_FEED_WINDOW = 90;
   const HUB_RPC_TIMEOUT_MS = 15000;
+  let hubStickyGeometryFrame = 0;
+  let hubStickyGeometryObserver = null;
+
+  function syncHubStickyGeometry(){
+    const hub = document.getElementById("memberHub");
+    const destinationRail = hub?.querySelector(".hub-sidebar");
+    if(!hub || !destinationRail) return;
+    const railIsSticky = getComputedStyle(destinationRail).position === "sticky";
+    const railHeight = !hub.hidden && railIsSticky
+      ? Math.ceil(destinationRail.getBoundingClientRect().height * 100) / 100
+      : 0;
+    hub.style.setProperty("--hub-destination-rail-height", `${railHeight}px`);
+  }
+
+  function scheduleHubStickyGeometry(){
+    if(hubStickyGeometryFrame) cancelAnimationFrame(hubStickyGeometryFrame);
+    hubStickyGeometryFrame = requestAnimationFrame(() => {
+      hubStickyGeometryFrame = 0;
+      syncHubStickyGeometry();
+    });
+  }
+
+  function observeHubStickyGeometry(){
+    const destinationRail = document.querySelector("#memberHub .hub-sidebar");
+    if(!destinationRail) return;
+    if(typeof ResizeObserver === "function"){
+      hubStickyGeometryObserver = new ResizeObserver(scheduleHubStickyGeometry);
+      hubStickyGeometryObserver.observe(destinationRail);
+    }
+    window.addEventListener("resize", scheduleHubStickyGeometry, {passive:true});
+    document.fonts?.ready?.then(scheduleHubStickyGeometry);
+    scheduleHubStickyGeometry();
+  }
+
   const COMMUNITY_SEED_POSTS = Object.freeze([
     Object.freeze({
       key:"finance-revision",
@@ -990,6 +1024,7 @@
     $("hubPageIntroduction").textContent = t(`${prefix}Intro`);
     const marketplaceActions = $("hubMarketplaceActions");
     if(marketplaceActions) marketplaceActions.hidden = view !== "marketplace";
+    scheduleHubStickyGeometry();
   }
 
   function renderIdentity(){
@@ -1085,6 +1120,7 @@
     closeSchoolmateProfile({restoreFocus:false});
     closeHubAction(null, {restoreFocus:false});
     $("memberHub").hidden = true;
+    scheduleHubStickyGeometry();
     document.body.classList.remove("hub-active");
     window.syncPrimaryNavigation?.();
   }
@@ -1106,6 +1142,7 @@
     $("memberHub").hidden = false;
     document.body.classList.add("app-active", "hub-active");
     document.body.classList.remove("schedule-active");
+    scheduleHubStickyGeometry();
     window.syncPrimaryNavigation?.();
     switchView(view);
     window.scrollTo({top:0, behavior:"smooth"});
@@ -1127,6 +1164,7 @@
         else button.removeAttribute("aria-current");
       }
     });
+    scheduleHubStickyGeometry();
     configureMessagePolling(view === "messages");
     if(view === "overview"){
       renderOverview();
@@ -4679,5 +4717,6 @@
 
   syncInsightYearControl();
   switchConnectionTab("verified");
+  observeHubStickyGeometry();
   syncAccess();
 })();

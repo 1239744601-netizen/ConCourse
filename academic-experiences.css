@@ -1502,14 +1502,214 @@ body.hub-active .member-hub {
     clamp(62px, 8vw, 112px) clamp(76px, 9vw, 132px) 0 0 !important;
 }
 
-/* Academic Insights only: restore a clearly rounded perimeter around the
-   course-choice configurator. A late member-hub rule intentionally flattened
-   this block, which made the control group read as a rectangular patch. */
+/* Academic Insights only: the choice controls share one solid circular field.
+   The individual selects remain fully interactive without becoming nested
+   cards, so the component reads as one object rather than three boxes. */
 .member-hub
   .hub-view[data-hub-view="overview"]
   .hub-insight-controls {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: clamp(38px, 4vw, 52px) clamp(34px, 3.6vw, 46px) !important;
   overflow: hidden;
-  border-radius: clamp(36px, 4vw, 56px) !important;
+  color: #f5faff;
+  background:
+    radial-gradient(circle at 68% 24%, rgba(52, 126, 186, .52), transparent 34%),
+    radial-gradient(circle at 30% 82%, rgba(3, 18, 34, .54), transparent 42%),
+    #0a3558 !important;
+  border: 1px solid rgba(127, 216, 255, .2) !important;
+  border-radius: 50% !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .08),
+    inset 0 -24px 56px rgba(2, 16, 29, .22),
+    0 28px 64px rgba(0, 10, 23, .24) !important;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(139, 216, 255, .08), transparent 64%);
+  pointer-events: none;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row {
+  position: relative;
+  z-index: 1;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: inherit !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row label {
+  min-width: 0;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row label > span {
+  margin: 0 0 2px !important;
+  color: rgba(226, 242, 252, .68) !important;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear) {
+  width: 100%;
+  min-height: 44px !important;
+  padding: 4px 34px 4px 0 !important;
+  appearance: none;
+  -webkit-appearance: none;
+  color: #f7fbff !important;
+  background-color: transparent !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #8bd8ff 50%),
+    linear-gradient(135deg, #8bd8ff 50%, transparent 50%) !important;
+  background-position:
+    calc(100% - 12px) 50%,
+    calc(100% - 6px) 50% !important;
+  background-size: 6px 6px, 6px 6px !important;
+  background-repeat: no-repeat !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-size: clamp(15px, 1.35vw, 18px) !important;
+  font-weight: 760 !important;
+  text-overflow: ellipsis;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear):focus-visible {
+  outline: 2px solid #8bd8ff;
+  outline-offset: 5px;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear):disabled {
+  color: rgba(225, 240, 250, .58) !important;
+  background-color: transparent !important;
+  opacity: .78;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls #loadCourseInsights {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 4px;
+  color: #071d32;
+  background: #efbb45 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .18) !important;
+}
+
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls #previewCourseInsights {
+  min-height: 34px;
+  color: #9bddff;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 999px;
+  box-shadow: none !important;
+}
+
+html[data-theme="day"]
+  .member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls {
+  color: #08233c;
+  background:
+    radial-gradient(circle at 68% 24%, rgba(88, 178, 226, .42), transparent 36%),
+    radial-gradient(circle at 28% 82%, rgba(77, 144, 186, .18), transparent 44%),
+    #b8ddf3 !important;
+  border-color: rgba(16, 75, 118, .18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .72),
+    inset 0 -22px 52px rgba(58, 125, 165, .12),
+    0 26px 56px rgba(34, 91, 126, .16) !important;
+}
+
+html[data-theme="day"]
+  .member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row label > span {
+  color: rgba(8, 35, 60, .64) !important;
+}
+
+html[data-theme="day"]
+  .member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear) {
+  color: #08233c !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #155f8d 50%),
+    linear-gradient(135deg, #155f8d 50%, transparent 50%) !important;
+}
+
+html[data-theme="day"]
+  .member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear):disabled {
+  color: rgba(8, 35, 60, .52) !important;
+}
+
+/* The sticky destination rail and the active page's right column use the same
+   measured geometry. This makes the two surfaces meet exactly when scrolling,
+   without the navigation covering either panel. */
+.member-hub {
+  --hub-destination-rail-height: 0px;
+  --hub-sticky-content-top:
+    calc(var(--app-bar-offset, 76px) + var(--hub-destination-rail-height));
+}
+
+@media (min-width: 1081px) {
+  .member-hub[data-active-view="academic-tools"] .citation-preview {
+    top: var(--hub-sticky-content-top) !important;
+    max-height:
+      calc(
+        100dvh
+        - var(--app-bar-offset, 76px)
+        - var(--hub-destination-rail-height)
+      ) !important;
+    scroll-margin-top: var(--hub-sticky-content-top) !important;
+  }
+}
+
+@media (min-width: 1181px) {
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    top: var(--hub-sticky-content-top) !important;
+    max-height:
+      calc(
+        100dvh
+        - var(--app-bar-offset, 76px)
+        - var(--hub-destination-rail-height)
+      ) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
 }
 
 /* The two labels identified in Community need a deliberate trailing gutter

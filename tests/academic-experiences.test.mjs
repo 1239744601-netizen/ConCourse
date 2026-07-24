@@ -425,16 +425,37 @@ test("Hub artwork, paper surface, and Community edge labels use the final full-b
   );
 });
 
-test("Course Choice Intelligence keeps a rounded control-panel perimeter", () => {
-  const roundedInsightControls = cssRule(
+test("Course Choice Intelligence is one solid circular surface without nested boxes", () => {
+  const insightControls = cssRule(
     css,
     '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-controls'
   );
-  assert.match(roundedInsightControls, /overflow:\s*hidden/);
-  assert.match(
-    roundedInsightControls,
-    /border-radius:\s*clamp\(36px,\s*4vw,\s*56px\)\s*!important/
+  assert.match(insightControls, /aspect-ratio:\s*1/);
+  assert.match(insightControls, /background:[\s\S]*?#0a3558\s*!important/);
+  assert.match(insightControls, /border-radius:\s*50%\s*!important/);
+
+  const filterRow = cssRule(
+    css,
+    '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-controls .hub-filter-row'
   );
+  assert.match(filterRow, /background:\s*transparent\s*!important/);
+  assert.match(filterRow, /border:\s*0\s*!important/);
+  assert.match(filterRow, /box-shadow:\s*none\s*!important/);
+
+  const select = cssRule(
+    css,
+    '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear)'
+  );
+  assert.match(select, /background-color:\s*transparent\s*!important/);
+  assert.match(select, /border:\s*0\s*!important/);
+  assert.match(select, /box-shadow:\s*none\s*!important/);
+
+  const refresh = cssRule(
+    css,
+    '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-controls #loadCourseInsights'
+  );
+  assert.match(refresh, /background:\s*#efbb45\s*!important/);
+  assert.match(refresh, /border-radius:\s*999px\s*!important/);
 });
 
 test("the sticky Hub destination rail has an opaque background in both themes", () => {
@@ -453,6 +474,28 @@ test("the sticky Hub destination rail has an opaque background in both themes", 
   assert.match(
     hub,
     /document\.querySelectorAll\("\[data-hub-target\]"\)[\s\S]*?window\.scrollTo\(\{[\s\S]*?prefers-reduced-motion/
+  );
+});
+
+test("Academic Tools and Community right panels meet the measured sticky destination rail", () => {
+  assert.match(hub, /new ResizeObserver\(scheduleHubStickyGeometry\)/);
+  assert.match(hub, /destinationRail\.getBoundingClientRect\(\)\.height/);
+  assert.match(
+    hub,
+    /setProperty\("--hub-destination-rail-height",\s*`\$\{railHeight\}px`\)/
+  );
+
+  assert.match(
+    css,
+    /--hub-sticky-content-top:[\s\S]*?var\(--app-bar-offset,\s*76px\)[\s\S]*?var\(--hub-destination-rail-height\)/
+  );
+  assert.match(
+    css,
+    /@media \(min-width:\s*1081px\)[\s\S]*?data-active-view="academic-tools"\] \.citation-preview\s*\{[\s\S]*?top:\s*var\(--hub-sticky-content-top\)\s*!important/
+  );
+  assert.match(
+    css,
+    /@media \(min-width:\s*1181px\)[\s\S]*?data-active-view="community"\] \.hub-community-rail\s*\{[\s\S]*?top:\s*var\(--hub-sticky-content-top\)\s*!important/
   );
 });
 
