@@ -1606,6 +1606,22 @@ input.market-search::placeholder {
 
 .marketplace-editor-actions button { min-width: 112px; }
 
+.marketplace-editor-actions .marketplace-editor-delete {
+  margin-right: auto;
+  color: #a72431;
+  border-color: rgba(167, 36, 49, .28);
+  background: #fff4f5;
+}
+
+.marketplace-editor-actions .marketplace-editor-delete:hover,
+.marketplace-editor-actions .marketplace-editor-delete:focus-visible {
+  color: #861d28;
+  border-color: rgba(167, 36, 49, .5);
+  background: #fdebed;
+}
+
+.marketplace-editor-actions .marketplace-editor-delete[hidden] { display: none !important; }
+
 .marketplace-detail-dialog,
 .marketplace-order-dialog {
   width: min(1080px, 100%);
@@ -3069,6 +3085,11 @@ input.market-search::placeholder {
   .marketplace-dialog-footer,
   .marketplace-modal-footer,
   .marketplace-editor-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .marketplace-editor-actions .marketplace-editor-delete {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-right: 0;
+  }
   .marketplace-dialog-footer > button,
   .marketplace-modal-footer > button { width: 100%; min-width: 0; }
   .market-media-previews,

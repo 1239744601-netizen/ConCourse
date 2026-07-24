@@ -213,15 +213,83 @@ test("live Community posts and Market listings coexist with realistic seeded con
   assert.match(marketRender, /liveTotal \+ seedCount/);
 });
 
-test("owners can remove listings from cards and deleted listings stay removed", () => {
+test("seed post comment totals match their complete scrollable conversations", () => {
+  const seeds = sourceSection(
+    hub,
+    "const COMMUNITY_SEED_POSTS",
+    "const INSIGHT_DEMO"
+  );
+  const expectations = [
+    ["finance-revision", "campus-plant-swap", 8],
+    ["campus-plant-swap", "project-courtyard", 14],
+    ["project-courtyard", null, 5]
+  ];
+
+  for(const [key, nextKey, expectedCount] of expectations){
+    const start = seeds.indexOf(`key:"${key}"`);
+    const end = nextKey ? seeds.indexOf(`key:"${nextKey}"`, start + 1) : seeds.length;
+    assert.ok(start >= 0 && end > start, `Expected complete seed definition for ${key}`);
+    const seed = seeds.slice(start, end);
+    const comments = sourceSection(seed, "comments:Object.freeze([", "])");
+    assert.equal(
+      (comments.match(/\bauthor:"/g) || []).length,
+      expectedCount,
+      `${key} should provide every displayed comment`
+    );
+    assert.match(seed, new RegExp(`commentCount:${expectedCount}`));
+    for(const locale of ['en:', '"zh-CN":', '"zh-HK":']){
+      assert.equal(
+        (comments.match(new RegExp(locale.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length >= expectedCount,
+        true,
+        `${key} comments should all include ${locale.replace(/[:"]/g, "")}`
+      );
+    }
+  }
+
+  const seedRenderer = sourceSection(
+    hub,
+    "function renderCommunitySeedPosts(feed){",
+    "function renderCommunityFeed(posts){"
+  );
+  assert.match(
+    seedRenderer,
+    /\$\{t\("comment"\)\} · \$\{seed\.comments\.length \+ state\.comments\.length\}/
+  );
+  assert.match(seedRenderer, /const commentList = node\("div", "hub-community-example-comment-list"\)/);
+  assert.match(seedRenderer, /commentList\.append\(communitySeedCommentRow\(comment\)\)/);
+  assert.match(seedRenderer, /commentArea\.append\(commentList\)[\s\S]*?commentArea\.append\(form\)/);
+
+  const scrollableComments = cssRule(css, ".hub-community-example-comment-list");
+  assert.match(scrollableComments, /max-height:\s*286px/);
+  assert.match(scrollableComments, /overflow-y:\s*auto/);
+  assert.match(scrollableComments, /overscroll-behavior:\s*contain/);
+});
+
+test("owners delete listings from the Edit modal and deleted listings stay removed", () => {
   const listingCardSource = sourceSection(
     marketplace,
     "function listingCard(listing, options={}){",
     "function marketplaceSeedText("
   );
-  assert.match(listingCardSource, /marketplace-card-action danger/);
-  assert.match(listingCardSource, /marketplaceDeleteConfirm/);
-  assert.match(listingCardSource, /updateListingStatus\(id, "deleted", remove\)/);
+  assert.doesNotMatch(listingCardSource, /marketplaceDeleteConfirm/);
+  assert.doesNotMatch(listingCardSource, /updateListingStatus\(id, "deleted"/);
+
+  const listingDetailSource = sourceSection(
+    marketplace,
+    "function renderListingDetail(listing){",
+    "async function ask(options){"
+  );
+  assert.doesNotMatch(listingDetailSource, /updateListingStatus\(id, "deleted"/);
+
+  const editorDeleteSource = sourceSection(
+    marketplace,
+    "async function deleteEditedListing(){",
+    "function syncListingModeFields(){"
+  );
+  assert.match(editorDeleteSource, /marketplaceDeleteConfirm/);
+  assert.match(editorDeleteSource, /updateListingStatus\(id, "deleted", remove\)/);
+  assert.match(editorDeleteSource, /if\(deleted\) closeEditor\(\{restoreFocus:false, force:true\}\)/);
+  assert.match(html, /id="marketplaceEditorDelete"[\s\S]*?data-i18n="marketplaceDelete"[\s\S]*?hidden/);
 
   const marketLoader = sourceSection(
     marketplace,
@@ -354,6 +422,18 @@ test("Hub artwork, paper surface, and Community edge labels use the final full-b
   assert.match(
     css,
     /#refreshCommunityFeed\s*\{[\s\S]*?padding-inline:\s*10px/
+  );
+});
+
+test("Course Choice Intelligence keeps a rounded control-panel perimeter", () => {
+  const roundedInsightControls = cssRule(
+    css,
+    '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-controls'
+  );
+  assert.match(roundedInsightControls, /overflow:\s*hidden/);
+  assert.match(
+    roundedInsightControls,
+    /border-radius:\s*clamp\(36px,\s*4vw,\s*56px\)\s*!important/
   );
 });
 

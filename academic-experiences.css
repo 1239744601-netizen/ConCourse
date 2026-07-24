@@ -1037,6 +1037,26 @@ html[data-theme="day"]
   margin-top: 14px;
 }
 
+.hub-community-example-comment-list {
+  display: grid;
+  gap: 9px;
+  max-height: 286px;
+  padding: 1px 7px 1px 1px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: color-mix(in srgb, var(--community-accent, #14628d) 45%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.hub-community-example-comment-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hub-community-example-comment-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--community-accent, #14628d) 45%, transparent);
+  border-radius: 999px;
+}
+
 .hub-community-example-comment {
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);
@@ -1480,6 +1500,16 @@ body.hub-active .member-hub {
   border-radius:
     48% 52% 0 0 /
     clamp(62px, 8vw, 112px) clamp(76px, 9vw, 132px) 0 0 !important;
+}
+
+/* Academic Insights only: restore a clearly rounded perimeter around the
+   course-choice configurator. A late member-hub rule intentionally flattened
+   this block, which made the control group read as a rectangular patch. */
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-controls {
+  overflow: hidden;
+  border-radius: clamp(36px, 4vw, 56px) !important;
 }
 
 /* The two labels identified in Community need a deliberate trailing gutter

@@ -963,20 +963,6 @@
         edit.addEventListener("click", () => void openListingEditor(listing, edit));
         actions.append(edit);
       }
-      if(["draft", "active", "paused", "sold"].includes(String(listing.status))){
-        const remove = element("button", "marketplace-card-action danger", tr("marketplaceDelete"));
-        remove.type = "button";
-        remove.addEventListener("click", async () => {
-          const confirmed = await ask({
-            title:tr("marketplaceDelete"),
-            message:tr("marketplaceDeleteConfirm"),
-            confirmLabel:tr("marketplaceDelete"),
-            danger:true
-          });
-          if(confirmed) await updateListingStatus(id, "deleted", remove);
-        });
-        actions.append(remove);
-      }
     } else {
       const favorite = element("button", `marketplace-card-action${listing.favorited_by_me || listing.viewer?.favorited ? " active" : ""}`, listing.favorited_by_me || listing.viewer?.favorited ? tr("marketplaceUnfavorite") : tr("marketplaceFavorite"));
       favorite.type = "button";
@@ -1609,14 +1595,6 @@
         activateButton.addEventListener("click", () => void updateListingStatus(id, "active", activateButton));
         actions.append(activateButton);
       }
-      if(sellerControlled || listing.status === "sold"){
-        const remove = detailAction(tr("marketplaceDelete"), "marketplace-detail-action danger");
-        remove.addEventListener("click", async () => {
-          const confirmed = await ask({title:tr("marketplaceDelete"), message:tr("marketplaceDeleteConfirm"), confirmLabel:tr("marketplaceDelete"), danger:true});
-          if(confirmed) await updateListingStatus(id, "deleted", remove);
-        });
-        actions.append(remove);
-      }
     } else {
       const favorite = detailAction(listing.favorited_by_me || listing.viewer?.favorited ? tr("marketplaceUnfavorite") : tr("marketplaceFavorite"));
       favorite.classList.toggle("active", listing.favorited_by_me || listing.viewer?.favorited);
@@ -1761,7 +1739,7 @@
   }
 
   async function updateListingStatus(id, status, trigger){
-    if(!UUID_RE.test(id) || !["active", "paused", "sold", "deleted"].includes(status) || state.busyListings.has(id)) return;
+    if(!UUID_RE.test(id) || !["active", "paused", "sold", "deleted"].includes(status) || state.busyListings.has(id)) return false;
     const context = currentContext();
     state.busyListings.add(id);
     if(trigger) trigger.disabled = true;
@@ -1774,7 +1752,11 @@
       else await openListing(id, trigger);
       await loadMarketplace({force:true});
       await loadCommunityListingChoices();
-    } catch(error){ if(contextIsCurrent(context)) setStatus(featureError(error), "error"); }
+      return true;
+    } catch(error){
+      if(contextIsCurrent(context)) setStatus(featureError(error), "error");
+      return false;
+    }
     finally { if(contextIsCurrent(context)){ state.busyListings.delete(id); if(trigger?.isConnected) trigger.disabled = false; } }
   }
 
@@ -1798,7 +1780,40 @@
       if(byId("marketplaceMediaInput")) byId("marketplaceMediaInput").disabled = true;
       if(byId("marketplaceAddMediaButton")) byId("marketplaceAddMediaButton").disabled = true;
     }
+    syncEditorDeleteControl();
     if(!busy) syncListingModeFields();
+  }
+
+  function editorListingCanDelete(listing=state.editorListing){
+    return (
+      !!listing
+      && isOwnListing(listing)
+      && ["draft", "active", "paused", "sold"].includes(String(listing.status || "active"))
+    );
+  }
+
+  function syncEditorDeleteControl(){
+    const remove = byId("marketplaceEditorDelete");
+    if(!remove) return;
+    const available = editorListingCanDelete();
+    remove.hidden = !available;
+    remove.disabled = state.editorBusy || !available;
+  }
+
+  async function deleteEditedListing(){
+    const listing = state.editorListing;
+    const id = listingId(listing);
+    const remove = byId("marketplaceEditorDelete");
+    if(!remove || !editorListingCanDelete(listing) || !UUID_RE.test(id)) return;
+    const confirmed = await ask({
+      title:tr("marketplaceDelete"),
+      message:tr("marketplaceDeleteConfirm"),
+      confirmLabel:tr("marketplaceDelete"),
+      danger:true
+    });
+    if(!confirmed) return;
+    const deleted = await updateListingStatus(id, "deleted", remove);
+    if(deleted) closeEditor({restoreFocus:false, force:true});
   }
 
   function syncListingModeFields(){
@@ -1984,6 +1999,7 @@
     setEditorStatus(fullListing ? tr("marketplaceEditMediaLocked") : tr("marketplaceRightsStudy"));
     if(byId("marketplaceMediaInput")) byId("marketplaceMediaInput").disabled = !!fullListing;
     if(byId("marketplaceAddMediaButton")) byId("marketplaceAddMediaButton").disabled = !!fullListing;
+    syncEditorDeleteControl();
     openModal(byId("marketplaceListingEditorModal"), byId("marketplaceTitleInput"));
   }
 
@@ -1994,6 +2010,7 @@
     byId("marketplaceListingEditorModal").hidden = true;
     revokeEditorPreviews();
     state.editorListing = null;
+    syncEditorDeleteControl();
     byId("marketplaceListingEditorForm")?.reset();
     setEditorStatus("");
     const focus = state.editorReturnFocus;
@@ -2619,6 +2636,7 @@
     byId("marketplaceAddMediaButton")?.addEventListener("click", () => byId("marketplaceMediaInput")?.click());
     byId("marketplaceEditorCancel")?.addEventListener("click", () => closeEditor());
     byId("marketplaceEditorCancelButton")?.addEventListener("click", () => closeEditor());
+    byId("marketplaceEditorDelete")?.addEventListener("click", () => void deleteEditedListing());
     byId("marketplaceListingEditorForm")?.addEventListener("submit", submitEditor);
     byId("marketplaceEditorSubmit")?.addEventListener("click", event => {
       if(event.currentTarget.type !== "submit") void submitEditor(event);

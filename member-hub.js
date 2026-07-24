@@ -156,6 +156,51 @@
             "zh-HK":"活動完咗之後可唔可以分享 WACC 檢查清單？會幫到我溫習。"
           }),
           time:Object.freeze({en:"3 min", "zh-CN":"3 分钟前", "zh-HK":"3 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Natalie Fong",
+          body:Object.freeze({
+            en:"Could we add a short multiples comparison after DCF? I still mix up EV/EBITDA and P/E.",
+            "zh-CN":"讲完 DCF 后可以加一个估值倍数比较吗？我还是容易混淆 EV/EBITDA 和 P/E。",
+            "zh-HK":"講完 DCF 之後可唔可以加一個估值倍數比較？我仲係好易混淆 EV/EBITDA 同 P/E。"
+          }),
+          time:Object.freeze({en:"7 min", "zh-CN":"7 分钟前", "zh-HK":"7 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Ryan Chan",
+          body:Object.freeze({
+            en:"I made a one-page formula sheet and will upload it before Wednesday.",
+            "zh-CN":"我整理了一页公式表，会在周三前上传。",
+            "zh-HK":"我整理咗一頁公式表，會喺星期三之前上載。"
+          }),
+          time:Object.freeze({en:"6 min", "zh-CN":"6 分钟前", "zh-HK":"6 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Zoe Li",
+          body:Object.freeze({
+            en:"Is the session open to second-year students? We start valuation next week.",
+            "zh-CN":"大二学生也可以参加吗？我们下周刚开始学习估值。",
+            "zh-HK":"二年級學生都可以參加嗎？我哋下星期啱啱開始學估值。"
+          }),
+          time:Object.freeze({en:"5 min", "zh-CN":"5 分钟前", "zh-HK":"5 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Daniel Wu",
+          body:Object.freeze({
+            en:"I can walk through terminal-value sensitivity if anyone wants another example.",
+            "zh-CN":"如果大家需要，我可以再讲一个终值敏感性分析的例子。",
+            "zh-HK":"如果大家需要，我可以再講一個終值敏感度分析嘅例子。"
+          }),
+          time:Object.freeze({en:"2 min", "zh-CN":"2 分钟前", "zh-HK":"2 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Grace Leung",
+          body:Object.freeze({
+            en:"Please save one seat for me. I will bring the case-study marking guide.",
+            "zh-CN":"请帮我留一个座位，我会带上案例分析的评分指引。",
+            "zh-HK":"麻煩幫我留一個位，我會帶埋案例分析嘅評分指引。"
+          }),
+          time:Object.freeze({en:"just now", "zh-CN":"刚刚", "zh-HK":"啱啱"})
         })
       ]),
       poll:Object.freeze({
@@ -222,6 +267,105 @@
             "zh-HK":"我會幫香草加標籤，等新手知道光照同淋水方法。"
           }),
           time:Object.freeze({en:"9 min", "zh-CN":"9 分钟前", "zh-HK":"9 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Noah Cheng",
+          body:Object.freeze({
+            en:"Which side of the central lawn will the tables be on?",
+            "zh-CN":"摊位会设在中央草坪的哪一边？",
+            "zh-HK":"攤位會設喺中央草地邊一面？"
+          }),
+          time:Object.freeze({en:"8 min", "zh-CN":"8 分钟前", "zh-HK":"8 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Olivia Wong",
+          body:Object.freeze({
+            en:"I have several spider-plant babies that are ready for new homes.",
+            "zh-CN":"我有几株吊兰幼苗，已经可以带去新家了。",
+            "zh-HK":"我有幾株吊蘭幼苗，已經可以帶去新屋企喇。"
+          }),
+          time:Object.freeze({en:"7 min", "zh-CN":"7 分钟前", "zh-HK":"7 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Kelvin Tang",
+          body:Object.freeze({
+            en:"Happy to help at the welcome table and make plant-care labels.",
+            "zh-CN":"我可以在接待桌帮忙，也可以制作植物养护标签。",
+            "zh-HK":"我可以喺接待枱幫手，亦可以整植物護理標籤。"
+          }),
+          time:Object.freeze({en:"6 min", "zh-CN":"6 分钟前", "zh-HK":"6 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Amira Yusuf",
+          body:Object.freeze({
+            en:"Would packets of basil and coriander seeds be useful too?",
+            "zh-CN":"罗勒和香菜种子包也适合带来交换吗？",
+            "zh-HK":"羅勒同芫荽種子包都適合帶嚟交換嗎？"
+          }),
+          time:Object.freeze({en:"5 min", "zh-CN":"5 分钟前", "zh-HK":"5 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Jacky Ma",
+          body:Object.freeze({
+            en:"I cleaned six glass jars this morning and can drop them off early.",
+            "zh-CN":"我今早清洗了六个玻璃罐，可以提前送过去。",
+            "zh-HK":"我今朝洗乾淨咗六個玻璃樽，可以早啲拎過去。"
+          }),
+          time:Object.freeze({en:"4 min", "zh-CN":"4 分钟前", "zh-HK":"4 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Sarah Lo",
+          body:Object.freeze({
+            en:"Is there an indoor backup location if it rains on Thursday?",
+            "zh-CN":"如果周四下雨，有室内备用场地吗？",
+            "zh-HK":"如果星期四落雨，有冇室內後備場地？"
+          }),
+          time:Object.freeze({en:"4 min", "zh-CN":"4 分钟前", "zh-HK":"4 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Kenji Sato",
+          body:Object.freeze({
+            en:"My class ends at 17:30. Will the swap still be running then?",
+            "zh-CN":"我的课到 17:30 才结束，那时活动还会继续吗？",
+            "zh-HK":"我堂課到 17:30 先完，嗰陣活動仲會唔會繼續？"
+          }),
+          time:Object.freeze({en:"3 min", "zh-CN":"3 分钟前", "zh-HK":"3 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Michelle Ko",
+          body:Object.freeze({
+            en:"Please keep a clear route between the tables for wheelchair access.",
+            "zh-CN":"请在桌子之间保留通道，方便轮椅通行。",
+            "zh-HK":"麻煩喺枱之間留返通道，方便輪椅出入。"
+          }),
+          time:Object.freeze({en:"2 min", "zh-CN":"2 分钟前", "zh-HK":"2 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Dylan Tse",
+          body:Object.freeze({
+            en:"I can bring two unopened bags of potting soil for everyone to share.",
+            "zh-CN":"我可以带两袋未开封的营养土给大家一起用。",
+            "zh-HK":"我可以帶兩包未開封嘅培養土俾大家一齊用。"
+          }),
+          time:Object.freeze({en:"2 min", "zh-CN":"2 分钟前", "zh-HK":"2 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Iman Ali",
+          body:Object.freeze({
+            en:"May I take a few photos for the society newsletter if everyone agrees?",
+            "zh-CN":"如果大家同意，我可以拍几张照片放在学会通讯里吗？",
+            "zh-HK":"如果大家同意，我可唔可以影幾張相放喺學會通訊度？"
+          }),
+          time:Object.freeze({en:"1 min", "zh-CN":"1 分钟前", "zh-HK":"1 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Vivian Cheung",
+          body:Object.freeze({
+            en:"I can collect any leftover pots for the community garden afterward.",
+            "zh-CN":"活动结束后，我可以把剩余花盆带到社区花园。",
+            "zh-HK":"活動完咗之後，我可以將剩低嘅花盆帶去社區花園。"
+          }),
+          time:Object.freeze({en:"just now", "zh-CN":"刚刚", "zh-HK":"啱啱"})
         })
       ])
     }),
@@ -276,6 +420,24 @@
             "zh-HK":"已經加咗落我嘅溫習地點清單，多謝你測試 Wi-Fi。"
           }),
           time:Object.freeze({en:"17 min", "zh-CN":"17 分钟前", "zh-HK":"17 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Nathan Chiu",
+          body:Object.freeze({
+            en:"The shade is best between 10:00 and noon. After that, the west table gets warm.",
+            "zh-CN":"10:00 到中午的遮阴最好，之后西侧的桌子会比较热。",
+            "zh-HK":"10:00 到中午嘅遮蔭最好，之後西邊張枱會比較熱。"
+          }),
+          time:Object.freeze({en:"11 min", "zh-CN":"11 分钟前", "zh-HK":"11 分鐘前"})
+        }),
+        Object.freeze({
+          author:"Isabella Tam",
+          body:Object.freeze({
+            en:"The step-free route from the library lift takes about three minutes.",
+            "zh-CN":"从图书馆电梯走无障碍路线过去大约需要三分钟。",
+            "zh-HK":"由圖書館升降機行無障礙路線過去大約要三分鐘。"
+          }),
+          time:Object.freeze({en:"5 min", "zh-CN":"5 分钟前", "zh-HK":"5 分鐘前"})
         })
       ])
     })
@@ -3379,7 +3541,7 @@
       const comments = node(
         "button",
         "hub-post-action hub-post-action--comment",
-        `${t("comment")} · ${seed.commentCount + state.comments.length}`
+        `${t("comment")} · ${seed.comments.length + state.comments.length}`
       );
       comments.type = "button";
       comments.onclick = () => post.querySelector(".hub-community-example-comment-input")?.focus();
@@ -3402,12 +3564,16 @@
       post.append(actions);
 
       const commentArea = node("div", "hub-community-example-comments");
+      const commentList = node("div", "hub-community-example-comment-list");
+      commentList.setAttribute("role", "feed");
+      commentList.setAttribute("aria-label", `${t("comment")} · ${seed.comments.length + state.comments.length}`);
       seed.comments.forEach(comment => {
-        commentArea.append(communitySeedCommentRow(comment));
+        commentList.append(communitySeedCommentRow(comment));
       });
       state.comments.forEach(comment => {
-        commentArea.append(communitySeedCommentRow(comment, {own:true}));
+        commentList.append(communitySeedCommentRow(comment, {own:true}));
       });
+      commentArea.append(commentList);
       const form = node("div", "hub-community-example-comment-form");
       const input = node("input", "hub-community-example-comment-input");
       input.maxLength = 240;
