@@ -1292,3 +1292,102 @@ html[data-theme="day"] .marketplace-example-trigger:is(:hover, :focus-visible) {
     border: 1px solid CanvasText !important;
   }
 }
+
+/* Full-bleed Hub landscape --------------------------------------------- */
+
+/* The destination artwork and the functional paper are one continuous
+   viewport-wide scene. Controls retain the same centered working measure. */
+body.hub-active .member-hub {
+  padding-inline: 0 !important;
+}
+
+.member-hub .hub-shell,
+.member-hub .hub-main {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.member-hub .hub-sidebar {
+  width: min(1440px, calc(100% - 2 * var(--atlas-gutter)));
+  margin-inline: auto !important;
+}
+
+.member-hub .hub-page-header,
+.member-hub[data-active-view] .hub-page-header,
+.member-hub[data-active-view="marketplace"] .hub-page-header {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.member-hub .hub-page-header .hub-hero-art,
+.member-hub[data-active-view] .hub-page-header .hub-hero-art,
+.member-hub[data-active-view="marketplace"] .hub-page-header .hub-hero-art {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.member-hub .hub-page-header-copy,
+.member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+  z-index: 5 !important;
+  padding-inline-start:
+    max(
+      var(--atlas-gutter),
+      calc((100% - 1440px) / 2 + var(--atlas-gutter))
+    ) !important;
+}
+
+.member-hub .hub-view {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-inline:
+    max(
+      var(--atlas-gutter),
+      calc((100% - 1440px) / 2 + var(--atlas-gutter))
+    ) !important;
+  border-right: 0 !important;
+  border-left: 0 !important;
+  border-radius:
+    48% 52% 0 0 /
+    clamp(62px, 8vw, 112px) clamp(76px, 9vw, 132px) 0 0 !important;
+}
+
+/* The two labels identified in Community need a deliberate trailing gutter
+   instead of touching the viewport edge. */
+.member-hub[data-active-view="community"] .hub-compose-heading,
+.member-hub[data-active-view="community"] .hub-feed-toolbar {
+  padding-inline-end: clamp(14px, 1.6vw, 22px);
+}
+
+.member-hub[data-active-view="community"] .hub-feed-toolbar #refreshCommunityFeed {
+  padding-inline: 10px;
+}
+
+@media (max-width: 760px) {
+  .member-hub .hub-page-header-copy,
+  .member-hub[data-active-view="marketplace"] .hub-page-header-copy {
+    width: 100% !important;
+    padding-inline:
+      max(22px, env(safe-area-inset-left))
+      max(22px, env(safe-area-inset-right)) !important;
+  }
+
+  .member-hub .hub-view {
+    padding-inline:
+      max(16px, env(safe-area-inset-left))
+      max(16px, env(safe-area-inset-right)) !important;
+  }
+}

@@ -988,7 +988,7 @@
     return (
       state.scope === "campus"
       && state.mode === "discover"
-      && !state.query
+      && !String(state.query || "").trim()
       && state.category === "all"
     );
   }
@@ -1298,7 +1298,14 @@
         const message = featureError(error) || tr("marketplaceLoadFailed");
         if(!append){
           state.items = [];
-          renderMarketplaceError(message);
+          state.localItems = [];
+          state.offset = 0;
+          state.hasMore = false;
+          state.total = null;
+          if(marketplaceSeedAvailable()){
+            renderGrid();
+            if(catalogue) catalogue.dataset.feedState = "degraded";
+          } else renderMarketplaceError(message);
         } else if(catalogue) catalogue.dataset.feedState = "ready";
         setStatus(message, "error");
       }

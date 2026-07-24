@@ -191,6 +191,56 @@ test("Community, Market, and Messages seed interactions stay client-only", () =>
   assert.match(nightIncomingMessage, /background:\s*#edf2f6\s*!important/);
 });
 
+test("Community and Market preserve realistic seed content during feed RPC failures", () => {
+  const communityLoader = sourceSection(
+    hub,
+    "async function loadCommunityFeed(",
+    "async function publishCommunityPost("
+  );
+  assert.match(communityLoader, /const canShowSeedPosts = \(/);
+  assert.match(communityLoader, /hubState\.feedScope === "school"/);
+  assert.match(communityLoader, /hubState\.feedTopic === "all"/);
+  assert.match(communityLoader, /renderCommunityFeed\(\[\]\)/);
+  assert.match(communityLoader, /setStatus\("communityFeedStatus", message, "error"\)/);
+
+  const marketLoader = sourceSection(
+    marketplace,
+    "async function loadMarketplace(",
+    "function loadNextLocalPage("
+  );
+  assert.match(marketLoader, /if\(marketplaceSeedAvailable\(\)\)\{/);
+  assert.match(marketLoader, /renderGrid\(\)/);
+  assert.match(marketLoader, /catalogue\.dataset\.feedState = "degraded"/);
+  assert.match(marketLoader, /setStatus\(message, "error"\)/);
+  assert.match(
+    marketplace,
+    /!String\(state\.query \|\| ""\)\.trim\(\)/
+  );
+});
+
+test("Hub artwork, paper surface, and Community edge labels use the final full-bleed geometry", () => {
+  assert.match(
+    css,
+    /\/\* Full-bleed Hub landscape[\s\S]*?body\.hub-active \.member-hub\s*\{[\s\S]*?padding-inline:\s*0\s*!important[\s\S]*?\.member-hub \.hub-page-header,[\s\S]*?width:\s*100%\s*!important[\s\S]*?border-radius:\s*0\s*!important/
+  );
+  assert.match(
+    css,
+    /\.member-hub \.hub-page-header \.hub-hero-art,[\s\S]*?inset:\s*0\s*!important[\s\S]*?height:\s*100%\s*!important[\s\S]*?aspect-ratio:\s*auto\s*!important/
+  );
+  assert.match(
+    css,
+    /\.member-hub \.hub-view\s*\{[\s\S]*?width:\s*100%\s*!important[\s\S]*?padding-inline:[\s\S]*?calc\(\(100% - 1440px\) \/ 2 \+ var\(--atlas-gutter\)\)[\s\S]*?border-radius:[\s\S]*?48% 52% 0 0/
+  );
+  assert.match(
+    css,
+    /data-active-view="community"\] \.hub-compose-heading,[\s\S]*?\.hub-feed-toolbar\s*\{[\s\S]*?padding-inline-end:\s*clamp\(14px,\s*1\.6vw,\s*22px\)/
+  );
+  assert.match(
+    css,
+    /#refreshCommunityFeed\s*\{[\s\S]*?padding-inline:\s*10px/
+  );
+});
+
 test("the sticky Hub destination rail has an opaque background in both themes", () => {
   assert.match(html, /<nav class="hub-navigation"[^>]+aria-label="Student hub sections"/);
 

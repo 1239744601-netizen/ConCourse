@@ -3496,7 +3496,21 @@
     if(!contextIsCurrent(context) || request !== hubState.feedRequest) return;
     hubState.loadingFeed = false;
     if(error){
-      if(!append) replaceCommunityFeed(node("div", "hub-feed-empty", featureError(error)));
+      const message = featureError(error);
+      const canShowSeedPosts = (
+        !append
+        && hubState.feedScope === "school"
+        && hubState.feedTopic === "all"
+        && !String(hubState.feedQuery || "").trim()
+      );
+      if(canShowSeedPosts){
+        hubState.feed = [];
+        hubState.feedMode = mode;
+        hubState.feedOffset = 0;
+        hubState.feedHasMore = false;
+        renderCommunityFeed([]);
+        setStatus("communityFeedStatus", message, "error");
+      } else if(!append) replaceCommunityFeed(node("div", "hub-feed-empty", message));
       else setStatus("communityComposerStatus", featureError(error), "error");
       updateCommunityLoadMore();
       return;
@@ -3575,6 +3589,7 @@
     hubState.feedOffset = offset + (Array.isArray(data) ? data.length : 0);
     hubState.feedHasMore = (Array.isArray(data) ? data.length : 0) === limit;
     renderCommunityFeed(hubState.feed);
+    setStatus("communityFeedStatus", "");
     if(scrollAnchor){
       requestAnimationFrame(() => {
         const anchor = document.getElementById(`post-${scrollAnchor.id}`);
