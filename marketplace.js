@@ -24,6 +24,20 @@
     marketplaceLoading:"Loading your campus marketplace…",
     marketplaceEmpty:"No listings match these filters yet.",
     marketplaceEmptyHint:"Try another search—or add the first useful item for your campus.",
+    marketplaceExampleShow:"Preview an example",
+    marketplaceExampleLabel:"Example listing · preview only",
+    marketplaceExampleTitle:"ECON 2005 revision notes bundle",
+    marketplaceExampleDescription:"Student-created summaries, practice questions, and topic checklists from a completed course. Digital PDF; no active assessment answers.",
+    marketplaceExampleSeller:"Avery · Year 2 Economics",
+    marketplaceExampleCondition:"Digital · 38 pages",
+    marketplaceExamplePrice:"HK$48",
+    marketplaceExamplePreview:"Preview",
+    marketplaceExampleHide:"Hide details",
+    marketplaceExampleSave:"Save",
+    marketplaceExampleSaved:"Saved",
+    marketplaceExampleClose:"Close",
+    marketplaceExampleDetails:"This client-only preview demonstrates how a listing can be inspected and saved. It is not published, stored, or included in marketplace results.",
+    marketplaceExampleImageAlt:"A study desk with handwritten notes, books, a calculator, headphones, and a water bottle.",
     marketplaceSavedEmptyHint:"Save useful listings and they will stay together here.",
     marketplaceOwnEmptyHint:"Turn something you no longer need into another student's next find.",
     marketplaceOrderEmptyHint:"When you make or receive an order, its progress will appear here.",
@@ -201,6 +215,20 @@
       marketplaceEnableMessages:"请先在个人档案开启“允许已验证学生给我发私信”，再联系全球市集卖家。",
       marketplaceGlobalConversationStarted:"对话已建立，正在打开私信…",
       marketplaceEmptyHint:"尝试其他关键词或筛选条件，也可以成为第一个发布校园好物的人。",
+      marketplaceExampleShow:"预览示例",
+      marketplaceExampleLabel:"示例商品 · 仅供预览",
+      marketplaceExampleTitle:"ECON 2005 复习笔记套装",
+      marketplaceExampleDescription:"由学生整理的已修课程总结、练习题及重点清单。电子 PDF，不含当前考核答案。",
+      marketplaceExampleSeller:"Avery · 经济学二年级",
+      marketplaceExampleCondition:"电子版 · 38 页",
+      marketplaceExamplePrice:"HK$48",
+      marketplaceExamplePreview:"预览",
+      marketplaceExampleHide:"收起详情",
+      marketplaceExampleSave:"收藏",
+      marketplaceExampleSaved:"已收藏",
+      marketplaceExampleClose:"关闭",
+      marketplaceExampleDetails:"此示例仅在当前页面演示查看和收藏商品的效果，不会发布、保存，也不会计入市集结果。",
+      marketplaceExampleImageAlt:"书桌上放有手写笔记、书籍、计算器、耳机和水瓶。",
       marketplaceSavedEmptyHint:"收藏感兴趣的商品后，它们会集中显示在这里。",
       marketplaceOwnEmptyHint:"把不再需要的物品发布出来，让它成为另一位学生的新发现。",
       marketplaceOrderEmptyHint:"当你创建或收到订单后，交易进度会显示在这里。",
@@ -229,6 +257,20 @@
       marketplaceEnableMessages:"請先喺個人檔案開啟「允許已驗證學生私訊我」，再聯絡全球市集賣家。",
       marketplaceGlobalConversationStarted:"對話已建立，正在打開私訊…",
       marketplaceEmptyHint:"試下其他關鍵字或篩選條件，亦可以成為第一個發佈校園好物嘅人。",
+      marketplaceExampleShow:"預覽示例",
+      marketplaceExampleLabel:"示例商品 · 只供預覽",
+      marketplaceExampleTitle:"ECON 2005 溫習筆記套裝",
+      marketplaceExampleDescription:"由學生整理嘅已修課程總結、練習題同重點清單。電子 PDF，不包括現行考核答案。",
+      marketplaceExampleSeller:"Avery · 經濟學二年級",
+      marketplaceExampleCondition:"電子版 · 38 頁",
+      marketplaceExamplePrice:"HK$48",
+      marketplaceExamplePreview:"預覽",
+      marketplaceExampleHide:"收起詳情",
+      marketplaceExampleSave:"收藏",
+      marketplaceExampleSaved:"已收藏",
+      marketplaceExampleClose:"關閉",
+      marketplaceExampleDetails:"呢個示例只會喺目前頁面示範查看同收藏商品，唔會發佈、儲存，亦唔會計入市集結果。",
+      marketplaceExampleImageAlt:"書桌上放有手寫筆記、書籍、計算機、耳機同水樽。",
       marketplaceSavedEmptyHint:"收藏感興趣嘅商品之後，佢哋會集中顯示喺呢度。",
       marketplaceOwnEmptyHint:"將唔再需要嘅物品發佈出嚟，等佢成為另一位學生嘅新發現。",
       marketplaceOrderEmptyHint:"當你建立或者收到訂單之後，交易進度會顯示喺呢度。",
@@ -251,6 +293,9 @@
     items:[],
     localItems:[],
     loading:false,
+    exampleVisible:false,
+    exampleDetailsVisible:false,
+    exampleSaved:false,
     feedRequest:0,
     detailRequest:0,
     orderRequest:0,
@@ -298,7 +343,17 @@
         }));
       })
     : null;
-  mediaRemovalObserver?.observe(document.documentElement, {childList:true, subtree:true});
+  const observeMarketplaceMediaRemovals = () => {
+    const root = document.documentElement;
+    if(!mediaRemovalObserver || !(root instanceof Node)) return;
+    try {
+      mediaRemovalObserver.observe(root, {childList:true, subtree:true});
+    } catch(_error){
+      mediaRemovalObserver.disconnect();
+    }
+  };
+  if(document.documentElement instanceof Node) observeMarketplaceMediaRemovals();
+  else document.addEventListener("DOMContentLoaded", observeMarketplaceMediaRemovals, {once:true});
 
   const byId = id => typeof $ === "function" ? $(id) : document.getElementById(id);
   const canRestoreFocus = target => !!(
@@ -477,6 +532,9 @@
     if(!["campus", "global"].includes(scope) || scope === state.scope) return;
     closeDetail({restoreFocus:false, clearHash:true});
     state.scope = scope;
+    state.exampleVisible = false;
+    state.exampleDetailsVisible = false;
+    state.exampleSaved = false;
     if(scope === "global" && ["mine", "orders"].includes(state.mode)) state.mode = "discover";
     state.items = [];
     state.localItems = [];
@@ -823,6 +881,121 @@
     return card;
   }
 
+  function marketplaceExampleAvailable(){
+    return (
+      state.scope === "campus"
+      && state.mode === "discover"
+      && !state.query
+      && state.category === "all"
+    );
+  }
+
+  function syncMarketplaceExampleButton(){
+    const button = byId("marketplaceExampleButton");
+    if(!button) return;
+    button.hidden = !marketplaceExampleAvailable() || state.exampleVisible;
+    button.disabled = state.loading;
+    button.textContent = tr("marketplaceExampleShow");
+  }
+
+  function focusMarketplaceExampleAction(action){
+    window.requestAnimationFrame(() => {
+      document.querySelector(`[data-market-example-action="${action}"]`)?.focus({preventScroll:true});
+    });
+  }
+
+  function rerenderMarketplaceExample(focusAction){
+    renderGrid();
+    if(focusAction) focusMarketplaceExampleAction(focusAction);
+  }
+
+  function marketplaceExampleCard(){
+    const card = element("article", "marketplace-card");
+    card.dataset.marketplaceExample = "";
+    card.setAttribute("aria-label", tr("marketplaceExampleLabel"));
+
+    const mediaFrame = element("div", "marketplace-card-media-button");
+    const media = element("div", "marketplace-media marketplace-media-compact");
+    const image = element("img");
+    image.src = "concourse-campus-market.jpg";
+    image.width = 1536;
+    image.height = 1024;
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.alt = tr("marketplaceExampleImageAlt");
+    media.append(image);
+    mediaFrame.append(media);
+    card.append(mediaFrame);
+
+    const body = element("div", "marketplace-card-body");
+    const eyebrow = element("div", "marketplace-card-eyebrow");
+    eyebrow.append(
+      element("span", "marketplace-category-chip", tr("marketplaceExampleLabel")),
+      element("span", "marketplace-status-chip status-active", labelFor("marketplaceCategory", "notes"))
+    );
+    body.append(
+      eyebrow,
+      element("h3", "marketplace-card-title", tr("marketplaceExampleTitle")),
+      element("strong", "marketplace-card-price", tr("marketplaceExamplePrice"))
+    );
+
+    const meta = element("div", "marketplace-card-meta");
+    meta.append(
+      element("span", "", tr("marketplaceExampleSeller")),
+      element("span", "", tr("marketplaceExampleCondition"))
+    );
+    body.append(meta);
+
+    const description = element("p", "marketplace-muted", tr("marketplaceExampleDescription"));
+    description.hidden = !state.exampleDetailsVisible;
+    const boundary = element("p", "marketplace-muted", tr("marketplaceExampleDetails"));
+    boundary.hidden = !state.exampleDetailsVisible;
+    boundary.setAttribute("role", "status");
+    body.append(description, boundary);
+
+    const actions = element("div", "marketplace-card-actions");
+    const preview = element(
+      "button",
+      "marketplace-card-action",
+      tr(state.exampleDetailsVisible ? "marketplaceExampleHide" : "marketplaceExamplePreview")
+    );
+    preview.type = "button";
+    preview.dataset.marketExampleAction = "preview";
+    preview.setAttribute("aria-expanded", state.exampleDetailsVisible ? "true" : "false");
+    preview.addEventListener("click", () => {
+      state.exampleDetailsVisible = !state.exampleDetailsVisible;
+      rerenderMarketplaceExample("preview");
+    });
+
+    const save = element(
+      "button",
+      `marketplace-card-action${state.exampleSaved ? " active" : ""}`,
+      tr(state.exampleSaved ? "marketplaceExampleSaved" : "marketplaceExampleSave")
+    );
+    save.type = "button";
+    save.dataset.marketExampleAction = "save";
+    save.setAttribute("aria-pressed", state.exampleSaved ? "true" : "false");
+    save.addEventListener("click", () => {
+      state.exampleSaved = !state.exampleSaved;
+      rerenderMarketplaceExample("save");
+    });
+
+    const close = element("button", "marketplace-card-action", tr("marketplaceExampleClose"));
+    close.type = "button";
+    close.dataset.marketExampleAction = "close";
+    close.addEventListener("click", () => {
+      state.exampleVisible = false;
+      state.exampleDetailsVisible = false;
+      state.exampleSaved = false;
+      rerenderMarketplaceExample("show");
+    });
+
+    actions.append(preview, save, close);
+    body.append(actions);
+    card.append(body);
+    return card;
+  }
+
   function updateResultsLabel(count=state.items.length){
     const target = byId("marketplaceResultsLabel");
     if(!target) return;
@@ -876,7 +1049,6 @@
       if(actionType === "sell") action.setAttribute("aria-haspopup", "dialog");
       copy.append(action);
     }
-
     empty.append(visual, copy);
     return empty;
   }
@@ -884,6 +1056,7 @@
   function renderMarketplaceLoading(){
     const grid = byId("marketplaceGrid");
     if(!grid) return;
+    syncMarketplaceExampleButton();
     unloadRenderedMedia(grid);
     grid.classList.remove("is-single-result");
     delete grid.dataset.resultCount;
@@ -927,6 +1100,19 @@
     grid.classList.toggle("is-single-result", singleListing);
     grid.dataset.resultCount = String(state.items.length);
     const catalogue = byId("marketplaceCatalogue");
+    syncMarketplaceExampleButton();
+    if(state.exampleVisible && marketplaceExampleAvailable()){
+      grid.classList.add("is-single-result");
+      grid.dataset.resultCount = "0";
+      if(catalogue){
+        catalogue.dataset.empty = "false";
+        catalogue.dataset.feedState = "example";
+      }
+      grid.append(marketplaceExampleCard());
+      updateResultsLabel(0);
+      updateLoadMore();
+      return;
+    }
     if(catalogue){
       catalogue.dataset.empty = state.items.length ? "false" : "true";
       catalogue.dataset.feedState = "ready";
@@ -1003,6 +1189,7 @@
       if(contextIsCurrent(context) && request === state.feedRequest){
         state.loading = false;
         byId("marketplaceCatalogue")?.setAttribute("aria-busy", "false");
+        syncMarketplaceExampleButton();
         updateLoadMore();
       }
     }
@@ -1020,6 +1207,9 @@
     if(!["discover", "saved", "mine", "orders"].includes(mode)) mode = "discover";
     if(state.scope === "global" && ["mine", "orders"].includes(mode)) mode = "discover";
     state.mode = mode;
+    state.exampleVisible = false;
+    state.exampleDetailsVisible = false;
+    state.exampleSaved = false;
     state.items = [];
     state.localItems = [];
     state.offset = 0;
@@ -2126,6 +2316,9 @@
     state.items = [];
     state.localItems = [];
     state.loading = false;
+    state.exampleVisible = false;
+    state.exampleDetailsVisible = false;
+    state.exampleSaved = false;
     state.busyListings.clear();
     state.busyOrders.clear();
     state.detail = null;
@@ -2293,6 +2486,12 @@
       if(["mine", "orders"].includes(state.mode)) loadNextLocalPage();
       else void loadMarketplace({append:true});
     });
+    byId("marketplaceExampleButton")?.addEventListener("click", () => {
+      state.exampleVisible = true;
+      state.exampleDetailsVisible = false;
+      state.exampleSaved = false;
+      rerenderMarketplaceExample("preview");
+    });
     byId("marketplaceModes")?.addEventListener("click", event => {
       const button = event.target.closest("[data-market-mode]");
       if(button) void setMode(button.dataset.marketMode);
@@ -2308,6 +2507,9 @@
       void setMode(buttons[nextIndex].dataset.marketMode);
     });
     byId("marketplaceSearch")?.addEventListener("input", event => {
+      state.exampleVisible = false;
+      state.exampleDetailsVisible = false;
+      state.exampleSaved = false;
       state.query = event.target.value.trim().slice(0, 120);
       if(state.searchTimer) clearTimeout(state.searchTimer);
       state.searchTimer = window.setTimeout(() => { state.searchTimer = null; void loadMarketplace({force:true}); }, 350);
@@ -2315,13 +2517,28 @@
     byId("marketplaceSearch")?.addEventListener("keydown", event => {
       if(event.key === "Enter"){
         event.preventDefault();
+        state.exampleVisible = false;
+        state.exampleDetailsVisible = false;
+        state.exampleSaved = false;
         if(state.searchTimer){ clearTimeout(state.searchTimer); state.searchTimer = null; }
         state.query = event.currentTarget.value.trim().slice(0, 120);
         void loadMarketplace({force:true});
       }
     });
-    byId("marketplaceCategory")?.addEventListener("change", event => { state.category = event.target.value || "all"; void loadMarketplace({force:true}); });
-    byId("marketplaceSort")?.addEventListener("change", event => { state.sort = event.target.value || "recent"; void loadMarketplace({force:true}); });
+    byId("marketplaceCategory")?.addEventListener("change", event => {
+      state.exampleVisible = false;
+      state.exampleDetailsVisible = false;
+      state.exampleSaved = false;
+      state.category = event.target.value || "all";
+      void loadMarketplace({force:true});
+    });
+    byId("marketplaceSort")?.addEventListener("change", event => {
+      state.exampleVisible = false;
+      state.exampleDetailsVisible = false;
+      state.exampleSaved = false;
+      state.sort = event.target.value || "recent";
+      void loadMarketplace({force:true});
+    });
     byId("communityListingSelect")?.addEventListener("change", event => selectCommunityListing(event.target.value));
     byId("removeCommunityListing")?.addEventListener("click", clearCommunityListing);
     document.addEventListener("keydown", trapModalFocus);

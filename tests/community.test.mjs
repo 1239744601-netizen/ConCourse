@@ -6,6 +6,17 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const js = readFileSync(new URL("../member-hub.js", import.meta.url), "utf8");
 const css = readFileSync(new URL("../community-redesign.css", import.meta.url), "utf8");
 
+function cssRule(source, selector){
+  const standaloneSelector = `${selector} {`;
+  const standaloneIndex = source.indexOf(standaloneSelector);
+  const selectorIndex = standaloneIndex >= 0 ? standaloneIndex : source.indexOf(selector);
+  assert.ok(selectorIndex >= 0, `Expected CSS selector: ${selector}`);
+  const openIndex = source.indexOf("{", selectorIndex + selector.length);
+  const closeIndex = source.indexOf("}", openIndex + 1);
+  assert.ok(openIndex > selectorIndex && closeIndex > openIndex, `Expected CSS rule for: ${selector}`);
+  return source.slice(selectorIndex, closeIndex + 1);
+}
+
 test("the Community redesign is isolated and loaded after older visual layers", () => {
   const artLink = html.indexOf('href="concourse-art.css');
   const communityLink = html.indexOf('href="community-redesign.css');
@@ -62,4 +73,37 @@ test("Community feed keeps the essential social interactions", () => {
   assert.match(js, /togglePostBookmark\(post\.post_id\)/);
   assert.match(js, /shareCommunityPost\(post\.post_id\)/);
   assert.match(js, /loadPostComments\(post\.post_id, comments\)/);
+});
+
+test("Community scope indicators and Start chat stay aligned with their labels", () => {
+  const scopeButton = cssRule(
+    css,
+    '.member-hub[data-active-view="community"] .hub-campus-scope button'
+  );
+  assert.match(scopeButton, /padding:\s*8px 16px 12px/);
+  assert.match(scopeButton, /border-radius:\s*999px/);
+
+  const scopeIndicator = cssRule(
+    css,
+    '.member-hub[data-active-view="community"] .hub-campus-scope button::after'
+  );
+  assert.match(scopeIndicator, /right:\s*22%\s*!important/);
+  assert.match(scopeIndicator, /bottom:\s*4px\s*!important/);
+  assert.match(scopeIndicator, /left:\s*22%\s*!important/);
+  assert.match(scopeIndicator, /height:\s*2px\s*!important/);
+
+  const startChat = cssRule(
+    css,
+    '.member-hub[data-active-view="community"] #communityStartMessage'
+  );
+  assert.match(startChat, /justify-content:\s*center/);
+  assert.match(startChat, /gap:\s*10px/);
+  assert.match(startChat, /padding:\s*10px 20px/);
+
+  const startChatArrow = cssRule(
+    css,
+    '.member-hub[data-active-view="community"] #communityStartMessage::after'
+  );
+  assert.match(startChatArrow, /flex:\s*0 0 auto/);
+  assert.match(startChatArrow, /line-height:\s*1/);
 });

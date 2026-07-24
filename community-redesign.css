@@ -102,8 +102,9 @@ html[data-theme="night"] .member-hub[data-active-view="community"] {
 }
 
 .member-hub[data-active-view="community"] .hub-campus-scope button {
+  position: relative;
   min-height: 42px;
-  padding: 8px 16px;
+  padding: 8px 16px 12px;
   color: var(--community-muted);
   background: transparent;
   border: 0;
@@ -112,6 +113,14 @@ html[data-theme="night"] .member-hub[data-active-view="community"] {
   font-size: 12px;
   font-weight: 760;
   letter-spacing: -.01em;
+}
+
+.member-hub[data-active-view="community"] .hub-campus-scope button::after {
+  right: 22% !important;
+  bottom: 4px !important;
+  left: 22% !important;
+  height: 2px !important;
+  pointer-events: none;
 }
 
 .member-hub[data-active-view="community"] .hub-campus-scope button:hover {
@@ -1279,6 +1288,18 @@ html[data-theme="night"] .member-hub[data-active-view="community"] {
   color: #fff;
   background: linear-gradient(135deg, #0c4777, #1763d7);
   border-radius: 999px;
+}
+
+.member-hub[data-active-view="community"] #communityStartMessage {
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 20px;
+  line-height: 1.15;
+}
+
+.member-hub[data-active-view="community"] #communityStartMessage::after {
+  flex: 0 0 auto;
+  line-height: 1;
 }
 
 /* Night mode is explicit so no Community text fades into its background. */

@@ -57,7 +57,7 @@ test("each Hub destination has one original artwork and one visible-image rule",
     community: "concourse-art-community.jpg",
     marketplace: "concourse-art-market.jpg",
     messages: "concourse-art-messages.jpg",
-    overview: "concourse-art-insights-v2.jpg",
+    overview: "concourse-art-insights-v3.jpg",
     "academic-tools": "concourse-art-citations-motion.jpg",
     profile: "concourse-art-profile.jpg"
   };
@@ -207,7 +207,7 @@ test("Chinese copy distinguishes saving from bookmarking and uses academic termi
   assert.match(html, /Object\.assign\(TRANSLATIONS\["zh-HK"\]/);
   assert.match(html, /saved:"已保存",\s*postSaved:"已收藏"/);
   assert.match(html, /saved:"已儲存",\s*postSaved:"已收藏"/);
-  assert.equal((memberHubJs.match(/t\("postSaved"\)/g) || []).length, 2);
+  assert.equal((memberHubJs.match(/t\("postSaved"\)/g) || []).length, 3);
   assert.match(academicToolsJs, /toolsWorkspaceTitle:"参考文献工作室"/);
   assert.match(academicToolsJs, /toolsWorkspaceTitle:"參考文獻工作室"/);
   assert.match(academicToolsJs, /citationCopy:"复制参考文献"/);

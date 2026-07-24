@@ -36,8 +36,18 @@
     insightRows: [],
     insightsLoaded: false,
     insightDemoMode: "",
+    communityExample: {
+      liked:false,
+      saved:false,
+      selectedPoll:-1,
+      comments:[],
+      statusKey:""
+    },
     feed: [],
     conversations: [],
+    messageDemoMode: false,
+    messageDemoDismissed: false,
+    messageDemoMessages: [],
     activeConversationId: null,
     activeConversationUserId: null,
     activeConversationName: "",
@@ -100,17 +110,87 @@
   const COMMUNITY_FEED_PAGE_SIZE = 30;
   const COMMUNITY_FEED_WINDOW = 90;
   const HUB_RPC_TIMEOUT_MS = 15000;
-  const INSIGHT_DEMO_ROWS = Object.freeze({
-    major:Object.freeze([
-      Object.freeze({course_key:"FIN-310", course_code:"FIN 310", course_name:"Corporate Finance", selection_count:31, cohort_size:40, share_percent:78}),
-      Object.freeze({course_key:"BUS-320", course_code:"BUS 320", course_name:"Business Analytics", selection_count:27, cohort_size:40, share_percent:68}),
-      Object.freeze({course_key:"MGT-305", course_code:"MGT 305", course_name:"Strategic Management", selection_count:22, cohort_size:40, share_percent:55})
-    ]),
-    university:Object.freeze([
-      Object.freeze({course_key:"DAT-101", course_code:"DAT 101", course_name:"Data Literacy", selection_count:184, cohort_size:260, share_percent:71}),
-      Object.freeze({course_key:"COM-120", course_code:"COM 120", course_name:"Academic Communication", selection_count:153, cohort_size:260, share_percent:59}),
-      Object.freeze({course_key:"SUS-110", course_code:"SUS 110", course_name:"Sustainability in Practice", selection_count:117, cohort_size:260, share_percent:45})
-    ])
+  const INSIGHT_DEMO = Object.freeze({
+    major:Object.freeze({
+      summary:Object.freeze({cohortSize:40, medianCredits:18, sectionCount:11, professorCount:8}),
+      courses:Object.freeze([
+        Object.freeze({course_key:"FIN-310", course_code:"FIN 310", course_name:"Corporate Finance", selection_count:31, share_percent:78}),
+        Object.freeze({course_key:"BUS-320", course_code:"BUS 320", course_name:"Business Analytics", selection_count:27, share_percent:68}),
+        Object.freeze({course_key:"MGT-305", course_code:"MGT 305", course_name:"Strategic Management", selection_count:22, share_percent:55}),
+        Object.freeze({course_key:"ACC-302", course_code:"ACC 302", course_name:"Financial Reporting", selection_count:18, share_percent:45}),
+        Object.freeze({course_key:"ECO-318", course_code:"ECO 318", course_name:"International Economics", selection_count:14, share_percent:35})
+      ]),
+      sections:Object.freeze([
+        Object.freeze({section:"FIN 310 · 01", professor:"Dr. Mira Chen", schedule:"T / Th · 10:30", selection_count:29, demand_percent:91}),
+        Object.freeze({section:"BUS 320 · 02", professor:"Dr. Theo Lau", schedule:"M / W · 14:30", selection_count:25, demand_percent:83}),
+        Object.freeze({section:"MGT 305 · 01", professor:"Dr. Hana Lee", schedule:"W · 09:30", selection_count:21, demand_percent:70}),
+        Object.freeze({section:"ACC 302 · 03", professor:"Dr. Noah Wong", schedule:"T / F · 12:30", selection_count:17, demand_percent:57})
+      ]),
+      professors:Object.freeze([
+        Object.freeze({name:"Dr. Mira Chen", course_codes:"FIN 310", section_count:2, selection_count:29, share_percent:73}),
+        Object.freeze({name:"Dr. Theo Lau", course_codes:"BUS 320 · DAT 330", section_count:2, selection_count:25, share_percent:63}),
+        Object.freeze({name:"Dr. Hana Lee", course_codes:"MGT 305", section_count:1, selection_count:21, share_percent:53}),
+        Object.freeze({name:"Dr. Noah Wong", course_codes:"ACC 302", section_count:2, selection_count:17, share_percent:43})
+      ]),
+      creditDistribution:Object.freeze([
+        Object.freeze({label:"12–14", value:10, share_percent:25}),
+        Object.freeze({label:"15–17", value:8, share_percent:20}),
+        Object.freeze({label:"18–20", value:17, share_percent:43}),
+        Object.freeze({label:"21+", value:5, share_percent:12})
+      ]),
+      timetablePatterns:Object.freeze({
+        time:Object.freeze([
+          Object.freeze({labelKey:"insightMorning", share_percent:38}),
+          Object.freeze({labelKey:"insightAfternoon", share_percent:48}),
+          Object.freeze({labelKey:"insightEvening", share_percent:14})
+        ]),
+        days:Object.freeze([
+          Object.freeze({labelKey:"insightThreeCampusDays", share_percent:28}),
+          Object.freeze({labelKey:"insightFourCampusDays", share_percent:49}),
+          Object.freeze({labelKey:"insightFiveCampusDays", share_percent:23})
+        ])
+      })
+    }),
+    university:Object.freeze({
+      summary:Object.freeze({cohortSize:260, medianCredits:17, sectionCount:64, professorCount:41}),
+      courses:Object.freeze([
+        Object.freeze({course_key:"DAT-101", course_code:"DAT 101", course_name:"Data Literacy", selection_count:184, share_percent:71}),
+        Object.freeze({course_key:"COM-120", course_code:"COM 120", course_name:"Academic Communication", selection_count:153, share_percent:59}),
+        Object.freeze({course_key:"SUS-110", course_code:"SUS 110", course_name:"Sustainability in Practice", selection_count:117, share_percent:45}),
+        Object.freeze({course_key:"PSY-101", course_code:"PSY 101", course_name:"Introduction to Psychology", selection_count:96, share_percent:37}),
+        Object.freeze({course_key:"ENT-210", course_code:"ENT 210", course_name:"Innovation and Enterprise", selection_count:78, share_percent:30})
+      ]),
+      sections:Object.freeze([
+        Object.freeze({section:"DAT 101 · 04", professor:"Dr. Iris Lam", schedule:"M / Th · 11:30", selection_count:58, demand_percent:94}),
+        Object.freeze({section:"COM 120 · 02", professor:"Dr. Elias Ho", schedule:"T / F · 09:30", selection_count:51, demand_percent:85}),
+        Object.freeze({section:"SUS 110 · 05", professor:"Dr. Amara Patel", schedule:"W · 13:30", selection_count:44, demand_percent:73}),
+        Object.freeze({section:"PSY 101 · 03", professor:"Dr. Leo Ng", schedule:"M / W · 15:30", selection_count:39, demand_percent:65})
+      ]),
+      professors:Object.freeze([
+        Object.freeze({name:"Dr. Iris Lam", course_codes:"DAT 101", section_count:3, selection_count:58, share_percent:22}),
+        Object.freeze({name:"Dr. Elias Ho", course_codes:"COM 120 · COM 220", section_count:3, selection_count:51, share_percent:20}),
+        Object.freeze({name:"Dr. Amara Patel", course_codes:"SUS 110", section_count:2, selection_count:44, share_percent:17}),
+        Object.freeze({name:"Dr. Leo Ng", course_codes:"PSY 101", section_count:2, selection_count:39, share_percent:15})
+      ]),
+      creditDistribution:Object.freeze([
+        Object.freeze({label:"12–14", value:73, share_percent:28}),
+        Object.freeze({label:"15–17", value:83, share_percent:32}),
+        Object.freeze({label:"18–20", value:78, share_percent:30}),
+        Object.freeze({label:"21+", value:26, share_percent:10})
+      ]),
+      timetablePatterns:Object.freeze({
+        time:Object.freeze([
+          Object.freeze({labelKey:"insightMorning", share_percent:34}),
+          Object.freeze({labelKey:"insightAfternoon", share_percent:52}),
+          Object.freeze({labelKey:"insightEvening", share_percent:14})
+        ]),
+        days:Object.freeze([
+          Object.freeze({labelKey:"insightThreeCampusDays", share_percent:21}),
+          Object.freeze({labelKey:"insightFourCampusDays", share_percent:46}),
+          Object.freeze({labelKey:"insightFiveCampusDays", share_percent:33})
+        ])
+      })
+    })
   });
 
   const node = (tag, className="", content="") => {
@@ -271,8 +351,12 @@
     hubState.insightRows = [];
     hubState.insightsLoaded = false;
     hubState.insightDemoMode = "";
+    hubState.communityExample = {liked:false, saved:false, selectedPoll:-1, comments:[], statusKey:""};
     hubState.feed = [];
     hubState.conversations = [];
+    hubState.messageDemoMode = false;
+    hubState.messageDemoDismissed = false;
+    hubState.messageDemoMessages = [];
     hubState.activeConversationId = null;
     hubState.activeConversationUserId = null;
     hubState.activeConversationName = "";
@@ -785,14 +869,13 @@
       container.append(empty);
       return;
     }
-    const photo = document.createElement("img");
-    photo.className = "hub-insight-example-photo";
-    photo.src = "concourse-demo-insights.jpg";
-    photo.width = 1536;
-    photo.height = 1024;
-    photo.loading = "lazy";
-    photo.decoding = "async";
-    photo.alt = t("insightExamplePhotoAlt");
+    const mark = node("div", "hub-insight-example-mark");
+    mark.setAttribute("aria-hidden", "true");
+    [74, 56, 38].forEach(value => {
+      const bar = node("span");
+      bar.style.setProperty("--insight-example-value", `${value}%`);
+      mark.append(bar);
+    });
     const copy = node("div", "hub-insight-example-copy");
     copy.append(
       node("span", "", t("insightExampleEyebrow")),
@@ -803,23 +886,20 @@
     button.type = "button";
     button.dataset.insightExampleAction = "preview";
     copy.append(button);
-    empty.append(photo, copy);
+    empty.append(mark, copy);
     container.append(empty);
   }
 
   function appendInsightExampleHead(container, mode){
     const head = node("div", "hub-insight-example-head");
-    const photo = document.createElement("img");
-    photo.src = "concourse-demo-insights.jpg";
-    photo.width = 1536;
-    photo.height = 1024;
-    photo.loading = "lazy";
-    photo.decoding = "async";
-    photo.alt = t("insightExamplePhotoAlt");
     const copy = node("div", "hub-insight-example-head-copy");
+    const title = node("b", "", t("insightExampleFictional"));
+    title.id = "insightDemoHeading";
+    title.setAttribute("role", "heading");
+    title.setAttribute("aria-level", "2");
     copy.append(
       node("span", "", t("insightExampleEyebrow")),
-      node("b", "", t("insightExampleLabel")),
+      title,
       node("p", "", t("insightExampleDescription"))
     );
     const tabs = node("div", "hub-insight-example-tabs");
@@ -835,18 +915,236 @@
       tabs.append(button);
     });
     copy.append(tabs);
-    head.append(photo, copy);
+    head.append(copy);
     container.append(head);
   }
 
+  function insightPercent(value){
+    return Math.max(0, Math.min(100, Number(value || 0)));
+  }
+
+  function insightProgress(label, value, className="hub-insight-demo-progress"){
+    const share = insightPercent(value);
+    const track = node("div", className);
+    const fill = node("span", `${className}-fill`);
+    fill.style.setProperty("--insight-progress", `${share}%`);
+    fill.style.width = `${share}%`;
+    track.setAttribute("role", "progressbar");
+    track.setAttribute("aria-label", `${label}: ${share}%`);
+    track.setAttribute("aria-valuemin", "0");
+    track.setAttribute("aria-valuemax", "100");
+    track.setAttribute("aria-valuenow", String(share));
+    track.append(fill);
+    return track;
+  }
+
+  function appendInsightDemoSummary(container, summary){
+    const list = node("div", "hub-insight-demo-summary");
+    list.setAttribute("role", "list");
+    [
+      [t("insightCohortSize"), summary.cohortSize],
+      [t("insightMedianCredits"), summary.medianCredits],
+      [t("insightSectionCount"), summary.sectionCount],
+      [t("insightProfessorCount"), summary.professorCount]
+    ].forEach(([label, value]) => {
+      const item = node("div", "hub-insight-demo-kpi");
+      item.setAttribute("role", "listitem");
+      item.append(node("b", "", value), node("span", "", label));
+      list.append(item);
+    });
+    container.append(list);
+  }
+
+  function appendInsightCourseDemand(container, courses){
+    const section = document.createElement("section");
+    section.className = "hub-insight-demo-section hub-insight-demo-courses";
+    section.setAttribute("aria-labelledby", "insightDemoCourseHeading");
+    const heading = node("h3", "", t("insightCourseDemand"));
+    heading.id = "insightDemoCourseHeading";
+    const list = node("div", "hub-insight-demo-bar-list");
+    list.setAttribute("role", "list");
+    courses.forEach(course => {
+      const share = insightPercent(course.share_percent);
+      const row = node("div", "hub-insight-demo-bar-row");
+      row.setAttribute("role", "listitem");
+      const label = node("div", "hub-insight-demo-bar-label");
+      label.append(
+        node("b", "", course.course_name),
+        node("span", "", `${course.course_code} · ${t("courseChosenBy", {count:course.selection_count})}`)
+      );
+      row.append(label, insightProgress(course.course_name, share), node("strong", "", `${share}%`));
+      list.append(row);
+    });
+    section.append(heading, list);
+    container.append(section);
+  }
+
+  function appendInsightSectionDemand(container, sections){
+    const section = document.createElement("section");
+    section.className = "hub-insight-demo-section hub-insight-demo-sections";
+    section.setAttribute("aria-labelledby", "insightDemoSectionHeading");
+    const heading = node("h3", "", t("insightSectionDemand"));
+    heading.id = "insightDemoSectionHeading";
+    const tableWrap = node("div", "hub-insight-demo-table-wrap");
+    const table = document.createElement("table");
+    table.className = "hub-insight-demo-table";
+    table.setAttribute("aria-label", t("insightSectionDemand"));
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    [t("insightSection"), t("insightProfessor"), t("insightSchedule"), t("insightDemand")].forEach(label => {
+      const cell = document.createElement("th");
+      cell.scope = "col";
+      cell.textContent = label;
+      headRow.append(cell);
+    });
+    thead.append(headRow);
+    const tbody = document.createElement("tbody");
+    sections.forEach(item => {
+      const row = document.createElement("tr");
+      const sectionCell = document.createElement("th");
+      sectionCell.scope = "row";
+      sectionCell.textContent = item.section;
+      const professorCell = node("td", "", item.professor);
+      const scheduleCell = node("td", "", item.schedule);
+      const demandCell = node("td", "hub-insight-demo-demand");
+      demandCell.append(
+        insightProgress(`${item.section} ${t("insightDemand")}`, item.demand_percent, "hub-insight-demo-demand-track"),
+        node("span", "", `${insightPercent(item.demand_percent)}%`)
+      );
+      row.append(sectionCell, professorCell, scheduleCell, demandCell);
+      tbody.append(row);
+    });
+    table.append(thead, tbody);
+    tableWrap.append(table);
+    section.append(heading, tableWrap);
+    container.append(section);
+  }
+
+  function appendInsightProfessorPatterns(container, professors){
+    const section = document.createElement("section");
+    section.className = "hub-insight-demo-section hub-insight-demo-professors";
+    section.setAttribute("aria-labelledby", "insightDemoProfessorHeading");
+    const heading = node("h3", "", t("insightProfessorPatterns"));
+    heading.id = "insightDemoProfessorHeading";
+    const list = node("div", "hub-insight-demo-professor-list");
+    list.setAttribute("role", "list");
+    professors.forEach(item => {
+      const entry = node("article", "hub-insight-demo-professor");
+      entry.setAttribute("role", "listitem");
+      const copy = node("div", "hub-insight-demo-professor-copy");
+      copy.append(
+        node("b", "", item.name),
+        node("span", "", `${item.course_codes} · ${item.section_count} ${t("insightSectionsShort")}`)
+      );
+      entry.append(
+        copy,
+        insightProgress(item.name, item.share_percent, "hub-insight-demo-professor-track"),
+        node("strong", "", t("insightStudentsCount", {count:item.selection_count}))
+      );
+      list.append(entry);
+    });
+    section.append(heading, list);
+    container.append(section);
+  }
+
+  function appendInsightDistribution(container, {headingId, headingKey, items, className}){
+    const section = document.createElement("section");
+    section.className = `hub-insight-demo-section ${className}`;
+    section.setAttribute("aria-labelledby", headingId);
+    const heading = node("h3", "", t(headingKey));
+    heading.id = headingId;
+    const list = node("div", "hub-insight-demo-distribution");
+    list.setAttribute("role", "list");
+    items.forEach(item => {
+      const label = item.labelKey ? t(item.labelKey) : item.label;
+      const entry = node("div", "hub-insight-demo-distribution-item");
+      entry.setAttribute("role", "listitem");
+      const column = node("div", "hub-insight-demo-distribution-column");
+      const fill = node("span", "hub-insight-demo-distribution-fill");
+      fill.style.setProperty("--insight-distribution", `${insightPercent(item.share_percent)}%`);
+      fill.style.height = `${insightPercent(item.share_percent)}%`;
+      column.setAttribute("role", "img");
+      column.setAttribute("aria-label", `${label}: ${insightPercent(item.share_percent)}%`);
+      column.append(fill);
+      entry.append(
+        node("b", "", `${insightPercent(item.share_percent)}%`),
+        column,
+        node("span", "", label)
+      );
+      list.append(entry);
+    });
+    section.append(heading, list);
+    container.append(section);
+  }
+
+  function appendInsightTimetablePatterns(container, patterns){
+    const section = document.createElement("section");
+    section.className = "hub-insight-demo-section hub-insight-demo-timetable";
+    section.setAttribute("aria-labelledby", "insightDemoTimetableHeading");
+    const heading = node("h3", "", t("insightTimetablePatterns"));
+    heading.id = "insightDemoTimetableHeading";
+    const groups = node("div", "hub-insight-demo-pattern-groups");
+    [
+      [t("insightClassTime"), patterns.time],
+      [t("insightCampusDays"), patterns.days]
+    ].forEach(([label, items]) => {
+      const group = node("div", "hub-insight-demo-pattern-group");
+      group.append(node("h4", "", label));
+      items.forEach(item => {
+        const itemLabel = t(item.labelKey);
+        const row = node("div", "hub-insight-demo-pattern-row");
+        row.append(
+          node("span", "", itemLabel),
+          insightProgress(itemLabel, item.share_percent, "hub-insight-demo-pattern-track"),
+          node("strong", "", `${insightPercent(item.share_percent)}%`)
+        );
+        group.append(row);
+      });
+      groups.append(group);
+    });
+    section.append(heading, groups);
+    container.append(section);
+  }
+
+  function renderInsightDemo(model, mode){
+    const container = $("courseInsightChart");
+    container.replaceChildren();
+    appendInsightExampleHead(container, mode);
+    const dashboard = node("section", "hub-insight-demo-dashboard");
+    dashboard.dataset.insightExample = mode;
+    dashboard.setAttribute("aria-labelledby", "insightDemoHeading");
+    appendInsightDemoSummary(dashboard, model.summary);
+    const primary = node("div", "hub-insight-demo-primary");
+    appendInsightCourseDemand(primary, model.courses);
+    appendInsightSectionDemand(primary, model.sections);
+    const secondary = node("div", "hub-insight-demo-secondary");
+    appendInsightProfessorPatterns(secondary, model.professors);
+    appendInsightDistribution(secondary, {
+      headingId:"insightDemoCreditHeading",
+      headingKey:"insightCreditDistribution",
+      items:model.creditDistribution,
+      className:"hub-insight-demo-credits"
+    });
+    appendInsightTimetablePatterns(secondary, model.timetablePatterns);
+    dashboard.append(primary, secondary);
+    container.append(dashboard);
+    setStatus("courseInsightStatus", t("insightExampleStatus"));
+  }
+
   function renderInsights(rows, {exampleMode=""}={}){
+    const persistentPreview = $("previewCourseInsights");
+    if(persistentPreview) persistentPreview.hidden = Boolean(exampleMode) || !Array.isArray(rows) || !rows.length;
+    if(exampleMode){
+      const model = INSIGHT_DEMO[exampleMode];
+      if(model) renderInsightDemo(model, exampleMode);
+      return;
+    }
     const container = $("courseInsightChart");
     container.replaceChildren();
     if(!Array.isArray(rows) || !rows.length){
       insightEmpty(t("courseInsightNoData"), t("courseInsightPrivacy", {minimum:"5"}), {offerExample:true});
       return;
     }
-    if(exampleMode) appendInsightExampleHead(container, exampleMode);
     rows.forEach(row => {
       const share = Math.max(0, Math.min(100, Number(row.share_percent || 0)));
       const chartRow = node("div", "hub-chart-row");
@@ -867,14 +1165,14 @@
     });
     setStatus(
       "courseInsightStatus",
-      exampleMode ? t("insightExampleStatus") : t("courseChoiceParticipants", {count:rows[0].cohort_size || 0})
+      t("courseChoiceParticipants", {count:rows[0].cohort_size || 0})
     );
   }
 
   function renderInsightExample(mode="major"){
-    const nextMode = INSIGHT_DEMO_ROWS[mode] ? mode : "major";
+    const nextMode = INSIGHT_DEMO[mode] ? mode : "major";
     hubState.insightDemoMode = nextMode;
-    renderInsights(INSIGHT_DEMO_ROWS[nextMode], {exampleMode:nextMode});
+    renderInsights([], {exampleMode:nextMode});
   }
 
   async function loadCourseInsights(){
@@ -883,6 +1181,7 @@
     const context = requestContext();
     setStatus("courseInsightStatus", t("courseInsightLoading"));
     $("loadCourseInsights").disabled = true;
+    $("previewCourseInsights").hidden = true;
     insightEmpty(t("loading"), t("courseInsightLoading"));
     const yearValue = $("courseInsightYear").value;
     const scope = $("courseInsightScope").value;
@@ -2748,13 +3047,138 @@
     return (engagement + 1) / (1 + ageHours / 48);
   }
 
+  function renderCommunityExample(feed){
+    const state = hubState.communityExample;
+    const example = node("section", "hub-community-example");
+    example.setAttribute("aria-label", t("communityExampleLabel"));
+
+    const heading = node("header", "hub-community-example-heading");
+    const label = node("span", "", t("communityExampleLabel"));
+    const local = node("small", "", t("communityExampleLocal"));
+    heading.append(label, local);
+
+    const post = node("article", "hub-post-card hub-post-card--text hub-post-card--example");
+    const author = node("div", "hub-post-author");
+    const avatar = node("div", "hub-avatar hub-community-example-avatar", "CC");
+    avatar.setAttribute("aria-hidden", "true");
+    const authorCopy = node("div");
+    authorCopy.append(
+      node("b", "", t("communityExampleTitle")),
+      node("span", "", t("insightExampleFictional"))
+    );
+    author.append(avatar, authorCopy);
+    post.append(author, node("p", "hub-post-body", t("communityExampleBody")));
+
+    const poll = node("section", "hub-post-poll hub-community-example-poll");
+    poll.append(node("h3", "", t("communityExamplePoll")));
+    const pollOptions = [
+      [t("communityExampleOptionOne"), 12],
+      [t("communityExampleOptionTwo"), 9],
+      [t("communityExampleOptionThree"), 7]
+    ];
+    const totalVotes = pollOptions.reduce((sum, [, votes], index) => sum + votes + (state.selectedPoll === index ? 1 : 0), 0);
+    pollOptions.forEach(([option, baseVotes], index) => {
+      const votes = baseVotes + (state.selectedPoll === index ? 1 : 0);
+      const share = Math.round((votes / totalVotes) * 100);
+      const button = node("button", `hub-community-example-option${state.selectedPoll === index ? " selected" : ""}`);
+      button.type = "button";
+      button.setAttribute("aria-pressed", state.selectedPoll === index ? "true" : "false");
+      button.setAttribute("aria-label", `${option}: ${share}%`);
+      const copy = node("span");
+      copy.append(node("b", "", option), node("small", "", `${share}%`));
+      const track = node("i");
+      track.style.setProperty("--community-example-share", `${share}%`);
+      button.append(copy, track);
+      button.onclick = () => {
+        state.selectedPoll = index;
+        state.statusKey = "communityExampleVoteRecorded";
+        renderCommunityFeed(hubState.feed);
+      };
+      poll.append(button);
+    });
+    post.append(poll);
+
+    const actions = node("div", "hub-post-actions hub-community-example-actions");
+    const like = node("button", `hub-post-action${state.liked ? " liked" : ""}`, `${state.liked ? t("unlike") : t("like")} · ${18 + Number(state.liked)}`);
+    like.type = "button";
+    like.setAttribute("aria-pressed", state.liked ? "true" : "false");
+    like.onclick = () => {
+      state.liked = !state.liked;
+      state.statusKey = "";
+      renderCommunityFeed(hubState.feed);
+    };
+    const comments = node("button", "hub-post-action", `${t("comment")} · ${4 + state.comments.length}`);
+    comments.type = "button";
+    comments.onclick = () => post.querySelector(".hub-community-example-comment-input")?.focus();
+    const save = node("button", `hub-post-action${state.saved ? " bookmarked" : ""}`, state.saved ? t("postSaved") : t("savePost"));
+    save.type = "button";
+    save.setAttribute("aria-pressed", state.saved ? "true" : "false");
+    save.onclick = () => {
+      state.saved = !state.saved;
+      state.statusKey = "";
+      renderCommunityFeed(hubState.feed);
+    };
+    const share = node("button", "hub-post-action", t("share"));
+    share.type = "button";
+    share.onclick = () => {
+      state.statusKey = "communityExampleLocal";
+      renderCommunityFeed(hubState.feed);
+    };
+    actions.append(like, comments, save, share);
+    post.append(actions);
+
+    const commentArea = node("div", "hub-community-example-comments");
+    state.comments.forEach(comment => {
+      const row = node("p");
+      row.append(node("b", "", t("anonymousStudent")), document.createTextNode(` ${comment}`));
+      commentArea.append(row);
+    });
+    const form = node("div", "hub-community-example-comment-form");
+    const input = node("input", "hub-community-example-comment-input");
+    input.maxLength = 240;
+    input.placeholder = t("communityExampleCommentPlaceholder");
+    input.setAttribute("aria-label", t("communityExampleCommentPlaceholder"));
+    const submit = node("button", "", t("postComment"));
+    submit.type = "button";
+    const addComment = () => {
+      const value = input.value.trim();
+      if(!value) return;
+      state.comments.push(value);
+      state.statusKey = "communityExampleCommentAdded";
+      renderCommunityFeed(hubState.feed);
+    };
+    submit.onclick = addComment;
+    input.addEventListener("keydown", event => {
+      if(event.key === "Enter" && !event.isComposing){
+        event.preventDefault();
+        addComment();
+      }
+    });
+    form.append(input, submit);
+    commentArea.append(form);
+    if(state.statusKey) commentArea.append(node("small", "hub-community-example-status", t(state.statusKey)));
+    post.append(commentArea);
+    example.append(heading, post);
+    feed.append(example);
+  }
+
   function renderCommunityFeed(posts){
     const feed = replaceCommunityFeed();
     if(!feed) return;
     updateCommunityLoadMore();
-    if(!posts.length){ feed.append(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityEmpty" : "communityEmpty"))); return; }
+    const showExample = (
+      hubState.feedScope === "school"
+      && hubState.feedTopic === "all"
+      && !String(hubState.feedQuery || "").trim()
+    );
+    if(!posts.length){
+      feed.append(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityEmpty" : "communityEmpty")));
+      if(showExample) renderCommunityExample(feed);
+      return;
+    }
     const visiblePosts = filteredCommunityPosts(posts);
     if(!visiblePosts.length){ feed.append(node("div", "hub-feed-empty", t("communityNoMatches"))); return; }
+    if(showExample) renderCommunityExample(feed);
     const featuredPost = visiblePosts
       .filter(post => communityMediaItems(post).some(item => item.media_type !== "video"))
       .sort((left, right) => communityPopularityScore(right) - communityPopularityScore(left))[0] || null;
@@ -3095,14 +3519,81 @@
       .join(" · ");
   }
 
+  function removeMessageExampleClose(){
+    $("messageExampleClose")?.remove();
+  }
+
+  function messageExampleSeed(){
+    if(hubState.messageDemoMessages.length) return;
+    hubState.messageDemoMessages = [
+      {mine:false, bodyKey:"messageExampleOne", time:"10:18"},
+      {mine:true, bodyKey:"messageExampleTwo", time:"10:21"},
+      {mine:false, bodyKey:"messageExampleThree", time:"10:24"}
+    ];
+  }
+
+  function renderMessageExample(){
+    hubState.messageDemoMode = true;
+    hubState.messageDemoDismissed = false;
+    messageExampleSeed();
+    document.querySelectorAll("#conversationList .hub-message-demo-launcher").forEach(button => button.classList.add("active"));
+    $("chatHeading").textContent = t("messageExampleName");
+    $("chatSubheading").textContent = t("messageExampleLocal");
+    const list = $("chatMessages");
+    list.replaceChildren();
+    const label = node("span", "hub-message-example-label", t("messageExampleLabel"));
+    list.append(label);
+    hubState.messageDemoMessages.forEach(message => {
+      const bubble = node("div", `hub-message${message.mine ? " mine" : ""}`, message.bodyKey ? t(message.bodyKey) : message.body);
+      bubble.append(node("time", "", message.time));
+      list.append(bubble);
+    });
+    $("chatMessageInput").placeholder = t("messageExampleReplyPlaceholder");
+    $("chatMessageInput").disabled = false;
+    $("sendChatMessage").textContent = t("messageExampleSend");
+    $("sendChatMessage").disabled = false;
+    $("reportConversation").disabled = true;
+    $("blockConversationUser").disabled = true;
+    let close = $("messageExampleClose");
+    if(!close){
+      close = node("button", "btn-ghost", t("messageExampleClose"));
+      close.type = "button";
+      close.id = "messageExampleClose";
+      close.onclick = () => {
+        hubState.messageDemoMode = false;
+        hubState.messageDemoDismissed = true;
+        clearActiveConversation();
+        renderConversations([]);
+      };
+      $("refreshMessages").before(close);
+    } else close.textContent = t("messageExampleClose");
+    requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+  }
+
+  function appendMessageExampleLauncher(list){
+    const launcher = node("button", `hub-conversation-button hub-message-demo-launcher${hubState.messageDemoMode ? " active" : ""}`);
+    launcher.type = "button";
+    const mark = node("span", "hub-message-demo-avatar", "CC");
+    mark.setAttribute("aria-hidden", "true");
+    const copy = node("div");
+    copy.append(node("b", "", t("messageExampleOpen")), node("span", "", t("messageExampleLocal")));
+    launcher.append(mark, copy);
+    launcher.onclick = renderMessageExample;
+    list.append(launcher);
+  }
+
   function renderConversations(conversations){
     const list = $("conversationList");
     list.replaceChildren();
     if(!conversations.length){
       list.append(node("div", "hub-feed-empty", t("noConversations")));
+      appendMessageExampleLauncher(list);
+      if(!hubState.messageDemoDismissed) renderMessageExample();
       renderConversationPreview();
       return;
     }
+    appendMessageExampleLauncher(list);
+    if(!hubState.messageDemoMode) removeMessageExampleClose();
     conversations.forEach(conversation => {
       const button = node("button", "hub-conversation-button");
       button.type = "button";
@@ -3153,6 +3644,8 @@
   }
 
   function clearActiveConversation(message=t("selectConversation")){
+    hubState.messageDemoMode = false;
+    removeMessageExampleClose();
     hubState.conversationRequest += 1;
     hubState.activeConversationId = null;
     hubState.activeConversationUserId = null;
@@ -3167,6 +3660,7 @@
     $("chatMessages").replaceChildren(node("div", "hub-message-empty", message));
     $("chatMessageInput").placeholder = t("selectConversation");
     $("chatMessageInput").disabled = true;
+    $("sendChatMessage").textContent = t("send");
     $("sendChatMessage").disabled = true;
     $("reportConversation").disabled = true;
     $("blockConversationUser").disabled = true;
@@ -3196,6 +3690,10 @@
     }
     hubState.conversations = Array.isArray(data) ? data : [];
     renderConversations(hubState.conversations);
+    if(hubState.messageDemoMode){
+      renderMessageExample();
+      return hubState.conversations;
+    }
     let active = hubState.activeConversationId
       ? hubState.conversations.find(item => item.conversation_id === hubState.activeConversationId)
       : null;
@@ -3205,8 +3703,11 @@
       const selectionWasAlreadyRendered = hubState.activeConversationId === active.conversation_id;
       await openConversation(active, {skipConversationRender:selectionWasAlreadyRendered, showLoading:!force});
     } else if(hubState.activeView === "messages" && !hubState.conversations.length){
-      clearActiveConversation();
-      $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("noConversations")));
+      if(hubState.messageDemoMode) renderMessageExample();
+      else {
+        clearActiveConversation();
+        $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("noConversations")));
+      }
     }
     return hubState.conversations;
   }
@@ -3224,6 +3725,7 @@
   }
 
   function renderActiveConversationHeader(){
+    if(hubState.messageDemoMode) return;
     if(hubState.activeConversationId){
       $("chatHeading").textContent = hubState.activeConversationName;
       $("chatSubheading").textContent = [
@@ -3240,6 +3742,10 @@
   }
 
   async function openConversation(conversation, {skipConversationRender=false, showLoading=true}={}){
+    hubState.messageDemoMode = false;
+    hubState.messageDemoDismissed = false;
+    removeMessageExampleClose();
+    $("sendChatMessage").textContent = t("send");
     const context = requestContext();
     const request = ++hubState.conversationRequest;
     hubState.activeConversationId = conversation.conversation_id;
@@ -3295,6 +3801,10 @@
   async function startConversation(){
     const username = $("chatUsername").value.trim().replace(/^@/, "");
     if(!username) return;
+    hubState.messageDemoMode = false;
+    hubState.messageDemoDismissed = false;
+    removeMessageExampleClose();
+    $("sendChatMessage").textContent = t("send");
     if(!/^[A-Za-z0-9_]{3,24}$/.test(username)){
       setStatus("chatStatus", t("chatUsernameInvalid"), "error");
       return;
@@ -3340,6 +3850,16 @@
 
   async function sendMessage(){
     const button = $("sendChatMessage");
+    if(hubState.messageDemoMode){
+      const body = $("chatMessageInput").value.trim();
+      if(!body){ setStatus("chatStatus", t("messageRequired"), "error"); return; }
+      hubState.messageDemoMessages.push({mine:true, body, time:new Date().toLocaleTimeString(locale(), {hour:"2-digit", minute:"2-digit"})});
+      $("chatMessageInput").value = "";
+      setStatus("chatStatus", t("messageExampleReplyAdded"), "success");
+      renderMessageExample();
+      $("chatMessageInput").focus();
+      return;
+    }
     if(button.disabled || !hubState.activeConversationCanSend || hubState.sendingMessage) return;
     const body = $("chatMessageInput").value.trim();
     if(!body){ setStatus("chatStatus", t("messageRequired"), "error"); return; }
@@ -3440,9 +3960,12 @@
       if(hubState.activeView === "community") renderConversationPreview();
       if(hubState.activeView === "messages"){
         renderConversations(hubState.conversations);
-        renderActiveConversationHeader();
-        if(hubState.activeConversationId) renderMessages(hubState.messages);
-        else $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("selectConversation")));
+        if(hubState.messageDemoMode) renderMessageExample();
+        else {
+          renderActiveConversationHeader();
+          if(hubState.activeConversationId) renderMessages(hubState.messages);
+          else $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("selectConversation")));
+        }
       }
       if(!$('schoolmateProfileModal').hidden) renderSchoolmateProfile();
     }
@@ -3451,8 +3974,19 @@
   $("hubOpenBtn")?.addEventListener("click", () => showHub("community"));
   $("enterMemberHub")?.addEventListener("click", () => showHub("community"));
   $("overviewOpenTimetable")?.addEventListener("click", showTimetable);
-  document.querySelectorAll("[data-hub-target]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.hubTarget)));
+  document.querySelectorAll("[data-hub-target]").forEach(button => button.addEventListener("click", async () => {
+    await switchView(button.dataset.hubTarget);
+    const hub = $("memberHub");
+    if(!hub || hub.hidden) return;
+    const offset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--app-bar-offset")) || 76;
+    const top = Math.max(0, hub.getBoundingClientRect().top + window.scrollY - offset);
+    window.scrollTo({
+      top,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+    });
+  }));
   $("loadCourseInsights")?.addEventListener("click", loadCourseInsights);
+  $("previewCourseInsights")?.addEventListener("click", () => renderInsightExample("major"));
   $("courseInsightScope")?.addEventListener("change", syncInsightYearControl);
   $("courseInsightChart")?.addEventListener("click", event => {
     const button = event.target.closest?.("[data-insight-example-action]");
