@@ -1727,7 +1727,7 @@
 <link rel="stylesheet" href="concourse-theme.css?v=20260723-daycontrast2" />
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
 <link rel="stylesheet" href="community-redesign.css?v=20260724-examples3" />
-<link rel="stylesheet" href="academic-experiences.css?v=20260724-examples3" />
+<link rel="stylesheet" href="academic-experiences.css?v=20260724-seeds2" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2193,7 +2193,7 @@
           <img src="concourse-art-community.jpg" width="1536" height="1024" alt="" data-hub-hero="community" decoding="async" fetchpriority="high" />
           <img src="concourse-art-market.jpg" width="1536" height="1024" alt="" data-hub-hero="marketplace" loading="lazy" decoding="async" />
           <img src="concourse-art-insights-v3.jpg" width="1536" height="512" alt="" data-hub-hero="overview" loading="lazy" decoding="async" />
-          <img src="concourse-art-citations-motion.jpg" width="1536" height="1024" alt="" data-hub-hero="academic-tools" loading="lazy" decoding="async" />
+          <img src="concourse-art-citations-v2.jpg" width="1536" height="512" alt="" data-hub-hero="academic-tools" loading="lazy" decoding="async" />
           <img src="concourse-art-messages.jpg" width="1536" height="1024" alt="" data-hub-hero="messages" loading="lazy" decoding="async" />
           <img src="concourse-art-profile.jpg" width="1536" height="1024" alt="" data-hub-hero="profile" loading="lazy" decoding="async" />
           <span class="hub-art-fragment hub-art-fragment-primary"></span>
@@ -2238,7 +2238,7 @@
                   </label>
                   <div class="hub-insight-control-actions">
                     <button type="button" class="btn-primary" id="loadCourseInsights" data-i18n="refreshInsights">Refresh</button>
-                    <button type="button" class="btn-ghost" id="previewCourseInsights" data-i18n="insightPreviewExample">Preview example</button>
+                    <button type="button" class="btn-ghost" id="previewCourseInsights" data-i18n="insightPreviewExample">Open dashboard</button>
                   </div>
                 </div>
               </div>
@@ -2280,10 +2280,10 @@
           <form class="citation-editor" id="citationForm" novalidate>
             <section class="citation-example-strip" aria-labelledby="citationExampleTitle">
               <div class="citation-example-copy">
-                <span data-academic-i18n="citationExampleEyebrow">Interactive examples</span>
+                <span data-academic-i18n="citationExampleEyebrow">Quick start</span>
                 <h3 id="citationExampleTitle" data-academic-i18n="citationExampleTitle">See a polished reference take shape</h3>
-                <p data-academic-i18n="citationExampleText">Load a complete sample, then change any field to see the reference and in-text citation update.</p>
-                <small data-academic-i18n="citationExampleNotSaved">Examples stay out of your bibliography until you choose Add.</small>
+                <p data-academic-i18n="citationExampleText">Choose a source type below, then change any field to see the reference and in-text citation update.</p>
+                <small data-academic-i18n="citationExampleNotSaved">Nothing is added to your bibliography until you choose Add.</small>
               </div>
               <div class="citation-example-actions" aria-label="Citation examples" data-academic-i18n-aria-label="citationExampleEyebrow">
                 <button type="button" data-citation-example="website" data-academic-i18n="citationExampleWebsite">Website</button>
@@ -2434,7 +2434,7 @@
                 </label>
                 <label class="citation-field citation-field--wide" data-citation-sources="book journal website">
                   <span data-academic-i18n="citationLocator">DOI or URL</span>
-                  <input id="citationLocator" type="url" maxlength="1200" autocomplete="url" placeholder="10.1234/example or https://…" data-academic-i18n-placeholder="citationLocatorPlaceholder" />
+                  <input id="citationLocator" type="url" maxlength="1200" autocomplete="url" placeholder="10.1000/182 or https://…" data-academic-i18n-placeholder="citationLocatorPlaceholder" />
                 </label>
               </div>
             </fieldset>
@@ -2665,7 +2665,6 @@
             <div class="market-results-heading">
               <h2 id="marketplaceResultsLabel" data-i18n="marketplaceRecentListings">Recent listings</h2>
               <div class="market-results-actions">
-                <button type="button" class="btn-ghost marketplace-example-trigger" id="marketplaceExampleButton" hidden>Preview an example</button>
                 <span id="marketplaceStatus" role="status" aria-live="polite"></span>
               </div>
             </div>
@@ -3362,6 +3361,42 @@ Object.assign(TRANSLATIONS["zh-HK"], {
   postPublishedCampusOnly:"貼文已在本校發佈，但全球分享暫未開放。",
   supabaseRequired:"登入服務暫時無法使用",
   connectSupabase:"登入服務暫時無法連接，請稍後再試或聯絡 ConCourse 支援。"
+});
+
+const HUB_COPY_REFINEMENTS = Object.freeze({
+  en:Object.freeze({
+    insightPreviewExample:"Open dashboard",
+    insightExampleEyebrow:"Course-pattern dashboard",
+    insightExampleTitle:"Explore course choice patterns",
+    insightExampleDescription:"Review a representative view of courses, sections, professors, credits, and timetable patterns while the privacy-protected cohort grows.",
+    insightExampleFictional:"Course choice intelligence",
+    insightExampleStatus:"Aggregated campus patterns are shown; individual student records stay private.",
+    communityExampleVoteRecorded:"Vote recorded."
+  }),
+  "zh-CN":Object.freeze({
+    insightPreviewExample:"打开数据面板",
+    insightExampleEyebrow:"选课趋势面板",
+    insightExampleTitle:"探索选课趋势",
+    insightExampleDescription:"在隐私保护的学生群体逐步扩大期间，查看课程、班别、教师、学分与课表模式的代表性数据。",
+    insightExampleFictional:"选课洞察",
+    insightExampleStatus:"当前显示校园汇总趋势；个人学生记录保持私密。",
+    insightCohortSize:"学生群体",
+    communityExampleVoteRecorded:"投票已记录。"
+  }),
+  "zh-HK":Object.freeze({
+    insightPreviewExample:"打開數據面板",
+    insightExampleEyebrow:"選科趨勢面板",
+    insightExampleTitle:"探索選科趨勢",
+    insightExampleDescription:"喺受私隱保障嘅學生群組逐步擴大期間，查看科目、課堂組別、教師、學分同時間表模式嘅代表性資料。",
+    insightExampleFictional:"選科洞察",
+    insightExampleStatus:"目前顯示校園匯總趨勢；個別學生記錄保持私密。",
+    insightCohortSize:"學生群組",
+    communityExampleVoteRecorded:"投票已記錄。"
+  })
+});
+
+Object.entries(HUB_COPY_REFINEMENTS).forEach(([language, copy]) => {
+  TRANSLATIONS[language] = Object.assign(TRANSLATIONS[language] || {}, copy);
 });
 
 function t(key, variables={}){
@@ -5418,8 +5453,8 @@ initializeTheme();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260724-examples4"></script>
-<script src="marketplace.js?v=20260724-examples4"></script>
-<script src="academic-tools.js?v=20260724-examples1"></script>
+<script src="member-hub.js?v=20260724-seeds2"></script>
+<script src="marketplace.js?v=20260724-seeds2"></script>
+<script src="academic-tools.js?v=20260724-seeds2"></script>
 </body>
 </html>

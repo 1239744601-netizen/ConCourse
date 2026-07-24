@@ -293,9 +293,8 @@
     items:[],
     localItems:[],
     loading:false,
-    exampleVisible:false,
-    exampleDetailsVisible:false,
-    exampleSaved:false,
+    seedDetails:new Set(),
+    seedSaved:new Set(),
     feedRequest:0,
     detailRequest:0,
     orderRequest:0,
@@ -318,6 +317,108 @@
     videoUrls:new Map(),
     searchTimer:null
   };
+
+  const MARKETPLACE_SEED_LISTINGS = Object.freeze([
+    Object.freeze({
+      key:"economics-notes",
+      category:"notes",
+      image:"concourse-campus-market.jpg",
+      width:1536,
+      height:1024,
+      title:Object.freeze({
+        en:"ECON 2005 revision notes bundle",
+        "zh-CN":"ECON 2005 复习笔记套装",
+        "zh-HK":"ECON 2005 溫習筆記套裝"
+      }),
+      price:"HK$48",
+      seller:Object.freeze({
+        en:"Avery Lam · Year 2 Economics",
+        "zh-CN":"Avery Lam · 经济学二年级",
+        "zh-HK":"Avery Lam · 經濟學二年級"
+      }),
+      condition:Object.freeze({
+        en:"Digital · 38 pages",
+        "zh-CN":"电子版 · 38 页",
+        "zh-HK":"電子版 · 38 頁"
+      }),
+      description:Object.freeze({
+        en:"My own completed-course summaries, practice questions, and topic checklists. Delivered as a searchable PDF; no current assessment answers.",
+        "zh-CN":"本人整理的已修课程总结、练习题和重点清单。提供可搜索 PDF，不含当前考核答案。",
+        "zh-HK":"本人整理嘅已修課程總結、練習題同重點清單。提供可搜尋 PDF，不包括現行考核答案。"
+      }),
+      alt:Object.freeze({
+        en:"Study materials, books, a calculator, headphones, and a water bottle arranged on a desk.",
+        "zh-CN":"书桌上摆放着学习资料、书籍、计算器、耳机和水瓶。",
+        "zh-HK":"書枱上擺放住溫習資料、書籍、計算機、耳機同水樽。"
+      })
+    }),
+    Object.freeze({
+      key:"calculator-study-bundle",
+      category:"electronics",
+      image:"concourse-market-study-bundle.jpg",
+      width:1200,
+      height:900,
+      title:Object.freeze({
+        en:"Scientific calculator + statistics notes",
+        "zh-CN":"科学计算器与统计学笔记",
+        "zh-HK":"科學計算機連統計學筆記"
+      }),
+      price:"HK$120",
+      seller:Object.freeze({
+        en:"Jason Wu · Data Analytics",
+        "zh-CN":"Jason Wu · 数据分析",
+        "zh-HK":"Jason Wu · 數據分析"
+      }),
+      condition:Object.freeze({
+        en:"Good condition · Campus meetup",
+        "zh-CN":"状态良好 · 校园面交",
+        "zh-HK":"狀態良好 · 校園面交"
+      }),
+      description:Object.freeze({
+        en:"Reliable calculator with a clean screen, plus my original statistics review notebook, flash cards, and highlighters.",
+        "zh-CN":"计算器屏幕完好，附本人整理的统计学复习笔记、记忆卡和荧光笔。",
+        "zh-HK":"計算機螢幕完好，連本人整理嘅統計學溫習筆記、記憶卡同螢光筆。"
+      }),
+      alt:Object.freeze({
+        en:"A scientific calculator, bound revision notes, flash cards, highlighters, and a navy pencil case.",
+        "zh-CN":"科学计算器、装订复习笔记、记忆卡、荧光笔和海军蓝笔袋。",
+        "zh-HK":"科學計算機、釘裝溫習筆記、記憶卡、螢光筆同海軍藍筆袋。"
+      })
+    }),
+    Object.freeze({
+      key:"dorm-desk-set",
+      category:"life_essentials",
+      image:"concourse-market-dorm-set.jpg",
+      width:1200,
+      height:900,
+      title:Object.freeze({
+        en:"Dorm desk starter set",
+        "zh-CN":"宿舍书桌入门套装",
+        "zh-HK":"宿舍書枱入門套裝"
+      }),
+      price:"HK$180",
+      seller:Object.freeze({
+        en:"Nadia Karim · Exchange student",
+        "zh-CN":"Nadia Karim · 交换生",
+        "zh-HK":"Nadia Karim · 交換生"
+      }),
+      condition:Object.freeze({
+        en:"Like new · Kowloon Tong meetup",
+        "zh-CN":"近全新 · 九龙塘面交",
+        "zh-HK":"近全新 · 九龍塘面交"
+      }),
+      description:Object.freeze({
+        en:"Compact adjustable lamp, navy desk organiser, bedside clock, mug, and two trays. Selling together before moving out.",
+        "zh-CN":"小型可调节台灯、海军蓝桌面收纳、床头钟、杯子和两个托盘，搬离宿舍前整套出售。",
+        "zh-HK":"小型可調校枱燈、海軍藍桌面收納、床頭鐘、杯同兩個托盤，搬離宿舍前整套出售。"
+      }),
+      alt:Object.freeze({
+        en:"A compact desk lamp, navy organiser, clock, mug, and storage trays on a dorm desk.",
+        "zh-CN":"宿舍书桌上的小型台灯、海军蓝收纳、时钟、杯子和储物托盘。",
+        "zh-HK":"宿舍書枱上嘅小型枱燈、海軍藍收納、時鐘、杯同儲物托盤。"
+      })
+    })
+  ]);
 
   const mediaObserver = typeof IntersectionObserver === "function"
     ? new IntersectionObserver(entries => {
@@ -532,9 +633,6 @@
     if(!["campus", "global"].includes(scope) || scope === state.scope) return;
     closeDetail({restoreFocus:false, clearHash:true});
     state.scope = scope;
-    state.exampleVisible = false;
-    state.exampleDetailsVisible = false;
-    state.exampleSaved = false;
     if(scope === "global" && ["mine", "orders"].includes(state.mode)) state.mode = "discover";
     state.items = [];
     state.localItems = [];
@@ -881,7 +979,12 @@
     return card;
   }
 
-  function marketplaceExampleAvailable(){
+  function marketplaceSeedText(value){
+    if(typeof value === "string") return value;
+    return value?.[currentLanguage] || value?.en || "";
+  }
+
+  function marketplaceSeedAvailable(){
     return (
       state.scope === "campus"
       && state.mode === "discover"
@@ -890,39 +993,56 @@
     );
   }
 
-  function syncMarketplaceExampleButton(){
-    const button = byId("marketplaceExampleButton");
-    if(!button) return;
-    button.hidden = !marketplaceExampleAvailable() || state.exampleVisible;
-    button.disabled = state.loading;
-    button.textContent = tr("marketplaceExampleShow");
-  }
-
-  function focusMarketplaceExampleAction(action){
+  function focusMarketplaceSeedAction(key, action){
     window.requestAnimationFrame(() => {
-      document.querySelector(`[data-market-example-action="${action}"]`)?.focus({preventScroll:true});
+      document.querySelector(`[data-market-seed-action="${key}:${action}"]`)?.focus({preventScroll:true});
     });
   }
 
-  function rerenderMarketplaceExample(focusAction){
+  function rerenderMarketplaceSeed(key, focusAction){
     renderGrid();
-    if(focusAction) focusMarketplaceExampleAction(focusAction);
+    if(focusAction) focusMarketplaceSeedAction(key, focusAction);
   }
 
-  function marketplaceExampleCard(){
+  async function shareMarketplaceSeedListing(seed){
+    const title = marketplaceSeedText(seed.title);
+    const text = `${title} · ${seed.price}`;
+    if(navigator.share){
+      try {
+        await navigator.share({title:`${title} · ConCourse`, text, url:window.location.href});
+        return;
+      } catch(error){
+        if(error?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${marketplaceSeedText(seed.description)}\n${window.location.href}`);
+      setStatus(marketplaceSeedText({
+        en:"Listing details copied.",
+        "zh-CN":"商品资料已复制。",
+        "zh-HK":"商品資料已複製。"
+      }), "success");
+    } catch(_error){
+      setStatus(tr("marketplaceShareFailed"), "error");
+    }
+  }
+
+  function marketplaceSeedCard(seed){
+    const detailsVisible = state.seedDetails.has(seed.key);
+    const saved = state.seedSaved.has(seed.key);
     const card = element("article", "marketplace-card");
-    card.dataset.marketplaceExample = "";
-    card.setAttribute("aria-label", tr("marketplaceExampleLabel"));
+    card.dataset.marketplaceSeed = seed.key;
+    card.setAttribute("aria-label", marketplaceSeedText(seed.title));
 
     const mediaFrame = element("div", "marketplace-card-media-button");
     const media = element("div", "marketplace-media marketplace-media-compact");
     const image = element("img");
-    image.src = "concourse-campus-market.jpg";
-    image.width = 1536;
-    image.height = 1024;
+    image.src = seed.image;
+    image.width = seed.width;
+    image.height = seed.height;
     image.loading = "lazy";
     image.decoding = "async";
-    image.alt = tr("marketplaceExampleImageAlt");
+    image.alt = marketplaceSeedText(seed.alt);
     media.append(image);
     mediaFrame.append(media);
     card.append(mediaFrame);
@@ -930,67 +1050,61 @@
     const body = element("div", "marketplace-card-body");
     const eyebrow = element("div", "marketplace-card-eyebrow");
     eyebrow.append(
-      element("span", "marketplace-category-chip", tr("marketplaceExampleLabel")),
-      element("span", "marketplace-status-chip status-active", labelFor("marketplaceCategory", "notes"))
+      element("span", "marketplace-category-chip", labelFor("marketplaceCategory", seed.category)),
+      element("span", "marketplace-status-chip status-active", listingStatusLabel({status:"active"}))
     );
     body.append(
       eyebrow,
-      element("h3", "marketplace-card-title", tr("marketplaceExampleTitle")),
-      element("strong", "marketplace-card-price", tr("marketplaceExamplePrice"))
+      element("h3", "marketplace-card-title", marketplaceSeedText(seed.title)),
+      element("strong", "marketplace-card-price", seed.price)
     );
 
     const meta = element("div", "marketplace-card-meta");
     meta.append(
-      element("span", "", tr("marketplaceExampleSeller")),
-      element("span", "", tr("marketplaceExampleCondition"))
+      element("span", "", marketplaceSeedText(seed.seller)),
+      element("span", "", marketplaceSeedText(seed.condition))
     );
     body.append(meta);
 
-    const description = element("p", "marketplace-muted", tr("marketplaceExampleDescription"));
-    description.hidden = !state.exampleDetailsVisible;
-    const boundary = element("p", "marketplace-muted", tr("marketplaceExampleDetails"));
-    boundary.hidden = !state.exampleDetailsVisible;
-    boundary.setAttribute("role", "status");
-    body.append(description, boundary);
+    const description = element("p", "marketplace-muted", marketplaceSeedText(seed.description));
+    description.hidden = !detailsVisible;
+    body.append(description);
 
     const actions = element("div", "marketplace-card-actions");
-    const preview = element(
+    const details = element(
       "button",
       "marketplace-card-action",
-      tr(state.exampleDetailsVisible ? "marketplaceExampleHide" : "marketplaceExamplePreview")
+      detailsVisible ? tr("marketplaceExampleHide") : tr("marketplaceViewListing")
     );
-    preview.type = "button";
-    preview.dataset.marketExampleAction = "preview";
-    preview.setAttribute("aria-expanded", state.exampleDetailsVisible ? "true" : "false");
-    preview.addEventListener("click", () => {
-      state.exampleDetailsVisible = !state.exampleDetailsVisible;
-      rerenderMarketplaceExample("preview");
+    details.type = "button";
+    details.dataset.marketSeedAction = `${seed.key}:details`;
+    details.setAttribute("aria-expanded", detailsVisible ? "true" : "false");
+    details.addEventListener("click", () => {
+      if(detailsVisible) state.seedDetails.delete(seed.key);
+      else state.seedDetails.add(seed.key);
+      rerenderMarketplaceSeed(seed.key, "details");
     });
 
     const save = element(
       "button",
-      `marketplace-card-action${state.exampleSaved ? " active" : ""}`,
-      tr(state.exampleSaved ? "marketplaceExampleSaved" : "marketplaceExampleSave")
+      `marketplace-card-action${saved ? " active" : ""}`,
+      tr(saved ? "marketplaceUnfavorite" : "marketplaceFavorite")
     );
     save.type = "button";
-    save.dataset.marketExampleAction = "save";
-    save.setAttribute("aria-pressed", state.exampleSaved ? "true" : "false");
+    save.dataset.marketSeedAction = `${seed.key}:save`;
+    save.setAttribute("aria-pressed", saved ? "true" : "false");
     save.addEventListener("click", () => {
-      state.exampleSaved = !state.exampleSaved;
-      rerenderMarketplaceExample("save");
+      if(saved) state.seedSaved.delete(seed.key);
+      else state.seedSaved.add(seed.key);
+      rerenderMarketplaceSeed(seed.key, "save");
     });
 
-    const close = element("button", "marketplace-card-action", tr("marketplaceExampleClose"));
-    close.type = "button";
-    close.dataset.marketExampleAction = "close";
-    close.addEventListener("click", () => {
-      state.exampleVisible = false;
-      state.exampleDetailsVisible = false;
-      state.exampleSaved = false;
-      rerenderMarketplaceExample("show");
-    });
+    const share = element("button", "marketplace-card-action", tr("marketplaceShare"));
+    share.type = "button";
+    share.dataset.marketSeedAction = `${seed.key}:share`;
+    share.addEventListener("click", () => void shareMarketplaceSeedListing(seed));
 
-    actions.append(preview, save, close);
+    actions.append(details, save, share);
     body.append(actions);
     card.append(body);
     return card;
@@ -1056,7 +1170,6 @@
   function renderMarketplaceLoading(){
     const grid = byId("marketplaceGrid");
     if(!grid) return;
-    syncMarketplaceExampleButton();
     unloadRenderedMedia(grid);
     grid.classList.remove("is-single-result");
     delete grid.dataset.resultCount;
@@ -1096,20 +1209,24 @@
     if(!grid) return;
     unloadRenderedMedia(grid);
     grid.replaceChildren();
-    const singleListing = state.mode !== "orders" && state.items.length === 1;
+    const showSeedListings = (
+      !state.items.length
+      && marketplaceSeedAvailable()
+    );
+    const singleListing = !showSeedListings && state.mode !== "orders" && state.items.length === 1;
     grid.classList.toggle("is-single-result", singleListing);
-    grid.dataset.resultCount = String(state.items.length);
+    grid.dataset.resultCount = String(showSeedListings ? MARKETPLACE_SEED_LISTINGS.length : state.items.length);
     const catalogue = byId("marketplaceCatalogue");
-    syncMarketplaceExampleButton();
-    if(state.exampleVisible && marketplaceExampleAvailable()){
-      grid.classList.add("is-single-result");
-      grid.dataset.resultCount = "0";
+    if(showSeedListings){
       if(catalogue){
         catalogue.dataset.empty = "false";
-        catalogue.dataset.feedState = "example";
+        catalogue.dataset.feedState = "ready";
       }
-      grid.append(marketplaceExampleCard());
-      updateResultsLabel(0);
+      MARKETPLACE_SEED_LISTINGS.forEach(seed => grid.append(marketplaceSeedCard(seed)));
+      const resultsLabel = byId("marketplaceResultsLabel");
+      if(resultsLabel){
+        resultsLabel.textContent = tr("marketplaceResults", {count:MARKETPLACE_SEED_LISTINGS.length});
+      }
       updateLoadMore();
       return;
     }
@@ -1189,7 +1306,6 @@
       if(contextIsCurrent(context) && request === state.feedRequest){
         state.loading = false;
         byId("marketplaceCatalogue")?.setAttribute("aria-busy", "false");
-        syncMarketplaceExampleButton();
         updateLoadMore();
       }
     }
@@ -1207,9 +1323,6 @@
     if(!["discover", "saved", "mine", "orders"].includes(mode)) mode = "discover";
     if(state.scope === "global" && ["mine", "orders"].includes(mode)) mode = "discover";
     state.mode = mode;
-    state.exampleVisible = false;
-    state.exampleDetailsVisible = false;
-    state.exampleSaved = false;
     state.items = [];
     state.localItems = [];
     state.offset = 0;
@@ -2316,9 +2429,8 @@
     state.items = [];
     state.localItems = [];
     state.loading = false;
-    state.exampleVisible = false;
-    state.exampleDetailsVisible = false;
-    state.exampleSaved = false;
+    state.seedDetails.clear();
+    state.seedSaved.clear();
     state.busyListings.clear();
     state.busyOrders.clear();
     state.detail = null;
@@ -2486,12 +2598,6 @@
       if(["mine", "orders"].includes(state.mode)) loadNextLocalPage();
       else void loadMarketplace({append:true});
     });
-    byId("marketplaceExampleButton")?.addEventListener("click", () => {
-      state.exampleVisible = true;
-      state.exampleDetailsVisible = false;
-      state.exampleSaved = false;
-      rerenderMarketplaceExample("preview");
-    });
     byId("marketplaceModes")?.addEventListener("click", event => {
       const button = event.target.closest("[data-market-mode]");
       if(button) void setMode(button.dataset.marketMode);
@@ -2507,9 +2613,6 @@
       void setMode(buttons[nextIndex].dataset.marketMode);
     });
     byId("marketplaceSearch")?.addEventListener("input", event => {
-      state.exampleVisible = false;
-      state.exampleDetailsVisible = false;
-      state.exampleSaved = false;
       state.query = event.target.value.trim().slice(0, 120);
       if(state.searchTimer) clearTimeout(state.searchTimer);
       state.searchTimer = window.setTimeout(() => { state.searchTimer = null; void loadMarketplace({force:true}); }, 350);
@@ -2517,25 +2620,16 @@
     byId("marketplaceSearch")?.addEventListener("keydown", event => {
       if(event.key === "Enter"){
         event.preventDefault();
-        state.exampleVisible = false;
-        state.exampleDetailsVisible = false;
-        state.exampleSaved = false;
         if(state.searchTimer){ clearTimeout(state.searchTimer); state.searchTimer = null; }
         state.query = event.currentTarget.value.trim().slice(0, 120);
         void loadMarketplace({force:true});
       }
     });
     byId("marketplaceCategory")?.addEventListener("change", event => {
-      state.exampleVisible = false;
-      state.exampleDetailsVisible = false;
-      state.exampleSaved = false;
       state.category = event.target.value || "all";
       void loadMarketplace({force:true});
     });
     byId("marketplaceSort")?.addEventListener("change", event => {
-      state.exampleVisible = false;
-      state.exampleDetailsVisible = false;
-      state.exampleSaved = false;
       state.sort = event.target.value || "recent";
       void loadMarketplace({force:true});
     });

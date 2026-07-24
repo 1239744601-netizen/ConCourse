@@ -25,7 +25,15 @@ html:has(> body.hub-active) {
 }
 
 body.hub-active {
+  --app-bar-offset: 84px;
   overflow: visible !important;
+}
+
+@media (max-height: 840px) and (max-width: 1050px) {
+  body.app-active.hub-active #landingScreen {
+    position: sticky !important;
+    top: 0 !important;
+  }
 }
 
 .member-hub .hub-sidebar {
@@ -63,111 +71,59 @@ html[data-theme="day"] .member-hub .hub-sidebar {
   object-position: center center !important;
 }
 
-/* The citation artwork has a still paper-relief base. These two overlays
-   are tensioned strings fixed to pins, so their small rotations read as
-   physical movement rather than a moving camera. */
-.member-hub[data-active-view="academic-tools"] .hub-art-fragment {
-  inset: auto !important;
-  z-index: 3 !important;
-  display: block !important;
-  opacity: 1 !important;
-  background-image: none !important;
-  background-position: initial !important;
-  background-size: initial !important;
-  filter: none !important;
-  clip-path: none !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-  pointer-events: none;
-  transform-origin: 0 50% !important;
-  will-change: transform;
+/* Academic Tools uses one physical index wheel that is part of the artwork.
+   A pixel-matched circular crop rotates over the same wheel, so there are no
+   detached strings, pins, or decorative objects pasted above the image. */
+.member-hub[data-active-view="academic-tools"] .hub-hero-art {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 3 / 1;
 }
 
-.member-hub[data-active-view="academic-tools"] .hub-art-fragment::before,
-.member-hub[data-active-view="academic-tools"] .hub-art-fragment::after {
-  position: absolute;
-  display: block;
-  content: "";
-  border-radius: 50%;
+.member-hub[data-active-view="academic-tools"]
+  .hub-hero-art img[data-hub-hero="academic-tools"] {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
 }
 
 .member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary {
-  top: 38% !important;
-  left: 57% !important;
-  width: min(25vw, 330px) !important;
-  height: 74px !important;
-  background:
-    linear-gradient(5deg, transparent 49.25%, rgba(235, 188, 80, .92) 49.55% 50.45%, transparent 50.75%),
-    linear-gradient(0deg, transparent 49.3%, rgba(250, 229, 178, .82) 49.6% 50.4%, transparent 50.7%),
-    linear-gradient(-5deg, transparent 49.25%, rgba(139, 216, 255, .78) 49.55% 50.45%, transparent 50.75%) !important;
-  animation: academic-string-tension-primary 8.6s cubic-bezier(.42, 0, .2, 1) infinite !important;
+  inset: 46.5% auto auto 72.33% !important;
+  z-index: 3 !important;
+  display: block !important;
+  width: 28.65% !important;
+  height: auto !important;
+  aspect-ratio: 1;
+  overflow: hidden;
+  opacity: 1 !important;
+  background: url("concourse-art-citations-wheel.jpg") center / 100% 100% no-repeat !important;
+  border-radius: 50%;
+  filter: none !important;
+  clip-path: circle(49.5% at 50% 50%) !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  pointer-events: none;
+  transform: none !important;
+  translate: -50% -50% !important;
+  rotate: -1.2deg;
+  transform-origin: 50% 50% !important;
+  will-change: transform;
+  animation: academic-index-wheel 12s cubic-bezier(.45, 0, .2, 1) infinite !important;
 }
 
-.member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary::before {
-  top: calc(50% - 9px);
-  left: -9px;
-  width: 18px;
-  height: 18px;
-  background: #e9b84c;
-  border: 3px solid rgba(255, 243, 207, .88);
-  box-shadow: 0 8px 18px rgba(1, 12, 23, .36);
-}
-
-.member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary::after {
-  top: calc(50% - 6px);
-  right: -6px;
-  width: 12px;
-  height: 12px;
-  background: #f3d487;
-  border: 2px solid rgba(255, 248, 225, .78);
-  box-shadow:
-    1px -25px 0 -1px #e9b84c,
-    1px 25px 0 -1px #8bd8ff,
-    0 7px 15px rgba(1, 12, 23, .34);
-}
-
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary::before,
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary::after,
 .member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary {
-  top: 64% !important;
-  left: 68% !important;
-  width: min(18vw, 235px) !important;
-  height: 48px !important;
-  background:
-    linear-gradient(4deg, transparent 49.15%, rgba(128, 211, 249, .9) 49.55% 50.45%, transparent 50.85%),
-    linear-gradient(-4deg, transparent 49.15%, rgba(210, 235, 249, .78) 49.55% 50.45%, transparent 50.85%) !important;
-  animation: academic-string-tension-secondary 10.2s cubic-bezier(.42, 0, .2, 1) infinite !important;
+  display: none !important;
+  content: none !important;
 }
 
-.member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary::before {
-  top: calc(50% - 7px);
-  left: -7px;
-  width: 14px;
-  height: 14px;
-  background: #75ccef;
-  border: 3px solid rgba(229, 247, 255, .84);
-  box-shadow: 0 7px 16px rgba(1, 12, 23, .34);
-}
-
-.member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary::after {
-  top: calc(50% - 5px);
-  right: -5px;
-  width: 10px;
-  height: 10px;
-  background: #d7eef8;
-  box-shadow:
-    0 -16px 0 -1px #8bd8ff,
-    0 16px 0 -1px #b3cde0;
-}
-
-@keyframes academic-string-tension-primary {
-  0%, 14% { transform: rotate(-1.35deg); }
-  50%, 64% { transform: rotate(1.35deg); }
-  100% { transform: rotate(-1.35deg); }
-}
-
-@keyframes academic-string-tension-secondary {
-  0%, 18% { transform: rotate(.8deg); }
-  52%, 68% { transform: rotate(-.8deg); }
-  100% { transform: rotate(.8deg); }
+@keyframes academic-index-wheel {
+  0%, 18% { rotate: -1.2deg; }
+  48%, 66% { rotate: 1.2deg; }
+  100% { rotate: -1.2deg; }
 }
 
 /* Academic Insights uses a true square rotor over a stable 3:1 artwork. This
@@ -917,24 +873,15 @@ html[data-theme="night"] .hub-insight-demo-kpi {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
 }
 
-/* Client-only Community and Messages examples -------------------------- */
+/* Community starter feed and Messages ---------------------------------- */
 
 .hub-community-example {
   grid-column: 1 / -1;
   display: grid;
-  gap: 12px;
+  gap: clamp(20px, 3vw, 30px);
   margin-top: 10px;
 }
 
-.hub-community-example-heading {
-  display: flex;
-  gap: 12px 24px;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-inline: 4px;
-}
-
-.hub-community-example-heading > span,
 .hub-message-example-label {
   color: var(--community-accent, #8bd8ff);
   font-size: 10px;
@@ -943,22 +890,53 @@ html[data-theme="night"] .hub-insight-demo-kpi {
   text-transform: uppercase;
 }
 
-.hub-community-example-heading small {
-  max-width: 64ch;
-  color: var(--community-muted, #6c8295);
-  font-size: 10.5px;
-  line-height: 1.4;
-  text-align: right;
-}
-
-.member-hub[data-active-view="community"] .hub-post-card--example {
+.member-hub[data-active-view="community"] .hub-post-card--seed {
   width: 100%;
-  max-width: 760px;
+  max-width: 840px;
   margin: 0 auto;
   padding: clamp(18px, 3vw, 28px);
+  color: #f4f9fd;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(91, 169, 216, .14), transparent 30%),
+    #0a2943;
+  border: 1px solid rgba(139, 216, 255, .18);
   border-radius:
     30px 72px 34px 56px /
     28px 44px 48px 66px;
+  box-shadow: 0 24px 56px rgba(0, 8, 20, .22);
+}
+
+html[data-theme="day"]
+  .member-hub[data-active-view="community"]
+  .hub-post-card--seed {
+  color: #071d32;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(52, 143, 200, .1), transparent 32%),
+    #f8fcff;
+  border-color: rgba(24, 89, 136, .18);
+  box-shadow: 0 22px 48px rgba(31, 79, 114, .12);
+}
+
+.hub-community-seed-media {
+  width: 100%;
+  overflow: hidden;
+  margin: 16px 0 14px;
+  background: #071d32;
+  border-radius:
+    22px 54px 24px 42px /
+    20px 34px 38px 52px;
+}
+
+.hub-community-seed-media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  display: block;
+  object-fit: cover;
+}
+
+.hub-post-card--seed .hub-post-body {
+  margin-top: 0;
 }
 
 .hub-community-example-avatar,
@@ -1165,10 +1143,14 @@ html[data-theme="day"] .marketplace-example-trigger:is(:hover, :focus-visible) {
 }
 
 @media (max-width: 760px) {
+  body.hub-active {
+    --app-bar-offset: 130px;
+  }
+
   .member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary {
-    top: 40% !important;
-    left: 48% !important;
-    width: 44vw !important;
+    top: 46.5% !important;
+    left: 72.33% !important;
+    width: 28.65% !important;
   }
 
   .member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary {
@@ -1233,14 +1215,6 @@ html[data-theme="day"] .marketplace-example-trigger:is(:hover, :focus-visible) {
     grid-column: 1 / -1;
   }
 
-  .hub-community-example-heading {
-    display: grid;
-  }
-
-  .hub-community-example-heading small {
-    text-align: left;
-  }
-
   .market-results-actions {
     width: 100%;
     justify-content: space-between;
@@ -1281,9 +1255,11 @@ html[data-theme="day"] .marketplace-example-trigger:is(:hover, :focus-visible) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .member-hub[data-active-view="academic-tools"] .hub-art-fragment {
+  .member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary {
     animation: none !important;
     transform: none !important;
+    translate: -50% -50% !important;
+    rotate: 0deg !important;
   }
 
   .member-hub[data-active-view="overview"] .hub-art-fragment-primary::before,
@@ -1302,6 +1278,10 @@ html[data-theme="day"] .marketplace-example-trigger:is(:hover, :focus-visible) {
 }
 
 @media (forced-colors: active) {
+  .member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary {
+    display: none !important;
+  }
+
   .citation-example-strip,
   .member-hub[data-active-view="overview"] :is(
     .hub-chart-empty--interactive,

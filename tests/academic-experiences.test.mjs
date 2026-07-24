@@ -36,7 +36,7 @@ test("the night Market search uses a white caret without changing Day mode", () 
 });
 
 test("Academic artwork movement is object-level, scoped and reduced-motion safe", () => {
-  assert.match(css, /data-active-view="academic-tools"[\s\S]*?academic-string-tension-primary/);
+  assert.match(css, /data-active-view="academic-tools"[\s\S]*?academic-index-wheel/);
   assert.match(html, /src="concourse-art-insights-v3\.jpg"[^>]+data-hub-hero="overview"/);
   assert.doesNotMatch(html, /src="concourse-art-insights-v2\.jpg"[^>]+data-hub-hero="overview"/);
 
@@ -60,7 +60,8 @@ test("Academic artwork movement is object-level, scoped and reduced-motion safe"
   assert.match(needle, /transform-origin:\s*0 50%/);
   assert.match(needle, /animation:\s*academic-insight-needle/);
   assert.match(css, /@keyframes academic-insight-needle/);
-  assert.doesNotMatch(css, /clip-path:\s*circle|@keyframes academic-insight-lens/);
+  assert.doesNotMatch(`${overviewImage}\n${rotor}\n${needle}`, /clip-path:\s*circle/);
+  assert.doesNotMatch(css, /@keyframes academic-insight-lens/);
   assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?animation:\s*none\s*!important/);
   const academicMotion = sourceSection(
     css,
@@ -73,7 +74,8 @@ test("Academic artwork movement is object-level, scoped and reduced-motion safe"
     "the scoped academic layer must not modify unrelated Hub views"
   );
   for(const filename of [
-    "concourse-art-citations-motion.jpg",
+    "concourse-art-citations-v2.jpg",
+    "concourse-art-citations-wheel.jpg",
     "concourse-art-insights-v3.jpg"
   ]){
     assert.ok(existsSync(new URL(`../${filename}`, import.meta.url)), `${filename} should exist`);
@@ -131,29 +133,34 @@ test("Academic Tools and Insights include clearly labeled, non-saving examples",
   }
 });
 
-test("Community, Market, and Messages examples stay client-only", () => {
+test("Community, Market, and Messages seed interactions stay client-only", () => {
   const forbiddenLivePath = /\bhubRpc\s*\(|\bauthClient\b|\.rpc\s*\(|crypto\.randomUUID|(?:post|listing|conversation)_id/;
 
-  const communityExample = sourceSection(
+  const communitySeeds = sourceSection(
     hub,
-    "function renderCommunityExample(feed){",
+    "function renderCommunitySeedPosts(feed){",
     "function renderCommunityFeed(posts){"
   );
-  assert.match(communityExample, /hubState\.communityExample/);
-  assert.match(communityExample, /state\.selectedPoll = index/);
-  assert.match(communityExample, /state\.comments\.push\(value\)/);
-  assert.doesNotMatch(communityExample, forbiddenLivePath);
+  assert.match(hub, /hubState\.communitySeedState/);
+  assert.match(communitySeeds, /communitySeedPostState\(seed\.key\)/);
+  assert.match(communitySeeds, /state\.selectedPoll = index/);
+  assert.match(communitySeeds, /state\.comments\.push\(value\)/);
+  assert.match(communitySeeds, /hub-post-action--like/);
+  assert.match(communitySeeds, /hub-post-action--comment/);
+  assert.match(communitySeeds, /hub-post-action--save/);
+  assert.match(communitySeeds, /hub-post-action--share/);
+  assert.doesNotMatch(communitySeeds, forbiddenLivePath);
 
-  const marketExample = sourceSection(
+  const marketSeeds = sourceSection(
     marketplace,
-    "function marketplaceExampleCard(){",
+    "function marketplaceSeedCard(seed){",
     "function updateResultsLabel("
   );
-  assert.match(marketExample, /card\.dataset\.marketplaceExample/);
-  assert.match(marketExample, /state\.exampleDetailsVisible/);
-  assert.match(marketExample, /state\.exampleSaved/);
-  assert.doesNotMatch(marketExample, forbiddenLivePath);
-  assert.doesNotMatch(marketExample, /state\.items/);
+  assert.match(marketSeeds, /card\.dataset\.marketplaceSeed/);
+  assert.match(marketSeeds, /state\.seedDetails/);
+  assert.match(marketSeeds, /state\.seedSaved/);
+  assert.doesNotMatch(marketSeeds, forbiddenLivePath);
+  assert.doesNotMatch(marketSeeds, /state\.items/);
 
   const messageExample = sourceSection(
     hub,
@@ -172,7 +179,7 @@ test("Community, Market, and Messages examples stay client-only", () => {
   const demoReply = sendMessage.match(
     /if\(hubState\.messageDemoMode\)\{[\s\S]*?\n\s+return;\n\s+\}/
   )?.[0] || "";
-  assert.ok(demoReply, "Messages should have a local-only demo reply branch");
+  assert.ok(demoReply, "Messages should have a local-only seeded reply branch");
   assert.match(demoReply, /hubState\.messageDemoMessages\.push/);
   assert.doesNotMatch(demoReply, forbiddenLivePath);
 

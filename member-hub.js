@@ -36,13 +36,7 @@
     insightRows: [],
     insightsLoaded: false,
     insightDemoMode: "",
-    communityExample: {
-      liked:false,
-      saved:false,
-      selectedPoll:-1,
-      comments:[],
-      statusKey:""
-    },
+    communitySeedState: new Map(),
     feed: [],
     conversations: [],
     messageDemoMode: false,
@@ -110,6 +104,95 @@
   const COMMUNITY_FEED_PAGE_SIZE = 30;
   const COMMUNITY_FEED_WINDOW = 90;
   const HUB_RPC_TIMEOUT_MS = 15000;
+  const COMMUNITY_SEED_POSTS = Object.freeze([
+    Object.freeze({
+      key:"finance-revision",
+      initials:"MC",
+      author:"Maya Chen",
+      meta:Object.freeze({
+        en:"Hong Kong Baptist University · Finance · 24 min",
+        "zh-CN":"香港浸会大学 · 金融学 · 24 分钟前",
+        "zh-HK":"香港浸會大學 · 金融 · 24 分鐘前"
+      }),
+      body:Object.freeze({
+        en:"Our FIN 3010 revision group mapped the toughest valuation topics today. We are opening the next session to anyone who wants to compare approaches before the midterm.",
+        "zh-CN":"今天的 FIN 3010 复习小组整理了最难的估值主题。下次活动欢迎同学加入，一起在期中考试前交流解题思路。",
+        "zh-HK":"今日嘅 FIN 3010 溫習小組整理咗最難嘅估值主題。下次活動歡迎同學加入，一齊喺期中試前交流解題思路。"
+      }),
+      image:"concourse-community-library.jpg",
+      imageAlt:Object.freeze({
+        en:"Three students comparing revision notes around a laptop in a university library.",
+        "zh-CN":"三名学生在大学图书馆围着笔记本电脑交流复习笔记。",
+        "zh-HK":"三位學生喺大學圖書館圍住手提電腦交流溫習筆記。"
+      }),
+      tags:Object.freeze(["FIN3010", "revision"]),
+      likeCount:46,
+      commentCount:8,
+      comments:Object.freeze(["I can bring the practice set from last week."]),
+      poll:Object.freeze({
+        question:Object.freeze({
+          en:"When should the next session run?",
+          "zh-CN":"下次复习安排在什么时候？",
+          "zh-HK":"下次溫習安排喺幾時？"
+        }),
+        options:Object.freeze([
+          Object.freeze({label:Object.freeze({en:"Tuesday · 17:30", "zh-CN":"周二 · 17:30", "zh-HK":"星期二 · 17:30"}), votes:22}),
+          Object.freeze({label:Object.freeze({en:"Wednesday · 16:00", "zh-CN":"周三 · 16:00", "zh-HK":"星期三 · 16:00"}), votes:17}),
+          Object.freeze({label:Object.freeze({en:"Friday · online", "zh-CN":"周五 · 线上", "zh-HK":"星期五 · 網上"}), votes:11})
+        ])
+      })
+    }),
+    Object.freeze({
+      key:"campus-plant-swap",
+      initials:"AR",
+      author:"Aisha Rahman",
+      meta:Object.freeze({
+        en:"HKBU Sustainability Society · 42 min",
+        "zh-CN":"浸大可持续发展学会 · 42 分钟前",
+        "zh-HK":"浸大可持續發展學會 · 42 分鐘前"
+      }),
+      body:Object.freeze({
+        en:"Plant swap this Thursday beside the central lawn. Bring one cutting, seedling, or clean reusable item; first-time growers are absolutely welcome.",
+        "zh-CN":"本周四在中央草坪旁举行植物交换活动。带上一株扦插苗、幼苗或干净的可重复使用物品即可，新手也非常欢迎。",
+        "zh-HK":"今個星期四喺中央草地旁邊舉行植物交換活動。帶一株插枝、幼苗或者乾淨嘅可重用物品就可以，新手都非常歡迎。"
+      }),
+      image:"concourse-community-club.jpg",
+      imageAlt:Object.freeze({
+        en:"Students arranging herb seedlings and reusable items on a campus lawn.",
+        "zh-CN":"学生们在校园草坪上整理香草幼苗和可重复使用物品。",
+        "zh-HK":"學生喺校園草地上整理香草幼苗同可重用物品。"
+      }),
+      tags:Object.freeze(["campuslife", "sustainability"]),
+      likeCount:83,
+      commentCount:14,
+      comments:Object.freeze(["I have two mint cuttings to share!"])
+    }),
+    Object.freeze({
+      key:"project-courtyard",
+      initials:"LK",
+      author:"Leo Kwok",
+      meta:Object.freeze({
+        en:"Hong Kong Baptist University · Computer Science · 1 h",
+        "zh-CN":"香港浸会大学 · 计算机科学 · 1 小时前",
+        "zh-HK":"香港浸會大學 · 電腦科學 · 1 小時前"
+      }),
+      body:Object.freeze({
+        en:"Our project team tested the new courtyard study tables this morning. Strong Wi-Fi, quiet before noon, and enough shade for a long working session.",
+        "zh-CN":"我们的小组今早试用了庭院的新学习桌。无线网络稳定，中午前很安静，遮阴也足够，适合长时间学习。",
+        "zh-HK":"我哋小組今朝試用咗庭院嘅新溫習枱。Wi-Fi 穩定，中午前好安靜，亦有足夠遮蔭，適合長時間做嘢。"
+      }),
+      image:"concourse-campus-community.jpg",
+      imageAlt:Object.freeze({
+        en:"University students working together with notebooks in an outdoor campus space.",
+        "zh-CN":"大学生在校园户外空间一起使用笔记本学习。",
+        "zh-HK":"大學生喺校園戶外空間一齊用筆記簿學習。"
+      }),
+      tags:Object.freeze(["studyspot", "campustips"]),
+      likeCount:31,
+      commentCount:5,
+      comments:Object.freeze(["This is exactly the kind of quiet spot I needed."])
+    })
+  ]);
   const INSIGHT_DEMO = Object.freeze({
     major:Object.freeze({
       summary:Object.freeze({cohortSize:40, medianCredits:18, sectionCount:11, professorCount:8}),
@@ -351,7 +434,7 @@
     hubState.insightRows = [];
     hubState.insightsLoaded = false;
     hubState.insightDemoMode = "";
-    hubState.communityExample = {liked:false, saved:false, selectedPoll:-1, comments:[], statusKey:""};
+    hubState.communitySeedState = new Map();
     hubState.feed = [];
     hubState.conversations = [];
     hubState.messageDemoMode = false;
@@ -3047,138 +3130,207 @@
     return (engagement + 1) / (1 + ageHours / 48);
   }
 
-  function renderCommunityExample(feed){
-    const state = hubState.communityExample;
-    const example = node("section", "hub-community-example");
-    example.setAttribute("aria-label", t("communityExampleLabel"));
+  function communitySeedText(value){
+    if(typeof value === "string") return value;
+    return value?.[currentLanguage] || value?.en || "";
+  }
 
-    const heading = node("header", "hub-community-example-heading");
-    const label = node("span", "", t("communityExampleLabel"));
-    const local = node("small", "", t("communityExampleLocal"));
-    heading.append(label, local);
+  function communitySeedPostState(key){
+    if(!hubState.communitySeedState.has(key)){
+      hubState.communitySeedState.set(key, {
+        liked:false,
+        saved:false,
+        selectedPoll:-1,
+        comments:[],
+        status:""
+      });
+    }
+    return hubState.communitySeedState.get(key);
+  }
 
-    const post = node("article", "hub-post-card hub-post-card--text hub-post-card--example");
-    const author = node("div", "hub-post-author");
-    const avatar = node("div", "hub-avatar hub-community-example-avatar", "CC");
-    avatar.setAttribute("aria-hidden", "true");
-    const authorCopy = node("div");
-    authorCopy.append(
-      node("b", "", t("communityExampleTitle")),
-      node("span", "", t("insightExampleFictional"))
-    );
-    author.append(avatar, authorCopy);
-    post.append(author, node("p", "hub-post-body", t("communityExampleBody")));
+  async function shareCommunitySeedPost(seed, state){
+    const body = communitySeedText(seed.body);
+    const shareData = {title:`${seed.author} · ConCourse`, text:body, url:window.location.href};
+    if(navigator.share){
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch(error){
+        if(error?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${seed.author}\n${body}\n${window.location.href}`);
+      state.status = t("postLinkCopied");
+    } catch(_error){
+      state.status = t("shareFailed");
+    }
+    renderCommunityFeed(hubState.feed);
+  }
 
-    const poll = node("section", "hub-post-poll hub-community-example-poll");
-    poll.append(node("h3", "", t("communityExamplePoll")));
-    const pollOptions = [
-      [t("communityExampleOptionOne"), 12],
-      [t("communityExampleOptionTwo"), 9],
-      [t("communityExampleOptionThree"), 7]
-    ];
-    const totalVotes = pollOptions.reduce((sum, [, votes], index) => sum + votes + (state.selectedPoll === index ? 1 : 0), 0);
-    pollOptions.forEach(([option, baseVotes], index) => {
-      const votes = baseVotes + (state.selectedPoll === index ? 1 : 0);
-      const share = Math.round((votes / totalVotes) * 100);
-      const button = node("button", `hub-community-example-option${state.selectedPoll === index ? " selected" : ""}`);
-      button.type = "button";
-      button.setAttribute("aria-pressed", state.selectedPoll === index ? "true" : "false");
-      button.setAttribute("aria-label", `${option}: ${share}%`);
-      const copy = node("span");
-      copy.append(node("b", "", option), node("small", "", `${share}%`));
-      const track = node("i");
-      track.style.setProperty("--community-example-share", `${share}%`);
-      button.append(copy, track);
-      button.onclick = () => {
-        state.selectedPoll = index;
-        state.statusKey = "communityExampleVoteRecorded";
+  function renderCommunitySeedPosts(feed){
+    const collection = node("section", "hub-community-example hub-community-seed-feed");
+    collection.setAttribute("aria-label", t("campusFeed"));
+
+    COMMUNITY_SEED_POSTS.forEach(seed => {
+      const state = communitySeedPostState(seed.key);
+      const post = node("article", "hub-post-card hub-post-card--media hub-post-card--seed");
+      post.dataset.communitySeed = seed.key;
+
+      const author = node("div", "hub-post-author");
+      const avatar = node("div", "hub-avatar hub-community-example-avatar", seed.initials);
+      avatar.setAttribute("aria-hidden", "true");
+      const authorCopy = node("div");
+      authorCopy.append(
+        node("b", "", seed.author),
+        node("span", "", communitySeedText(seed.meta))
+      );
+      author.append(avatar, authorCopy);
+      post.append(author);
+
+      const media = node("figure", "hub-community-seed-media");
+      const image = node("img");
+      image.src = seed.image;
+      image.width = 1200;
+      image.height = 900;
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.alt = communitySeedText(seed.imageAlt);
+      media.append(image);
+      post.append(media, node("p", "hub-post-body", communitySeedText(seed.body)));
+
+      const tags = node("div", "hub-post-tags");
+      seed.tags.forEach(tag => tags.append(node("span", "hub-post-tag", `#${tag}`)));
+      post.append(tags);
+
+      if(seed.poll){
+        const poll = node("section", "hub-post-poll hub-community-example-poll");
+        poll.append(node("h3", "", communitySeedText(seed.poll.question)));
+        const totalVotes = seed.poll.options.reduce(
+          (sum, option, index) => sum + option.votes + (state.selectedPoll === index ? 1 : 0),
+          0
+        );
+        seed.poll.options.forEach((option, index) => {
+          const votes = option.votes + (state.selectedPoll === index ? 1 : 0);
+          const share = Math.round((votes / totalVotes) * 100);
+          const label = communitySeedText(option.label);
+          const button = node("button", `hub-community-example-option${state.selectedPoll === index ? " selected" : ""}`);
+          button.type = "button";
+          button.setAttribute("aria-pressed", state.selectedPoll === index ? "true" : "false");
+          button.setAttribute("aria-label", `${label}: ${share}%`);
+          const copy = node("span");
+          copy.append(node("b", "", label), node("small", "", `${share}%`));
+          const track = node("i");
+          track.style.setProperty("--community-example-share", `${share}%`);
+          button.append(copy, track);
+          button.onclick = () => {
+            state.selectedPoll = index;
+            state.status = t("communityExampleVoteRecorded");
+            renderCommunityFeed(hubState.feed);
+          };
+          poll.append(button);
+        });
+        post.append(poll);
+      }
+
+      const actions = node("div", "hub-post-actions hub-community-example-actions");
+      const like = node(
+        "button",
+        `hub-post-action hub-post-action--like${state.liked ? " liked" : ""}`,
+        `${state.liked ? t("unlike") : t("like")} · ${seed.likeCount + Number(state.liked)}`
+      );
+      like.type = "button";
+      like.setAttribute("aria-pressed", state.liked ? "true" : "false");
+      like.onclick = () => {
+        state.liked = !state.liked;
+        state.status = "";
         renderCommunityFeed(hubState.feed);
       };
-      poll.append(button);
-    });
-    post.append(poll);
+      const comments = node(
+        "button",
+        "hub-post-action hub-post-action--comment",
+        `${t("comment")} · ${seed.commentCount + state.comments.length}`
+      );
+      comments.type = "button";
+      comments.onclick = () => post.querySelector(".hub-community-example-comment-input")?.focus();
+      const save = node(
+        "button",
+        `hub-post-action hub-post-action--save${state.saved ? " bookmarked" : ""}`,
+        state.saved ? t("postSaved") : t("savePost")
+      );
+      save.type = "button";
+      save.setAttribute("aria-pressed", state.saved ? "true" : "false");
+      save.onclick = () => {
+        state.saved = !state.saved;
+        state.status = "";
+        renderCommunityFeed(hubState.feed);
+      };
+      const share = node("button", "hub-post-action hub-post-action--share", t("share"));
+      share.type = "button";
+      share.onclick = () => void shareCommunitySeedPost(seed, state);
+      actions.append(like, comments, save, share);
+      post.append(actions);
 
-    const actions = node("div", "hub-post-actions hub-community-example-actions");
-    const like = node("button", `hub-post-action${state.liked ? " liked" : ""}`, `${state.liked ? t("unlike") : t("like")} · ${18 + Number(state.liked)}`);
-    like.type = "button";
-    like.setAttribute("aria-pressed", state.liked ? "true" : "false");
-    like.onclick = () => {
-      state.liked = !state.liked;
-      state.statusKey = "";
-      renderCommunityFeed(hubState.feed);
-    };
-    const comments = node("button", "hub-post-action", `${t("comment")} · ${4 + state.comments.length}`);
-    comments.type = "button";
-    comments.onclick = () => post.querySelector(".hub-community-example-comment-input")?.focus();
-    const save = node("button", `hub-post-action${state.saved ? " bookmarked" : ""}`, state.saved ? t("postSaved") : t("savePost"));
-    save.type = "button";
-    save.setAttribute("aria-pressed", state.saved ? "true" : "false");
-    save.onclick = () => {
-      state.saved = !state.saved;
-      state.statusKey = "";
-      renderCommunityFeed(hubState.feed);
-    };
-    const share = node("button", "hub-post-action", t("share"));
-    share.type = "button";
-    share.onclick = () => {
-      state.statusKey = "communityExampleLocal";
-      renderCommunityFeed(hubState.feed);
-    };
-    actions.append(like, comments, save, share);
-    post.append(actions);
-
-    const commentArea = node("div", "hub-community-example-comments");
-    state.comments.forEach(comment => {
-      const row = node("p");
-      row.append(node("b", "", t("anonymousStudent")), document.createTextNode(` ${comment}`));
-      commentArea.append(row);
+      const commentArea = node("div", "hub-community-example-comments");
+      seed.comments.forEach(comment => {
+        const row = node("p");
+        row.append(node("b", "", t("anonymousStudent")), document.createTextNode(` ${comment}`));
+        commentArea.append(row);
+      });
+      state.comments.forEach(comment => {
+        const row = node("p");
+        row.append(
+          node("b", "", communitySeedText({en:"You", "zh-CN":"你", "zh-HK":"你"})),
+          document.createTextNode(` ${comment}`)
+        );
+        commentArea.append(row);
+      });
+      const form = node("div", "hub-community-example-comment-form");
+      const input = node("input", "hub-community-example-comment-input");
+      input.maxLength = 240;
+      input.placeholder = t("writeComment");
+      input.setAttribute("aria-label", t("writeComment"));
+      const submit = node("button", "", t("postComment"));
+      submit.type = "button";
+      const addComment = () => {
+        const value = input.value.trim();
+        if(!value) return;
+        state.comments.push(value);
+        state.status = t("commentPosted");
+        renderCommunityFeed(hubState.feed);
+      };
+      submit.onclick = addComment;
+      input.addEventListener("keydown", event => {
+        if(event.key === "Enter" && !event.isComposing){
+          event.preventDefault();
+          addComment();
+        }
+      });
+      form.append(input, submit);
+      commentArea.append(form);
+      if(state.status) commentArea.append(node("small", "hub-community-example-status", state.status));
+      post.append(commentArea);
+      collection.append(post);
     });
-    const form = node("div", "hub-community-example-comment-form");
-    const input = node("input", "hub-community-example-comment-input");
-    input.maxLength = 240;
-    input.placeholder = t("communityExampleCommentPlaceholder");
-    input.setAttribute("aria-label", t("communityExampleCommentPlaceholder"));
-    const submit = node("button", "", t("postComment"));
-    submit.type = "button";
-    const addComment = () => {
-      const value = input.value.trim();
-      if(!value) return;
-      state.comments.push(value);
-      state.statusKey = "communityExampleCommentAdded";
-      renderCommunityFeed(hubState.feed);
-    };
-    submit.onclick = addComment;
-    input.addEventListener("keydown", event => {
-      if(event.key === "Enter" && !event.isComposing){
-        event.preventDefault();
-        addComment();
-      }
-    });
-    form.append(input, submit);
-    commentArea.append(form);
-    if(state.statusKey) commentArea.append(node("small", "hub-community-example-status", t(state.statusKey)));
-    post.append(commentArea);
-    example.append(heading, post);
-    feed.append(example);
+    feed.append(collection);
   }
 
   function renderCommunityFeed(posts){
     const feed = replaceCommunityFeed();
     if(!feed) return;
     updateCommunityLoadMore();
-    const showExample = (
+    const showSeedPosts = (
       hubState.feedScope === "school"
       && hubState.feedTopic === "all"
       && !String(hubState.feedQuery || "").trim()
     );
     if(!posts.length){
-      feed.append(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityEmpty" : "communityEmpty")));
-      if(showExample) renderCommunityExample(feed);
+      if(showSeedPosts) renderCommunitySeedPosts(feed);
+      else feed.append(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityEmpty" : "communityEmpty")));
       return;
     }
     const visiblePosts = filteredCommunityPosts(posts);
     if(!visiblePosts.length){ feed.append(node("div", "hub-feed-empty", t("communityNoMatches"))); return; }
-    if(showExample) renderCommunityExample(feed);
     const featuredPost = visiblePosts
       .filter(post => communityMediaItems(post).some(item => item.media_type !== "video"))
       .sort((left, right) => communityPopularityScore(right) - communityPopularityScore(left))[0] || null;
@@ -3538,25 +3690,27 @@
     messageExampleSeed();
     document.querySelectorAll("#conversationList .hub-message-demo-launcher").forEach(button => button.classList.add("active"));
     $("chatHeading").textContent = t("messageExampleName");
-    $("chatSubheading").textContent = t("messageExampleLocal");
+    $("chatSubheading").textContent = communitySeedText({
+      en:"Finance · Year 3",
+      "zh-CN":"金融学 · 三年级",
+      "zh-HK":"金融 · 三年級"
+    });
     const list = $("chatMessages");
     list.replaceChildren();
-    const label = node("span", "hub-message-example-label", t("messageExampleLabel"));
-    list.append(label);
     hubState.messageDemoMessages.forEach(message => {
       const bubble = node("div", `hub-message${message.mine ? " mine" : ""}`, message.bodyKey ? t(message.bodyKey) : message.body);
       bubble.append(node("time", "", message.time));
       list.append(bubble);
     });
-    $("chatMessageInput").placeholder = t("messageExampleReplyPlaceholder");
+    $("chatMessageInput").placeholder = t("writePrivateMessage");
     $("chatMessageInput").disabled = false;
-    $("sendChatMessage").textContent = t("messageExampleSend");
+    $("sendChatMessage").textContent = t("send");
     $("sendChatMessage").disabled = false;
     $("reportConversation").disabled = true;
     $("blockConversationUser").disabled = true;
     let close = $("messageExampleClose");
     if(!close){
-      close = node("button", "btn-ghost", t("messageExampleClose"));
+      close = node("button", "btn-ghost", communitySeedText({en:"Close chat", "zh-CN":"关闭对话", "zh-HK":"關閉對話"}));
       close.type = "button";
       close.id = "messageExampleClose";
       close.onclick = () => {
@@ -3566,17 +3720,17 @@
         renderConversations([]);
       };
       $("refreshMessages").before(close);
-    } else close.textContent = t("messageExampleClose");
+    } else close.textContent = communitySeedText({en:"Close chat", "zh-CN":"关闭对话", "zh-HK":"關閉對話"});
     requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
   }
 
   function appendMessageExampleLauncher(list){
     const launcher = node("button", `hub-conversation-button hub-message-demo-launcher${hubState.messageDemoMode ? " active" : ""}`);
     launcher.type = "button";
-    const mark = node("span", "hub-message-demo-avatar", "CC");
+    const mark = node("span", "hub-message-demo-avatar", "AW");
     mark.setAttribute("aria-hidden", "true");
     const copy = node("div");
-    copy.append(node("b", "", t("messageExampleOpen")), node("span", "", t("messageExampleLocal")));
+    copy.append(node("b", "", t("messageExampleName")), node("span", "", t("messageExampleOne")));
     launcher.append(mark, copy);
     launcher.onclick = renderMessageExample;
     list.append(launcher);
@@ -3586,13 +3740,11 @@
     const list = $("conversationList");
     list.replaceChildren();
     if(!conversations.length){
-      list.append(node("div", "hub-feed-empty", t("noConversations")));
       appendMessageExampleLauncher(list);
       if(!hubState.messageDemoDismissed) renderMessageExample();
       renderConversationPreview();
       return;
     }
-    appendMessageExampleLauncher(list);
     if(!hubState.messageDemoMode) removeMessageExampleClose();
     conversations.forEach(conversation => {
       const button = node("button", "hub-conversation-button");
@@ -3855,7 +4007,7 @@
       if(!body){ setStatus("chatStatus", t("messageRequired"), "error"); return; }
       hubState.messageDemoMessages.push({mine:true, body, time:new Date().toLocaleTimeString(locale(), {hour:"2-digit", minute:"2-digit"})});
       $("chatMessageInput").value = "";
-      setStatus("chatStatus", t("messageExampleReplyAdded"), "success");
+      setStatus("chatStatus", communitySeedText({en:"Message added.", "zh-CN":"消息已添加。", "zh-HK":"訊息已加入。"}), "success");
       renderMessageExample();
       $("chatMessageInput").focus();
       return;
