@@ -82,18 +82,11 @@ test("Academic artwork movement is object-level, scoped and reduced-motion safe"
   }
 });
 
-test("Academic Tools and Insights include clearly labeled, non-saving examples", () => {
-  assert.match(html, /class="citation-example-strip"/);
-  assert.match(html, /data-citation-example="website"/);
-  assert.match(html, /data-citation-example="journal"/);
-  assert.match(html, /data-citation-example="book"/);
-  assert.match(tools, /const CITATION_EXAMPLES/);
-  assert.match(tools, /function loadCitationExample/);
-  assert.doesNotMatch(
-    tools.match(/function loadCitationExample[\s\S]*?\n  \}/u)?.[0] || "",
-    /saveLibrary|localStorage/,
-    "loading a citation example must not save it"
-  );
+test("Citation guidance is removed while Academic Insights keeps its comprehensive example", () => {
+  assert.doesNotMatch(html, /class="citation-example-strip"/);
+  assert.doesNotMatch(html, /data-citation-example=/);
+  assert.match(html, /id="citationForm"/);
+  assert.match(html, /data-academic-i18n="citationStyleLegend"/);
   assert.match(hub, /const INSIGHT_DEMO = Object\.freeze\(\{/);
   for(const section of [
     "summary",
@@ -197,9 +190,7 @@ test("Community and Market preserve realistic seed content during feed RPC failu
     "async function loadCommunityFeed(",
     "async function publishCommunityPost("
   );
-  assert.match(communityLoader, /const canShowSeedPosts = \(/);
-  assert.match(communityLoader, /hubState\.feedScope === "school"/);
-  assert.match(communityLoader, /hubState\.feedTopic === "all"/);
+  assert.match(communityLoader, /const canShowSeedPosts = !append && communitySeedAvailable\(\)/);
   assert.match(communityLoader, /renderCommunityFeed\(\[\]\)/);
   assert.match(communityLoader, /setStatus\("communityFeedStatus", message, "error"\)/);
 
@@ -215,6 +206,48 @@ test("Community and Market preserve realistic seed content during feed RPC failu
   assert.match(
     marketplace,
     /!String\(state\.query \|\| ""\)\.trim\(\)/
+  );
+});
+
+test("Community and Market render their empty-state examples before live feeds settle", () => {
+  const communityReset = sourceSection(
+    hub,
+    "function resetSensitiveState(",
+    "function academicLabel("
+  );
+  assert.match(communityReset, /renderCommunityFeed\(\[\]\)/);
+
+  const communityLoader = sourceSection(
+    hub,
+    "async function loadCommunityFeed(",
+    "async function publishCommunityPost("
+  );
+  assert.match(
+    communityLoader,
+    /if\(!authClient \|\| !currentUser\)\{[\s\S]*?communitySeedAvailable\(\)[\s\S]*?renderCommunityFeed\(\[\]\)/
+  );
+  assert.match(
+    communityLoader,
+    /if\(!append && \(!hubState\.feed\.length \|\| hubState\.feedMode !== mode\)\)\{[\s\S]*?communitySeedAvailable\(\)[\s\S]*?renderCommunityFeed\(\[\]\)/
+  );
+
+  const marketLoading = sourceSection(
+    marketplace,
+    "function renderMarketplaceLoading(){",
+    "function renderMarketplaceError("
+  );
+  assert.match(marketLoading, /marketplaceSeedAvailable\(\)/);
+  assert.match(marketLoading, /renderGrid\(\)/);
+  assert.match(marketLoading, /dataset\.feedState = "loading"/);
+
+  const marketLoader = sourceSection(
+    marketplace,
+    "async function loadMarketplace(",
+    "function loadNextLocalPage("
+  );
+  assert.match(
+    marketLoader,
+    /if\(!authClient \|\| !state\.userId\)\{[\s\S]*?marketplaceSeedAvailable\(\)[\s\S]*?renderGrid\(\)/
   );
 });
 

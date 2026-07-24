@@ -1168,6 +1168,15 @@
   }
 
   function renderMarketplaceLoading(){
+    if(!state.items.length && marketplaceSeedAvailable()){
+      renderGrid();
+      const catalogue = byId("marketplaceCatalogue");
+      if(catalogue){
+        catalogue.dataset.feedState = "loading";
+        catalogue.setAttribute("aria-busy", "true");
+      }
+      return;
+    }
     const grid = byId("marketplaceGrid");
     if(!grid) return;
     unloadRenderedMedia(grid);
@@ -1257,7 +1266,11 @@
   }
 
   async function loadMarketplace({append=false, force=false}={}){
-    if(!authClient || !state.userId || state.loading && !force) return;
+    if(!authClient || !state.userId){
+      if(!append && marketplaceSeedAvailable()) renderGrid();
+      return;
+    }
+    if(state.loading && !force) return;
     const context = currentContext();
     const request = ++state.feedRequest;
     state.loading = true;
@@ -2488,6 +2501,7 @@
     setStatus("");
     updateResultsLabel(0);
     updateLoadMore();
+    renderGrid();
   }
 
   async function syncAccess(){

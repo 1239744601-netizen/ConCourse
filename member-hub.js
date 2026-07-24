@@ -492,6 +492,7 @@
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
     ["communityFeed", "conversationList", "chatMessages", "courseInsightChart"].forEach(id => $(id)?.replaceChildren());
+    renderCommunityFeed([]);
     $("courseInsightScope").value = "same_major_year";
     $("courseInsightYear").value = "";
     syncInsightYearControl();
@@ -2661,6 +2662,14 @@
     return `${hubState.feedScope}:${hubState.feedTopic === "saved" ? "saved" : "all"}`;
   }
 
+  function communitySeedAvailable(){
+    return (
+      hubState.feedScope === "school"
+      && hubState.feedTopic === "all"
+      && !String(hubState.feedQuery || "").trim()
+    );
+  }
+
   function selectCommunityScope(scope="school"){
     const nextScope = scope === "cross" ? "cross" : "school";
     if(nextScope === hubState.feedScope) return;
@@ -3319,11 +3328,7 @@
     const feed = replaceCommunityFeed();
     if(!feed) return;
     updateCommunityLoadMore();
-    const showSeedPosts = (
-      hubState.feedScope === "school"
-      && hubState.feedTopic === "all"
-      && !String(hubState.feedQuery || "").trim()
-    );
+    const showSeedPosts = communitySeedAvailable();
     if(!posts.length){
       if(showSeedPosts) renderCommunitySeedPosts(feed);
       else feed.append(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityEmpty" : "communityEmpty")));
@@ -3458,7 +3463,10 @@
   }
 
   async function loadCommunityFeed({force=false, append=false}={}){
-    if(!authClient || !currentUser) return;
+    if(!authClient || !currentUser){
+      if(!append && communitySeedAvailable()) renderCommunityFeed([]);
+      return;
+    }
     if(append && hubState.loadingFeed) return;
     const crossHash = /^#cross-post-/i.test(String(window.location.hash || ""));
     if(crossHash && !append && hubState.feedScope !== "cross"){
@@ -3477,7 +3485,8 @@
     hubState.loadingFeed = true;
     updateCommunityLoadMore();
     if(!append && (!hubState.feed.length || hubState.feedMode !== mode)){
-      replaceCommunityFeed(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityLoading" : "communityLoading")));
+      if(communitySeedAvailable()) renderCommunityFeed([]);
+      else replaceCommunityFeed(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityLoading" : "communityLoading")));
     }
     let data = null;
     let error = null;
@@ -3497,12 +3506,7 @@
     hubState.loadingFeed = false;
     if(error){
       const message = featureError(error);
-      const canShowSeedPosts = (
-        !append
-        && hubState.feedScope === "school"
-        && hubState.feedTopic === "all"
-        && !String(hubState.feedQuery || "").trim()
-      );
+      const canShowSeedPosts = !append && communitySeedAvailable();
       if(canShowSeedPosts){
         hubState.feed = [];
         hubState.feedMode = mode;
