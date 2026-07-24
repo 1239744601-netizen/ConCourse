@@ -1,0 +1,567 @@
+/* Scoped refinements requested for Campus Market, Academic Tools and
+   Academic Insights. No selectors in this file affect other Hub views. */
+
+/* Campus Market --------------------------------------------------------- */
+
+html[data-theme="night"]
+  .member-hub[data-active-view="marketplace"]
+  #marketplaceSearch {
+  caret-color: #fff !important;
+}
+
+/* Academic artwork motion ---------------------------------------------- */
+
+.member-hub[data-active-view="academic-tools"]
+  .hub-hero-art img[data-hub-hero="academic-tools"],
+.member-hub[data-active-view="overview"]
+  .hub-hero-art img[data-hub-hero="overview"] {
+  transform: none !important;
+  animation: none !important;
+  object-position: center center !important;
+}
+
+/* The citation artwork has a still paper-relief base. These two overlays
+   are tensioned strings fixed to pins, so their small rotations read as
+   physical movement rather than a moving camera. */
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment {
+  inset: auto !important;
+  z-index: 3 !important;
+  display: block !important;
+  opacity: 1 !important;
+  background-image: none !important;
+  background-position: initial !important;
+  background-size: initial !important;
+  filter: none !important;
+  clip-path: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  pointer-events: none;
+  transform-origin: 0 50% !important;
+  will-change: transform;
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment::before,
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment::after {
+  position: absolute;
+  display: block;
+  content: "";
+  border-radius: 50%;
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary {
+  top: 38% !important;
+  left: 57% !important;
+  width: min(25vw, 330px) !important;
+  height: 74px !important;
+  background:
+    linear-gradient(5deg, transparent 49.25%, rgba(235, 188, 80, .92) 49.55% 50.45%, transparent 50.75%),
+    linear-gradient(0deg, transparent 49.3%, rgba(250, 229, 178, .82) 49.6% 50.4%, transparent 50.7%),
+    linear-gradient(-5deg, transparent 49.25%, rgba(139, 216, 255, .78) 49.55% 50.45%, transparent 50.75%) !important;
+  animation: academic-string-tension-primary 8.6s cubic-bezier(.42, 0, .2, 1) infinite !important;
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary::before {
+  top: calc(50% - 9px);
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  background: #e9b84c;
+  border: 3px solid rgba(255, 243, 207, .88);
+  box-shadow: 0 8px 18px rgba(1, 12, 23, .36);
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary::after {
+  top: calc(50% - 6px);
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  background: #f3d487;
+  border: 2px solid rgba(255, 248, 225, .78);
+  box-shadow:
+    1px -25px 0 -1px #e9b84c,
+    1px 25px 0 -1px #8bd8ff,
+    0 7px 15px rgba(1, 12, 23, .34);
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary {
+  top: 64% !important;
+  left: 68% !important;
+  width: min(18vw, 235px) !important;
+  height: 48px !important;
+  background:
+    linear-gradient(4deg, transparent 49.15%, rgba(128, 211, 249, .9) 49.55% 50.45%, transparent 50.85%),
+    linear-gradient(-4deg, transparent 49.15%, rgba(210, 235, 249, .78) 49.55% 50.45%, transparent 50.85%) !important;
+  animation: academic-string-tension-secondary 10.2s cubic-bezier(.42, 0, .2, 1) infinite !important;
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary::before {
+  top: calc(50% - 7px);
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  background: #75ccef;
+  border: 3px solid rgba(229, 247, 255, .84);
+  box-shadow: 0 7px 16px rgba(1, 12, 23, .34);
+}
+
+.member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary::after {
+  top: calc(50% - 5px);
+  right: -5px;
+  width: 10px;
+  height: 10px;
+  background: #d7eef8;
+  box-shadow:
+    0 -16px 0 -1px #8bd8ff,
+    0 16px 0 -1px #b3cde0;
+}
+
+@keyframes academic-string-tension-primary {
+  0%, 14% { transform: rotate(-1.35deg); }
+  50%, 64% { transform: rotate(1.35deg); }
+  100% { transform: rotate(-1.35deg); }
+}
+
+@keyframes academic-string-tension-secondary {
+  0%, 18% { transform: rotate(.8deg); }
+  52%, 68% { transform: rotate(-.8deg); }
+  100% { transform: rotate(.8deg); }
+}
+
+/* Academic Insights uses one ordered analytical lens instead of strings.
+   A matched crop of the artwork turns within the aperture while the base
+   remains still, so only the object moves. */
+.member-hub[data-active-view="overview"] .hub-art-fragment-primary {
+  inset: 0 !important;
+  z-index: 2 !important;
+  display: block !important;
+  opacity: 1 !important;
+  background-image: url("concourse-art-insights-v2.jpg") !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  filter: none !important;
+  clip-path: circle(22% at 73.5% 48%) !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  transform-origin: 73.5% 48% !important;
+  animation: academic-insight-lens 17s cubic-bezier(.42, 0, .2, 1) infinite !important;
+  will-change: transform;
+}
+
+.member-hub[data-active-view="overview"] .hub-art-fragment-secondary {
+  display: none !important;
+  animation: none !important;
+}
+
+@keyframes academic-insight-lens {
+  0%, 16% { transform: rotate(-2.4deg) scale(1.004); }
+  50%, 66% { transform: rotate(2.4deg) scale(1.004); }
+  100% { transform: rotate(-2.4deg) scale(1.004); }
+}
+
+/* Academic Tools example ------------------------------------------------ */
+
+.citation-example-strip {
+  display: grid;
+  grid-template-columns: minmax(132px, 170px) minmax(0, 1fr);
+  gap: 20px 24px;
+  align-items: center;
+  margin: 0 0 30px;
+  padding: 12px 18px 12px 12px;
+  overflow: hidden;
+  color: #f6fbff;
+  background:
+    radial-gradient(circle at 7% 12%, rgba(139, 216, 255, .18), transparent 38%),
+    rgba(2, 18, 32, .56);
+  border: 1px solid rgba(139, 216, 255, .22);
+  border-radius:
+    26px 58px 28px 46px /
+    24px 40px 36px 52px;
+}
+
+.citation-example-visual {
+  grid-row: span 2;
+  align-self: stretch;
+  min-height: 142px;
+  margin: 0;
+  overflow: hidden;
+  border-radius:
+    20px 42px 22px 34px /
+    18px 28px 32px 44px;
+}
+
+.citation-example-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 142px;
+  object-fit: cover;
+}
+
+.citation-example-copy {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.citation-example-copy > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #8bd8ff;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.citation-example-copy h3 {
+  margin: 0;
+  color: inherit;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+.citation-example-copy p {
+  margin: 8px 0 0;
+  color: rgba(229, 241, 250, .8);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.citation-example-copy small {
+  display: block;
+  margin-top: 7px;
+  color: rgba(229, 241, 250, .58);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.citation-example-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-self: start;
+}
+
+.citation-example-actions button {
+  min-height: 35px;
+  padding: 7px 13px;
+  color: #eaf7ff;
+  background: rgba(139, 216, 255, .08);
+  border: 1px solid rgba(139, 216, 255, .25);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 780;
+  transition: transform 160ms ease, color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.citation-example-actions button:is(:hover, :focus-visible) {
+  color: #071a2e;
+  background: #8bd8ff;
+  border-color: #8bd8ff;
+  transform: translateY(-1px);
+}
+
+html[data-theme="day"] .citation-example-strip {
+  color: #071a2e;
+  background:
+    radial-gradient(circle at 7% 12%, rgba(79, 178, 235, .2), transparent 40%),
+    rgba(244, 250, 254, .92);
+  border-color: rgba(23, 77, 191, .2);
+}
+
+html[data-theme="day"] .citation-example-copy > span {
+  color: #12628d;
+}
+
+html[data-theme="day"] .citation-example-copy p {
+  color: #3e5970;
+}
+
+html[data-theme="day"] .citation-example-copy small {
+  color: #62798d;
+}
+
+html[data-theme="day"] .citation-example-actions button {
+  color: #174dbf;
+  background: rgba(23, 77, 191, .07);
+  border-color: rgba(23, 77, 191, .22);
+}
+
+html[data-theme="day"] .citation-example-actions button:is(:hover, :focus-visible) {
+  color: #fff;
+  background: #174dbf;
+  border-color: #174dbf;
+}
+
+/* Academic Insights example -------------------------------------------- */
+
+.member-hub[data-active-view="overview"] .hub-chart-empty--interactive {
+  display: grid;
+  max-width: 720px !important;
+  grid-template-columns: minmax(130px, 190px) minmax(0, 1fr);
+  gap: clamp(18px, 3vw, 34px);
+  align-items: center;
+  padding: clamp(16px, 2.4vw, 24px) !important;
+  color: #0a2137;
+  text-align: left;
+  background: linear-gradient(145deg, rgba(246, 251, 255, .96), rgba(228, 242, 251, .94));
+  border: 1px solid rgba(45, 94, 130, .17);
+  border-radius:
+    28px 64px 32px 52px /
+    24px 42px 40px 60px;
+  box-shadow: 0 18px 44px rgba(7, 38, 63, .1);
+}
+
+.hub-insight-example-photo {
+  width: 100%;
+  height: 128px;
+  object-fit: cover;
+  border-radius:
+    22px 44px 24px 34px /
+    20px 30px 34px 46px;
+}
+
+.hub-insight-example-copy {
+  min-width: 0;
+}
+
+.hub-insight-example-copy > span,
+.hub-insight-example-head-copy > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #14628d;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.member-hub[data-active-view="overview"] .hub-insight-example-copy > b {
+  display: block;
+  max-width: 28ch;
+  margin: 0;
+  color: #071d32;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.14;
+  letter-spacing: -.026em;
+}
+
+.member-hub[data-active-view="overview"] .hub-insight-example-copy > p {
+  margin: 8px 0 14px;
+  color: #587087;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hub-insight-example-button,
+.hub-insight-example-tabs button {
+  min-height: 36px;
+  padding: 8px 14px;
+  color: #fff;
+  background: #174dbf;
+  border: 1px solid #174dbf;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.hub-insight-example-button:is(:hover, :focus-visible),
+.hub-insight-example-tabs button:is(:hover, :focus-visible),
+.hub-insight-example-tabs button.active {
+  color: #071d32;
+  background: #efc35c;
+  border-color: #efc35c;
+}
+
+.hub-insight-example-head {
+  display: grid;
+  grid-template-columns: 126px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 12px;
+  color: #071d32;
+  background: linear-gradient(145deg, rgba(246, 251, 255, .96), rgba(228, 242, 251, .9));
+  border: 1px solid rgba(45, 94, 130, .15);
+  border-radius:
+    24px 54px 26px 42px /
+    22px 36px 34px 50px;
+}
+
+.hub-insight-example-head img {
+  width: 126px;
+  height: 82px;
+  object-fit: cover;
+  border-radius:
+    17px 34px 18px 27px /
+    16px 23px 25px 36px;
+}
+
+.hub-insight-example-head-copy b {
+  display: block;
+  color: inherit;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.hub-insight-example-head-copy p {
+  margin: 5px 0 10px;
+  color: #587087;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hub-insight-example-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.hub-insight-example-tabs button {
+  min-height: 31px;
+  padding: 6px 11px;
+  color: #174dbf;
+  background: transparent;
+  border-color: rgba(23, 77, 191, .28);
+}
+
+.hub-insight-example-tabs button[data-insight-example-action="close"] {
+  color: #526b80;
+  border-color: rgba(82, 107, 128, .22);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] :is(
+  .hub-chart-empty--interactive,
+  .hub-insight-example-head
+) {
+  color: #f5faff;
+  background: linear-gradient(145deg, rgba(11, 43, 69, .96), rgba(5, 27, 47, .94));
+  border-color: rgba(139, 216, 255, .22);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] :is(
+  .hub-insight-example-copy > b,
+  .hub-insight-example-head-copy b
+) {
+  color: #f5faff;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] :is(
+  .hub-insight-example-copy > p,
+  .hub-insight-example-head-copy p
+) {
+  color: rgba(226, 240, 250, .74);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"] :is(
+  .hub-insight-example-copy > span,
+  .hub-insight-example-head-copy > span
+) {
+  color: #8bd8ff;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"]
+  .hub-insight-example-tabs button {
+  color: #b8e8fb;
+  border-color: rgba(139, 216, 255, .28);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="overview"]
+  .hub-insight-example-tabs button[data-insight-example-action="close"] {
+  color: rgba(226, 240, 250, .7);
+  border-color: rgba(226, 240, 250, .2);
+}
+
+@media (max-width: 760px) {
+  .member-hub[data-active-view="academic-tools"] .hub-art-fragment-primary {
+    top: 40% !important;
+    left: 48% !important;
+    width: 44vw !important;
+  }
+
+  .member-hub[data-active-view="academic-tools"] .hub-art-fragment-secondary {
+    display: none !important;
+  }
+
+  .member-hub[data-active-view="overview"] .hub-art-fragment-primary {
+    clip-path: circle(27% at 73.5% 48%) !important;
+  }
+
+  .citation-example-strip {
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 14px 16px;
+    padding: 10px 14px 10px 10px;
+  }
+
+  .citation-example-visual,
+  .citation-example-visual img {
+    min-height: 132px;
+  }
+
+  .citation-example-actions {
+    gap: 6px;
+  }
+
+  .citation-example-actions button {
+    min-height: 32px;
+    padding: 6px 10px;
+  }
+
+  .member-hub[data-active-view="overview"] .hub-chart-empty--interactive,
+  .hub-insight-example-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub-insight-example-photo {
+    height: 150px;
+  }
+
+  .hub-insight-example-head img {
+    width: 100%;
+    height: 132px;
+  }
+}
+
+@media (max-width: 480px) {
+  .citation-example-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .citation-example-visual {
+    grid-row: auto;
+    height: 150px;
+  }
+
+  .citation-example-actions {
+    grid-column: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-hub[data-active-view="academic-tools"] .hub-art-fragment,
+  .member-hub[data-active-view="overview"] .hub-art-fragment-primary {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .citation-example-actions button {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .citation-example-strip,
+  .member-hub[data-active-view="overview"] :is(
+    .hub-chart-empty--interactive,
+    .hub-insight-example-head
+  ) {
+    color: CanvasText !important;
+    background: Canvas !important;
+    border: 1px solid CanvasText !important;
+  }
+}

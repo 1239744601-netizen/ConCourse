@@ -57,8 +57,8 @@ test("each Hub destination has one original artwork and one visible-image rule",
     community: "concourse-art-community.jpg",
     marketplace: "concourse-art-market.jpg",
     messages: "concourse-art-messages.jpg",
-    overview: "concourse-art-insights.jpg",
-    "academic-tools": "concourse-art-citations.jpg",
+    overview: "concourse-art-insights-v2.jpg",
+    "academic-tools": "concourse-art-citations-motion.jpg",
     profile: "concourse-art-profile.jpg"
   };
 

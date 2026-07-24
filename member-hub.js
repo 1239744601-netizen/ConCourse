@@ -35,6 +35,7 @@
     profilePreviewBackgroundModals: [],
     insightRows: [],
     insightsLoaded: false,
+    insightDemoMode: "",
     feed: [],
     conversations: [],
     activeConversationId: null,
@@ -99,6 +100,18 @@
   const COMMUNITY_FEED_PAGE_SIZE = 30;
   const COMMUNITY_FEED_WINDOW = 90;
   const HUB_RPC_TIMEOUT_MS = 15000;
+  const INSIGHT_DEMO_ROWS = Object.freeze({
+    major:Object.freeze([
+      Object.freeze({course_key:"FIN-310", course_code:"FIN 310", course_name:"Corporate Finance", selection_count:31, cohort_size:40, share_percent:78}),
+      Object.freeze({course_key:"BUS-320", course_code:"BUS 320", course_name:"Business Analytics", selection_count:27, cohort_size:40, share_percent:68}),
+      Object.freeze({course_key:"MGT-305", course_code:"MGT 305", course_name:"Strategic Management", selection_count:22, cohort_size:40, share_percent:55})
+    ]),
+    university:Object.freeze([
+      Object.freeze({course_key:"DAT-101", course_code:"DAT 101", course_name:"Data Literacy", selection_count:184, cohort_size:260, share_percent:71}),
+      Object.freeze({course_key:"COM-120", course_code:"COM 120", course_name:"Academic Communication", selection_count:153, cohort_size:260, share_percent:59}),
+      Object.freeze({course_key:"SUS-110", course_code:"SUS 110", course_name:"Sustainability in Practice", selection_count:117, cohort_size:260, share_percent:45})
+    ])
+  });
 
   const node = (tag, className="", content="") => {
     const element = document.createElement(tag);
@@ -257,6 +270,7 @@
     hubState.socialStatus = null;
     hubState.insightRows = [];
     hubState.insightsLoaded = false;
+    hubState.insightDemoMode = "";
     hubState.feed = [];
     hubState.conversations = [];
     hubState.activeConversationId = null;
@@ -762,21 +776,77 @@
     return true;
   }
 
-  function insightEmpty(title, description){
+  function insightEmpty(title, description, {offerExample=false}={}){
     const container = $("courseInsightChart");
     container.replaceChildren();
-    const empty = node("div", "hub-chart-empty");
-    empty.append(node("b", "", title), node("span", "", description));
+    const empty = node("div", `hub-chart-empty${offerExample ? " hub-chart-empty--interactive" : ""}`);
+    if(!offerExample){
+      empty.append(node("b", "", title), node("span", "", description));
+      container.append(empty);
+      return;
+    }
+    const photo = document.createElement("img");
+    photo.className = "hub-insight-example-photo";
+    photo.src = "concourse-demo-insights.jpg";
+    photo.width = 1536;
+    photo.height = 1024;
+    photo.loading = "lazy";
+    photo.decoding = "async";
+    photo.alt = t("insightExamplePhotoAlt");
+    const copy = node("div", "hub-insight-example-copy");
+    copy.append(
+      node("span", "", t("insightExampleEyebrow")),
+      node("b", "", t("insightExampleTitle")),
+      node("p", "", t("insightExampleDescription"))
+    );
+    const button = node("button", "hub-insight-example-button", t("insightPreviewExample"));
+    button.type = "button";
+    button.dataset.insightExampleAction = "preview";
+    copy.append(button);
+    empty.append(photo, copy);
     container.append(empty);
   }
 
-  function renderInsights(rows){
+  function appendInsightExampleHead(container, mode){
+    const head = node("div", "hub-insight-example-head");
+    const photo = document.createElement("img");
+    photo.src = "concourse-demo-insights.jpg";
+    photo.width = 1536;
+    photo.height = 1024;
+    photo.loading = "lazy";
+    photo.decoding = "async";
+    photo.alt = t("insightExamplePhotoAlt");
+    const copy = node("div", "hub-insight-example-head-copy");
+    copy.append(
+      node("span", "", t("insightExampleEyebrow")),
+      node("b", "", t("insightExampleLabel")),
+      node("p", "", t("insightExampleDescription"))
+    );
+    const tabs = node("div", "hub-insight-example-tabs");
+    [
+      ["major", t("insightExampleSameMajor")],
+      ["university", t("insightExampleUniversity")],
+      ["close", t("insightExampleExit")]
+    ].forEach(([action, label]) => {
+      const button = node("button", action === mode ? "active" : "", label);
+      button.type = "button";
+      button.dataset.insightExampleAction = action;
+      if(action !== "close") button.setAttribute("aria-pressed", action === mode ? "true" : "false");
+      tabs.append(button);
+    });
+    copy.append(tabs);
+    head.append(photo, copy);
+    container.append(head);
+  }
+
+  function renderInsights(rows, {exampleMode=""}={}){
     const container = $("courseInsightChart");
     container.replaceChildren();
     if(!Array.isArray(rows) || !rows.length){
-      insightEmpty(t("courseInsightNoData"), t("courseInsightPrivacy", {minimum:"5"}));
+      insightEmpty(t("courseInsightNoData"), t("courseInsightPrivacy", {minimum:"5"}), {offerExample:true});
       return;
     }
+    if(exampleMode) appendInsightExampleHead(container, exampleMode);
     rows.forEach(row => {
       const share = Math.max(0, Math.min(100, Number(row.share_percent || 0)));
       const chartRow = node("div", "hub-chart-row");
@@ -795,11 +865,21 @@
       chartRow.append(label, track, node("div", "hub-chart-value", `${share}%`));
       container.append(chartRow);
     });
-    setStatus("courseInsightStatus", t("courseChoiceParticipants", {count:rows[0].cohort_size || 0}));
+    setStatus(
+      "courseInsightStatus",
+      exampleMode ? t("insightExampleStatus") : t("courseChoiceParticipants", {count:rows[0].cohort_size || 0})
+    );
+  }
+
+  function renderInsightExample(mode="major"){
+    const nextMode = INSIGHT_DEMO_ROWS[mode] ? mode : "major";
+    hubState.insightDemoMode = nextMode;
+    renderInsights(INSIGHT_DEMO_ROWS[nextMode], {exampleMode:nextMode});
   }
 
   async function loadCourseInsights(){
     if(!authClient || !currentUser) return;
+    hubState.insightDemoMode = "";
     const context = requestContext();
     setStatus("courseInsightStatus", t("courseInsightLoading"));
     $("loadCourseInsights").disabled = true;
@@ -3352,7 +3432,10 @@
     window.syncPrimaryNavigation?.();
     renderSocialConnections();
     if(!$("memberHub").hidden){
-      if(hubState.activeView === "overview" && hubState.insightsLoaded) renderInsights(hubState.insightRows);
+      if(hubState.activeView === "overview" && hubState.insightsLoaded){
+        if(hubState.insightDemoMode) renderInsightExample(hubState.insightDemoMode);
+        else renderInsights(hubState.insightRows);
+      }
       if(hubState.activeView === "community") renderCommunityFeed(hubState.feed);
       if(hubState.activeView === "community") renderConversationPreview();
       if(hubState.activeView === "messages"){
@@ -3371,6 +3454,17 @@
   document.querySelectorAll("[data-hub-target]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.hubTarget)));
   $("loadCourseInsights")?.addEventListener("click", loadCourseInsights);
   $("courseInsightScope")?.addEventListener("change", syncInsightYearControl);
+  $("courseInsightChart")?.addEventListener("click", event => {
+    const button = event.target.closest?.("[data-insight-example-action]");
+    if(!button) return;
+    const action = button.dataset.insightExampleAction;
+    if(action === "preview") renderInsightExample("major");
+    else if(action === "major" || action === "university") renderInsightExample(action);
+    else if(action === "close"){
+      hubState.insightDemoMode = "";
+      renderInsights(hubState.insightRows);
+    }
+  });
   $("saveMemberProfile")?.addEventListener("click", saveMemberProfile);
   $("chooseProfileAvatar")?.addEventListener("click", () => $("profileAvatarInput").click());
   $("profileAvatarInput")?.addEventListener("change", event => void prepareProfileAvatar(event.target.files?.[0]));

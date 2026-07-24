@@ -6,6 +6,45 @@
   const MAX_REFERENCE_LENGTH = 5000;
   const STYLE_VALUES = new Set(["apa", "mla", "chicago", "harvard", "ieee"]);
   const SOURCE_VALUES = new Set(["book", "journal", "website"]);
+  const CITATION_EXAMPLES = Object.freeze({
+    website:Object.freeze({
+      source:"website",
+      fields:Object.freeze({
+        citationAuthorType:"organization",
+        citationAuthors:"W3C Web Accessibility Initiative (WAI)",
+        citationTitle:"Introduction to Web Accessibility",
+        citationYear:"",
+        citationPublicationDate:"",
+        citationSite:"W3C Web Accessibility Initiative",
+        citationLocator:"https://www.w3.org/WAI/fundamentals/accessibility-intro/"
+      })
+    }),
+    journal:Object.freeze({
+      source:"journal",
+      fields:Object.freeze({
+        citationAuthorType:"person",
+        citationAuthors:"Zimmerman, Barry J.",
+        citationTitle:"Becoming a Self-Regulated Learner: An Overview",
+        citationYear:"2002",
+        citationJournal:"Theory Into Practice",
+        citationVolume:"41",
+        citationIssue:"2",
+        citationPages:"64–70",
+        citationLocator:"10.1207/s15430421tip4102_2"
+      })
+    }),
+    book:Object.freeze({
+      source:"book",
+      fields:Object.freeze({
+        citationAuthorType:"person",
+        citationAuthors:"Booth, Wayne C.; Colomb, Gregory G.; Williams, Joseph M.",
+        citationTitle:"The Craft of Research",
+        citationYear:"2016",
+        citationPublisher:"University of Chicago Press",
+        citationEdition:"4"
+      })
+    })
+  });
 
   const COPY = Object.freeze({
     en: Object.freeze({
@@ -416,7 +455,27 @@
   });
 
   const ACADEMIC_COPY_REFINEMENTS = Object.freeze({
+    en: Object.freeze({
+      citationExampleEyebrow:"Interactive examples",
+      citationExampleTitle:"See a polished reference take shape",
+      citationExampleText:"Load a complete sample, then change any field to see the reference and in-text citation update.",
+      citationExampleNotSaved:"Examples stay out of your bibliography until you choose Add.",
+      citationExampleWebsite:"Website",
+      citationExampleJournal:"Journal",
+      citationExampleBook:"Book",
+      citationExampleLoaded:"Example loaded. Edit any field or add the finished reference when you are ready.",
+      citationExampleImageAlt:"A library desk with an open research book, laptop and source notes."
+    }),
     "zh-CN": Object.freeze({
+      citationExampleEyebrow:"互动示例",
+      citationExampleTitle:"查看规范参考文献如何生成",
+      citationExampleText:"载入完整示例，再修改任意字段，观察参考文献和文内引用实时更新。",
+      citationExampleNotSaved:"只有点击“加入参考书目”后，示例才会保存。",
+      citationExampleWebsite:"网页",
+      citationExampleJournal:"期刊",
+      citationExampleBook:"书籍",
+      citationExampleLoaded:"示例已载入。你可以修改字段，确认后再加入参考书目。",
+      citationExampleImageAlt:"图书馆书桌上摆有研究书籍、手提电脑和来源笔记。",
       toolsWorkspaceTitle:"参考文献工作室",
       toolsWorkspaceIntro:"生成规范的参考文献、核对文内引用，并整理当前项目的参考书目。",
       toolsLocalNote:"手动输入的来源与已保存的参考书目只保存在此设备。学术关键词结果来自 Crossref 免费公开元数据；所选网页会由 ConCourse 核对。",
@@ -468,6 +527,15 @@
       styleMlaAdvice:"MLA 第 9 版 · 常用于人文学科。请检查标题大小写及课程要求的收录来源信息。"
     }),
     "zh-HK": Object.freeze({
+      citationExampleEyebrow:"互動示例",
+      citationExampleTitle:"查看完整參考文獻如何建立",
+      citationExampleText:"載入完整示例，再修改任何欄位，查看參考文獻和文內引用即時更新。",
+      citationExampleNotSaved:"只有按下「加入參考書目」後，示例才會儲存。",
+      citationExampleWebsite:"網頁",
+      citationExampleJournal:"期刊",
+      citationExampleBook:"書籍",
+      citationExampleLoaded:"示例已載入。你可以修改欄位，確認後再加入參考書目。",
+      citationExampleImageAlt:"圖書館書桌上放有研究書籍、手提電腦和來源筆記。",
       toolsWorkspaceTitle:"參考文獻工作室",
       toolsWorkspaceIntro:"建立格式規範的參考文獻、查看文內引用，並整理目前項目的參考書目。",
       toolsLocalNote:"手動輸入的資料和已儲存的參考書目只會保留在此裝置。學術關鍵字搜尋結果來自 Crossref 的免費公開中繼資料；所選網頁會由 ConCourse 核對。",
@@ -1810,6 +1878,38 @@
     byId("citationTitle")?.focus();
   }
 
+  function loadCitationExample(exampleName){
+    const example = CITATION_EXAMPLES[exampleName];
+    if(!example) return;
+    resetFormState();
+    const styleControl = document.querySelector('input[name="citationStyle"][value="apa"]');
+    const sourceControl = document.querySelector(`input[name="citationSource"][value="${example.source}"]`);
+    if(styleControl) styleControl.checked = true;
+    if(sourceControl) sourceControl.checked = true;
+    if(example.source === "website"){
+      const manualControl = document.querySelector('input[name="citationEntryMode"][value="manual"]');
+      if(manualControl) manualControl.checked = true;
+    }
+    syncSourceFields({render:false});
+    syncStyle({render:false});
+    Object.entries(example.fields).forEach(([id, value]) => {
+      const control = byId(id);
+      if(control) control.value = value;
+    });
+    if(example.source === "website"){
+      if(byId("citationAutomaticUrl")) byId("citationAutomaticUrl").value = example.fields.citationLocator || "";
+      if(byId("citationAccessDate")) byId("citationAccessDate").value = localDateValue();
+    }
+    renderPreview({announce:true});
+    setStatus(tr("citationExampleLoaded"), "success", true);
+    const preview = byId("citationPreview");
+    preview?.scrollIntoView({
+      behavior:window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? "auto" : "smooth",
+      block:"center"
+    });
+    preview?.focus({preventScroll:true});
+  }
+
   function clearBibliography(){
     if(!state.library.length || !window.confirm(tr("bibliographyClearConfirm"))) return;
     const previous = [...state.library];
@@ -1836,6 +1936,7 @@
       else element.placeholder = value;
     });
     document.querySelectorAll("[data-academic-i18n-aria-label]").forEach(element => { element.setAttribute("aria-label", tr(element.dataset.academicI18nAriaLabel)); });
+    document.querySelectorAll("[data-academic-i18n-alt]").forEach(element => { element.setAttribute("alt", tr(element.dataset.academicI18nAlt)); });
     setLookupBusy(state.lookupBusy, state.lookupMode);
     renderSearchResults();
     syncStyle();
@@ -1900,6 +2001,10 @@
       if(!button) return;
       const index = Number(button.dataset.citationResultIndex);
       if(Number.isInteger(index)) void selectSearchResult(index);
+    });
+    document.querySelector(".citation-example-actions")?.addEventListener("click", event => {
+      const button = event.target.closest?.("[data-citation-example]");
+      if(button) loadCitationExample(button.dataset.citationExample);
     });
     byId("citationOutput")?.addEventListener("input", editCurrentReference);
     byId("citationOutput")?.addEventListener("paste", pastePlainReference);
