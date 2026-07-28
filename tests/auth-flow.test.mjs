@@ -5,7 +5,9 @@ import test from "node:test";
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
 function functionBody(name, nextName){
-  const pattern = new RegExp(`function ${name}\\([^)]*\\)\\{([\\s\\S]*?)\\n\\}\\n\\nfunction ${nextName}`);
+  const pattern = new RegExp(
+    `function ${name}\\([^)]*\\)\\{([\\s\\S]*?)\\n\\}\\n\\n(?:async )?function ${nextName}`
+  );
   const match = html.match(pattern);
   assert.ok(match, `${name} should remain available for auth regression tests`);
   return match[1];
@@ -140,4 +142,30 @@ test("account creation requires password confirmation, privacy acknowledgement, 
   assert.match(html, /password !== \$\("authPasswordConfirm"\)\.value/);
   assert.match(html, /!\$\("authPrivacyConsent"\)\.checked/);
   assert.match(html, /signingUp && result\.data\.session[\s\S]*?auth\.signOut\(\)[\s\S]*?verificationMisconfigured/);
+});
+
+test("accepted privacy notice is recorded after the matching user obtains a verified session", () => {
+  assert.match(html, /const PRIVACY_NOTICE_VERSION = "2026-07-28"/);
+  assert.match(html, /localStorage\.setItem\(PENDING_PRIVACY_NOTICE_STORAGE_KEY, JSON\.stringify\(marker\)\)/);
+
+  const submitBody = functionBody("submitAuth", "initializeAccount");
+  assert.match(
+    submitBody,
+    /if\(signingUp && !result\.data\.session\)\{[\s\S]*?rememberPendingPrivacyNotice\(result\.data\.user\?\.id\)/
+  );
+
+  const flushBody = functionBody("flushPendingPrivacyNotice", "getAcademicIdentity");
+  assert.match(flushBody, /!session\?\.access_token[\s\S]*?!user\.email_confirmed_at/);
+  assert.match(flushBody, /pending\.userId !== user\.id/);
+  assert.match(
+    flushBody,
+    /authClient\.rpc\("record_privacy_notice_acceptance", \{\s*p_notice_version:pending\.noticeVersion/
+  );
+  assert.ok(
+    flushBody.indexOf("if(error)") < flushBody.indexOf("clearPendingPrivacyNotice()"),
+    "the local marker must remain available when the RPC fails"
+  );
+
+  const applySessionBody = functionBody("applySession", "submitAuth");
+  assert.match(applySessionBody, /if\(signedIn\)\{\s*void flushPendingPrivacyNotice\(session\)/);
 });

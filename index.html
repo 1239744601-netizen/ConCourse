@@ -3795,6 +3795,8 @@ function invalidateSchedules(){
 // The publishable key is safe in browser code when Row Level Security is enabled.
 const SUPABASE_URL = "https://uqnwvxceznsxbxhkspeo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Sl_mKACQoAp70JNH3og2uw_hMFXSZn4";
+const PRIVACY_NOTICE_VERSION = "2026-07-28";
+const PENDING_PRIVACY_NOTICE_STORAGE_KEY = "concourse_pending_privacy_notice";
 // Keep auth callbacks on whichever trusted host is serving this build. This
 // supports GitHub Pages, Cloudflare Pages, local QA, and future custom domains
 // without shipping a stale hard-coded URL.
@@ -3828,6 +3830,7 @@ let usernameCheckTimer = null;
 let usernameAvailable = null;
 let usernameCheckSequence = 0;
 let usernameCheckedValue = "";
+const privacyNoticeRecordings = new Map();
 const schoolSearchCache = new Map();
 const ROR_DIRECTORY_URL = "https://api.ror.org/v2/organizations";
 const HIPO_DIRECTORY_URL = "https://universities.hipolabs.com/search";
@@ -3859,6 +3862,84 @@ function rememberVerificationEmail(email){
 function restoreVerificationEmail(){
   try { return sessionStorage.getItem("concourse_pending_verification_email") || ""; }
   catch(_error){ return ""; }
+}
+
+function rememberPendingPrivacyNotice(userId, noticeVersion=PRIVACY_NOTICE_VERSION){
+  const marker = {
+    userId:String(userId || "").trim(),
+    noticeVersion:String(noticeVersion || "").trim()
+  };
+  if(!marker.userId || !marker.noticeVersion || marker.noticeVersion.length > 80) return false;
+  try {
+    localStorage.setItem(PENDING_PRIVACY_NOTICE_STORAGE_KEY, JSON.stringify(marker));
+    return true;
+  } catch(_error){
+    return false;
+  }
+}
+
+function restorePendingPrivacyNotice(){
+  try {
+    const rawMarker = localStorage.getItem(PENDING_PRIVACY_NOTICE_STORAGE_KEY);
+    if(!rawMarker) return null;
+    const marker = JSON.parse(rawMarker);
+    const userId = String(marker?.userId || "").trim();
+    const noticeVersion = String(marker?.noticeVersion || "").trim();
+    if(!userId || !noticeVersion || noticeVersion.length > 80){
+      localStorage.removeItem(PENDING_PRIVACY_NOTICE_STORAGE_KEY);
+      return null;
+    }
+    return {userId, noticeVersion};
+  } catch(_error){
+    try { localStorage.removeItem(PENDING_PRIVACY_NOTICE_STORAGE_KEY); } catch(_storageError){}
+    return null;
+  }
+}
+
+function clearPendingPrivacyNotice(){
+  try { localStorage.removeItem(PENDING_PRIVACY_NOTICE_STORAGE_KEY); } catch(_error){}
+}
+
+async function flushPendingPrivacyNotice(session){
+  const user = session?.user;
+  if(!authClient || !session?.access_token || !user?.id || !user.email_confirmed_at) return false;
+  const pending = restorePendingPrivacyNotice();
+  if(!pending || pending.userId !== user.id) return false;
+
+  const recordingKey = `${pending.userId}:${pending.noticeVersion}`;
+  if(privacyNoticeRecordings.has(recordingKey)) return privacyNoticeRecordings.get(recordingKey);
+
+  const recording = (async () => {
+    try {
+      const { error } = await authClient.rpc("record_privacy_notice_acceptance", {
+        p_notice_version:pending.noticeVersion
+      });
+      if(error){
+        console.warn("Privacy notice acceptance could not be recorded yet:", error);
+        return false;
+      }
+      const currentMarker = restorePendingPrivacyNotice();
+      if(
+        currentMarker?.userId === pending.userId &&
+        currentMarker.noticeVersion === pending.noticeVersion
+      ){
+        clearPendingPrivacyNotice();
+      }
+      return true;
+    } catch(error){
+      console.warn("Privacy notice acceptance could not be recorded yet:", error);
+      return false;
+    }
+  })();
+
+  privacyNoticeRecordings.set(recordingKey, recording);
+  try {
+    return await recording;
+  } finally {
+    if(privacyNoticeRecordings.get(recordingKey) === recording){
+      privacyNoticeRecordings.delete(recordingKey);
+    }
+  }
 }
 
 function getAcademicIdentity(){
@@ -4830,6 +4911,7 @@ function applySession(session){
   }
 
   if(signedIn){
+    void flushPendingPrivacyNotice(session);
     closeAuthModal();
     if(loadedUserId !== currentUser.id) loadUserState();
   } else {
@@ -4991,6 +5073,7 @@ async function submitAuth(mode){
     }
     if(signingUp && !result.data.session){
       // Avoid an immediate duplicate request consuming Supabase's email quota.
+      rememberPendingPrivacyNotice(result.data.user?.id);
       rememberVerificationEmail(email);
       $("authEmail").value = email;
       $("authVerificationCode").value = "";
