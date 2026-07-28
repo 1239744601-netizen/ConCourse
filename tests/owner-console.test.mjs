@@ -2,10 +2,29 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+/*
+ * Legacy Owner Console compatibility checks.
+ *
+ * These are source-contract checks, not a live Supabase/RLS execution. The
+ * capability-based Verification Center supersedes the school-only browser
+ * flow while preserving the original route, role registry, context keys, and
+ * school-review RPC signatures for already-deployed installations.
+ */
+
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const js = readFileSync(new URL("../member-hub.js", import.meta.url), "utf8");
-const ownerSql = readFileSync(new URL("../supabase-owner-console.sql", import.meta.url), "utf8");
-const trustSql = readFileSync(new URL("../supabase-account-trust-and-data-fix.sql", import.meta.url), "utf8");
+const ownerSql = readFileSync(
+  new URL("../supabase-owner-console.sql", import.meta.url),
+  "utf8"
+);
+const trustSql = readFileSync(
+  new URL("../supabase-account-trust-and-data-fix.sql", import.meta.url),
+  "utf8"
+);
+const verificationSql = readFileSync(
+  new URL("../supabase-verification-center.sql", import.meta.url),
+  "utf8"
+);
 
 function sourceBetween(source, start, end){
   const startIndex = source.indexOf(start);
@@ -15,154 +34,229 @@ function sourceBetween(source, start, end){
   return source.slice(startIndex, endIndex);
 }
 
-test("Owner Console navigation and content are hidden until access is confirmed", () => {
-  assert.match(html, /<small[^>]+id="hubAdminRoleBadge"[^>]+hidden/);
-  assert.match(html, /<button[^>]+id="hubOwnerConsoleNav"[^>]+data-hub-target="owner-console"[^>]+hidden/);
-  assert.match(html, /<section[^>]+id="hubOwnerConsoleView"[^>]+data-hub-view="owner-console"[^>]+hidden/);
+function sqlFunction(source, name){
+  return sourceBetween(
+    source,
+    `create or replace function public.${name}(`,
+    `revoke all on function public.${name}(`
+  );
+}
 
-  const renderAccess = sourceBetween(js, "function renderAdminAccess(){", "async function loadAdminContext");
-  assert.match(renderAccess, /const allowed = canReviewSchoolVerifications\(\)/);
-  assert.match(renderAccess, /badge\.hidden = !allowed/);
-  assert.match(renderAccess, /navigation\.hidden = !allowed/);
-  assert.match(renderAccess, /if\(!allowed\)\{[\s\S]*?badge\.textContent = ""/);
+test("the legacy owner-console route remains hidden and compatible with the Verification Center", () => {
+  assert.match(
+    html,
+    /id="hubOwnerConsoleNav"[^>]+data-hub-target="owner-console"[^>]+aria-controls="hubOwnerConsoleView"[^>]+hidden/
+  );
+  assert.match(
+    html,
+    /id="hubOwnerConsoleView"[^>]+data-hub-view="owner-console"[^>]+hidden/
+  );
+  assert.match(html, /id="hubOwnerConsoleNavLabel">Verification Center</);
+  assert.match(js, /data-hub-view="owner-console"|activeView === "owner-console"/);
+  assert.match(
+    js,
+    /const canReviewSchoolVerifications = \(\) => canOpenVerificationCenter\(\)/
+  );
 
-  const switchView = sourceBetween(js, "async function switchView(view){", "function messageViewIsActive");
-  assert.match(switchView, /view === "owner-console" && !canReviewSchoolVerifications\(\)\) view = "community"/);
+  const switchView = sourceBetween(
+    js,
+    "async function switchView(view){",
+    "function messageViewIsActive"
+  );
+  assert.match(
+    switchView,
+    /view === "owner-console" && !canReviewSchoolVerifications\(\)\) view = "community"/
+  );
 });
 
-test("the signed-in user's protected administrator context controls owner and reviewer access", () => {
-  const loadContext = sourceBetween(js, "async function loadAdminContext({force=false}={}){", "function adminDetail");
-
-  assert.match(loadContext, /hubRpc\("get_my_concourse_admin_context"\)/);
-  assert.match(loadContext, /\["owner", "reviewer"\]\.includes\(role\)/);
-  assert.match(loadContext, /payload\?\.is_admin === false[\s\S]*?\? "" : role/);
-  assert.match(loadContext, /if\(!hubState\.adminRole\)\{[\s\S]*?hubState\.adminQueue = \[\]/);
-  assert.match(loadContext, /hubState\.activeView === "owner-console"\) void switchView\("community"\)/);
-
-  assert.match(ownerSql, /where admin_user\.user_id = caller/);
-  assert.match(ownerSql, /'is_admin', admin_role is not null/);
-  assert.match(ownerSql, /coalesce\(admin_role in \('owner', 'reviewer'\), false\)/);
+test("the original owner migration preserves its protected registry and school RPC signatures", () => {
+  assert.match(
+    ownerSql,
+    /intentionally preserves the[\s\S]*existing school-verification queue and decision RPC signatures/
+  );
+  assert.match(
+    ownerSql,
+    /to_regprocedure\(\s*'public\.get_school_verification_review_queue\(text,integer\)'/
+  );
+  assert.match(
+    ownerSql,
+    /to_regprocedure\(\s*'public\.review_school_verification_request\(uuid,text,text,text\)'/
+  );
   assert.match(
     ownerSql,
     /revoke all on table public\.concourse_admins\s+from public, anon, authenticated/
   );
+  assert.doesNotMatch(
+    ownerSql,
+    /grant\s+(?:select|insert|update|delete|all)\s+on\s+(?:table\s+)?public\.concourse_admins\s+to\s+(?:anon|authenticated)/i
+  );
 });
 
-test("ordinary users are denied both in the interface and by the review RPCs", () => {
-  const loadQueue = sourceBetween(
-    js,
-    "async function loadOwnerConsoleQueue({force=false}={}){",
-    "async function reviewSchoolVerification"
+test("legacy context keys are retained when capability context replaces the old role-only response", () => {
+  const originalContext = sqlFunction(ownerSql, "get_my_concourse_admin_context");
+  const capabilityContext = sqlFunction(
+    verificationSql,
+    "get_my_concourse_admin_context"
   );
-  const reviewRequest = sourceBetween(
-    js,
-    "async function reviewSchoolVerification(request, decision, method, reviewerNote, noteInput){",
-    "async function syncFinalSchedule"
-  );
-
-  assert.match(loadQueue, /if\(!canReviewSchoolVerifications\(\) \|\| !authClient \|\| !currentUser\) return \[\]/);
-  assert.match(reviewRequest, /if\(!canReviewSchoolVerifications\(\) \|\| !request\?\.request_id\) return/);
-
-  const queueRpc = sourceBetween(
-    trustSql,
-    "create or replace function public.get_school_verification_review_queue(",
-    "revoke all on function public.get_school_verification_review_queue"
-  );
-  const reviewRpc = sourceBetween(
-    trustSql,
-    "create or replace function public.review_school_verification_request(",
-    "revoke all on function public.review_school_verification_request"
-  );
-  for(const rpc of [queueRpc, reviewRpc]){
-    assert.match(rpc, /private\.is_concourse_admin\(caller, array\['owner', 'reviewer'\]::text\[\]\)/);
-    assert.match(rpc, /raise exception 'Administrator access required'/);
+  for(const body of [originalContext, capabilityContext]){
+    assert.match(body, /security definer/);
+    assert.match(body, /set search_path = ''/);
+    assert.match(body, /where [a-z_]+\.user_id = caller/);
+    assert.match(body, /'is_admin'/);
+    assert.match(body, /'role'/);
+    assert.match(body, /'view_school_verification_queue'/);
+    assert.match(body, /'review_school_verification_requests'/);
+    assert.match(body, /'view_owner_summary'/);
   }
+  assert.match(capabilityContext, /'view_verification_center'/);
+  assert.match(capabilityContext, /'manage_admin_team'/);
+  assert.match(capabilityContext, /'scopes', to_jsonb\(scope_list\)/);
+
+  const browserContext = sourceBetween(
+    js,
+    "async function loadAdminContext({force=false}={}){",
+    "function adminDetail"
+  );
+  assert.match(browserContext, /hubRpc\("get_my_concourse_admin_context"\)/);
+  assert.match(browserContext, /normalizeAdminCapabilities/);
+  assert.match(browserContext, /payload\?\.is_admin === false/);
 });
 
-test("the verification queue requests the selected status and renders complete review records", () => {
-  const loadQueue = sourceBetween(
-    js,
-    "async function loadOwnerConsoleQueue({force=false}={}){",
-    "async function reviewSchoolVerification"
+test("legacy reviewer and privacy roles map to their historical least-privilege workflows", () => {
+  const scopeList = sourceBetween(
+    verificationSql,
+    "create or replace function private.concourse_admin_scope_list(",
+    "revoke all on function private.concourse_admin_scope_list("
   );
-  const renderQueue = sourceBetween(
-    js,
-    "function renderOwnerConsole(){",
-    "async function loadOwnerOperationalSummary"
+  assert.match(
+    scopeList,
+    /select 'school_verification\.review'::text[\s\S]*?legacy\.role = 'reviewer'/
   );
+  assert.match(
+    scopeList,
+    /select 'account_deletion\.review'::text[\s\S]*?legacy\.role = 'privacy'/
+  );
+  assert.match(
+    scopeList,
+    /select unnest\(private\.allowed_concourse_admin_scopes\(\)\)[\s\S]*?owner_admin\.role = 'owner'/
+  );
+
+  const normalize = sourceBetween(
+    js,
+    "function normalizeAdminCapabilities(payload={}, role=\"\"){",
+    "const hasAdminCapability"
+  );
+  assert.match(
+    normalize,
+    /role === "reviewer"[\s\S]*?normalized\.add\("school_verification\.review"\)/
+  );
+  assert.match(
+    normalize,
+    /role === "privacy"[\s\S]*?normalized\.add\("account_deletion\.review"\)/
+  );
+});
+
+test("the historical school queue and decision RPCs remain server-authorized", () => {
+  const queue = sqlFunction(
+    trustSql,
+    "get_school_verification_review_queue"
+  );
+  const review = sqlFunction(
+    trustSql,
+    "review_school_verification_request"
+  );
+  for(const body of [queue, review]){
+    assert.match(body, /security definer/);
+    assert.match(body, /set search_path = ''/);
+    assert.match(
+      body,
+      /private\.is_concourse_admin\(caller, array\['owner', 'reviewer'\]::text\[\]\)/
+    );
+    assert.match(body, /raise exception 'Administrator access required'/);
+  }
+  assert.match(queue, /p_status text/);
+  assert.match(queue, /p_limit integer/);
+  assert.match(review, /p_request_id uuid/);
+  assert.match(review, /p_decision text/);
+  assert.match(review, /p_verification_method text/);
+  assert.match(review, /p_reviewer_note text/);
 
   assert.match(
-    loadQueue,
-    /hubRpc\("get_school_verification_review_queue", \{\s*p_status:hubState\.adminQueueStatus,\s*p_limit:50\s*\}\)/
+    verificationSql,
+    /'public\.get_school_verification_review_queue\(text,integer\)'/
   );
-  assert.match(loadQueue, /Array\.isArray\(payload\?\.requests\)/);
-  assert.match(loadQueue, /Array\.isArray\(payload\?\.queue\)/);
+  assert.match(
+    verificationSql,
+    /'public\.review_school_verification_request\(uuid,text,text,text\)'/
+  );
+});
 
-  assert.match(renderQueue, /queue\.replaceChildren\(\)/);
-  assert.match(renderQueue, /card\.setAttribute\("role", "listitem"\)/);
-  assert.match(renderQueue, /card\.dataset\.requestId = requestId/);
+test("legacy school records stay safely representable in the generic queue", () => {
+  const genericQueue = sqlFunction(
+    verificationSql,
+    "get_verification_center_queue"
+  );
+  const renderCase = sourceBetween(
+    js,
+    "function renderVerificationCase(record){",
+    "function renderVerificationTeamCopy"
+  );
   for(const field of [
-    "request.school_name",
-    "request.account_email",
-    "request.school_key",
-    "request.evidence_kind",
-    "request.evidence_reference",
-    "request.submitted_at",
-    "request.reviewed_at",
-    "request.user_note"
+    "'request_id'",
+    "'account_email'",
+    "'school_name'",
+    "'school_key'",
+    "'evidence_kind'",
+    "'evidence_reference'",
+    "'user_note'",
+    "'reviewer_note'"
   ]){
-    assert.ok(renderQueue.includes(field), `${field} should be represented in the review queue`);
+    assert.ok(genericQueue.includes(field), `generic queue should preserve ${field}`);
   }
-});
+  assert.match(renderCase, /verificationCaseTitle/);
+  assert.match(renderCase, /verificationCaseSubtitle/);
+  assert.match(renderCase, /verificationCaseDetails/);
+  assert.match(renderCase, /node\("p", "", record\.reviewer_note/);
+  assert.doesNotMatch(renderCase, /innerHTML|insertAdjacentHTML|outerHTML/);
 
-test("Approve and Reject actions call the protected decision RPC with the reviewer's inputs", () => {
-  const renderQueue = sourceBetween(
+  const nodeHelper = sourceBetween(
     js,
-    "function renderOwnerConsole(){",
-    "async function loadOwnerOperationalSummary"
+    'const node = (tag, className="", content="") => {',
+    "const setStatus"
   );
-  const reviewRequest = sourceBetween(
-    js,
-    "async function reviewSchoolVerification(request, decision, method, reviewerNote, noteInput){",
-    "async function syncFinalSchedule"
-  );
-
-  assert.match(
-    renderQueue,
-    /approve\.onclick = \(\) => void reviewSchoolVerification\(request, "approve", method\.value, note\.value, note\)/
-  );
-  assert.match(
-    renderQueue,
-    /reject\.onclick = \(\) => void reviewSchoolVerification\(request, "reject", method\.value, note\.value, note\)/
-  );
-  assert.match(reviewRequest, /decision === "reject" && !note/);
-  assert.match(reviewRequest, /copy\.rejectNoteRequired/);
-  assert.match(
-    reviewRequest,
-    /hubRpc\("review_school_verification_request", \{\s*p_request_id:requestId,\s*p_decision:decision,\s*p_verification_method:method \|\| "manual",\s*p_reviewer_note:note \|\| null\s*\}\)/
-  );
-  assert.match(reviewRequest, /await loadOwnerConsoleQueue\(\{force:true\}\)/);
-});
-
-test("evidence and review notes are rendered as text rather than executable markup", () => {
-  const nodeHelper = sourceBetween(js, "const node = (tag, className=\"\", content=\"\") => {", "const setStatus");
-  const renderQueue = sourceBetween(
-    js,
-    "function renderOwnerConsole(){",
-    "async function loadOwnerOperationalSummary"
-  );
-  const reviewRequest = sourceBetween(
-    js,
-    "async function reviewSchoolVerification(request, decision, method, reviewerNote, noteInput){",
-    "async function syncFinalSchedule"
-  );
-
   assert.match(nodeHelper, /element\.textContent = String\(content\)/);
-  assert.doesNotMatch(nodeHelper, /innerHTML|insertAdjacentHTML|outerHTML/);
-  assert.doesNotMatch(renderQueue, /innerHTML|insertAdjacentHTML|outerHTML/);
-  assert.match(renderQueue, /adminDetail\(copy, copy\.evidenceReference, request\.evidence_reference\)/);
-  assert.match(renderQueue, /node\("p", "", request\.user_note \|\| copy\.noValue\)/);
-  assert.match(renderQueue, /node\("p", "", request\.reviewer_note\)/);
-  assert.match(renderQueue, /status\.replace\(\/\[\^a-z_\]\/g, ""\)/);
-  assert.match(reviewRequest, /CSS\.escape\(requestId\)/);
+});
+
+test("the legacy owner summary stays owner-only and returns aggregates instead of record bodies", () => {
+  const summary = sqlFunction(ownerSql, "get_concourse_owner_summary");
+  assert.match(
+    summary,
+    /private\.is_concourse_admin\(\s*caller,\s*array\['owner'\]::text\[\]\s*\)/
+  );
+  assert.match(summary, /raise exception 'Owner access required'/);
+  for(const group of [
+    "accounts",
+    "school_verification",
+    "account_deletion",
+    "community",
+    "marketplace",
+    "messaging"
+  ]){
+    assert.ok(summary.includes(`'${group}'`), `missing summary group ${group}`);
+  }
+  assert.doesNotMatch(
+    summary,
+    /select\s+(?:app_user|request|post|report|listing|message)\.\*/i
+  );
+
+  const browserSummary = sourceBetween(
+    js,
+    "async function loadOwnerOperationalSummary({force=false}={}){",
+    "async function loadOwnerConsoleQueue"
+  );
+  assert.match(
+    browserSummary,
+    /!hasAdminCapability\("owner_summary\.view"\)/
+  );
+  assert.match(browserSummary, /hubRpc\("get_concourse_owner_summary"\)/);
 });

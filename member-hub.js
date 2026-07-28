@@ -58,14 +58,24 @@
     messageRealtimeChannel: null,
     messageRealtimeActive: false,
     messageRefreshTimer: 0,
+    usernameSearchRequest: 0,
+    usernameSearchTimer: 0,
+    usernameSearchLoading: false,
+    usernameSuggestions: [],
+    usernameSuggestionIndex: -1,
+    messageAvailabilityUpdating: false,
     sendingMessage: false,
     messagePoll: null,
     accountDeletionRequest: null,
     accountDeletionLoading: false,
     schoolVerificationRequest: null,
     schoolVerificationLoading: false,
+    supportRequests: [],
+    supportRequestsLoading: false,
+    supportRequestSubmitting: false,
     adminContextUserId: null,
     adminRole: "",
+    adminCapabilities: new Set(),
     adminContextLoading: false,
     adminQueue: [],
     adminQueueStatus: "submitted",
@@ -77,6 +87,17 @@
     ownerSummary: null,
     ownerSummaryLoading: false,
     ownerSummaryError: "",
+    verificationWorkflow: "school_verification",
+    verificationCounts: {},
+    verificationCountsLoading: false,
+    verificationCountsError: "",
+    verificationCases: [],
+    verificationCaseOffset: 0,
+    verificationCaseHasMore: false,
+    verificationTeam: [],
+    verificationTeamLoading: false,
+    verificationTeamError: "",
+    verificationTeamBusy: new Set(),
     loadingFeed: false,
     loadingConversations: false,
     feedScope: "school",
@@ -132,6 +153,34 @@
   const COMMUNITY_COMMENT_PAGE_SIZE = 30;
   const MESSAGE_PAGE_SIZE = 50;
   const HUB_RPC_TIMEOUT_MS = 15000;
+  const VERIFICATION_PAGE_SIZE = 40;
+  const VERIFICATION_WORKFLOWS = Object.freeze([
+    Object.freeze({id:"school_verification", scope:"school_verification.review", tabId:"verificationTabSchool", countId:"verificationTabSchoolCount", labelKey:"workflowSchool"}),
+    Object.freeze({id:"payment_evidence", scope:"payment_evidence.review", tabId:"verificationTabPayments", countId:"verificationTabPaymentsCount", labelKey:"workflowPayments"}),
+    Object.freeze({id:"marketplace_dispute", scope:"marketplace_disputes.review", tabId:"verificationTabDisputes", countId:"verificationTabDisputesCount", labelKey:"workflowDisputes"}),
+    Object.freeze({id:"marketplace_report", scope:"marketplace_reports.review", tabId:"verificationTabMarketReports", countId:"verificationTabMarketReportsCount", labelKey:"workflowMarketReports"}),
+    Object.freeze({id:"content_report", scope:"content_reports.review", tabId:"verificationTabContentReports", countId:"verificationTabContentReportsCount", labelKey:"workflowContentReports"}),
+    Object.freeze({id:"account_deletion", scope:"account_deletion.review", tabId:"verificationTabDeletion", countId:"verificationTabDeletionCount", labelKey:"workflowDeletion"}),
+    Object.freeze({id:"support_request", scope:"support_requests.review", tabId:"verificationTabSupport", countId:"verificationTabSupportCount", labelKey:"workflowSupport"})
+  ]);
+  const VERIFICATION_STATUS_KEYS = Object.freeze({
+    school_verification:["submitted","under_review","approved","rejected","withdrawn"],
+    payment_evidence:["submitted","under_review","evidence_accepted","rejected","withdrawn"],
+    marketplace_dispute:["open","under_review","resolved_buyer","resolved_seller","closed"],
+    marketplace_report:["open","reviewing","resolved","dismissed"],
+    content_report:["open","reviewing","resolved","dismissed"],
+    account_deletion:["submitted","processing","completed","cancelled"],
+    support_request:["submitted","under_review","resolved","rejected","withdrawn"]
+  });
+  const VERIFICATION_ACTIONS = Object.freeze({
+    school_verification:["start_review","approve","reject"],
+    payment_evidence:["start_review","accept_evidence","reject"],
+    marketplace_dispute:["start_review","recommend_refund","recommend_release","close"],
+    marketplace_report:["start_review","resolve","dismiss"],
+    content_report:["start_review","resolve","dismiss"],
+    account_deletion:["start_review","return_to_queue"],
+    support_request:["start_review","resolve","reject"]
+  });
   let hubStickyGeometryFrame = 0;
   let hubStickyGeometryObserver = null;
 
@@ -623,6 +672,7 @@
     if(/Could not find the function|schema cache|does not exist|relation .* does not exist|PGRST202/i.test(message)) return t("memberSetupRequired");
     if(/already reported/i.test(message)) return t("alreadyReported");
     if(/Please wait/i.test(message)) return t("rateLimited");
+    if(/Enable Allow messages/i.test(message)) return t("messageAvailabilityRequired");
     if(/not accepting messages|Messaging is unavailable|blocked the other/i.test(message)) return t("messagingUnavailable");
     if(/No messageable schoolmate/i.test(message)) return t("conversationStartFailed");
     if(/Post is unavailable|Comment is unavailable|Conversation is unavailable|Campus profile is unavailable/i.test(message)) return t("contentUnavailable");
@@ -634,6 +684,8 @@
 
   const conversationStartError = error => {
     const message = errorText(error);
+    if(/Enable Allow messages/i.test(message)) return t("messageAvailabilityRequired");
+    if(/Multiple usernames differ only by capitalization/i.test(message)) return t("chatUsernameAmbiguous");
     if(/You cannot message yourself|cannot message yourself/i.test(message)) return t("cannotMessageSelf");
     if(/No messageable schoolmate|username.*not found|no account.*username/i.test(message)) return t("conversationStartFailed");
     if(/not accepting messages|Messaging is unavailable|blocked the other/i.test(message)) return t("messagingUnavailable");
@@ -764,13 +816,24 @@
     hubState.messageHasMore = false;
     hubState.messageNextCursor = null;
     hubState.messageLoadingOlder = false;
+    if(hubState.usernameSearchTimer) window.clearTimeout(hubState.usernameSearchTimer);
+    hubState.usernameSearchRequest += 1;
+    hubState.usernameSearchTimer = 0;
+    hubState.usernameSearchLoading = false;
+    hubState.usernameSuggestions = [];
+    hubState.usernameSuggestionIndex = -1;
+    hubState.messageAvailabilityUpdating = false;
     hubState.sendingMessage = false;
     hubState.accountDeletionRequest = null;
     hubState.accountDeletionLoading = false;
     hubState.schoolVerificationRequest = null;
     hubState.schoolVerificationLoading = false;
+    hubState.supportRequests = [];
+    hubState.supportRequestsLoading = false;
+    hubState.supportRequestSubmitting = false;
     hubState.adminContextUserId = null;
     hubState.adminRole = "";
+    hubState.adminCapabilities = new Set();
     hubState.adminContextLoading = false;
     hubState.adminQueue = [];
     hubState.adminQueueStatus = "submitted";
@@ -782,6 +845,17 @@
     hubState.ownerSummary = null;
     hubState.ownerSummaryLoading = false;
     hubState.ownerSummaryError = "";
+    hubState.verificationWorkflow = "school_verification";
+    hubState.verificationCounts = {};
+    hubState.verificationCountsLoading = false;
+    hubState.verificationCountsError = "";
+    hubState.verificationCases = [];
+    hubState.verificationCaseOffset = 0;
+    hubState.verificationCaseHasMore = false;
+    hubState.verificationTeam = [];
+    hubState.verificationTeamLoading = false;
+    hubState.verificationTeamError = "";
+    hubState.verificationTeamBusy.clear();
     hubState.loadingFeed = false;
     hubState.loadingConversations = false;
     hubState.feedScope = "school";
@@ -848,6 +922,9 @@
     $("sendChatMessage").disabled = true;
     $("reportConversation").disabled = true;
     $("blockConversationUser").disabled = true;
+    $("chatUsernameSuggestions")?.replaceChildren();
+    if($("chatUsernameSuggestions")) $("chatUsernameSuggestions").hidden = true;
+    $("chatUsername")?.setAttribute("aria-expanded", "false");
     ["loadCourseInsights", "publishCommunityPost", "startConversation"].forEach(id => { if($(id)) $(id).disabled = false; });
   }
 
@@ -1266,12 +1343,18 @@
     } else if(view === "academic-tools"){
       window.ConCourseAcademicTools?.activate?.();
     } else if(view === "messages"){
-      await loadConversations();
+      renderMessageAvailability();
+      await Promise.all([loadConversations(), loadMemberProfile()]);
     } else if(view === "owner-console"){
-      renderOwnerConsole();
+      renderVerificationCenter();
+      await loadVerificationCenterCounts({force:true});
       await Promise.all([
-        loadOwnerConsoleQueue(),
-        hubState.adminRole === "owner" ? loadOwnerOperationalSummary() : Promise.resolve(null)
+        hubState.verificationWorkflow === "admin_team"
+          ? loadVerificationAdminTeam({force:true})
+          : loadVerificationCenterQueue({force:true}),
+        hasAdminCapability("owner_summary.view")
+          ? loadOwnerOperationalSummary()
+          : Promise.resolve(null)
       ]);
     } else if(view === "profile"){
       ensureAccountTrustControls();
@@ -1279,7 +1362,8 @@
         loadMemberProfile(),
         loadSocialConnections({force:true}),
         loadSchoolVerificationRequest(),
-        loadAccountDeletionRequest()
+        loadAccountDeletionRequest(),
+        loadSupportRequests()
       ]);
     }
   }
@@ -1418,7 +1502,28 @@
         deletionRequestCancelled:"Your deletion request was cancelled.",
         actionFailed:"The request could not be completed. Please try again.",
         requiredReference:"Add the SSO or evidence reference before submitting.",
-        requiredNote:"Add a short note describing the evidence for manual review."
+        requiredNote:"Add a short note describing the evidence for manual review.",
+        supportTitle:"Support Request",
+        supportDescription:"Send an access, marketplace, academic, privacy, or general request to the ConCourse team.",
+        supportCategory:"Category",
+        supportSubject:"Subject",
+        supportDetails:"Details",
+        supportSubmit:"Submit Request",
+        supportLoading:"Loading your support requests…",
+        supportUnavailable:"Support requests become available after the latest Supabase migration is applied.",
+        supportSubmitted:"Your support request was submitted.",
+        supportRequired:"Add a subject and enough detail for the team to help.",
+        supportCurrent:"Your Requests",
+        supportNone:"No support requests yet.",
+        supportAccount:"Account",
+        supportSchool:"School",
+        supportMarketplace:"Marketplace",
+        supportPayment:"Payment",
+        supportCommunity:"Community",
+        supportPrivacy:"Privacy",
+        supportSafety:"Safety",
+        supportTechnical:"Technical",
+        supportOther:"Other"
       },
       "zh-CN":{
         verificationTitle:"校园身份审核",
@@ -1456,7 +1561,28 @@
         deletionRequestCancelled:"账户删除申请已取消。",
         actionFailed:"暂时无法完成申请，请重试。",
         requiredReference:"提交前请填写 SSO 或证明资料。",
-        requiredNote:"请简要说明用于人工审核的证明。"
+        requiredNote:"请简要说明用于人工审核的证明。",
+        supportTitle:"支持申请",
+        supportDescription:"向 ConCourse 团队提交账户访问、市集、学术、隐私或一般问题。",
+        supportCategory:"类别",
+        supportSubject:"主题",
+        supportDetails:"详情",
+        supportSubmit:"提交申请",
+        supportLoading:"正在加载你的支持申请…",
+        supportUnavailable:"应用最新 Supabase 迁移后即可使用支持申请。",
+        supportSubmitted:"支持申请已提交。",
+        supportRequired:"请填写主题和足够的详情，以便团队协助。",
+        supportCurrent:"你的申请",
+        supportNone:"暂时没有支持申请。",
+        supportAccount:"账户",
+        supportSchool:"学校",
+        supportMarketplace:"校园市集",
+        supportPayment:"付款",
+        supportCommunity:"校园社区",
+        supportPrivacy:"隐私",
+        supportSafety:"安全",
+        supportTechnical:"技术问题",
+        supportOther:"其他"
       },
       "zh-HK":{
         verificationTitle:"校園身份審核",
@@ -1494,7 +1620,28 @@
         deletionRequestCancelled:"帳戶刪除申請已取消。",
         actionFailed:"暫時未能完成申請，請再試。",
         requiredReference:"提交前請填寫 SSO 或證明資料。",
-        requiredNote:"請簡短說明用作人手審核嘅證明。"
+        requiredNote:"請簡短說明用作人手審核嘅證明。",
+        supportTitle:"支援申請",
+        supportDescription:"向 ConCourse 團隊提交帳戶存取、市集、學術、私隱或一般問題。",
+        supportCategory:"類別",
+        supportSubject:"主題",
+        supportDetails:"詳情",
+        supportSubmit:"提交申請",
+        supportLoading:"正在載入你嘅支援申請…",
+        supportUnavailable:"套用最新 Supabase 遷移後就可以使用支援申請。",
+        supportSubmitted:"支援申請已提交。",
+        supportRequired:"請填寫主題同足夠詳情，等團隊可以協助。",
+        supportCurrent:"你嘅申請",
+        supportNone:"暫時無支援申請。",
+        supportAccount:"帳戶",
+        supportSchool:"學校",
+        supportMarketplace:"校園市集",
+        supportPayment:"付款",
+        supportCommunity:"校園社群",
+        supportPrivacy:"私隱",
+        supportSafety:"安全",
+        supportTechnical:"技術問題",
+        supportOther:"其他"
       }
     });
   }
@@ -1502,16 +1649,16 @@
   function ownerConsoleCopy(){
     return communitySeedText({
       en:{
-        nav:"Owner Console",
-        kicker:"ConCourse Administration",
-        title:"Owner Console",
-        intro:"Review campus identity evidence through protected administrator-only operations.",
+        nav:"Verification Center",
+        kicker:"ConCourse Trust Operations",
+        title:"Verification Center",
+        intro:"Review identity, marketplace, safety, privacy, and support requests through protected administrator workflows.",
         ownerRole:"Owner",
         reviewerRole:"Reviewer",
         access:"{role} Access",
-        queueKicker:"Campus Trust",
-        queueTitle:"School Verification Queue",
-        queueDescription:"Review submitted evidence before granting access to verified-campus features.",
+        queueKicker:"Protected Review Queue",
+        queueTitle:"School Identity",
+        queueDescription:"Review submitted evidence and record a clear, auditable decision.",
         summaryKicker:"Operations",
         summaryTitle:"Platform Summary",
         summaryRefresh:"Refresh Summary",
@@ -1531,8 +1678,8 @@
         statusWithdrawn:"Withdrawn",
         refresh:"Refresh Queue",
         loading:"Loading protected verification requests…",
-        unavailable:"The Owner Console is unavailable. Apply the latest administrator migration, then try again.",
-        denied:"This account does not have permission to open the Owner Console.",
+        unavailable:"The Verification Center is unavailable. Apply the latest administrator migration, then try again.",
+        denied:"This account does not have permission to open the Verification Center.",
         queueClear:"Queue Clear",
         noRequests:"There are no requests with this status.",
         account:"Account",
@@ -1561,19 +1708,106 @@
         approved:"The campus identity was approved.",
         rejected:"The campus identity was rejected.",
         decisionFailed:"The review decision could not be saved. Please try again.",
-        statusLabel:"Status"
+        statusLabel:"Status",
+        statusAll:"All Statuses",
+        statusOpen:"Open",
+        statusReviewing:"Reviewing",
+        statusVerified:"Verified",
+        statusEvidenceAccepted:"Evidence Accepted",
+        statusCancelled:"Cancelled",
+        statusProcessing:"Processing",
+        statusCompleted:"Completed",
+        statusResolved:"Resolved",
+        statusDismissed:"Dismissed",
+        statusAwaitingUser:"Waiting for User",
+        statusClosed:"Closed",
+        statusResolvedBuyer:"Resolved for Buyer",
+        statusResolvedSeller:"Resolved for Seller",
+        workflowSchool:"School Identity",
+        workflowPayments:"Payments",
+        workflowDisputes:"Disputes",
+        workflowMarketReports:"Market Reports",
+        workflowContentReports:"Safety Reports",
+        workflowDeletion:"Account & Privacy",
+        workflowSupport:"Other Requests",
+        workflowTeam:"Admin Team",
+        workflowSchoolDescription:"Review school evidence before granting verified-campus access.",
+        workflowPaymentsDescription:"Review user-submitted payment evidence and provider-state exceptions. Provider payment truth remains server controlled.",
+        workflowDisputesDescription:"Review protected marketplace disputes and record a resolution.",
+        workflowMarketReportsDescription:"Review reports about listings and marketplace conduct.",
+        workflowContentReportsDescription:"Review reports about posts, comments, messages, and users.",
+        workflowDeletionDescription:"Process account deletion and privacy requests with an auditable record.",
+        workflowSupportDescription:"Respond to access, marketplace, academic, and general support requests.",
+        caseReference:"Case",
+        requester:"Requester",
+        created:"Created",
+        updated:"Updated",
+        order:"Order",
+        listing:"Listing",
+        amount:"Amount",
+        paymentState:"Provider State",
+        provider:"Provider",
+        reason:"Reason",
+        details:"Details",
+        category:"Category",
+        subject:"Subject",
+        priority:"Priority",
+        decisionNote:"Review Note",
+        decisionNotePlaceholder:"Explain the decision clearly for the requester and audit record.",
+        noteRequired:"Add a review note before completing this action.",
+        actionUnderReview:"Start Review",
+        actionAcceptEvidence:"Accept Evidence",
+        actionRecommendRefund:"Recommend Buyer Refund",
+        actionRecommendRelease:"Recommend Seller Release",
+        actionReturnToQueue:"Return to Queue",
+        actionRequestInfo:"Request Information",
+        actionApprove:"Approve",
+        actionReject:"Reject",
+        actionVerify:"Verify Evidence",
+        actionResolve:"Resolve",
+        actionResolveBuyer:"Resolve for Buyer",
+        actionResolveSeller:"Resolve for Seller",
+        actionClose:"Close",
+        actionDismiss:"Dismiss",
+        actionProcessing:"Mark Processing",
+        actionComplete:"Complete",
+        actionCancel:"Cancel Request",
+        actionEscalate:"Escalate",
+        actionConfirmTitle:"Confirm Review Action",
+        actionConfirm:"Apply “{action}” to this case?",
+        actionSaved:"The case was updated.",
+        teamKicker:"Access Control",
+        teamTitle:"Appointed Admins",
+        teamDescription:"Appoint trusted administrators and give each person only the review scopes they need.",
+        teamIdentifier:"Confirmed Account Email",
+        teamRole:"Role",
+        teamScopes:"Allowed Workflows",
+        teamAppoint:"Appoint Admin",
+        teamSave:"Save Access",
+        teamRevoke:"Revoke Access",
+        teamLoading:"Loading appointed administrators…",
+        teamEmptyTitle:"No Appointed Admins",
+        teamEmptyDescription:"Appoint an administrator when you are ready to delegate a workflow.",
+        teamIdentifierRequired:"Enter the administrator’s confirmed account email.",
+        teamScopeRequired:"Choose at least one workflow.",
+        teamAppointed:"The administrator was appointed.",
+        teamUpdated:"The administrator access was updated.",
+        teamRevoked:"The administrator access was revoked.",
+        teamUnavailable:"The administrator team is temporarily unavailable.",
+        revokeConfirm:"Revoke this administrator’s Verification Center access?",
+        privacyRole:"Privacy Administrator"
       },
       "zh-CN":{
-        nav:"所有者控制台",
-        kicker:"ConCourse 管理",
-        title:"所有者控制台",
-        intro:"通过仅限管理员使用的受保护操作审核校园身份证明。",
+        nav:"审核中心",
+        kicker:"ConCourse 信任运营",
+        title:"审核中心",
+        intro:"通过受保护的管理员工作流程审核身份、市集、安全、隐私和用户支持申请。",
         ownerRole:"所有者",
         reviewerRole:"审核员",
         access:"{role}权限",
-        queueKicker:"校园信任",
-        queueTitle:"校园身份审核队列",
-        queueDescription:"在授予校园认证功能访问权前，核对用户提交的证明。",
+        queueKicker:"受保护审核队列",
+        queueTitle:"校园身份",
+        queueDescription:"核对用户提交的证明，并记录清晰、可审计的决定。",
         summaryKicker:"运营概览",
         summaryTitle:"平台摘要",
         summaryRefresh:"刷新摘要",
@@ -1593,8 +1827,8 @@
         statusWithdrawn:"已撤回",
         refresh:"刷新队列",
         loading:"正在加载受保护的审核申请…",
-        unavailable:"所有者控制台暂不可用。请应用最新管理员迁移后重试。",
-        denied:"此账户无权打开所有者控制台。",
+        unavailable:"审核中心暂不可用。请应用最新管理员迁移后重试。",
+        denied:"此账户无权打开审核中心。",
         queueClear:"队列已清空",
         noRequests:"没有处于此状态的申请。",
         account:"账户",
@@ -1623,19 +1857,106 @@
         approved:"校园身份已批准。",
         rejected:"校园身份已拒绝。",
         decisionFailed:"无法保存审核决定，请重试。",
-        statusLabel:"状态"
+        statusLabel:"状态",
+        statusAll:"全部状态",
+        statusOpen:"待处理",
+        statusReviewing:"审核中",
+        statusVerified:"已核验",
+        statusEvidenceAccepted:"证据已接受",
+        statusCancelled:"已取消",
+        statusProcessing:"处理中",
+        statusCompleted:"已完成",
+        statusResolved:"已解决",
+        statusDismissed:"已驳回",
+        statusAwaitingUser:"等待用户",
+        statusClosed:"已关闭",
+        statusResolvedBuyer:"支持买家",
+        statusResolvedSeller:"支持卖家",
+        workflowSchool:"校园身份",
+        workflowPayments:"付款凭证",
+        workflowDisputes:"交易争议",
+        workflowMarketReports:"市集举报",
+        workflowContentReports:"安全举报",
+        workflowDeletion:"账户与隐私",
+        workflowSupport:"其他申请",
+        workflowTeam:"管理员团队",
+        workflowSchoolDescription:"审核学校证明，再授予校园认证功能访问权。",
+        workflowPaymentsDescription:"审核用户提交的付款凭证和支付状态异常。支付平台状态仍由服务器控制。",
+        workflowDisputesDescription:"审核受保护交易争议并记录处理结果。",
+        workflowMarketReportsDescription:"审核商品和市集行为举报。",
+        workflowContentReportsDescription:"审核帖子、评论、私信和用户举报。",
+        workflowDeletionDescription:"以可审计方式处理账户删除和隐私申请。",
+        workflowSupportDescription:"处理访问、市集、学术和一般支持申请。",
+        caseReference:"个案",
+        requester:"申请人",
+        created:"创建时间",
+        updated:"更新时间",
+        order:"订单",
+        listing:"商品",
+        amount:"金额",
+        paymentState:"支付平台状态",
+        provider:"支付平台",
+        reason:"原因",
+        details:"详情",
+        category:"类别",
+        subject:"主题",
+        priority:"优先级",
+        decisionNote:"审核说明",
+        decisionNotePlaceholder:"为申请人和审计记录清楚说明决定。",
+        noteRequired:"完成此操作前请填写审核说明。",
+        actionUnderReview:"开始审核",
+        actionAcceptEvidence:"接受付款凭证",
+        actionRecommendRefund:"建议向买家退款",
+        actionRecommendRelease:"建议向卖家放款",
+        actionReturnToQueue:"退回待处理队列",
+        actionRequestInfo:"要求补充资料",
+        actionApprove:"批准",
+        actionReject:"拒绝",
+        actionVerify:"核验凭证",
+        actionResolve:"解决",
+        actionResolveBuyer:"支持买家",
+        actionResolveSeller:"支持卖家",
+        actionClose:"关闭",
+        actionDismiss:"驳回",
+        actionProcessing:"标记处理中",
+        actionComplete:"完成",
+        actionCancel:"取消申请",
+        actionEscalate:"升级处理",
+        actionConfirmTitle:"确认审核操作",
+        actionConfirm:"确定对该个案执行“{action}”吗？",
+        actionSaved:"个案已更新。",
+        teamKicker:"访问控制",
+        teamTitle:"受委任管理员",
+        teamDescription:"委任可信管理员，并仅授予其所需的审核权限。",
+        teamIdentifier:"已确认的账户邮箱",
+        teamRole:"角色",
+        teamScopes:"允许的工作流程",
+        teamAppoint:"委任管理员",
+        teamSave:"保存权限",
+        teamRevoke:"撤销权限",
+        teamLoading:"正在加载管理员团队…",
+        teamEmptyTitle:"暂无受委任管理员",
+        teamEmptyDescription:"需要分派审核工作时，可在此委任管理员。",
+        teamIdentifierRequired:"请输入管理员已确认的账户邮箱。",
+        teamScopeRequired:"请至少选择一个工作流程。",
+        teamAppointed:"管理员已委任。",
+        teamUpdated:"管理员权限已更新。",
+        teamRevoked:"管理员权限已撤销。",
+        teamUnavailable:"管理员团队暂时不可用。",
+        revokeConfirm:"撤销此管理员的审核中心权限？",
+        privacyRole:"隐私管理员"
       },
       "zh-HK":{
-        nav:"擁有人控制台",
-        kicker:"ConCourse 管理",
-        title:"擁有人控制台",
-        intro:"透過只限管理員使用嘅受保護操作審核校園身份證明。",
+        nav:"審核中心",
+        kicker:"ConCourse 信任營運",
+        title:"審核中心",
+        intro:"透過受保護嘅管理員工作流程，審核身份、市集、安全、私隱同用戶支援申請。",
         ownerRole:"擁有人",
         reviewerRole:"審核員",
         access:"{role}權限",
-        queueKicker:"校園信任",
-        queueTitle:"校園身份審核隊列",
-        queueDescription:"喺授予已驗證校園功能之前，核對用戶提交嘅證明。",
+        queueKicker:"受保護審核隊列",
+        queueTitle:"校園身份",
+        queueDescription:"核對用戶提交嘅證明，並記錄清晰、可審計嘅決定。",
         summaryKicker:"營運概覽",
         summaryTitle:"平台摘要",
         summaryRefresh:"重新整理摘要",
@@ -1655,8 +1976,8 @@
         statusWithdrawn:"已撤回",
         refresh:"重新整理隊列",
         loading:"正在載入受保護嘅審核申請…",
-        unavailable:"擁有人控制台暫時未能使用。請套用最新管理員遷移後再試。",
-        denied:"呢個帳戶無權開啟擁有人控制台。",
+        unavailable:"審核中心暫時未能使用。請套用最新管理員遷移後再試。",
+        denied:"呢個帳戶無權開啟審核中心。",
         queueClear:"隊列已清空",
         noRequests:"無申請處於呢個狀態。",
         account:"帳戶",
@@ -1685,16 +2006,154 @@
         approved:"校園身份已批准。",
         rejected:"校園身份已拒絕。",
         decisionFailed:"未能儲存審核決定，請再試。",
-        statusLabel:"狀態"
+        statusLabel:"狀態",
+        statusAll:"全部狀態",
+        statusOpen:"待處理",
+        statusReviewing:"審核中",
+        statusVerified:"已核驗",
+        statusEvidenceAccepted:"證據已接納",
+        statusCancelled:"已取消",
+        statusProcessing:"處理中",
+        statusCompleted:"已完成",
+        statusResolved:"已解決",
+        statusDismissed:"已駁回",
+        statusAwaitingUser:"等候用戶",
+        statusClosed:"已關閉",
+        statusResolvedBuyer:"支持買家",
+        statusResolvedSeller:"支持賣家",
+        workflowSchool:"校園身份",
+        workflowPayments:"付款證明",
+        workflowDisputes:"交易爭議",
+        workflowMarketReports:"市集舉報",
+        workflowContentReports:"安全舉報",
+        workflowDeletion:"帳戶及私隱",
+        workflowSupport:"其他申請",
+        workflowTeam:"管理員團隊",
+        workflowSchoolDescription:"審核院校證明，再授予已驗證校園功能存取權。",
+        workflowPaymentsDescription:"審核用戶提交嘅付款證明同支付狀態異常。支付平台狀態仍由伺服器控制。",
+        workflowDisputesDescription:"審核受保護交易爭議並記錄處理結果。",
+        workflowMarketReportsDescription:"審核商品同市集行為舉報。",
+        workflowContentReportsDescription:"審核帖子、留言、私訊同用戶舉報。",
+        workflowDeletionDescription:"以可審計方式處理帳戶刪除同私隱申請。",
+        workflowSupportDescription:"處理存取、市集、學術同一般支援申請。",
+        caseReference:"個案",
+        requester:"申請人",
+        created:"建立時間",
+        updated:"更新時間",
+        order:"訂單",
+        listing:"商品",
+        amount:"金額",
+        paymentState:"支付平台狀態",
+        provider:"支付平台",
+        reason:"原因",
+        details:"詳情",
+        category:"類別",
+        subject:"主題",
+        priority:"優先次序",
+        decisionNote:"審核說明",
+        decisionNotePlaceholder:"為申請人同審計記錄清楚說明決定。",
+        noteRequired:"完成呢個操作之前請填寫審核說明。",
+        actionUnderReview:"開始審核",
+        actionAcceptEvidence:"接受付款證明",
+        actionRecommendRefund:"建議向買家退款",
+        actionRecommendRelease:"建議向賣家放款",
+        actionReturnToQueue:"退回待處理隊列",
+        actionRequestInfo:"要求補充資料",
+        actionApprove:"批准",
+        actionReject:"拒絕",
+        actionVerify:"核驗證明",
+        actionResolve:"解決",
+        actionResolveBuyer:"支持買家",
+        actionResolveSeller:"支持賣家",
+        actionClose:"關閉",
+        actionDismiss:"駁回",
+        actionProcessing:"標記處理中",
+        actionComplete:"完成",
+        actionCancel:"取消申請",
+        actionEscalate:"升級處理",
+        actionConfirmTitle:"確認審核操作",
+        actionConfirm:"確定對呢個個案執行「{action}」？",
+        actionSaved:"個案已更新。",
+        teamKicker:"存取控制",
+        teamTitle:"獲委任管理員",
+        teamDescription:"委任可信管理員，並只授予佢所需嘅審核權限。",
+        teamIdentifier:"已確認嘅帳戶電郵",
+        teamRole:"角色",
+        teamScopes:"允許嘅工作流程",
+        teamAppoint:"委任管理員",
+        teamSave:"儲存權限",
+        teamRevoke:"撤銷權限",
+        teamLoading:"正在載入管理員團隊…",
+        teamEmptyTitle:"暫無獲委任管理員",
+        teamEmptyDescription:"需要分派審核工作時，可以喺呢度委任管理員。",
+        teamIdentifierRequired:"請輸入管理員已確認嘅帳戶電郵。",
+        teamScopeRequired:"請至少選擇一個工作流程。",
+        teamAppointed:"管理員已委任。",
+        teamUpdated:"管理員權限已更新。",
+        teamRevoked:"管理員權限已撤銷。",
+        teamUnavailable:"管理員團隊暫時未能使用。",
+        revokeConfirm:"撤銷呢位管理員嘅審核中心權限？",
+        privacyRole:"私隱管理員"
       }
     });
   }
 
-  const canReviewSchoolVerifications = () => ["owner", "reviewer"].includes(hubState.adminRole);
+  function normalizeAdminCapabilities(payload={}, role=""){
+    const normalized = new Set();
+    const sources = [payload.capabilities, payload.scopes, payload.permissions];
+    const aliases = {
+      view_school_verification_queue:"school_verification.review",
+      review_school_verification_requests:"school_verification.review",
+      review_school_verification:"school_verification.review",
+      review_payment_evidence:"payment_evidence.review",
+      review_marketplace_disputes:"marketplace_disputes.review",
+      review_marketplace_reports:"marketplace_reports.review",
+      review_content_reports:"content_reports.review",
+      review_account_deletion:"account_deletion.review",
+      review_support_requests:"support_requests.review",
+      manage_admin_team:"team.manage",
+      view_owner_summary:"owner_summary.view"
+    };
+    const add = value => {
+      const key = String(value || "").trim();
+      if(key) normalized.add(aliases[key] || key);
+    };
+    sources.forEach(source => {
+      if(Array.isArray(source)) source.forEach(add);
+      else if(source && typeof source === "object"){
+        Object.entries(source).forEach(([key, value]) => {
+          if(value === true) add(key);
+          else if(Array.isArray(value)) value.forEach(add);
+        });
+      }
+    });
+    if(role === "owner"){
+      VERIFICATION_WORKFLOWS.forEach(workflow => normalized.add(workflow.scope));
+      normalized.add("team.manage");
+      normalized.add("owner_summary.view");
+    } else if(role === "reviewer" && !normalized.size){
+      normalized.add("school_verification.review");
+    } else if(role === "privacy" && !normalized.size){
+      normalized.add("account_deletion.review");
+    }
+    return normalized;
+  }
+
+  const hasAdminCapability = scope => hubState.adminRole === "owner" || hubState.adminCapabilities.has(scope);
+  const canOpenVerificationCenter = () => (
+    hasAdminCapability("team.manage")
+    || VERIFICATION_WORKFLOWS.some(workflow => hasAdminCapability(workflow.scope))
+  );
+  // Compatibility alias retained for the original owner-console route and
+  // school-review functions. New workflows use the scoped checks above.
+  const canReviewSchoolVerifications = () => canOpenVerificationCenter();
+  const canReviewSchoolCases = () => hasAdminCapability("school_verification.review");
 
   function adminRoleLabel(){
     const copy = ownerConsoleCopy();
-    return hubState.adminRole === "owner" ? copy.ownerRole : copy.reviewerRole;
+    if(hubState.adminRole === "owner") return copy.ownerRole;
+    if(hubState.adminRole === "privacy") return copy.privacyRole;
+    return copy.reviewerRole;
   }
 
   function ensureAccountTrustControls(){
@@ -1781,7 +2240,75 @@
     cancelDeletion.onclick = () => void cancelAccountDeletion();
     deletionActions.append(requestDeletion, cancelDeletion);
     deletion.append(deletionHeading, deletionDescription, deletionStatus, deletionActions);
-    shell.append(verification, deletion);
+
+    const support = node("section", "hub-account-trust-section hub-support-request hub-account-trust-wide");
+    support.id = "hubSupportRequest";
+    const supportHeading = node("h3");
+    supportHeading.id = "hubSupportRequestHeading";
+    const supportDescription = node("p", "hub-account-trust-description");
+    supportDescription.id = "hubSupportRequestDescription";
+    const supportStatus = node("p", "hub-account-trust-status");
+    supportStatus.id = "hubSupportRequestStatus";
+    supportStatus.setAttribute("role", "status");
+    supportStatus.setAttribute("aria-live", "polite");
+    const supportForm = node("form", "hub-account-trust-form hub-support-request-form");
+    supportForm.id = "hubSupportRequestForm";
+    const categoryLabel = node("label");
+    const categoryText = node("span");
+    categoryText.id = "hubSupportCategoryLabel";
+    const category = document.createElement("select");
+    category.id = "hubSupportCategory";
+    [
+      ["account", "supportAccount"],
+      ["school", "supportSchool"],
+      ["marketplace", "supportMarketplace"],
+      ["payment", "supportPayment"],
+      ["community", "supportCommunity"],
+      ["privacy", "supportPrivacy"],
+      ["safety", "supportSafety"],
+      ["technical", "supportTechnical"],
+      ["other", "supportOther"]
+    ].forEach(([value, key]) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.dataset.copyKey = key;
+      category.append(option);
+    });
+    categoryLabel.append(categoryText, category);
+    const subjectLabel = node("label");
+    const subjectText = node("span");
+    subjectText.id = "hubSupportSubjectLabel";
+    const subject = node("input");
+    subject.id = "hubSupportSubject";
+    subject.maxLength = 160;
+    subject.required = true;
+    subjectLabel.append(subjectText, subject);
+    const detailsLabel = node("label", "hub-account-trust-wide");
+    const detailsText = node("span");
+    detailsText.id = "hubSupportDetailsLabel";
+    const supportDetails = node("textarea");
+    supportDetails.id = "hubSupportDetails";
+    supportDetails.maxLength = 3000;
+    supportDetails.required = true;
+    detailsLabel.append(detailsText, supportDetails);
+    const supportActions = node("div", "hub-account-trust-actions hub-account-trust-wide");
+    const submitSupport = node("button", "btn-primary");
+    submitSupport.type = "submit";
+    submitSupport.id = "hubSubmitSupportRequest";
+    supportActions.append(submitSupport);
+    supportForm.append(categoryLabel, subjectLabel, detailsLabel, supportActions);
+    supportForm.addEventListener("submit", event => {
+      event.preventDefault();
+      void submitSupportRequest();
+    });
+    const supportHistoryHeading = node("h4", "hub-support-history-heading");
+    supportHistoryHeading.id = "hubSupportRequestHistoryHeading";
+    const supportHistory = node("div", "hub-support-request-list");
+    supportHistory.id = "hubSupportRequestList";
+    supportHistory.setAttribute("role", "list");
+    support.append(supportHeading, supportDescription, supportStatus, supportForm, supportHistoryHeading, supportHistory);
+
+    shell.append(verification, deletion, support);
     card.insertBefore(shell, save);
     method.onchange = renderAccountTrustControls;
     renderAccountTrustControls();
@@ -1806,6 +2333,16 @@
     $("hubAccountDeletionDescription").textContent = copy.accountDescription;
     $("hubRequestAccountDeletion").textContent = copy.requestDeletion;
     $("hubCancelAccountDeletion").textContent = copy.cancelDeletion;
+    $("hubSupportRequestHeading").textContent = copy.supportTitle;
+    $("hubSupportRequestDescription").textContent = copy.supportDescription;
+    $("hubSupportCategoryLabel").textContent = copy.supportCategory;
+    $("hubSupportSubjectLabel").textContent = copy.supportSubject;
+    $("hubSupportDetailsLabel").textContent = copy.supportDetails;
+    $("hubSupportRequestHistoryHeading").textContent = copy.supportCurrent;
+    $("hubSubmitSupportRequest").textContent = copy.supportSubmit;
+    $("hubSupportCategory").querySelectorAll("option").forEach(option => {
+      option.textContent = copy[option.dataset.copyKey];
+    });
 
     const verificationState = hubState.schoolVerificationRequest;
     const verificationPayload = verificationState?.data || {};
@@ -1853,6 +2390,49 @@
     $("hubRequestAccountDeletion").disabled = hubState.accountDeletionLoading || deletionState?.setupMissing;
     $("hubCancelAccountDeletion").hidden = deletionStatus !== "submitted";
     $("hubCancelAccountDeletion").disabled = hubState.accountDeletionLoading;
+
+    const supportBusy = hubState.supportRequestsLoading || hubState.supportRequestSubmitting;
+    ["hubSupportCategory", "hubSupportSubject", "hubSupportDetails", "hubSubmitSupportRequest"].forEach(id => {
+      $(id).disabled = supportBusy;
+    });
+    if(hubState.supportRequestsLoading){
+      $("hubSupportRequestStatus").textContent = copy.supportLoading;
+      $("hubSupportRequestStatus").className = "hub-account-trust-status";
+    } else if(!$("hubSupportRequestStatus").textContent){
+      $("hubSupportRequestStatus").textContent = "";
+    }
+    const supportList = $("hubSupportRequestList");
+    supportList.replaceChildren();
+    if(!hubState.supportRequestsLoading && !hubState.supportRequests.length){
+      supportList.append(node("p", "hub-support-request-empty", copy.supportNone));
+    } else {
+      hubState.supportRequests.forEach(request => {
+        const item = node("article", "hub-support-request-item");
+        item.setAttribute("role", "listitem");
+        const heading = node("div", "hub-support-request-item-heading");
+        heading.append(
+          node("b", "", request.subject || copy.supportOther),
+          node("span", `hub-admin-request-status ${String(request.status || "submitted").replace(/[^a-z_]/g, "")}`, adminStatusLabel(request.status, ownerConsoleCopy()))
+        );
+        const categoryKey = {
+          account:"supportAccount",
+          school:"supportSchool",
+          marketplace:"supportMarketplace",
+          payment:"supportPayment",
+          community:"supportCommunity",
+          privacy:"supportPrivacy",
+          safety:"supportSafety",
+          technical:"supportTechnical",
+          other:"supportOther"
+        }[request.request_type || request.category] || "supportOther";
+        item.append(
+          heading,
+          node("p", "", request.details || ""),
+          node("small", "", [copy[categoryKey], formatDate(request.created_at || request.submitted_at)].filter(Boolean).join(" · "))
+        );
+        supportList.append(item);
+      });
+    }
   }
 
   async function loadSchoolVerificationRequest(){
@@ -1902,6 +2482,77 @@
       : {data:parseJsonValue(response.data, response.data), setupMissing:false, error:""};
     renderAccountTrustControls();
     return hubState.accountDeletionRequest;
+  }
+
+  async function loadSupportRequests(){
+    ensureAccountTrustControls();
+    if(!authClient || !currentUser) return [];
+    const context = requestContext();
+    hubState.supportRequestsLoading = true;
+    renderAccountTrustControls();
+    let response;
+    try { response = await hubRpc("get_my_concourse_support_requests"); }
+    catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return [];
+    hubState.supportRequestsLoading = false;
+    if(response.error){
+      hubState.supportRequests = [];
+      const copy = accountTrustCopy();
+      $("hubSupportRequestStatus").textContent = missingRpcError(response.error)
+        ? copy.supportUnavailable
+        : featureError(response.error);
+      $("hubSupportRequestStatus").className = "hub-account-trust-status error";
+    } else {
+      const payload = parseJsonValue(response.data, response.data);
+      hubState.supportRequests = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload?.requests) ? payload.requests : []);
+      $("hubSupportRequestStatus").textContent = "";
+      $("hubSupportRequestStatus").className = "hub-account-trust-status";
+    }
+    renderAccountTrustControls();
+    return hubState.supportRequests;
+  }
+
+  async function submitSupportRequest(){
+    if(hubState.supportRequestSubmitting || !authClient || !currentUser) return;
+    const copy = accountTrustCopy();
+    const category = $("hubSupportCategory").value;
+    const subject = $("hubSupportSubject").value.trim();
+    const details = $("hubSupportDetails").value.trim();
+    if(!subject || details.length < 10){
+      $("hubSupportRequestStatus").textContent = copy.supportRequired;
+      $("hubSupportRequestStatus").className = "hub-account-trust-status error";
+      (subject ? $("hubSupportDetails") : $("hubSupportSubject")).focus();
+      return;
+    }
+    const context = requestContext();
+    hubState.supportRequestSubmitting = true;
+    renderAccountTrustControls();
+    let response;
+    try {
+      response = await hubRpc("submit_concourse_support_request", {
+        p_request_type:category,
+        p_subject:subject,
+        p_details:details
+      });
+    } catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.supportRequestSubmitting = false;
+    if(response.error){
+      $("hubSupportRequestStatus").textContent = missingRpcError(response.error)
+        ? copy.supportUnavailable
+        : featureError(response.error);
+      $("hubSupportRequestStatus").className = "hub-account-trust-status error";
+      renderAccountTrustControls();
+      return;
+    }
+    $("hubSupportSubject").value = "";
+    $("hubSupportDetails").value = "";
+    await loadSupportRequests();
+    if(!contextIsCurrent(context)) return;
+    $("hubSupportRequestStatus").textContent = copy.supportSubmitted;
+    $("hubSupportRequestStatus").className = "hub-account-trust-status success";
   }
 
   async function submitSchoolVerification(){
@@ -2059,6 +2710,7 @@
     if(!authClient || !currentUser){
       hubState.adminContextUserId = null;
       hubState.adminRole = "";
+      hubState.adminCapabilities = new Set();
       hubState.adminContextLoading = false;
       renderAdminAccess();
       return null;
@@ -2076,15 +2728,35 @@
     hubState.adminContextUserId = context.userId;
     const payload = response.error ? null : (parseJsonValue(response.data, response.data) || {});
     const role = String(payload?.role || payload?.admin_role || "").trim().toLocaleLowerCase();
+    // Keep the original role assignment readable for older installations,
+    // then extend access through the capability set returned by the new RPC.
     hubState.adminRole = payload?.is_admin === false || !["owner", "reviewer"].includes(role) ? "" : role;
+    hubState.adminCapabilities = normalizeAdminCapabilities(payload || {}, role);
+    if(
+      payload?.is_admin !== false
+      && (hubState.adminCapabilities.size || ["owner", "reviewer", "privacy"].includes(role))
+    ){
+      hubState.adminRole = role || "reviewer";
+    }
     if(!hubState.adminRole){
       hubState.adminQueue = [];
       hubState.adminQueueError = "";
       hubState.adminQueueNotice = "";
+      hubState.verificationCounts = {};
+      hubState.verificationCases = [];
+      hubState.verificationTeam = [];
       if(hubState.activeView === "owner-console") void switchView("community");
+    } else {
+      const current = VERIFICATION_WORKFLOWS.find(workflow => workflow.id === hubState.verificationWorkflow);
+      if(!current || !hasAdminCapability(current.scope)){
+        hubState.verificationWorkflow = (
+          VERIFICATION_WORKFLOWS.find(workflow => hasAdminCapability(workflow.scope))?.id
+          || (hasAdminCapability("team.manage") ? "admin_team" : "school_verification")
+        );
+      }
     }
     renderAdminAccess();
-    renderOwnerConsole();
+    renderVerificationCenter();
     return hubState.adminRole;
   }
 
@@ -2100,7 +2772,21 @@
       under_review:"statusUnderReview",
       approved:"statusApproved",
       rejected:"statusRejected",
-      withdrawn:"statusWithdrawn"
+      withdrawn:"statusWithdrawn",
+      all:"statusAll",
+      open:"statusOpen",
+      reviewing:"statusReviewing",
+      verified:"statusVerified",
+      evidence_accepted:"statusEvidenceAccepted",
+      cancelled:"statusCancelled",
+      processing:"statusProcessing",
+      completed:"statusCompleted",
+      resolved:"statusResolved",
+      dismissed:"statusDismissed",
+      awaiting_user:"statusAwaitingUser",
+      closed:"statusClosed",
+      resolved_buyer:"statusResolvedBuyer",
+      resolved_seller:"statusResolvedSeller"
     };
     return copy[keys[status]] || String(status || copy.noValue);
   }
@@ -2121,7 +2807,7 @@
     const section = $("ownerOperationalSummary");
     if(!section) return;
     const copy = ownerConsoleCopy();
-    const isOwner = hubState.adminRole === "owner";
+    const isOwner = hasAdminCapability("owner_summary.view");
     section.hidden = !isOwner;
     if(!isOwner) return;
     $("ownerOperationalSummaryKicker").textContent = copy.summaryKicker;
@@ -2301,7 +2987,7 @@
   }
 
   async function loadOwnerOperationalSummary({force=false}={}){
-    if(hubState.adminRole !== "owner" || !authClient || !currentUser) return null;
+    if(!hasAdminCapability("owner_summary.view") || !authClient || !currentUser) return null;
     if(hubState.ownerSummaryLoading && !force) return hubState.ownerSummary;
     const context = requestContext();
     hubState.ownerSummaryLoading = true;
@@ -2408,6 +3094,786 @@
     hubState.adminQueueNotice = decision === "approve" ? copy.approved : copy.rejected;
     hubState.adminQueueNoticeKind = "success";
     renderOwnerConsole();
+  }
+
+  function verificationWorkflowDefinition(workflowId=hubState.verificationWorkflow){
+    return VERIFICATION_WORKFLOWS.find(workflow => workflow.id === workflowId) || null;
+  }
+
+  function verificationWorkflowAllowed(workflowId){
+    if(workflowId === "admin_team") return hasAdminCapability("team.manage");
+    const workflow = verificationWorkflowDefinition(workflowId);
+    return !!workflow && hasAdminCapability(workflow.scope);
+  }
+
+  function verificationWorkflowLabel(workflowId, copy=ownerConsoleCopy()){
+    if(workflowId === "admin_team") return copy.workflowTeam;
+    const workflow = verificationWorkflowDefinition(workflowId);
+    return workflow ? copy[workflow.labelKey] : copy.queueTitle;
+  }
+
+  function verificationWorkflowDescription(workflowId, copy=ownerConsoleCopy()){
+    const keys = {
+      school_verification:"workflowSchoolDescription",
+      payment_evidence:"workflowPaymentsDescription",
+      marketplace_dispute:"workflowDisputesDescription",
+      marketplace_report:"workflowMarketReportsDescription",
+      content_report:"workflowContentReportsDescription",
+      account_deletion:"workflowDeletionDescription",
+      support_request:"workflowSupportDescription"
+    };
+    return copy[keys[workflowId]] || copy.queueDescription;
+  }
+
+  function verificationDefaultStatus(workflowId){
+    return VERIFICATION_STATUS_KEYS[workflowId]?.[0] || "submitted";
+  }
+
+  function verificationStatusOptions(workflowId){
+    return VERIFICATION_STATUS_KEYS[workflowId] || ["submitted"];
+  }
+
+  function verificationCountValue(workflowId){
+    const raw = hubState.verificationCounts?.[workflowId];
+    if(Number.isFinite(Number(raw))) return Number(raw);
+    if(!raw || typeof raw !== "object" || Array.isArray(raw)) return 0;
+    for(const key of ["actionable", "pending", "needs_review", "count"]){
+      if(Number.isFinite(Number(raw[key]))) return Number(raw[key]);
+    }
+    const statuses = verificationStatusOptions(workflowId).slice(0, 2);
+    const statusTotal = statuses.reduce((sum, status) => (
+      sum + (Number.isFinite(Number(raw[status])) ? Number(raw[status]) : 0)
+    ), 0);
+    if(statusTotal) return statusTotal;
+    return Number.isFinite(Number(raw.total)) ? Number(raw.total) : 0;
+  }
+
+  function renderVerificationTabs(){
+    const copy = ownerConsoleCopy();
+    const tablist = $("verificationCenterTabs");
+    if(!tablist) return;
+    VERIFICATION_WORKFLOWS.forEach(workflow => {
+      const tab = $(workflow.tabId);
+      if(!tab) return;
+      const allowed = hasAdminCapability(workflow.scope);
+      tab.hidden = !allowed;
+      tab.querySelector("span").textContent = copy[workflow.labelKey];
+      $(workflow.countId).textContent = verificationCountValue(workflow.id).toLocaleString(locale());
+      const selected = allowed && hubState.verificationWorkflow === workflow.id;
+      tab.classList.toggle("active", selected);
+      tab.setAttribute("aria-selected", selected ? "true" : "false");
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    const team = $("verificationTabTeam");
+    if(team){
+      const allowed = hasAdminCapability("team.manage");
+      team.hidden = !allowed;
+      $("verificationTabTeamLabel").textContent = copy.workflowTeam;
+      const selected = allowed && hubState.verificationWorkflow === "admin_team";
+      team.classList.toggle("active", selected);
+      team.setAttribute("aria-selected", selected ? "true" : "false");
+      team.tabIndex = selected ? 0 : -1;
+    }
+  }
+
+  function verificationSafeValue(value){
+    if(value === null || value === undefined || value === "") return "";
+    if(typeof value === "string" || typeof value === "number" || typeof value === "boolean") return String(value);
+    return "";
+  }
+
+  function verificationCaseId(record){
+    return verificationSafeValue(
+      record?.case_id
+      || record?.request_id
+      || record?.payment_evidence_id
+      || record?.dispute_id
+      || record?.report_id
+      || record?.deletion_request_id
+      || record?.support_request_id
+      || record?.id
+    );
+  }
+
+  function verificationCaseTitle(record, workflowId, copy=ownerConsoleCopy()){
+    return verificationSafeValue(
+      record?.title
+      || record?.subject
+      || record?.school_name
+      || record?.listing_title
+      || record?.target_title
+      || record?.account_email
+      || record?.requester_email
+      || verificationWorkflowLabel(workflowId, copy)
+    );
+  }
+
+  function verificationCaseSubtitle(record, copy=ownerConsoleCopy()){
+    return verificationSafeValue(
+      record?.requester_display_name
+      || record?.display_name
+      || record?.account_email
+      || record?.requester_email
+      || record?.reporter_username
+      || record?.username
+      || record?.user_id
+      || copy.noValue
+    );
+  }
+
+  function formatVerificationAmount(record){
+    const minor = Number(record?.amount_minor ?? record?.gross_minor);
+    const currency = verificationSafeValue(record?.currency).toLocaleUpperCase();
+    if(!Number.isFinite(minor)) return "";
+    try {
+      return new Intl.NumberFormat(locale(), {
+        style:"currency",
+        currency:currency || "USD"
+      }).format(minor / 100);
+    } catch(_error){
+      return `${currency || ""} ${(minor / 100).toFixed(2)}`.trim();
+    }
+  }
+
+  function verificationCaseDetails(record, workflowId, copy=ownerConsoleCopy()){
+    const common = [
+      [copy.caseReference, verificationCaseId(record)],
+      [copy.requester, verificationCaseSubtitle(record, copy)],
+      [copy.created, formatDate(record?.created_at || record?.submitted_at || record?.requested_at)],
+      [copy.updated, formatDate(record?.updated_at || record?.reviewed_at || record?.resolved_at)]
+    ];
+    const workflowFields = {
+      school_verification:[
+        [copy.school, record?.school_name],
+        [copy.schoolKey, record?.school_key],
+        [copy.evidenceMethod, adminMethodLabel(record?.evidence_kind, copy)],
+        [copy.evidenceReference, record?.evidence_reference],
+        [copy.applicantNote, record?.user_note]
+      ],
+      payment_evidence:[
+        [copy.order, record?.order_id],
+        [copy.listing, record?.listing_title],
+        [copy.amount, formatVerificationAmount(record)],
+        [copy.provider, record?.provider],
+        [copy.paymentState, record?.payment_state],
+        [copy.evidenceReference, record?.evidence_reference],
+        [copy.applicantNote, record?.user_note || record?.details]
+      ],
+      marketplace_dispute:[
+        [copy.order, record?.order_id],
+        [copy.listing, record?.listing_title],
+        [copy.amount, formatVerificationAmount(record)],
+        [copy.paymentState, record?.payment_state],
+        [copy.reason, record?.reason],
+        [copy.details, record?.details]
+      ],
+      marketplace_report:[
+        [copy.listing, record?.listing_title || record?.listing_id],
+        [copy.reason, record?.reason],
+        [copy.details, record?.details]
+      ],
+      content_report:[
+        [copy.category, record?.target_type],
+        [copy.caseReference, record?.target_id],
+        [copy.reason, record?.reason],
+        [copy.details, record?.details]
+      ],
+      account_deletion:[
+        [copy.account, record?.account_email || record?.requester_email],
+        [copy.reason, record?.reason],
+        [copy.submittedAt, formatDate(record?.requested_at || record?.submitted_at)],
+        [copy.updated, formatDate(record?.scheduled_for)]
+      ],
+      support_request:[
+        [copy.category, record?.category],
+        [copy.subject, record?.subject],
+        [copy.details, record?.details],
+        [copy.priority, record?.priority]
+      ]
+    };
+    const seen = new Set();
+    return [...common, ...(workflowFields[workflowId] || [])]
+      .map(([label, value]) => [label, verificationSafeValue(value)])
+      .filter(([label, value]) => {
+        const key = `${label}:${value}`;
+        if(!value || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  function verificationActionLabel(action, copy=ownerConsoleCopy()){
+    const keys = {
+      start_review:"actionUnderReview",
+      accept_evidence:"actionAcceptEvidence",
+      recommend_refund:"actionRecommendRefund",
+      recommend_release:"actionRecommendRelease",
+      return_to_queue:"actionReturnToQueue",
+      request_info:"actionRequestInfo",
+      approve:"actionApprove",
+      reject:"actionReject",
+      verify:"actionVerify",
+      resolve:"actionResolve",
+      resolve_buyer:"actionResolveBuyer",
+      resolve_seller:"actionResolveSeller",
+      close:"actionClose",
+      dismiss:"actionDismiss",
+      processing:"actionProcessing",
+      complete:"actionComplete",
+      cancel:"actionCancel",
+      escalate:"actionEscalate"
+    };
+    return copy[keys[action]] || summaryMetricLabel(action);
+  }
+
+  function verificationCaseActions(record, workflowId){
+    if(Array.isArray(record?.allowed_actions)){
+      return record.allowed_actions
+        .map(action => verificationSafeValue(action))
+        .filter(action => VERIFICATION_ACTIONS[workflowId]?.includes(action));
+    }
+    const terminal = new Set([
+      "approved", "rejected", "withdrawn", "evidence_accepted", "cancelled", "completed",
+      "resolved", "dismissed", "resolved_buyer", "resolved_seller", "closed"
+    ]);
+    return terminal.has(String(record?.status || "")) ? [] : (VERIFICATION_ACTIONS[workflowId] || []);
+  }
+
+  function verificationActionNeedsNote(action){
+    return !["start_review", "approve", "accept_evidence", "return_to_queue"].includes(action);
+  }
+
+  function renderVerificationCase(record){
+    const copy = ownerConsoleCopy();
+    const workflowId = hubState.verificationWorkflow;
+    const caseId = verificationCaseId(record);
+    if(!caseId) return null;
+    const status = verificationSafeValue(record?.status || hubState.adminQueueStatus);
+    const card = node("article", "hub-admin-request hub-verification-case");
+    card.setAttribute("role", "listitem");
+    card.dataset.requestId = caseId;
+    card.dataset.caseId = caseId;
+    const header = node("header", "hub-admin-request-heading");
+    const headingCopy = node("div");
+    headingCopy.append(
+      node("h4", "", verificationCaseTitle(record, workflowId, copy)),
+      node("p", "", verificationCaseSubtitle(record, copy))
+    );
+    const statusBadge = node(
+      "span",
+      `hub-admin-request-status ${status.replace(/[^a-z_]/g, "")}`,
+      adminStatusLabel(status, copy)
+    );
+    statusBadge.setAttribute("aria-label", `${copy.statusLabel}: ${adminStatusLabel(status, copy)}`);
+    header.append(headingCopy, statusBadge);
+    const details = node("dl", "hub-admin-details");
+    verificationCaseDetails(record, workflowId, copy).forEach(([label, value]) => {
+      details.append(adminDetail(copy, label, value));
+    });
+    card.append(header, details);
+    if(record?.reviewer_note || record?.resolution_note || record?.admin_note){
+      const previousNote = node("section", "hub-admin-note hub-admin-reviewer-note");
+      previousNote.append(
+        node("h5", "", copy.reviewerNote),
+        node("p", "", record.reviewer_note || record.resolution_note || record.admin_note)
+      );
+      card.append(previousNote);
+    }
+    const availableActions = verificationCaseActions(record, workflowId);
+    if(availableActions.length){
+      const review = node("div", "hub-admin-review hub-verification-review");
+      const noteLabel = node("label", "hub-admin-review-note");
+      noteLabel.append(node("span", "", copy.decisionNote));
+      const note = node("textarea");
+      note.maxLength = 2000;
+      note.placeholder = copy.decisionNotePlaceholder;
+      note.value = record?.draft_note || "";
+      noteLabel.append(note);
+      const actions = node("div", "hub-admin-review-actions hub-verification-actions");
+      const busy = hubState.adminReviewBusy.has(caseId);
+      note.disabled = busy;
+      availableActions.forEach(action => {
+        const destructive = ["reject", "dismiss"].includes(action);
+        const button = node("button", destructive ? "btn-ghost hub-admin-reject" : (["approve", "accept_evidence", "resolve"].includes(action) ? "btn-primary" : "btn-ghost"), verificationActionLabel(action, copy));
+        button.type = "button";
+        button.disabled = busy;
+        button.dataset.verificationAction = action;
+        button.onclick = () => void reviewVerificationCenterCase(record, action, note.value, note);
+        actions.append(button);
+      });
+      review.append(noteLabel, actions);
+      card.append(review);
+    }
+    return card;
+  }
+
+  function renderVerificationTeamCopy(){
+    const copy = ownerConsoleCopy();
+    const values = {
+      verificationTeamKicker:copy.teamKicker,
+      verificationTeamTitle:copy.teamTitle,
+      verificationTeamDescription:copy.teamDescription,
+      verificationTeamIdentifierLabel:copy.teamIdentifier,
+      verificationTeamRoleLabel:copy.teamRole,
+      verificationTeamScopesLabel:copy.teamScopes,
+      verificationTeamAppoint:copy.teamAppoint,
+      verificationScopeSchool:copy.workflowSchool,
+      verificationScopePayments:copy.workflowPayments,
+      verificationScopeDisputes:copy.workflowDisputes,
+      verificationScopeMarketReports:copy.workflowMarketReports,
+      verificationScopeContentReports:copy.workflowContentReports,
+      verificationScopeDeletion:copy.workflowDeletion,
+      verificationScopeSupport:copy.workflowSupport,
+      verificationTeamEmptyTitle:copy.teamEmptyTitle,
+      verificationTeamEmptyDescription:copy.teamEmptyDescription
+    };
+    Object.entries(values).forEach(([id, value]) => { if($(id)) $(id).textContent = value; });
+    const role = $("verificationTeamRole");
+    if(role){
+      role.querySelector('[value="reviewer"]').textContent = copy.reviewerRole;
+      role.querySelector('[value="privacy"]').textContent = copy.privacyRole;
+    }
+  }
+
+  function createVerificationScopePicker(selectedScopes=[], {disabled=false}={}){
+    const copy = ownerConsoleCopy();
+    const selected = new Set(Array.isArray(selectedScopes) ? selectedScopes : []);
+    const picker = node("fieldset", "hub-admin-scope-picker hub-admin-member-scopes");
+    const legend = node("legend", "", copy.teamScopes);
+    picker.append(legend);
+    VERIFICATION_WORKFLOWS.forEach(workflow => {
+      const label = node("label");
+      const input = node("input");
+      input.type = "checkbox";
+      input.value = workflow.scope;
+      input.checked = selected.has(workflow.scope);
+      input.disabled = disabled;
+      label.append(input, node("span", "", copy[workflow.labelKey]));
+      picker.append(label);
+    });
+    return picker;
+  }
+
+  function renderVerificationTeam(){
+    renderVerificationTeamCopy();
+    const copy = ownerConsoleCopy();
+    const list = $("verificationTeamList");
+    const empty = $("verificationTeamEmpty");
+    if(!list || !empty) return;
+    list.replaceChildren();
+    $("verificationTeamAppointmentForm").hidden = !hasAdminCapability("team.manage");
+    if(hubState.verificationTeamLoading){
+      setStatus("verificationTeamStatus", copy.teamLoading);
+    } else if(hubState.verificationTeamError){
+      setStatus("verificationTeamStatus", hubState.verificationTeamError, "error");
+    } else if(!hubState.adminQueueNotice){
+      setStatus("verificationTeamStatus", "");
+    }
+    empty.hidden = hubState.verificationTeamLoading || Boolean(hubState.verificationTeamError) || hubState.verificationTeam.length > 0;
+    if(hubState.verificationTeamLoading || hubState.verificationTeamError) return;
+    hubState.verificationTeam.forEach(member => {
+      const userId = verificationSafeValue(member?.user_id || member?.id);
+      if(!userId) return;
+      const role = verificationSafeValue(member?.role || "reviewer");
+      const isOwner = role === "owner";
+      const busy = hubState.verificationTeamBusy.has(userId);
+      const card = node("article", "hub-admin-member");
+      card.setAttribute("role", "listitem");
+      card.dataset.adminUserId = userId;
+      const heading = node("header", "hub-admin-request-heading");
+      const identity = node("div");
+      identity.append(
+        node("h4", "", member?.display_name || member?.username || member?.email || userId),
+        node("p", "", member?.email || member?.username || userId)
+      );
+      heading.append(identity, node("span", `hub-admin-request-status ${role}`, isOwner ? copy.ownerRole : (role === "privacy" ? copy.privacyRole : copy.reviewerRole)));
+      const scopes = Array.isArray(member?.scopes)
+        ? member.scopes
+        : (Array.isArray(member?.capabilities) ? member.capabilities : []);
+      const picker = createVerificationScopePicker(scopes, {disabled:isOwner || busy});
+      const roleLabel = node("label", "hub-admin-member-role");
+      roleLabel.append(node("span", "", copy.teamRole));
+      const roleSelect = node("select");
+      [["reviewer", copy.reviewerRole], ["privacy", copy.privacyRole]].forEach(([value, label]) => {
+        const option = node("option", "", label);
+        option.value = value;
+        roleSelect.append(option);
+      });
+      roleSelect.value = role === "privacy" ? "privacy" : "reviewer";
+      roleSelect.disabled = isOwner || busy;
+      roleLabel.append(roleSelect);
+      const actions = node("div", "hub-admin-review-actions");
+      if(!isOwner){
+        const save = node("button", "btn-primary", copy.teamSave);
+        save.type = "button";
+        save.disabled = busy;
+        save.onclick = () => void updateVerificationAdmin(member, roleSelect.value, verificationSelectedScopes(picker));
+        const revoke = node("button", "btn-ghost hub-admin-reject", copy.teamRevoke);
+        revoke.type = "button";
+        revoke.disabled = busy;
+        revoke.onclick = () => void revokeVerificationAdmin(member);
+        actions.append(save, revoke);
+      }
+      card.append(heading, roleLabel, picker);
+      if(actions.childElementCount) card.append(actions);
+      list.append(card);
+    });
+  }
+
+  function renderVerificationCenter(){
+    const view = $("hubOwnerConsoleView");
+    if(!view) return;
+    const copy = ownerConsoleCopy();
+    $("ownerConsoleKicker").textContent = copy.kicker;
+    $("ownerConsoleTitle").textContent = copy.title;
+    $("ownerConsoleDescription").textContent = copy.intro;
+    $("hubOwnerConsoleNavLabel").textContent = copy.nav;
+    renderOwnerOperationalSummary();
+    renderVerificationTabs();
+    renderVerificationTeamCopy();
+    const teamActive = hubState.verificationWorkflow === "admin_team";
+    $("verificationCenterQueuePanel").hidden = teamActive;
+    $("verificationCenterTeamPanel").hidden = !teamActive;
+    if(teamActive){
+      renderVerificationTeam();
+      return;
+    }
+    const workflowId = hubState.verificationWorkflow;
+    const allowed = verificationWorkflowAllowed(workflowId);
+    $("ownerVerificationQueueKicker").textContent = copy.queueKicker;
+    $("ownerVerificationQueueTitle").textContent = verificationWorkflowLabel(workflowId, copy);
+    $("ownerVerificationQueueDescription").textContent = verificationWorkflowDescription(workflowId, copy);
+    $("ownerVerificationStatusLabel").textContent = copy.requestStatus;
+    $("refreshOwnerVerificationQueue").textContent = copy.refresh;
+    $("ownerVerificationEmptyTitle").textContent = copy.queueClear;
+    $("ownerVerificationEmptyDescription").textContent = copy.noRequests;
+    const role = allowed ? adminRoleLabel() : "";
+    $("ownerConsoleAccessMark").textContent = role ? copy.access.replace("{role}", role) : "";
+    const filter = $("ownerVerificationStatusFilter");
+    const statuses = verificationStatusOptions(workflowId);
+    if(filter.dataset.workflow !== workflowId){
+      filter.replaceChildren();
+      statuses.forEach(status => {
+        const option = node("option", "", adminStatusLabel(status, copy));
+        option.value = status;
+        filter.append(option);
+      });
+      filter.dataset.workflow = workflowId;
+    }
+    if(!statuses.includes(hubState.adminQueueStatus)){
+      hubState.adminQueueStatus = verificationDefaultStatus(workflowId);
+    }
+    filter.value = hubState.adminQueueStatus;
+    filter.disabled = !allowed || hubState.adminQueueLoading;
+    $("refreshOwnerVerificationQueue").disabled = !allowed || hubState.adminQueueLoading;
+    if(hubState.adminQueueLoading){
+      setStatus("ownerVerificationQueueStatus", copy.loading);
+    } else if(hubState.adminQueueError){
+      setStatus("ownerVerificationQueueStatus", hubState.adminQueueError, "error");
+    } else if(hubState.adminQueueNotice){
+      setStatus("ownerVerificationQueueStatus", hubState.adminQueueNotice, hubState.adminQueueNoticeKind);
+    } else {
+      setStatus("ownerVerificationQueueStatus", "");
+    }
+    const queue = $("ownerVerificationQueue");
+    const empty = $("ownerVerificationEmpty");
+    queue.replaceChildren();
+    if(!allowed){
+      empty.hidden = true;
+      return;
+    }
+    empty.hidden = hubState.adminQueueLoading || Boolean(hubState.adminQueueError) || hubState.verificationCases.length > 0;
+    if(hubState.adminQueueLoading || hubState.adminQueueError) return;
+    hubState.verificationCases.forEach(record => {
+      const card = renderVerificationCase(record);
+      if(card) queue.append(card);
+    });
+    if(hubState.verificationCaseHasMore){
+      const more = node("button", "btn-ghost hub-verification-load-more", copy.refresh);
+      more.type = "button";
+      more.onclick = () => void loadVerificationCenterQueue({append:true, force:true});
+      queue.append(more);
+    }
+  }
+
+  function verificationQueueItems(payload){
+    if(Array.isArray(payload)) return payload;
+    for(const key of ["items", "cases", "requests", "queue"]){
+      if(Array.isArray(payload?.[key])) return payload[key];
+    }
+    return [];
+  }
+
+  async function loadVerificationCenterCounts({force=false}={}){
+    if(!canOpenVerificationCenter() || !authClient || !currentUser) return {};
+    if(hubState.verificationCountsLoading && !force) return hubState.verificationCounts;
+    const context = requestContext();
+    hubState.verificationCountsLoading = true;
+    hubState.verificationCountsError = "";
+    renderVerificationTabs();
+    let response;
+    try { response = await hubRpc("get_verification_center_counts"); }
+    catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return {};
+    hubState.verificationCountsLoading = false;
+    if(response.error){
+      hubState.verificationCounts = {};
+      hubState.verificationCountsError = missingRpcError(response.error)
+        ? ownerConsoleCopy().unavailable
+        : featureError(response.error);
+    } else {
+      const payload = parseJsonValue(response.data, response.data) || {};
+      hubState.verificationCounts = payload?.counts && typeof payload.counts === "object"
+        ? payload.counts
+        : (payload?.workflows && typeof payload.workflows === "object" ? payload.workflows : payload);
+    }
+    renderVerificationTabs();
+    return hubState.verificationCounts;
+  }
+
+  async function loadVerificationCenterQueue({force=false, append=false}={}){
+    const workflowId = hubState.verificationWorkflow;
+    if(!verificationWorkflowAllowed(workflowId) || workflowId === "admin_team" || !authClient || !currentUser) return [];
+    if(hubState.adminQueueLoading && !force) return hubState.verificationCases;
+    const context = requestContext();
+    const offset = append ? hubState.verificationCases.length : 0;
+    hubState.adminQueueStatus = $("ownerVerificationStatusFilter")?.value || hubState.adminQueueStatus || verificationDefaultStatus(workflowId);
+    hubState.adminQueueLoading = true;
+    hubState.adminQueueError = "";
+    hubState.adminQueueNotice = "";
+    renderVerificationCenter();
+    let response;
+    try {
+      response = await hubRpc("get_verification_center_queue", {
+        p_workflow:workflowId,
+        p_status:hubState.adminQueueStatus,
+        p_limit:VERIFICATION_PAGE_SIZE,
+        p_offset:offset
+      });
+    } catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context) || hubState.verificationWorkflow !== workflowId) return [];
+    hubState.adminQueueLoading = false;
+    if(response.error){
+      hubState.verificationCases = append ? hubState.verificationCases : [];
+      hubState.adminQueueError = missingRpcError(response.error)
+        ? ownerConsoleCopy().unavailable
+        : featureError(response.error);
+      hubState.verificationCaseHasMore = false;
+    } else {
+      const payload = parseJsonValue(response.data, response.data);
+      const items = verificationQueueItems(payload);
+      hubState.verificationCases = append ? [...hubState.verificationCases, ...items] : items;
+      hubState.verificationCaseOffset = hubState.verificationCases.length;
+      hubState.verificationCaseHasMore = payload?.has_more === true || items.length === VERIFICATION_PAGE_SIZE;
+      hubState.adminQueue = hubState.verificationCases;
+    }
+    renderVerificationCenter();
+    return hubState.verificationCases;
+  }
+
+  async function reviewVerificationCenterCase(record, action, reviewerNote, noteInput){
+    const workflowId = hubState.verificationWorkflow;
+    const caseId = verificationCaseId(record);
+    if(!verificationWorkflowAllowed(workflowId) || !caseId || hubState.adminReviewBusy.has(caseId)) return;
+    const copy = ownerConsoleCopy();
+    const note = String(reviewerNote || "").trim();
+    if(verificationActionNeedsNote(action) && !note){
+      hubState.adminQueueNotice = copy.noteRequired;
+      hubState.adminQueueNoticeKind = "error";
+      renderVerificationCenter();
+      const restored = document.querySelector(`[data-case-id="${CSS.escape(caseId)}"] .hub-admin-review-note textarea`);
+      (restored || noteInput)?.focus();
+      return;
+    }
+    const actionLabel = verificationActionLabel(action, copy);
+    const confirmed = await requestHubAction({
+      title:copy.actionConfirmTitle,
+      message:copy.actionConfirm.replace("{action}", actionLabel),
+      confirmLabel:actionLabel,
+      danger:["reject", "dismiss"].includes(action)
+    });
+    if(!confirmed) return;
+    const context = requestContext();
+    hubState.adminReviewBusy.add(caseId);
+    hubState.adminQueueNotice = copy.savingDecision;
+    hubState.adminQueueNoticeKind = "";
+    renderVerificationCenter();
+    let response;
+    const options = workflowId === "school_verification"
+      ? {verification_method:record?.evidence_kind || "manual"}
+      : {};
+    try {
+      response = await hubRpc("review_verification_center_case", {
+        p_workflow:workflowId,
+        p_case_id:caseId,
+        p_action:action,
+        p_note:note || null,
+        p_options:options
+      });
+    } catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.adminReviewBusy.delete(caseId);
+    if(response.error){
+      hubState.adminQueueNotice = missingRpcError(response.error) ? copy.unavailable : copy.decisionFailed;
+      hubState.adminQueueNoticeKind = "error";
+      renderVerificationCenter();
+      return;
+    }
+    await Promise.all([
+      loadVerificationCenterQueue({force:true}),
+      loadVerificationCenterCounts({force:true})
+    ]);
+    if(!contextIsCurrent(context)) return;
+    hubState.adminQueueNotice = copy.actionSaved;
+    hubState.adminQueueNoticeKind = "success";
+    renderVerificationCenter();
+  }
+
+  async function switchVerificationWorkflow(workflowId, {focus=false}={}){
+    if(!verificationWorkflowAllowed(workflowId)) return;
+    hubState.verificationWorkflow = workflowId;
+    hubState.adminQueueStatus = workflowId === "admin_team" ? "all" : verificationDefaultStatus(workflowId);
+    hubState.verificationCases = [];
+    hubState.adminQueue = [];
+    hubState.adminQueueError = "";
+    hubState.adminQueueNotice = "";
+    renderVerificationCenter();
+    if(focus){
+      document.querySelector(`[data-verification-workflow="${CSS.escape(workflowId)}"]`)?.focus();
+    }
+    if(workflowId === "admin_team") await loadVerificationAdminTeam({force:true});
+    else await loadVerificationCenterQueue({force:true});
+  }
+
+  function verificationSelectedScopes(container){
+    return [...container.querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value);
+  }
+
+  async function loadVerificationAdminTeam({force=false}={}){
+    if(!hasAdminCapability("team.manage") || !authClient || !currentUser) return [];
+    if(hubState.verificationTeamLoading && !force) return hubState.verificationTeam;
+    const context = requestContext();
+    hubState.verificationTeamLoading = true;
+    hubState.verificationTeamError = "";
+    renderVerificationTeam();
+    let response;
+    try { response = await hubRpc("get_concourse_admin_team"); }
+    catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return [];
+    hubState.verificationTeamLoading = false;
+    if(response.error){
+      hubState.verificationTeam = [];
+      hubState.verificationTeamError = missingRpcError(response.error)
+        ? ownerConsoleCopy().unavailable
+        : featureError(response.error);
+    } else {
+      const payload = parseJsonValue(response.data, response.data);
+      hubState.verificationTeam = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload?.items)
+          ? payload.items
+          : (Array.isArray(payload?.members) ? payload.members : (Array.isArray(payload?.admins) ? payload.admins : [])));
+    }
+    renderVerificationTeam();
+    return hubState.verificationTeam;
+  }
+
+  async function appointVerificationAdmin(){
+    if(!hasAdminCapability("team.manage") || hubState.verificationTeamLoading) return;
+    const copy = ownerConsoleCopy();
+    const identifier = $("verificationTeamIdentifier").value.trim();
+    const role = $("verificationTeamRole").value;
+    const scopes = verificationSelectedScopes($("verificationTeamScopePicker"));
+    if(!identifier){
+      setStatus("verificationTeamStatus", copy.teamIdentifierRequired, "error");
+      $("verificationTeamIdentifier").focus();
+      return;
+    }
+    if(!scopes.length){
+      setStatus("verificationTeamStatus", copy.teamScopeRequired, "error");
+      $("verificationTeamScopePicker").querySelector("input")?.focus();
+      return;
+    }
+    const context = requestContext();
+    hubState.verificationTeamLoading = true;
+    renderVerificationTeam();
+    let response;
+    try {
+      response = await hubRpc("appoint_concourse_admin", {
+        p_identifier:identifier,
+        p_role:role,
+        p_scopes:scopes
+      });
+    } catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.verificationTeamLoading = false;
+    if(response.error){
+      setStatus("verificationTeamStatus", missingRpcError(response.error) ? copy.teamUnavailable : featureError(response.error), "error");
+      renderVerificationTeam();
+      return;
+    }
+    $("verificationTeamIdentifier").value = "";
+    $("verificationTeamScopePicker").querySelectorAll('input[type="checkbox"]').forEach(input => { input.checked = false; });
+    await loadVerificationAdminTeam({force:true});
+    if(contextIsCurrent(context)) setStatus("verificationTeamStatus", copy.teamAppointed, "success");
+  }
+
+  async function updateVerificationAdmin(member, role, scopes){
+    const userId = verificationSafeValue(member?.user_id || member?.id);
+    if(!hasAdminCapability("team.manage") || !userId || hubState.verificationTeamBusy.has(userId)) return;
+    const copy = ownerConsoleCopy();
+    if(!scopes.length){
+      setStatus("verificationTeamStatus", copy.teamScopeRequired, "error");
+      return;
+    }
+    const context = requestContext();
+    hubState.verificationTeamBusy.add(userId);
+    renderVerificationTeam();
+    let response;
+    try {
+      response = await hubRpc("update_concourse_admin_scopes", {
+        p_user_id:userId,
+        p_role:role,
+        p_scopes:scopes
+      });
+    } catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.verificationTeamBusy.delete(userId);
+    if(response.error){
+      setStatus("verificationTeamStatus", missingRpcError(response.error) ? copy.teamUnavailable : featureError(response.error), "error");
+      renderVerificationTeam();
+      return;
+    }
+    await loadVerificationAdminTeam({force:true});
+    if(contextIsCurrent(context)) setStatus("verificationTeamStatus", copy.teamUpdated, "success");
+  }
+
+  async function revokeVerificationAdmin(member){
+    const userId = verificationSafeValue(member?.user_id || member?.id);
+    if(!hasAdminCapability("team.manage") || !userId || hubState.verificationTeamBusy.has(userId)) return;
+    const copy = ownerConsoleCopy();
+    const confirmed = await requestHubAction({
+      title:copy.teamRevoke,
+      message:copy.revokeConfirm,
+      confirmLabel:copy.teamRevoke,
+      danger:true
+    });
+    if(!confirmed) return;
+    const context = requestContext();
+    hubState.verificationTeamBusy.add(userId);
+    renderVerificationTeam();
+    let response;
+    try { response = await hubRpc("revoke_concourse_admin", {p_user_id:userId}); }
+    catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.verificationTeamBusy.delete(userId);
+    if(response.error){
+      setStatus("verificationTeamStatus", missingRpcError(response.error) ? copy.teamUnavailable : featureError(response.error), "error");
+      renderVerificationTeam();
+      return;
+    }
+    await loadVerificationAdminTeam({force:true});
+    if(contextIsCurrent(context)) setStatus("verificationTeamStatus", copy.teamRevoked, "success");
   }
 
   async function syncFinalSchedule(snapshot=finalTimetable){
@@ -3219,6 +4685,7 @@
     $("profileAllowMessages").checked = profile.allow_messages === true;
     $("profileAnalyticsConsent").checked = profile.analytics_consent === true;
     renderOwnAvatars();
+    renderMessageAvailability();
   }
 
   function switchConnectionTab(tab){
@@ -3535,6 +5002,7 @@
       hubState.profileLoading = false;
       hubState.profileHydrated = true;
       setProfileFormDisabled(false);
+      renderMessageAvailability();
       setStatus("memberProfileStatus", featureError(error), "error");
       return;
     }
@@ -3661,6 +5129,7 @@
     hubState.profile = data;
     hubState.profileUserId = context.userId;
     hubState.profileDirty = false;
+    renderMessageAvailability();
     setStatus("avatarUploadStatus", "");
     setStatus("memberProfileStatus", t("profileSaved"), "success");
     renderOverview();
@@ -4489,13 +5958,12 @@
 
   async function messageProfileStudent(){
     const context = requestContext();
-    const username = hubState.profilePreview?.username;
-    if(!username || hubState.profilePreview?.user_id === currentUser?.id) return;
+    const schoolmate = hubState.profilePreview;
+    if(!schoolmate?.username || schoolmate.user_id === currentUser?.id) return;
     closeSchoolmateProfile({restoreFocus:false});
     await switchView("messages");
     if(!contextIsCurrent(context)) return;
-    $("chatUsername").value = username;
-    await startConversation();
+    await startConversationWithSchoolmate(schoolmate);
   }
 
   async function togglePostLike(postId){
@@ -5673,6 +7141,241 @@
       .join(" · ");
   }
 
+  function messageAvailabilityEnabled(){
+    return hubState.profile?.allow_messages === true;
+  }
+
+  function renderMessageAvailability(){
+    const toggle = $("messageAvailability");
+    if(!toggle) return;
+    const enabled = messageAvailabilityEnabled();
+    const loading = !hubState.profileHydrated || hubState.profileLoading;
+    toggle.checked = enabled;
+    toggle.disabled = !currentUser || loading || hubState.messageAvailabilityUpdating;
+    const row = toggle.closest(".hub-message-availability");
+    row?.classList.toggle("is-enabled", enabled);
+    row?.classList.toggle("is-busy", hubState.messageAvailabilityUpdating);
+    const hint = $("messageAvailabilityHint");
+    if(hint){
+      hint.textContent = t(
+        hubState.messageAvailabilityUpdating
+          ? "messageAvailabilitySaving"
+          : loading
+            ? "messageAvailabilityLoading"
+            : enabled
+              ? "messageAvailabilityHintOn"
+              : "messageAvailabilityHintOff"
+      );
+    }
+  }
+
+  async function setMessageAvailability(enabled){
+    if(
+      !authClient
+      || !currentUser
+      || hubState.messageAvailabilityUpdating
+      || !hubState.profileHydrated
+    ) return false;
+    const context = requestContext();
+    const previous = messageAvailabilityEnabled();
+    hubState.messageAvailabilityUpdating = true;
+    renderMessageAvailability();
+    setStatus("chatStatus", t("messageAvailabilitySaving"));
+    let response;
+    try {
+      response = await hubRpc("set_message_availability", {p_enabled:enabled});
+      if(response.error && missingRpcError(response.error)){
+        response = await authClient
+          .from("member_profiles")
+          .upsert(
+            {user_id:context.userId, allow_messages:enabled},
+            {onConflict:"user_id"}
+          )
+          .select("allow_messages")
+          .single();
+      }
+    } catch(error){
+      response = {error};
+    }
+    if(!contextIsCurrent(context)) return false;
+    hubState.messageAvailabilityUpdating = false;
+    if(response?.error){
+      hubState.profile = {...(hubState.profile || {}), allow_messages:previous};
+      renderMessageAvailability();
+      setStatus(
+        "chatStatus",
+        featureError(response.error) || t("profileSaveFailed"),
+        "error"
+      );
+      return false;
+    }
+    const saved = typeof response?.data === "boolean"
+      ? response.data
+      : response?.data?.allow_messages === true;
+    hubState.profile = {...(hubState.profile || {}), allow_messages:saved};
+    hubState.profileUserId = context.userId;
+    $("profileAllowMessages").checked = saved;
+    renderMessageAvailability();
+    if(!saved && hubState.activeConversationId && !hubState.messageDemoMode){
+      hubState.activeConversationCanSend = false;
+      renderActiveConversationHeader();
+      $("chatMessageInput").disabled = true;
+      $("sendChatMessage").disabled = true;
+    }
+    if(hubState.activeView === "messages" && hubState.conversations.length){
+      void loadConversations({force:true, suppressStatus:true});
+    }
+    if(saved){
+      setStatus("chatStatus", t("messageAvailabilityEnabled"), "success");
+      queueUsernameSearch();
+    } else {
+      clearUsernameSuggestions({cancel:true});
+      setStatus("chatStatus", t("messageAvailabilityDisabled"));
+    }
+    return true;
+  }
+
+  function normalizedMessageUsername(value){
+    return String(value || "").trim().replace(/^@+/, "");
+  }
+
+  function clearUsernameSuggestions({cancel=false}={}){
+    if(cancel){
+      if(hubState.usernameSearchTimer){
+        window.clearTimeout(hubState.usernameSearchTimer);
+      }
+      hubState.usernameSearchTimer = 0;
+      hubState.usernameSearchRequest += 1;
+      hubState.usernameSearchLoading = false;
+    }
+    hubState.usernameSuggestions = [];
+    hubState.usernameSuggestionIndex = -1;
+    const list = $("chatUsernameSuggestions");
+    list?.replaceChildren();
+    if(list) list.hidden = true;
+    const input = $("chatUsername");
+    input?.setAttribute("aria-expanded", "false");
+    input?.removeAttribute("aria-activedescendant");
+    input?.removeAttribute("aria-busy");
+  }
+
+  function setUsernameSuggestionIndex(index){
+    const suggestions = hubState.usernameSuggestions;
+    if(!suggestions.length){
+      hubState.usernameSuggestionIndex = -1;
+      return;
+    }
+    const next = (index + suggestions.length) % suggestions.length;
+    hubState.usernameSuggestionIndex = next;
+    const input = $("chatUsername");
+    document.querySelectorAll("#chatUsernameSuggestions [role='option']").forEach((option, optionIndex) => {
+      const selected = optionIndex === next;
+      option.setAttribute("aria-selected", selected ? "true" : "false");
+      if(selected) input?.setAttribute("aria-activedescendant", option.id);
+    });
+  }
+
+  function renderUsernameSuggestions(results, {showEmpty=false}={}){
+    const list = $("chatUsernameSuggestions");
+    const input = $("chatUsername");
+    if(!list || !input) return;
+    list.replaceChildren();
+    hubState.usernameSuggestions = Array.isArray(results) ? results : [];
+    hubState.usernameSuggestionIndex = -1;
+    if(!hubState.usernameSuggestions.length){
+      if(!showEmpty){
+        clearUsernameSuggestions();
+        return;
+      }
+      list.append(node("p", "hub-username-suggestion-empty", t("messageSearchEmpty")));
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      return;
+    }
+    hubState.usernameSuggestions.forEach((schoolmate, index) => {
+      const option = node("button", "hub-username-suggestion");
+      option.type = "button";
+      option.id = `chatUsernameSuggestion-${index}`;
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", "false");
+      const avatar = createAvatar(
+        schoolmate.display_name || schoolmate.username,
+        schoolmate.avatar_path,
+        schoolmate.avatar_revision
+      );
+      const copy = node("span", "hub-username-suggestion-copy");
+      copy.append(node("b", "", `@${schoolmate.username}`));
+      if(schoolmate.display_name){
+        copy.append(node("small", "", schoolmate.display_name));
+      }
+      option.append(avatar, copy);
+      option.addEventListener("pointerdown", event => event.preventDefault());
+      option.addEventListener("click", () => {
+        void startConversationWithSchoolmate(schoolmate);
+      });
+      list.append(option);
+    });
+    list.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+  }
+
+  async function searchUsernameSuggestions(query, request){
+    if(!authClient || !currentUser || !messageAvailabilityEnabled()) return;
+    const context = requestContext();
+    hubState.usernameSearchLoading = true;
+    $("chatUsername")?.setAttribute("aria-busy", "true");
+    let response;
+    try {
+      response = await hubRpc("search_messageable_schoolmates", {
+        p_query:query,
+        p_limit:8
+      });
+    } catch(error){
+      response = {error};
+    }
+    if(
+      !contextIsCurrent(context)
+      || request !== hubState.usernameSearchRequest
+    ) return;
+    hubState.usernameSearchLoading = false;
+    $("chatUsername")?.removeAttribute("aria-busy");
+    if(response.error){
+      clearUsernameSuggestions();
+      setStatus("chatStatus", featureError(response.error), "error");
+      return;
+    }
+    renderUsernameSuggestions(
+      (Array.isArray(response.data) ? response.data : [])
+        .filter(schoolmate => (
+          schoolmate?.username
+          && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(schoolmate.user_id || ""))
+        )),
+      {showEmpty:true}
+    );
+  }
+
+  function queueUsernameSearch(){
+    if(hubState.usernameSearchTimer){
+      window.clearTimeout(hubState.usernameSearchTimer);
+    }
+    const request = ++hubState.usernameSearchRequest;
+    hubState.usernameSearchTimer = 0;
+    const query = normalizedMessageUsername($("chatUsername")?.value);
+    if(!/^[A-Za-z0-9_]{2,24}$/.test(query)){
+      clearUsernameSuggestions();
+      return;
+    }
+    if(!messageAvailabilityEnabled()){
+      clearUsernameSuggestions();
+      setStatus("chatStatus", t("messageAvailabilityRequired"), "error");
+      return;
+    }
+    hubState.usernameSearchTimer = window.setTimeout(() => {
+      hubState.usernameSearchTimer = 0;
+      void searchUsernameSuggestions(query, request);
+    }, 240);
+  }
+
   function removeMessageExampleClose(){
     $("messageExampleClose")?.remove();
   }
@@ -6176,54 +7879,127 @@
     return true;
   }
 
-  async function startConversation(){
-    const username = $("chatUsername").value.trim().replace(/^@/, "");
-    if(!username) return;
-    hubState.messageDemoMode = false;
-    hubState.messageDemoDismissed = false;
-    removeMessageExampleClose();
-    $("sendChatMessage").textContent = t("send");
+  async function startConversation(options={}){
+    if(options instanceof Event) options = {};
+    const username = normalizedMessageUsername(
+      options.username || $("chatUsername").value
+    );
+    const targetUserId = String(options.userId || "");
+    const preserveDemo = hubState.messageDemoMode;
+    if(!username) return false;
+    if(!messageAvailabilityEnabled()){
+      setStatus("chatStatus", t("messageAvailabilityRequired"), "error");
+      return false;
+    }
     if(!/^[A-Za-z0-9_]{3,24}$/.test(username)){
       setStatus("chatStatus", t("chatUsernameInvalid"), "error");
-      return;
+      return false;
     }
-    if(username === currentUser?.user_metadata?.username){ setStatus("chatStatus", t("cannotMessageSelf"), "error"); return; }
+    if(username === String(currentUser?.user_metadata?.username || "")){
+      setStatus("chatStatus", t("cannotMessageSelf"), "error");
+      return false;
+    }
     const button = $("startConversation");
-    if(button.disabled) return;
+    if(button.disabled) return false;
     const context = requestContext();
     button.disabled = true;
+    clearUsernameSuggestions({cancel:true});
     setStatus("chatStatus", t("startingConversation"));
     try {
-      const { data, error } = await hubRpc("start_direct_conversation", {p_username:username});
-      if(!contextIsCurrent(context)) return;
-      if(error){ setStatus("chatStatus", conversationStartError(error), "error"); return; }
-      const conversationId = Array.isArray(data) ? data[0]?.conversation_id : data;
-      if(!conversationId){ setStatus("chatStatus", t("conversationStartFailed"), "error"); return; }
+      let response = targetUserId
+        ? await hubRpc(
+          "start_direct_conversation_by_user",
+          {p_user_id:targetUserId}
+        )
+        : await hubRpc(
+          "start_direct_conversation",
+          {p_username:username}
+        );
+      if(targetUserId && response.error && missingRpcError(response.error)){
+        response = await hubRpc(
+          "start_direct_conversation",
+          {p_username:username}
+        );
+      }
+      if(!contextIsCurrent(context)) return false;
+      if(response.error){
+        setStatus("chatStatus", conversationStartError(response.error), "error");
+        if(preserveDemo) renderMessageExample();
+        return false;
+      }
+      const firstResult = Array.isArray(response.data)
+        ? response.data[0]
+        : response.data;
+      const conversationId = typeof firstResult === "object"
+        ? firstResult?.conversation_id || firstResult?.id
+        : firstResult;
+      if(!conversationId){
+        setStatus("chatStatus", t("conversationStartFailed"), "error");
+        if(preserveDemo) renderMessageExample();
+        return false;
+      }
+      hubState.messageDemoMode = false;
+      hubState.messageDemoDismissed = false;
+      removeMessageExampleClose();
+      $("sendChatMessage").textContent = t("send");
       $("chatUsername").value = "";
       setStatus("chatStatus", t("conversationStarted"), "success");
       await loadConversations({force:true, suppressStatus:true});
-      if(!contextIsCurrent(context)) return;
+      if(!contextIsCurrent(context)) return false;
       let conversation = hubState.conversations.find(item => item.conversation_id === conversationId);
       if(!conversation){
         conversation = {
           conversation_id: conversationId,
-          other_user_id: null,
+          other_user_id: targetUserId || null,
           other_username: username,
           other_display_name: null,
           other_avatar_path: null,
           other_avatar_revision: 0,
           last_message: null,
-          last_message_at: null
+          last_message_at: null,
+          conversation_context: "campus",
+          marketplace_listing_id: null,
+          marketplace_listing_title: null,
+          other_school_name: null,
+          can_send: true
         };
         hubState.conversations = [conversation, ...hubState.conversations];
         renderConversations(hubState.conversations);
       }
       await openConversation(conversation);
+      return true;
     } catch(requestError){
-      if(contextIsCurrent(context)) setStatus("chatStatus", conversationStartError(requestError), "error");
+      if(contextIsCurrent(context)){
+        setStatus("chatStatus", conversationStartError(requestError), "error");
+        if(preserveDemo) renderMessageExample();
+      }
+      return false;
     } finally {
       if(contextIsCurrent(context)) button.disabled = false;
     }
+  }
+
+  async function startConversationWithSchoolmate(schoolmate){
+    const username = normalizedMessageUsername(schoolmate?.username);
+    const userId = String(schoolmate?.user_id || "");
+    if(
+      !/^[A-Za-z0-9_]{3,24}$/.test(username)
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)
+    ) return false;
+    $("chatUsername").value = username;
+    return startConversation({username, userId});
+  }
+
+  async function startConversationWithUsername(username){
+    const exactUsername = normalizedMessageUsername(username);
+    if(!/^[A-Za-z0-9_]{3,24}$/.test(exactUsername) || !currentUser){
+      return false;
+    }
+    const context = requestContext();
+    await switchView("messages");
+    if(!contextIsCurrent(context)) return false;
+    $("chatUsername").value = exactUsername;
+    return startConversation({username:exactUsername});
   }
 
   async function sendMessage(){
@@ -6341,6 +8117,7 @@
       if(hubState.activeView === "community") renderCommunityFeed(hubState.feed);
       if(hubState.activeView === "community") renderConversationPreview();
       if(hubState.activeView === "messages"){
+        renderMessageAvailability();
         renderConversations(hubState.conversations);
         if(hubState.messageDemoMode) renderMessageExample();
         else {
@@ -6370,9 +8147,36 @@
   $("loadCourseInsights")?.addEventListener("click", loadCourseInsights);
   $("ownerVerificationStatusFilter")?.addEventListener("change", event => {
     hubState.adminQueueStatus = event.target.value;
-    void loadOwnerConsoleQueue({force:true});
+    void loadVerificationCenterQueue({force:true});
   });
-  $("refreshOwnerVerificationQueue")?.addEventListener("click", () => void loadOwnerConsoleQueue({force:true}));
+  $("refreshOwnerVerificationQueue")?.addEventListener("click", () => {
+    void Promise.all([
+      loadVerificationCenterQueue({force:true}),
+      loadVerificationCenterCounts({force:true})
+    ]);
+  });
+  $("verificationCenterTabs")?.addEventListener("click", event => {
+    const tab = event.target.closest?.("[data-verification-workflow]");
+    if(!tab || tab.hidden) return;
+    void switchVerificationWorkflow(tab.dataset.verificationWorkflow, {focus:true});
+  });
+  $("verificationCenterTabs")?.addEventListener("keydown", event => {
+    if(!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    const tabs = [...$("verificationCenterTabs").querySelectorAll("[data-verification-workflow]:not([hidden])")];
+    if(!tabs.length) return;
+    const current = Math.max(0, tabs.indexOf(document.activeElement));
+    const next = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? tabs.length - 1
+        : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    event.preventDefault();
+    void switchVerificationWorkflow(tabs[next].dataset.verificationWorkflow, {focus:true});
+  });
+  $("verificationTeamAppointmentForm")?.addEventListener("submit", event => {
+    event.preventDefault();
+    void appointVerificationAdmin();
+  });
   $("refreshOwnerOperationalSummary")?.addEventListener("click", () => void loadOwnerOperationalSummary({force:true}));
   $("previewCourseInsights")?.addEventListener("click", () => renderInsightExample("major"));
   $("courseInsightScope")?.addEventListener("change", syncInsightYearControl);
@@ -6479,12 +8283,43 @@
   });
   $("startConversation")?.addEventListener("click", startConversation);
   $("chatUsername")?.addEventListener("keydown", event => {
+    if(event.key === "ArrowDown" && hubState.usernameSuggestions.length){
+      event.preventDefault();
+      setUsernameSuggestionIndex(hubState.usernameSuggestionIndex + 1);
+      return;
+    }
+    if(event.key === "ArrowUp" && hubState.usernameSuggestions.length){
+      event.preventDefault();
+      setUsernameSuggestionIndex(
+        hubState.usernameSuggestionIndex < 0
+          ? hubState.usernameSuggestions.length - 1
+          : hubState.usernameSuggestionIndex - 1
+      );
+      return;
+    }
+    if(event.key === "Escape"){
+      clearUsernameSuggestions({cancel:true});
+      return;
+    }
     if(event.key === "Enter" && !event.isComposing && event.keyCode !== 229){
       event.preventDefault();
-      void startConversation();
+      const selected = hubState.usernameSuggestions[hubState.usernameSuggestionIndex];
+      if(selected) void startConversationWithSchoolmate(selected);
+      else void startConversation();
     }
   });
-  $("chatUsername")?.addEventListener("input", () => setStatus("chatStatus", ""));
+  $("chatUsername")?.addEventListener("input", () => {
+    setStatus("chatStatus", "");
+    queueUsernameSearch();
+  });
+  $("messageAvailability")?.addEventListener("change", event => {
+    void setMessageAvailability(event.target.checked);
+  });
+  document.addEventListener("pointerdown", event => {
+    if(!event.target.closest?.(".hub-username-search")){
+      clearUsernameSuggestions();
+    }
+  });
   $("refreshMessages")?.addEventListener("click", () => loadConversations({force:true}));
   $("reportConversation")?.addEventListener("click", reportConversation);
   $("blockConversationUser")?.addEventListener("click", blockConversationUser);
@@ -6553,6 +8388,7 @@
     show: showHub,
     hide: hideHub,
     switchView,
+    startConversationWithUsername,
     openConversationById,
     refreshHeader: renderHubHeader,
     syncAccess,
@@ -6573,6 +8409,10 @@
       updateCommunityPostCounter();
       syncCommunityScopeControls();
       syncAccess();
+      renderMessageAvailability();
+      if(hubState.usernameSuggestions.length){
+        renderUsernameSuggestions(hubState.usernameSuggestions);
+      }
       renderAdminAccess();
       renderOwnerConsole();
       if($("hubAccountTrustControls")) renderAccountTrustControls();

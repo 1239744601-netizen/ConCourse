@@ -2859,6 +2859,17 @@ input.market-search::placeholder {
 .marketplace-detail-action.active { background: #e7e7ea; filter: none; transform: none; }
 .marketplace-detail-action.primary { color: #211804; background: var(--market-warm); }
 .marketplace-detail-action.primary:hover { background: #ffc34a; }
+.marketplace-detail-action.payment-review {
+  color: #075681;
+  background: #e8f6ff;
+  border-color: #bfe8fb;
+}
+.marketplace-detail-action.payment-review:hover { background: #d8f0fc; }
+.marketplace-detail-action.payment-review:disabled {
+  color: #4d7186;
+  background: #edf5f8;
+  border-color: #d4e5ec;
+}
 .marketplace-detail-action.danger { color: #a72431; background: #fdebed; }
 .marketplace-detail-action.danger:hover { background: #f9dce0; }
 

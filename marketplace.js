@@ -120,6 +120,11 @@
     marketplaceDisputeReason:"Choose a short reason, such as item not received or not as described.",
     marketplaceDisputeDetails:"Describe the problem and keep any evidence. Do not include card or bank details.",
     marketplaceDisputeOpened:"The dispute was recorded for administrator review.",
+    marketplaceRequestPaymentReview:"Request Payment Review",
+    marketplacePaymentReviewReason:"Explain what you need the verification team to review. Do not include card, bank, password, or one-time-code information.",
+    marketplacePaymentReviewEvidence:"Optional: add a safe evidence reference, such as a receipt number or a private file reference. Never enter full payment credentials.",
+    marketplacePaymentReviewSubmitted:"Your payment review request was sent to the Verification Center. This review does not move, release, or refund money.",
+    marketplacePaymentReviewAlreadySubmitted:"Payment Review Requested",
     marketplaceDisputeRecord:"Dispute record",
     marketplaceReview:"Transaction review",
     marketplaceRating:"Rating: {rating} out of 5",
@@ -256,6 +261,11 @@
       marketplaceCommentsLoadMore:"加载更多评论",
       marketplaceCommentsLoadingMore:"正在加载评论…",
       marketplaceContactSeller:"私信卖家",
+      marketplaceRequestPaymentReview:"申请付款复核",
+      marketplacePaymentReviewReason:"请说明需要验证团队复核的事项。请勿填写银行卡、银行账户、密码或一次性验证码。",
+      marketplacePaymentReviewEvidence:"选填：填写安全的凭证编号或私密文件引用。切勿输入完整付款凭据。",
+      marketplacePaymentReviewSubmitted:"付款复核申请已发送至验证中心。此复核不会转移、放款或退款。",
+      marketplacePaymentReviewAlreadySubmitted:"已申请付款复核",
       marketplaceMessageOpenFailed:"未能打开私信。请进入“私信”，并输入卖家的准确用户名。",
       marketplaceFeedDegraded:"实时市集商品暂时无法加载。重新连接期间，仍可浏览下方校园示例。",
       marketplaceRetry:"重试",
@@ -320,6 +330,11 @@
       marketplaceCommentsLoadMore:"載入更多留言",
       marketplaceCommentsLoadingMore:"正在載入留言…",
       marketplaceContactSeller:"私訊賣家",
+      marketplaceRequestPaymentReview:"申請付款覆核",
+      marketplacePaymentReviewReason:"請說明需要驗證團隊覆核嘅事項。請勿填寫銀行卡、銀行帳戶、密碼或一次性驗證碼。",
+      marketplacePaymentReviewEvidence:"選填：填寫安全嘅憑證編號或私人檔案參考。切勿輸入完整付款憑據。",
+      marketplacePaymentReviewSubmitted:"付款覆核申請已傳送到驗證中心。呢個覆核唔會轉移、放款或退款。",
+      marketplacePaymentReviewAlreadySubmitted:"已申請付款覆核",
       marketplaceMessageOpenFailed:"未能開啟私訊。請進入「私訊」，再輸入賣家嘅準確用戶名。",
       marketplaceFeedDegraded:"即時市集商品暫時未能載入。重新連線期間，仍可瀏覽下面嘅校園示例。",
       marketplaceRetry:"重試",
@@ -374,6 +389,7 @@
     editorOperation:0,
     busyListings:new Set(),
     busyOrders:new Set(),
+    paymentReviewOrders:new Set(),
     detail:null,
     order:null,
     returnFocus:null,
@@ -631,7 +647,7 @@
     const parsed = parseJson(value, value);
     if(Array.isArray(parsed)) return {items:parsed, hasMore:false, total:parsed.length};
     if(!parsed || typeof parsed !== "object") return {items:[], hasMore:false, total:0};
-    const items = [parsed.items, parsed.listings, parsed.orders, parsed.rows].find(Array.isArray) || [];
+    const items = [parsed.items, parsed.listings, parsed.orders, parsed.requests, parsed.rows].find(Array.isArray) || [];
     return {
       items,
       hasMore:parsed.has_more === true || parsed.hasMore === true,
@@ -2287,21 +2303,22 @@
   async function messageUsername(username){
     const exactUsername = String(username || "").trim().replace(/^@/, "");
     if(!exactUsername) return false;
+    if(!byId("marketplaceDetailModal")?.hidden){
+      closeDetail({restoreFocus:false, clearHash:true});
+    }
     if(typeof hub().startConversationWithUsername === "function"){
-      return hub().startConversationWithUsername(exactUsername);
+      return await hub().startConversationWithUsername(exactUsername);
     }
     if(typeof hub().switchView !== "function") return false;
     const context = currentContext();
-    if(!byId("marketplaceDetailModal")?.hidden) closeDetail({restoreFocus:false, clearHash:true});
     await hub().switchView("messages");
     if(!contextIsCurrent(context)) return false;
     const usernameInput = byId("chatUsername");
-    const start = byId("startConversation");
-    if(!usernameInput || !start || start.disabled) return false;
+    if(!usernameInput) return false;
     usernameInput.value = exactUsername;
     usernameInput.dispatchEvent(new Event("input", {bubbles:true}));
-    start.click();
-    return true;
+    usernameInput.focus();
+    return false;
   }
 
   async function makeOffer(listing, trigger){
@@ -2935,6 +2952,16 @@
       dispute.addEventListener("click", () => void disputeOrder(order, dispute));
       actions.append(dispute);
     }
+    if((buyerRole || sellerRole) && !["released", "refunded"].includes(paymentState) && !["accepted", "cancelled", "refunded"].includes(order.status)){
+      const requested = state.paymentReviewOrders.has(orderId(order));
+      const paymentReview = detailAction(
+        tr(requested ? "marketplacePaymentReviewAlreadySubmitted" : "marketplaceRequestPaymentReview"),
+        "marketplace-detail-action payment-review"
+      );
+      paymentReview.disabled = requested;
+      paymentReview.addEventListener("click", () => void requestPaymentReview(order, paymentReview));
+      actions.append(paymentReview);
+    }
     article.append(actions);
     content.append(article);
   }
@@ -2977,6 +3004,75 @@
     const details = await ask({title:tr("marketplaceOpenDispute"), message:tr("marketplaceDisputeDetails"), input:true, maxLength:2000, confirmLabel:tr("marketplaceOpenDispute"), danger:true});
     if(!details) return;
     await orderMutation(order, trigger, "open_marketplace_dispute", {p_order_id:orderId(order), p_reason:String(reason).trim().slice(0, 80), p_details:String(details).trim().slice(0, 2000)}, "marketplaceDisputeOpened");
+  }
+
+  async function requestPaymentReview(order, trigger){
+    const id = orderId(order);
+    if(!UUID_RE.test(id) || state.busyOrders.has(id) || state.paymentReviewOrders.has(id)) return;
+    const reason = await ask({
+      title:tr("marketplaceRequestPaymentReview"),
+      message:tr("marketplacePaymentReviewReason"),
+      input:true,
+      maxLength:1200,
+      confirmLabel:tr("marketplaceRequestPaymentReview")
+    });
+    if(!reason) return;
+    const evidenceReference = await ask({
+      title:tr("marketplaceRequestPaymentReview"),
+      message:tr("marketplacePaymentReviewEvidence"),
+      input:true,
+      inputRequired:false,
+      maxLength:500,
+      confirmLabel:tr("marketplaceRequestPaymentReview")
+    });
+    if(evidenceReference === null || evidenceReference === false) return;
+    const context = currentContext();
+    state.busyOrders.add(id);
+    if(trigger) trigger.disabled = true;
+    try {
+      const {error} = await authClient.rpc("submit_marketplace_payment_review_request", {
+        p_order_id:id,
+        p_reason:String(reason).trim().slice(0, 1200),
+        p_evidence_reference:String(evidenceReference || "").trim().slice(0, 500) || null
+      });
+      if(!contextIsCurrent(context)) return;
+      if(error) throw error;
+      state.paymentReviewOrders.add(id);
+      setStatus(tr("marketplacePaymentReviewSubmitted"), "success");
+      if(state.order && orderId(state.order) === id) renderOrder(state.order);
+    } catch(error){
+      if(contextIsCurrent(context)) setStatus(featureError(error), "error");
+    } finally {
+      if(contextIsCurrent(context)){
+        state.busyOrders.delete(id);
+        if(trigger?.isConnected && !state.paymentReviewOrders.has(id)) trigger.disabled = false;
+      }
+    }
+  }
+
+  async function loadPaymentReviewRequests(){
+    if(!authClient || !state.userId) return [];
+    const context = currentContext();
+    try {
+      const {data, error} = await authClient.rpc("get_my_marketplace_payment_review_requests");
+      if(!contextIsCurrent(context)) return [];
+      if(error) throw error;
+      const requests = collection(data).items;
+      state.paymentReviewOrders.clear();
+      requests
+        .filter(request => ["submitted", "under_review"].includes(String(request?.status || "")))
+        .map(request => orderId(request))
+        .filter(id => UUID_RE.test(id))
+        .forEach(id => state.paymentReviewOrders.add(id));
+      if(state.order) renderOrder(state.order);
+      return requests;
+    } catch(error){
+      const message = String(error?.message || error || "");
+      if(!/Could not find the function|schema cache|does not exist|PGRST202/i.test(message)){
+        console.warn("ConCourse payment review status could not be loaded.", error);
+      }
+      return [];
+    }
   }
 
   async function loadCommunityListingChoices(){
@@ -3103,6 +3199,7 @@
     state.busyCommentLikes.clear();
     state.busyListings.clear();
     state.busyOrders.clear();
+    state.paymentReviewOrders.clear();
     state.detail = null;
     state.order = null;
     state.returnFocus = null;
@@ -3178,7 +3275,11 @@
     if(!nextUserId){ reset(null); return false; }
     if(nextUserId !== state.userId) reset(nextUserId);
     state.active = true;
-    await Promise.all([loadMarketplace({force:true}), loadCommunityListingChoices()]);
+    await Promise.all([
+      loadMarketplace({force:true}),
+      loadCommunityListingChoices(),
+      loadPaymentReviewRequests()
+    ]);
     const match = window.location.hash.match(LISTING_HASH_RE);
     if(match) await openListing(match[1]);
     return true;
