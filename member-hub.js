@@ -64,6 +64,19 @@
     accountDeletionLoading: false,
     schoolVerificationRequest: null,
     schoolVerificationLoading: false,
+    adminContextUserId: null,
+    adminRole: "",
+    adminContextLoading: false,
+    adminQueue: [],
+    adminQueueStatus: "submitted",
+    adminQueueLoading: false,
+    adminQueueError: "",
+    adminQueueNotice: "",
+    adminQueueNoticeKind: "",
+    adminReviewBusy: new Set(),
+    ownerSummary: null,
+    ownerSummaryLoading: false,
+    ownerSummaryError: "",
     loadingFeed: false,
     loadingConversations: false,
     feedScope: "school",
@@ -756,6 +769,19 @@
     hubState.accountDeletionLoading = false;
     hubState.schoolVerificationRequest = null;
     hubState.schoolVerificationLoading = false;
+    hubState.adminContextUserId = null;
+    hubState.adminRole = "";
+    hubState.adminContextLoading = false;
+    hubState.adminQueue = [];
+    hubState.adminQueueStatus = "submitted";
+    hubState.adminQueueLoading = false;
+    hubState.adminQueueError = "";
+    hubState.adminQueueNotice = "";
+    hubState.adminQueueNoticeKind = "";
+    hubState.adminReviewBusy.clear();
+    hubState.ownerSummary = null;
+    hubState.ownerSummaryLoading = false;
+    hubState.ownerSummaryError = "";
     hubState.loadingFeed = false;
     hubState.loadingConversations = false;
     hubState.feedScope = "school";
@@ -799,7 +825,7 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
-    ["communityFeed", "conversationList", "chatMessages", "courseInsightChart"].forEach(id => $(id)?.replaceChildren());
+    ["communityFeed", "conversationList", "chatMessages", "courseInsightChart", "ownerVerificationQueue"].forEach(id => $(id)?.replaceChildren());
     renderCommunityFeed([]);
     $("courseInsightScope").value = "same_major_year";
     $("courseInsightYear").value = "";
@@ -813,6 +839,8 @@
     ["communityComposerStatus", "communityFeedStatus", "chatStatus", "memberProfileStatus", "avatarUploadStatus", "courseInsightStatus"].forEach(id => setStatus(id, ""));
     setSocialConnectionStatus();
     renderSocialConnections();
+    renderAdminAccess();
+    renderOwnerConsole();
     if($("hubAccountTrustControls")) renderAccountTrustControls();
     $("chatHeading").textContent = t("selectConversation");
     $("chatSubheading").textContent = "";
@@ -1041,9 +1069,19 @@
   }
 
   function renderHubHeader(){
-    const view = ["community", "marketplace", "messages", "overview", "academic-tools", "profile"].includes(hubState.activeView) ? hubState.activeView : "community";
+    const view = ["community", "marketplace", "messages", "overview", "academic-tools", "profile", "owner-console"].includes(hubState.activeView) ? hubState.activeView : "community";
     const worldwideCommunity = view === "community" && hubState.feedScope === "cross";
     const worldwideMarketplace = view === "marketplace" && $("memberHub")?.dataset.marketplaceScope === "global";
+    if(view === "owner-console"){
+      const copy = ownerConsoleCopy();
+      $("hubPageKicker").textContent = copy.kicker;
+      $("hubGreeting").textContent = copy.title;
+      $("hubPageIntroduction").textContent = copy.intro;
+      const marketplaceActions = $("hubMarketplaceActions");
+      if(marketplaceActions) marketplaceActions.hidden = true;
+      scheduleHubStickyGeometry();
+      return;
+    }
     const prefix = view === "overview"
       ? "hubInsights"
       : view === "community"
@@ -1196,7 +1234,8 @@
   }
 
   async function switchView(view){
-    if(!["overview", "community", "marketplace", "messages", "academic-tools", "profile"].includes(view)) view = "community";
+    if(!["overview", "community", "marketplace", "messages", "academic-tools", "profile", "owner-console"].includes(view)) view = "community";
+    if(view === "owner-console" && !canReviewSchoolVerifications()) view = "community";
     if(view !== "academic-tools") window.ConCourseAcademicTools?.deactivate?.();
     if(view !== "community") closeSchoolmateProfile({restoreFocus:false});
     hubState.activeView = view;
@@ -1228,6 +1267,12 @@
       window.ConCourseAcademicTools?.activate?.();
     } else if(view === "messages"){
       await loadConversations();
+    } else if(view === "owner-console"){
+      renderOwnerConsole();
+      await Promise.all([
+        loadOwnerConsoleQueue(),
+        hubState.adminRole === "owner" ? loadOwnerOperationalSummary() : Promise.resolve(null)
+      ]);
     } else if(view === "profile"){
       ensureAccountTrustControls();
       await Promise.all([
@@ -1452,6 +1497,204 @@
         requiredNote:"請簡短說明用作人手審核嘅證明。"
       }
     });
+  }
+
+  function ownerConsoleCopy(){
+    return communitySeedText({
+      en:{
+        nav:"Owner Console",
+        kicker:"ConCourse Administration",
+        title:"Owner Console",
+        intro:"Review campus identity evidence through protected administrator-only operations.",
+        ownerRole:"Owner",
+        reviewerRole:"Reviewer",
+        access:"{role} Access",
+        queueKicker:"Campus Trust",
+        queueTitle:"School Verification Queue",
+        queueDescription:"Review submitted evidence before granting access to verified-campus features.",
+        summaryKicker:"Operations",
+        summaryTitle:"Platform Summary",
+        summaryRefresh:"Refresh Summary",
+        summaryLoading:"Loading protected operational totals…",
+        summaryUnavailable:"The operational summary is temporarily unavailable.",
+        summaryAccounts:"Accounts",
+        summaryVerification:"School Verification",
+        summaryDeletion:"Deletion Requests",
+        summaryCommunity:"Community",
+        summaryMarketplace:"Marketplace",
+        summaryMessaging:"Messaging",
+        requestStatus:"Request Status",
+        statusSubmitted:"Submitted",
+        statusUnderReview:"Under Review",
+        statusApproved:"Approved",
+        statusRejected:"Rejected",
+        statusWithdrawn:"Withdrawn",
+        refresh:"Refresh Queue",
+        loading:"Loading protected verification requests…",
+        unavailable:"The Owner Console is unavailable. Apply the latest administrator migration, then try again.",
+        denied:"This account does not have permission to open the Owner Console.",
+        queueClear:"Queue Clear",
+        noRequests:"There are no requests with this status.",
+        account:"Account",
+        school:"School",
+        schoolKey:"School Key",
+        evidenceMethod:"Evidence Method",
+        evidenceReference:"Evidence Reference",
+        applicantNote:"Applicant Note",
+        submittedAt:"Submitted",
+        reviewedAt:"Reviewed",
+        reviewerNote:"Reviewer Note",
+        noValue:"Not provided",
+        academicEmail:"Academic Email",
+        institutionSso:"Institution SSO",
+        manualReview:"Manual Review",
+        decisionMethod:"Verification Method",
+        notePlaceholder:"Add a clear note for the applicant and the audit record.",
+        approve:"Approve",
+        reject:"Reject",
+        approveTitle:"Approve Campus Identity",
+        approveConfirm:"Approve this request and grant verified-campus access?",
+        rejectTitle:"Reject Campus Identity",
+        rejectConfirm:"Reject this request? The applicant will be able to see your reviewer note before resubmitting.",
+        rejectNoteRequired:"Add a reviewer note before rejecting this request.",
+        savingDecision:"Saving the review decision…",
+        approved:"The campus identity was approved.",
+        rejected:"The campus identity was rejected.",
+        decisionFailed:"The review decision could not be saved. Please try again.",
+        statusLabel:"Status"
+      },
+      "zh-CN":{
+        nav:"所有者控制台",
+        kicker:"ConCourse 管理",
+        title:"所有者控制台",
+        intro:"通过仅限管理员使用的受保护操作审核校园身份证明。",
+        ownerRole:"所有者",
+        reviewerRole:"审核员",
+        access:"{role}权限",
+        queueKicker:"校园信任",
+        queueTitle:"校园身份审核队列",
+        queueDescription:"在授予校园认证功能访问权前，核对用户提交的证明。",
+        summaryKicker:"运营概览",
+        summaryTitle:"平台摘要",
+        summaryRefresh:"刷新摘要",
+        summaryLoading:"正在加载受保护的运营统计…",
+        summaryUnavailable:"运营摘要暂时不可用。",
+        summaryAccounts:"账户",
+        summaryVerification:"校园认证",
+        summaryDeletion:"删除申请",
+        summaryCommunity:"校园社区",
+        summaryMarketplace:"校园市集",
+        summaryMessaging:"私信",
+        requestStatus:"申请状态",
+        statusSubmitted:"已提交",
+        statusUnderReview:"审核中",
+        statusApproved:"已批准",
+        statusRejected:"已拒绝",
+        statusWithdrawn:"已撤回",
+        refresh:"刷新队列",
+        loading:"正在加载受保护的审核申请…",
+        unavailable:"所有者控制台暂不可用。请应用最新管理员迁移后重试。",
+        denied:"此账户无权打开所有者控制台。",
+        queueClear:"队列已清空",
+        noRequests:"没有处于此状态的申请。",
+        account:"账户",
+        school:"学校",
+        schoolKey:"学校标识",
+        evidenceMethod:"证明方式",
+        evidenceReference:"证明资料",
+        applicantNote:"申请人说明",
+        submittedAt:"提交时间",
+        reviewedAt:"审核时间",
+        reviewerNote:"审核说明",
+        noValue:"未提供",
+        academicEmail:"学校邮箱",
+        institutionSso:"学校 SSO",
+        manualReview:"人工审核",
+        decisionMethod:"认证方式",
+        notePlaceholder:"为申请人和审核记录填写清晰说明。",
+        approve:"批准",
+        reject:"拒绝",
+        approveTitle:"批准校园身份",
+        approveConfirm:"批准此申请并授予认证校园功能访问权？",
+        rejectTitle:"拒绝校园身份",
+        rejectConfirm:"拒绝此申请？申请人重新提交前会看到你的审核说明。",
+        rejectNoteRequired:"拒绝申请前请填写审核说明。",
+        savingDecision:"正在保存审核决定…",
+        approved:"校园身份已批准。",
+        rejected:"校园身份已拒绝。",
+        decisionFailed:"无法保存审核决定，请重试。",
+        statusLabel:"状态"
+      },
+      "zh-HK":{
+        nav:"擁有人控制台",
+        kicker:"ConCourse 管理",
+        title:"擁有人控制台",
+        intro:"透過只限管理員使用嘅受保護操作審核校園身份證明。",
+        ownerRole:"擁有人",
+        reviewerRole:"審核員",
+        access:"{role}權限",
+        queueKicker:"校園信任",
+        queueTitle:"校園身份審核隊列",
+        queueDescription:"喺授予已驗證校園功能之前，核對用戶提交嘅證明。",
+        summaryKicker:"營運概覽",
+        summaryTitle:"平台摘要",
+        summaryRefresh:"重新整理摘要",
+        summaryLoading:"正在載入受保護嘅營運統計…",
+        summaryUnavailable:"營運摘要暫時未能使用。",
+        summaryAccounts:"帳戶",
+        summaryVerification:"校園驗證",
+        summaryDeletion:"刪除申請",
+        summaryCommunity:"校園社群",
+        summaryMarketplace:"校園市集",
+        summaryMessaging:"私訊",
+        requestStatus:"申請狀態",
+        statusSubmitted:"已提交",
+        statusUnderReview:"審核中",
+        statusApproved:"已批准",
+        statusRejected:"已拒絕",
+        statusWithdrawn:"已撤回",
+        refresh:"重新整理隊列",
+        loading:"正在載入受保護嘅審核申請…",
+        unavailable:"擁有人控制台暫時未能使用。請套用最新管理員遷移後再試。",
+        denied:"呢個帳戶無權開啟擁有人控制台。",
+        queueClear:"隊列已清空",
+        noRequests:"無申請處於呢個狀態。",
+        account:"帳戶",
+        school:"院校",
+        schoolKey:"院校識別碼",
+        evidenceMethod:"證明方式",
+        evidenceReference:"證明資料",
+        applicantNote:"申請人說明",
+        submittedAt:"提交時間",
+        reviewedAt:"審核時間",
+        reviewerNote:"審核說明",
+        noValue:"未提供",
+        academicEmail:"院校電郵",
+        institutionSso:"院校 SSO",
+        manualReview:"人手審核",
+        decisionMethod:"驗證方式",
+        notePlaceholder:"為申請人同審核記錄填寫清晰說明。",
+        approve:"批准",
+        reject:"拒絕",
+        approveTitle:"批准校園身份",
+        approveConfirm:"批准呢份申請並授予已驗證校園功能存取權？",
+        rejectTitle:"拒絕校園身份",
+        rejectConfirm:"拒絕呢份申請？申請人重新提交之前會見到你嘅審核說明。",
+        rejectNoteRequired:"拒絕申請之前請填寫審核說明。",
+        savingDecision:"正在儲存審核決定…",
+        approved:"校園身份已批准。",
+        rejected:"校園身份已拒絕。",
+        decisionFailed:"未能儲存審核決定，請再試。",
+        statusLabel:"狀態"
+      }
+    });
+  }
+
+  const canReviewSchoolVerifications = () => ["owner", "reviewer"].includes(hubState.adminRole);
+
+  function adminRoleLabel(){
+    const copy = ownerConsoleCopy();
+    return hubState.adminRole === "owner" ? copy.ownerRole : copy.reviewerRole;
   }
 
   function ensureAccountTrustControls(){
@@ -1790,6 +2033,381 @@
       $("hubAccountDeletionStatus").textContent = copy.deletionRequestCancelled;
       $("hubAccountDeletionStatus").className = "hub-account-trust-status success";
     }
+  }
+
+  function renderAdminAccess(){
+    const badge = $("hubAdminRoleBadge");
+    const navigation = $("hubOwnerConsoleNav");
+    if(!badge || !navigation) return;
+    const allowed = canReviewSchoolVerifications();
+    badge.hidden = !allowed;
+    navigation.hidden = !allowed;
+    if(!allowed){
+      badge.textContent = "";
+      navigation.removeAttribute("aria-current");
+      navigation.classList.remove("active");
+      return;
+    }
+    const copy = ownerConsoleCopy();
+    const role = adminRoleLabel();
+    badge.textContent = role;
+    badge.className = `hub-admin-role-badge ${hubState.adminRole}`;
+    $("hubOwnerConsoleNavLabel").textContent = copy.nav;
+  }
+
+  async function loadAdminContext({force=false}={}){
+    if(!authClient || !currentUser){
+      hubState.adminContextUserId = null;
+      hubState.adminRole = "";
+      hubState.adminContextLoading = false;
+      renderAdminAccess();
+      return null;
+    }
+    if(!force && hubState.adminContextUserId === currentUser.id) return hubState.adminRole;
+    if(hubState.adminContextLoading) return null;
+    const context = requestContext();
+    hubState.adminContextLoading = true;
+    renderAdminAccess();
+    let response;
+    try { response = await hubRpc("get_my_concourse_admin_context"); }
+    catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return null;
+    hubState.adminContextLoading = false;
+    hubState.adminContextUserId = context.userId;
+    const payload = response.error ? null : (parseJsonValue(response.data, response.data) || {});
+    const role = String(payload?.role || payload?.admin_role || "").trim().toLocaleLowerCase();
+    hubState.adminRole = payload?.is_admin === false || !["owner", "reviewer"].includes(role) ? "" : role;
+    if(!hubState.adminRole){
+      hubState.adminQueue = [];
+      hubState.adminQueueError = "";
+      hubState.adminQueueNotice = "";
+      if(hubState.activeView === "owner-console") void switchView("community");
+    }
+    renderAdminAccess();
+    renderOwnerConsole();
+    return hubState.adminRole;
+  }
+
+  function adminDetail(copy, label, value){
+    const wrapper = node("div", "hub-admin-detail");
+    wrapper.append(node("dt", "", label), node("dd", "", value || copy.noValue));
+    return wrapper;
+  }
+
+  function adminStatusLabel(status, copy=ownerConsoleCopy()){
+    const keys = {
+      submitted:"statusSubmitted",
+      under_review:"statusUnderReview",
+      approved:"statusApproved",
+      rejected:"statusRejected",
+      withdrawn:"statusWithdrawn"
+    };
+    return copy[keys[status]] || String(status || copy.noValue);
+  }
+
+  function adminMethodLabel(method, copy=ownerConsoleCopy()){
+    if(method === "academic_email") return copy.academicEmail;
+    if(method === "institution_sso") return copy.institutionSso;
+    return copy.manualReview;
+  }
+
+  function summaryMetricLabel(key){
+    return String(key || "")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, character => character.toLocaleUpperCase());
+  }
+
+  function renderOwnerOperationalSummary(){
+    const section = $("ownerOperationalSummary");
+    if(!section) return;
+    const copy = ownerConsoleCopy();
+    const isOwner = hubState.adminRole === "owner";
+    section.hidden = !isOwner;
+    if(!isOwner) return;
+    $("ownerOperationalSummaryKicker").textContent = copy.summaryKicker;
+    $("ownerOperationalSummaryTitle").textContent = copy.summaryTitle;
+    $("refreshOwnerOperationalSummary").textContent = copy.summaryRefresh;
+    $("refreshOwnerOperationalSummary").disabled = hubState.ownerSummaryLoading;
+    if(hubState.ownerSummaryLoading) setStatus("ownerOperationalSummaryStatus", copy.summaryLoading);
+    else if(hubState.ownerSummaryError) setStatus("ownerOperationalSummaryStatus", hubState.ownerSummaryError, "error");
+    else setStatus("ownerOperationalSummaryStatus", "");
+    const grid = $("ownerOperationalSummaryGrid");
+    grid.replaceChildren();
+    if(hubState.ownerSummaryLoading || hubState.ownerSummaryError || !hubState.ownerSummary) return;
+    const groups = [
+      ["accounts", copy.summaryAccounts],
+      ["school_verification", copy.summaryVerification],
+      ["account_deletion", copy.summaryDeletion],
+      ["community", copy.summaryCommunity],
+      ["marketplace", copy.summaryMarketplace],
+      ["messaging", copy.summaryMessaging]
+    ];
+    groups.forEach(([key, label]) => {
+      const raw = hubState.ownerSummary?.[key];
+      const values = raw && typeof raw === "object" && !Array.isArray(raw)
+        ? Object.entries(raw).filter(([, value]) => Number.isFinite(Number(value)))
+        : [];
+      const preferred = ["total", "count", "all", "users", "accounts", "requests", "posts", "listings", "conversations"]
+        .map(name => values.find(([keyName]) => keyName === name))
+        .find(Boolean);
+      const total = Number.isFinite(Number(raw))
+        ? Number(raw)
+        : (preferred ? Number(preferred[1]) : values.reduce((sum, [, value]) => sum + Number(value), 0));
+      const card = node("article", "hub-owner-summary-card");
+      card.append(node("span", "", label), node("strong", "", Number.isFinite(total) ? total.toLocaleString(locale()) : "—"));
+      const details = node("dl");
+      values
+        .filter(([name]) => name !== preferred?.[0])
+        .slice(0, 4)
+        .forEach(([name, value]) => {
+          const row = node("div");
+          row.append(node("dt", "", summaryMetricLabel(name)), node("dd", "", Number(value).toLocaleString(locale())));
+          details.append(row);
+        });
+      if(details.childElementCount) card.append(details);
+      grid.append(card);
+    });
+  }
+
+  function renderOwnerConsole(){
+    const view = $("hubOwnerConsoleView");
+    if(!view) return;
+    const copy = ownerConsoleCopy();
+    $("ownerConsoleKicker").textContent = copy.kicker;
+    $("ownerConsoleTitle").textContent = copy.title;
+    $("ownerConsoleDescription").textContent = copy.intro;
+    $("ownerVerificationQueueKicker").textContent = copy.queueKicker;
+    $("ownerVerificationQueueTitle").textContent = copy.queueTitle;
+    $("ownerVerificationQueueDescription").textContent = copy.queueDescription;
+    $("ownerVerificationStatusLabel").textContent = copy.requestStatus;
+    $("refreshOwnerVerificationQueue").textContent = copy.refresh;
+    $("ownerVerificationEmptyTitle").textContent = copy.queueClear;
+    $("ownerVerificationEmptyDescription").textContent = copy.noRequests;
+    const filter = $("ownerVerificationStatusFilter");
+    const statusKeys = {
+      submitted:"statusSubmitted",
+      under_review:"statusUnderReview",
+      approved:"statusApproved",
+      rejected:"statusRejected",
+      withdrawn:"statusWithdrawn"
+    };
+    [...filter.options].forEach(option => { option.textContent = copy[statusKeys[option.value]]; });
+    filter.value = hubState.adminQueueStatus;
+    const role = canReviewSchoolVerifications() ? adminRoleLabel() : "";
+    $("ownerConsoleAccessMark").textContent = role ? copy.access.replace("{role}", role) : "";
+    renderOwnerOperationalSummary();
+
+    const queue = $("ownerVerificationQueue");
+    const empty = $("ownerVerificationEmpty");
+    queue.replaceChildren();
+    const allowed = canReviewSchoolVerifications();
+    filter.disabled = !allowed || hubState.adminQueueLoading;
+    $("refreshOwnerVerificationQueue").disabled = !allowed || hubState.adminQueueLoading;
+    if(hubState.adminQueueLoading){
+      setStatus("ownerVerificationQueueStatus", copy.loading);
+    } else if(hubState.adminQueueError){
+      setStatus("ownerVerificationQueueStatus", hubState.adminQueueError, "error");
+    } else if(hubState.adminQueueNotice){
+      setStatus("ownerVerificationQueueStatus", hubState.adminQueueNotice, hubState.adminQueueNoticeKind);
+    } else {
+      setStatus("ownerVerificationQueueStatus", "");
+    }
+    if(!allowed){
+      empty.hidden = true;
+      return;
+    }
+    const requests = Array.isArray(hubState.adminQueue) ? hubState.adminQueue : [];
+    empty.hidden = hubState.adminQueueLoading || Boolean(hubState.adminQueueError) || requests.length > 0;
+    if(hubState.adminQueueLoading || hubState.adminQueueError) return;
+
+    requests.forEach(request => {
+      const requestId = String(request?.request_id || "");
+      if(!requestId) return;
+      const status = String(request.status || hubState.adminQueueStatus);
+      const card = node("article", "hub-admin-request");
+      card.setAttribute("role", "listitem");
+      card.dataset.requestId = requestId;
+      const header = node("header", "hub-admin-request-heading");
+      const headingCopy = node("div");
+      headingCopy.append(
+        node("h4", "", request.school_name || copy.noValue),
+        node("p", "", request.account_email || copy.noValue)
+      );
+      const statusBadge = node("span", `hub-admin-request-status ${status.replace(/[^a-z_]/g, "")}`, adminStatusLabel(status, copy));
+      statusBadge.setAttribute("aria-label", `${copy.statusLabel}: ${adminStatusLabel(status, copy)}`);
+      header.append(headingCopy, statusBadge);
+
+      const details = node("dl", "hub-admin-details");
+      details.append(
+        adminDetail(copy, copy.account, request.account_email),
+        adminDetail(copy, copy.schoolKey, request.school_key),
+        adminDetail(copy, copy.evidenceMethod, adminMethodLabel(request.evidence_kind, copy)),
+        adminDetail(copy, copy.evidenceReference, request.evidence_reference),
+        adminDetail(copy, copy.submittedAt, formatDate(request.submitted_at))
+      );
+      if(request.reviewed_at) details.append(adminDetail(copy, copy.reviewedAt, formatDate(request.reviewed_at)));
+
+      const applicantNote = node("section", "hub-admin-note");
+      applicantNote.append(node("h5", "", copy.applicantNote), node("p", "", request.user_note || copy.noValue));
+      card.append(header, details, applicantNote);
+
+      if(["submitted", "under_review"].includes(status)){
+        const review = node("div", "hub-admin-review");
+        const methodLabel = node("label");
+        methodLabel.append(node("span", "", copy.decisionMethod));
+        const method = node("select", "hub-admin-review-method");
+        [
+          ["manual", copy.manualReview],
+          ["academic_email", copy.academicEmail],
+          ["institution_sso", copy.institutionSso]
+        ].forEach(([value, label]) => {
+          const option = node("option", "", label);
+          option.value = value;
+          method.append(option);
+        });
+        method.value = request.evidence_kind === "academic_email" || request.evidence_kind === "institution_sso"
+          ? request.evidence_kind
+          : "manual";
+        methodLabel.append(method);
+        const noteLabel = node("label", "hub-admin-review-note");
+        noteLabel.append(node("span", "", copy.reviewerNote));
+        const note = node("textarea");
+        note.maxLength = 1000;
+        note.placeholder = copy.notePlaceholder;
+        note.value = request.reviewer_note || "";
+        noteLabel.append(note);
+        const actions = node("div", "hub-admin-review-actions");
+        const approve = node("button", "btn-primary", copy.approve);
+        approve.type = "button";
+        const reject = node("button", "btn-ghost hub-admin-reject", copy.reject);
+        reject.type = "button";
+        const busy = hubState.adminReviewBusy.has(requestId);
+        method.disabled = busy;
+        note.disabled = busy;
+        approve.disabled = busy;
+        reject.disabled = busy;
+        approve.onclick = () => void reviewSchoolVerification(request, "approve", method.value, note.value, note);
+        reject.onclick = () => void reviewSchoolVerification(request, "reject", method.value, note.value, note);
+        actions.append(approve, reject);
+        review.append(methodLabel, noteLabel, actions);
+        card.append(review);
+      } else if(request.reviewer_note){
+        const reviewerNote = node("section", "hub-admin-note hub-admin-reviewer-note");
+        reviewerNote.append(node("h5", "", copy.reviewerNote), node("p", "", request.reviewer_note));
+        card.append(reviewerNote);
+      }
+      queue.append(card);
+    });
+  }
+
+  async function loadOwnerOperationalSummary({force=false}={}){
+    if(hubState.adminRole !== "owner" || !authClient || !currentUser) return null;
+    if(hubState.ownerSummaryLoading && !force) return hubState.ownerSummary;
+    const context = requestContext();
+    hubState.ownerSummaryLoading = true;
+    hubState.ownerSummaryError = "";
+    renderOwnerOperationalSummary();
+    let response;
+    try { response = await hubRpc("get_concourse_owner_summary"); }
+    catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return null;
+    hubState.ownerSummaryLoading = false;
+    if(response.error){
+      hubState.ownerSummary = null;
+      hubState.ownerSummaryError = missingRpcError(response.error)
+        ? ownerConsoleCopy().unavailable
+        : ownerConsoleCopy().summaryUnavailable;
+    } else {
+      const payload = parseJsonValue(response.data, response.data);
+      hubState.ownerSummary = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+      hubState.ownerSummaryError = "";
+    }
+    renderOwnerOperationalSummary();
+    return hubState.ownerSummary;
+  }
+
+  async function loadOwnerConsoleQueue({force=false}={}){
+    if(!canReviewSchoolVerifications() || !authClient || !currentUser) return [];
+    if(hubState.adminQueueLoading && !force) return hubState.adminQueue;
+    const context = requestContext();
+    hubState.adminQueueStatus = $("ownerVerificationStatusFilter")?.value || hubState.adminQueueStatus;
+    hubState.adminQueueLoading = true;
+    hubState.adminQueueError = "";
+    hubState.adminQueueNotice = "";
+    renderOwnerConsole();
+    let response;
+    try {
+      response = await hubRpc("get_school_verification_review_queue", {
+        p_status:hubState.adminQueueStatus,
+        p_limit:50
+      });
+    } catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return [];
+    hubState.adminQueueLoading = false;
+    if(response.error){
+      const raw = errorText(response.error);
+      hubState.adminQueue = [];
+      hubState.adminQueueError = missingRpcError(response.error)
+        ? ownerConsoleCopy().unavailable
+        : (/Administrator access required/i.test(raw) ? ownerConsoleCopy().denied : featureError(response.error));
+    } else {
+      const payload = parseJsonValue(response.data, response.data);
+      hubState.adminQueue = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload?.requests) ? payload.requests : (Array.isArray(payload?.queue) ? payload.queue : []));
+      hubState.adminQueueError = "";
+    }
+    renderOwnerConsole();
+    return hubState.adminQueue;
+  }
+
+  async function reviewSchoolVerification(request, decision, method, reviewerNote, noteInput){
+    if(!canReviewSchoolVerifications() || !request?.request_id) return;
+    const copy = ownerConsoleCopy();
+    const requestId = String(request.request_id);
+    const note = String(reviewerNote || "").trim();
+    if(decision === "reject" && !note){
+      hubState.adminQueueNotice = copy.rejectNoteRequired;
+      hubState.adminQueueNoticeKind = "error";
+      renderOwnerConsole();
+      const restored = document.querySelector(`[data-request-id="${CSS.escape(requestId)}"] .hub-admin-review-note textarea`);
+      (restored || noteInput)?.focus();
+      return;
+    }
+    const confirmed = await requestHubAction({
+      title:decision === "approve" ? copy.approveTitle : copy.rejectTitle,
+      message:decision === "approve" ? copy.approveConfirm : copy.rejectConfirm,
+      confirmLabel:decision === "approve" ? copy.approve : copy.reject,
+      danger:decision === "reject"
+    });
+    if(!confirmed) return;
+    const context = requestContext();
+    hubState.adminReviewBusy.add(requestId);
+    hubState.adminQueueNotice = copy.savingDecision;
+    hubState.adminQueueNoticeKind = "";
+    renderOwnerConsole();
+    let response;
+    try {
+      response = await hubRpc("review_school_verification_request", {
+        p_request_id:requestId,
+        p_decision:decision,
+        p_verification_method:method || "manual",
+        p_reviewer_note:note || null
+      });
+    } catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.adminReviewBusy.delete(requestId);
+    if(response.error){
+      hubState.adminQueueNotice = missingRpcError(response.error) ? copy.unavailable : copy.decisionFailed;
+      hubState.adminQueueNoticeKind = "error";
+      renderOwnerConsole();
+      return;
+    }
+    await loadOwnerConsoleQueue({force:true});
+    if(!contextIsCurrent(context)) return;
+    hubState.adminQueueNotice = decision === "approve" ? copy.approved : copy.rejected;
+    hubState.adminQueueNoticeKind = "success";
+    renderOwnerConsole();
   }
 
   async function syncFinalSchedule(snapshot=finalTimetable){
@@ -5696,6 +6314,10 @@
     const fullHubAvailable = allowed && !!finalTimetable?.savedAt;
     if($("enterMemberHub")) $("enterMemberHub").hidden = !fullHubAvailable;
     if(!allowed && !$("memberHub").hidden) hideHub();
+    if(currentUser && hubState.adminContextUserId !== currentUser.id && !hubState.adminContextLoading){
+      void loadAdminContext().catch(error => console.warn("ConCourse administrator context could not be loaded.", error));
+    }
+    renderAdminAccess();
     if(allowed){
       renderOverview();
       if(!hubState.profileUserId) loadMemberProfile().catch(console.warn);
@@ -5746,6 +6368,12 @@
     });
   }));
   $("loadCourseInsights")?.addEventListener("click", loadCourseInsights);
+  $("ownerVerificationStatusFilter")?.addEventListener("change", event => {
+    hubState.adminQueueStatus = event.target.value;
+    void loadOwnerConsoleQueue({force:true});
+  });
+  $("refreshOwnerVerificationQueue")?.addEventListener("click", () => void loadOwnerConsoleQueue({force:true}));
+  $("refreshOwnerOperationalSummary")?.addEventListener("click", () => void loadOwnerOperationalSummary({force:true}));
   $("previewCourseInsights")?.addEventListener("click", () => renderInsightExample("major"));
   $("courseInsightScope")?.addEventListener("change", syncInsightYearControl);
   $("courseInsightChart")?.addEventListener("click", event => {
@@ -5933,6 +6561,7 @@
     openProfile: openSchoolmateProfile,
     mediaTools: Object.freeze({normalizeRasterUpload, normalizeRasterToWebP, videoUploadType, validateVideoSignature, wrapMediaUploadError, mediaUploadError}),
     reloadMembership: () => loadMembership(),
+    reloadAdminContext: () => loadAdminContext({force:true}),
     refreshSocialConnections: () => loadSocialConnections({force:true}),
     refreshLanguage: () => {
       document.querySelectorAll("#communityPollOptions [data-poll-option]").forEach((input, index) => {
@@ -5944,6 +6573,8 @@
       updateCommunityPostCounter();
       syncCommunityScopeControls();
       syncAccess();
+      renderAdminAccess();
+      renderOwnerConsole();
       if($("hubAccountTrustControls")) renderAccountTrustControls();
       window.ConCourseMarketplace?.refreshLanguage();
       window.ConCourseAcademicTools?.refreshLanguage?.();

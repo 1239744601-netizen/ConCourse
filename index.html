@@ -1718,7 +1718,7 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260721-market-gallery5" />
+<link rel="stylesheet" href="member-hub.css?v=20260728-owner-console1" />
 <link rel="stylesheet" href="marketplace.css?v=20260728-social-comments1" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260722-authotp1" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
@@ -1728,7 +1728,7 @@
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
 <link rel="stylesheet" href="community-redesign.css?v=20260728-social-comments1" />
 <link rel="stylesheet" href="academic-experiences.css?v=20260728-readable-controls1" />
-<link rel="stylesheet" href="concourse-stabilization.css?v=20260728-stability1" />
+<link rel="stylesheet" href="concourse-stabilization.css?v=20260728-owner-console1" />
 </head>
 <body>
 <header id="landingScreen">
@@ -2214,6 +2214,7 @@
           <b id="hubUserName">ConCourse student</b>
           <span id="hubUserAcademic">Your academic community</span>
           <small class="hub-membership-status pending" id="hubMembershipStatus" data-i18n="membershipPending">School verification pending</small>
+          <small class="hub-admin-role-badge" id="hubAdminRoleBadge" hidden></small>
           <button type="button" class="hub-profile-shortcut" data-hub-target="profile" data-i18n="editProfile">Edit profile</button>
         </div>
       </div>
@@ -2224,6 +2225,7 @@
         <button type="button" class="hub-nav-button" id="hubAcademicToolsNav" data-hub-target="academic-tools" aria-controls="hubAcademicToolsView"><b data-i18n="hubAcademicTools">Academic tools</b></button>
         <button type="button" class="hub-nav-button" data-hub-target="overview"><b data-i18n="hubInsights">Academic insights</b></button>
         <button type="button" class="hub-nav-button" data-hub-target="profile"><b data-i18n="hubProfile">Profile</b></button>
+        <button type="button" class="hub-nav-button hub-owner-console-nav" id="hubOwnerConsoleNav" data-hub-target="owner-console" aria-controls="hubOwnerConsoleView" hidden><b id="hubOwnerConsoleNavLabel">Owner Console</b></button>
       </nav>
     </aside>
 
@@ -2241,6 +2243,7 @@
           <img src="concourse-art-citations-v2.jpg" width="1536" height="512" alt="" data-hub-hero="academic-tools" loading="lazy" decoding="async" />
           <img src="concourse-art-messages.jpg" width="1536" height="1024" alt="" data-hub-hero="messages" loading="lazy" decoding="async" />
           <img src="concourse-art-profile.jpg" width="1536" height="1024" alt="" data-hub-hero="profile" loading="lazy" decoding="async" />
+          <img src="concourse-art-insights-v3.jpg" width="1536" height="512" alt="" data-hub-hero="owner-console" loading="lazy" decoding="async" />
           <span class="hub-art-fragment hub-art-fragment-primary"></span>
           <span class="hub-art-fragment hub-art-fragment-secondary"></span>
         </figure>
@@ -2737,6 +2740,57 @@
                 <button type="button" class="btn-primary" id="sendChatMessage" data-i18n="send" disabled>Send</button>
               </div>
             </section>
+          </div>
+        </article>
+      </section>
+
+      <section class="hub-view hub-owner-console-view" id="hubOwnerConsoleView" data-hub-view="owner-console" aria-labelledby="ownerConsoleTitle" hidden>
+        <div class="hub-section-heading hub-owner-console-heading">
+          <div>
+            <p class="hub-kicker" id="ownerConsoleKicker">ConCourse Administration</p>
+            <h2 id="ownerConsoleTitle">Owner Console</h2>
+          </div>
+          <p id="ownerConsoleDescription">Review campus identity evidence through protected administrator-only operations.</p>
+        </div>
+        <article class="hub-admin-panel" aria-labelledby="ownerVerificationQueueTitle">
+          <section class="hub-owner-summary" id="ownerOperationalSummary" aria-labelledby="ownerOperationalSummaryTitle" hidden>
+            <div class="hub-owner-summary-heading">
+              <div>
+                <p class="hub-kicker" id="ownerOperationalSummaryKicker">Operations</p>
+                <h3 id="ownerOperationalSummaryTitle">Platform Summary</h3>
+              </div>
+              <button type="button" class="btn-ghost" id="refreshOwnerOperationalSummary">Refresh Summary</button>
+            </div>
+            <p class="hub-inline-status" id="ownerOperationalSummaryStatus" role="status" aria-live="polite"></p>
+            <div class="hub-owner-summary-grid" id="ownerOperationalSummaryGrid"></div>
+          </section>
+          <header class="hub-admin-panel-heading">
+            <div>
+              <p class="hub-kicker" id="ownerVerificationQueueKicker">Campus Trust</p>
+              <h3 id="ownerVerificationQueueTitle">School Verification Queue</h3>
+              <p id="ownerVerificationQueueDescription">Review submitted evidence before granting access to verified-campus features.</p>
+            </div>
+            <span class="hub-admin-access-mark" id="ownerConsoleAccessMark"></span>
+          </header>
+          <div class="hub-admin-toolbar">
+            <label for="ownerVerificationStatusFilter">
+              <span id="ownerVerificationStatusLabel">Request Status</span>
+              <select id="ownerVerificationStatusFilter">
+                <option value="submitted">Submitted</option>
+                <option value="under_review">Under Review</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="withdrawn">Withdrawn</option>
+              </select>
+            </label>
+            <button type="button" class="btn-ghost" id="refreshOwnerVerificationQueue">Refresh Queue</button>
+          </div>
+          <p class="hub-inline-status hub-admin-status" id="ownerVerificationQueueStatus" role="status" aria-live="polite"></p>
+          <div class="hub-admin-queue" id="ownerVerificationQueue" role="list"></div>
+          <div class="hub-admin-empty" id="ownerVerificationEmpty" hidden>
+            <span aria-hidden="true">✓</span>
+            <h3 id="ownerVerificationEmptyTitle">Queue Clear</h3>
+            <p id="ownerVerificationEmptyDescription">There are no requests with this status.</p>
           </div>
         </article>
       </section>
@@ -6068,7 +6122,7 @@ initializeTheme();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260728-social-comments1"></script>
+<script src="member-hub.js?v=20260728-owner-console1"></script>
 <script src="marketplace.js?v=20260728-social-comments1"></script>
 <script src="academic-tools.js?v=20260724-seeds2"></script>
 </body>

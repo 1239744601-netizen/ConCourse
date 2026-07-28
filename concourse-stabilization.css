@@ -270,3 +270,22 @@ html[lang="en"] :is(
     transition: none;
   }
 }
+
+/* The protected Owner Console is a seventh destination only for authorized
+   accounts. Ordinary student navigation keeps its existing six-column rhythm. */
+@media (min-width: 901px) {
+  .member-hub:has(.hub-owner-console-nav:not([hidden])) .hub-navigation {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+}
+
+.member-hub[data-active-view="owner-console"] {
+  --hub-feature-accent: #f2c454;
+  --hub-art-position: 54% 48%;
+}
+
+.member-hub[data-active-view="owner-console"] .hub-hero-art img[data-hub-hero="owner-console"] {
+  display: block !important;
+  object-position: 54% 48%;
+  animation: atlas-art-breathe 14s ease-in-out infinite alternate;
+}
