@@ -1091,6 +1091,12 @@ html[data-theme="night"] .member-hub[data-active-view="community"] {
   border-top: 1px solid var(--community-line);
 }
 
+.member-hub[data-active-view="community"] .hub-comments[hidden],
+.member-hub[data-active-view="community"] .hub-community-example-comments[hidden],
+.member-hub[data-active-view="community"] .hub-comment-reply-context[hidden] {
+  display: none !important;
+}
+
 .member-hub[data-active-view="community"] .hub-comment {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1103,13 +1109,37 @@ html[data-theme="night"] .member-hub[data-active-view="community"] {
   font-size: 11px;
 }
 
+.member-hub[data-active-view="community"] .hub-comment.is-reply {
+  margin-inline-start: clamp(22px, 6vw, 48px);
+  border-inline-start: 3px solid color-mix(in srgb, var(--community-cyan) 72%, transparent);
+}
+
 .member-hub[data-active-view="community"] .hub-comment-copy b {
   color: var(--community-ink);
+}
+
+.member-hub[data-active-view="community"] .hub-comment-reply-label {
+  display: block;
+  margin: 3px 0 1px;
+  color: var(--community-blue);
+  font-size: 9px;
+  font-weight: 750;
 }
 
 .member-hub[data-active-view="community"] .hub-comment-copy time,
 .member-hub[data-active-view="community"] .hub-comment-actions button {
   color: var(--community-muted);
+}
+
+.member-hub[data-active-view="community"] .hub-comment-actions .hub-comment-action {
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 760;
+}
+
+.member-hub[data-active-view="community"] .hub-comment-actions .hub-comment-like.liked {
+  color: #d2385b;
 }
 
 .member-hub[data-active-view="community"] .hub-comment-form {
@@ -1142,6 +1172,75 @@ html[data-theme="night"] .member-hub[data-active-view="community"] {
   color: #fff;
   background: linear-gradient(135deg, #0c4777, #1763d7);
   border-radius: 999px;
+}
+
+.member-hub[data-active-view="community"] .hub-comment-reply-context {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  color: var(--community-copy);
+  background: color-mix(in srgb, var(--community-cyan) 10%, transparent);
+  border-inline-start: 3px solid var(--community-cyan);
+  border-radius: 12px 22px 14px 18px;
+  font-size: 10px;
+  font-weight: 720;
+}
+
+.member-hub[data-active-view="community"] .hub-comment-reply-context > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.member-hub[data-active-view="community"] .hub-comment-form .hub-comment-reply-cancel,
+.member-hub[data-active-view="community"] .hub-community-example-comment-form .hub-comment-reply-cancel {
+  min-height: 28px;
+  flex: none;
+  padding: 4px 9px;
+  color: var(--community-blue);
+  background: transparent !important;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 9px;
+}
+
+.member-hub[data-active-view="community"] .hub-community-example-comment.is-reply {
+  margin-inline-start: clamp(20px, 5vw, 42px);
+  border-inline-start: 3px solid color-mix(in srgb, var(--community-cyan) 72%, transparent);
+}
+
+.member-hub[data-active-view="community"] .hub-community-example-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.member-hub[data-active-view="community"] .hub-community-example-comment-actions button {
+  min-height: 28px;
+  padding: 4px 8px;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 9px;
+  font-weight: 760;
+}
+
+.member-hub[data-active-view="community"] .hub-community-example-comment-actions button:hover,
+.member-hub[data-active-view="community"] .hub-community-example-comment-actions button:focus-visible {
+  color: var(--community-blue);
+  background: color-mix(in srgb, var(--community-cyan) 11%, transparent);
+  filter: none;
+}
+
+.member-hub[data-active-view="community"] .hub-community-example-comment-actions .hub-comment-like.liked {
+  color: #d2385b;
 }
 
 .member-hub[data-active-view="community"] .hub-feed-load-more {

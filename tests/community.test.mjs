@@ -73,6 +73,29 @@ test("Community feed keeps the essential social interactions", () => {
   assert.match(js, /togglePostBookmark\(post\.post_id\)/);
   assert.match(js, /shareCommunityPost\(post\.post_id\)/);
   assert.match(js, /loadPostComments\(post\.post_id, comments\)/);
+  assert.match(js, /comments\.hidden = !commentsVisible/);
+  assert.match(js, /commentButton\.setAttribute\("aria-expanded", commentsVisible \? "true" : "false"\)/);
+});
+
+test("Community comment threads open on demand and support like and one-level reply actions", () => {
+  assert.match(js, /hubRpc\("toggle_community_comment_like", \{\s*p_comment_id:comment\.comment_id\s*\}\)/);
+  assert.match(js, /hub-comment-action hub-comment-like/);
+  assert.match(js, /likeButton\.setAttribute\("aria-pressed", liked \? "true" : "false"\)/);
+  assert.match(js, /hub-comment-action hub-comment-reply/);
+  assert.match(js, /if\(!isReply\)\{[\s\S]*?commentId:comment\.comment_id/);
+  assert.match(
+    js,
+    /hubRpc\("add_post_comment", \{\s*p_post_id:postId,\s*p_body:body,\s*p_parent_comment_id:replyTarget\?\.commentId \|\| null\s*\}\)/
+  );
+  assert.match(js, /hub-comment-reply-context/);
+  assert.match(js, /t\("cancelReply"\)/);
+
+  assert.match(
+    css,
+    /\.hub-comments\[hidden\],[\s\S]*?\.hub-community-example-comments\[hidden\],[\s\S]*?display:\s*none\s*!important/
+  );
+  assert.match(css, /\.hub-comment\.is-reply[\s\S]*?margin-inline-start:/);
+  assert.match(css, /\.hub-comment-like\.liked[\s\S]*?color:\s*#d2385b/);
 });
 
 test("Community scope indicators and Start chat stay aligned with their labels", () => {

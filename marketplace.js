@@ -185,6 +185,20 @@
     marketplaceGlobalMessageUnavailable:"This seller is not accepting cross-campus messages.",
     marketplaceEnableMessages:"Enable “Allow verified students to message me” in your Profile before contacting a global seller.",
     marketplaceGlobalConversationStarted:"Conversation started. Opening Messages…",
+    marketplaceComments:"Comments",
+    marketplaceCommentsEmpty:"No questions yet. Ask the seller something useful.",
+    marketplaceCommentsUnavailable:"Comments are temporarily unavailable. Run the latest social-comments SQL and try again.",
+    marketplaceWriteComment:"Ask about this listing…",
+    marketplacePostComment:"Post",
+    marketplaceCommentPosting:"Posting…",
+    marketplaceCommentPosted:"Comment posted.",
+    marketplaceCommentRequired:"Write a comment first.",
+    marketplaceCommentLike:"Like",
+    marketplaceCommentUnlike:"Unlike",
+    marketplaceDeleteComment:"Delete",
+    marketplaceDeleteCommentConfirm:"Delete this comment?",
+    marketplaceCommentDeleted:"Comment deleted.",
+    marketplaceContactSeller:"Contact seller",
     edit:"Edit",
     report:"Report",
     loadMore:"Load more",
@@ -214,6 +228,20 @@
       marketplaceGlobalMessageUnavailable:"卖家暂不接收跨校私信。",
       marketplaceEnableMessages:"请先在个人档案开启“允许已验证学生给我发私信”，再联系全球市集卖家。",
       marketplaceGlobalConversationStarted:"对话已建立，正在打开私信…",
+      marketplaceComments:"评论",
+      marketplaceCommentsEmpty:"暂无留言。可以向卖家询问商品详情。",
+      marketplaceCommentsUnavailable:"评论功能暂不可用。请运行最新的社交评论 SQL 后重试。",
+      marketplaceWriteComment:"询问这件商品…",
+      marketplacePostComment:"发布",
+      marketplaceCommentPosting:"正在发布…",
+      marketplaceCommentPosted:"评论已发布。",
+      marketplaceCommentRequired:"请先填写评论。",
+      marketplaceCommentLike:"点赞",
+      marketplaceCommentUnlike:"取消点赞",
+      marketplaceDeleteComment:"删除",
+      marketplaceDeleteCommentConfirm:"确定删除这条评论吗？",
+      marketplaceCommentDeleted:"评论已删除。",
+      marketplaceContactSeller:"私信卖家",
       marketplaceEmptyHint:"尝试其他关键词或筛选条件，也可以成为第一个发布校园好物的人。",
       marketplaceExampleShow:"预览示例",
       marketplaceExampleLabel:"示例商品 · 仅供预览",
@@ -256,6 +284,20 @@
       marketplaceGlobalMessageUnavailable:"賣家暫時唔接收跨校私訊。",
       marketplaceEnableMessages:"請先喺個人檔案開啟「允許已驗證學生私訊我」，再聯絡全球市集賣家。",
       marketplaceGlobalConversationStarted:"對話已建立，正在打開私訊…",
+      marketplaceComments:"留言",
+      marketplaceCommentsEmpty:"暫時未有留言。可以向賣家查詢商品詳情。",
+      marketplaceCommentsUnavailable:"留言功能暫時用唔到。請執行最新社交留言 SQL 後再試。",
+      marketplaceWriteComment:"查詢呢件商品…",
+      marketplacePostComment:"發佈",
+      marketplaceCommentPosting:"正在發佈…",
+      marketplaceCommentPosted:"留言已發佈。",
+      marketplaceCommentRequired:"請先填寫留言。",
+      marketplaceCommentLike:"讚好",
+      marketplaceCommentUnlike:"取消讚好",
+      marketplaceDeleteComment:"刪除",
+      marketplaceDeleteCommentConfirm:"確定刪除呢個留言？",
+      marketplaceCommentDeleted:"留言已刪除。",
+      marketplaceContactSeller:"私訊賣家",
       marketplaceEmptyHint:"試下其他關鍵字或篩選條件，亦可以成為第一個發佈校園好物嘅人。",
       marketplaceExampleShow:"預覽示例",
       marketplaceExampleLabel:"示例商品 · 只供預覽",
@@ -295,6 +337,10 @@
     loading:false,
     seedDetails:new Set(),
     seedSaved:new Set(),
+    seedOpenComments:new Set(),
+    seedCommentLikes:new Set(),
+    seedComments:new Map(),
+    busyCommentLikes:new Set(),
     feedRequest:0,
     detailRequest:0,
     orderRequest:0,
@@ -350,7 +396,29 @@
         en:"Study materials, books, a calculator, headphones, and a water bottle arranged on a desk.",
         "zh-CN":"书桌上摆放着学习资料、书籍、计算器、耳机和水瓶。",
         "zh-HK":"書枱上擺放住溫習資料、書籍、計算機、耳機同水樽。"
-      })
+      }),
+      comments:Object.freeze([
+        Object.freeze({
+          id:"economics-notes-question",
+          author:"Mina Ho",
+          body:Object.freeze({
+            en:"Does the bundle include worked elasticity examples?",
+            "zh-CN":"套装里有弹性计算的完整例题吗？",
+            "zh-HK":"套裝入面有冇彈性計算嘅完整例題？"
+          }),
+          likes:4
+        }),
+        Object.freeze({
+          id:"economics-notes-answer",
+          author:"Avery Lam",
+          body:Object.freeze({
+            en:"Yes. There are six worked examples and a separate answer-checking page.",
+            "zh-CN":"有，包括六道完整例题和一页独立的答案核对表。",
+            "zh-HK":"有，包括六條完整例題同一頁獨立答案核對表。"
+          }),
+          likes:7
+        })
+      ])
     }),
     Object.freeze({
       key:"calculator-study-bundle",
@@ -383,7 +451,29 @@
         en:"A scientific calculator, bound revision notes, flash cards, highlighters, and a navy pencil case.",
         "zh-CN":"科学计算器、装订复习笔记、记忆卡、荧光笔和海军蓝笔袋。",
         "zh-HK":"科學計算機、釘裝溫習筆記、記憶卡、螢光筆同海軍藍筆袋。"
-      })
+      }),
+      comments:Object.freeze([
+        Object.freeze({
+          id:"calculator-model",
+          author:"Sophie Chan",
+          body:Object.freeze({
+            en:"Which calculator model is this, and are all buttons working?",
+            "zh-CN":"这是哪一款计算器？所有按键都能正常使用吗？",
+            "zh-HK":"呢部係邊款計算機？所有按鍵都正常嗎？"
+          }),
+          likes:3
+        }),
+        Object.freeze({
+          id:"calculator-answer",
+          author:"Jason Wu",
+          body:Object.freeze({
+            en:"It is a Casio fx-991ES Plus. I tested every key this morning.",
+            "zh-CN":"是 Casio fx-991ES Plus，我今天早上测试过所有按键。",
+            "zh-HK":"係 Casio fx-991ES Plus，我今朝試過晒所有按鍵。"
+          }),
+          likes:6
+        })
+      ])
     }),
     Object.freeze({
       key:"dorm-desk-set",
@@ -416,7 +506,29 @@
         en:"A compact desk lamp, navy organiser, clock, mug, and storage trays on a dorm desk.",
         "zh-CN":"宿舍书桌上的小型台灯、海军蓝收纳、时钟、杯子和储物托盘。",
         "zh-HK":"宿舍書枱上嘅小型枱燈、海軍藍收納、時鐘、杯同儲物托盤。"
-      })
+      }),
+      comments:Object.freeze([
+        Object.freeze({
+          id:"dorm-set-pickup",
+          author:"Elena Rossi",
+          body:Object.freeze({
+            en:"Could the set be collected near the residence halls on Friday?",
+            "zh-CN":"周五可以在宿舍附近取这套物品吗？",
+            "zh-HK":"星期五可唔可以喺宿舍附近交收呢套物品？"
+          }),
+          likes:2
+        }),
+        Object.freeze({
+          id:"dorm-set-answer",
+          author:"Nadia Karim",
+          body:Object.freeze({
+            en:"Yes, Friday after 16:30 works. The lamp folds down for easy carrying.",
+            "zh-CN":"可以，周五 16:30 后方便。台灯可以折叠，容易携带。",
+            "zh-HK":"可以，星期五 16:30 後方便。枱燈可以摺起，容易攜帶。"
+          }),
+          likes:5
+        })
+      ])
     })
   ]);
 
@@ -926,6 +1038,50 @@
     return button;
   }
 
+  function marketplaceCommentCount(listing){
+    const count = Number(listing?.comment_count);
+    return Number.isFinite(count) && count >= 0 ? count : null;
+  }
+
+  function marketplaceCommentsAvailable(listing){
+    const status = String(listing?.status || "active");
+    return isCrossCampusListing(listing)
+      ? status === "active"
+      : status === "active" || status === "reserved";
+  }
+
+  function marketplaceCommentLabel(listing){
+    const count = marketplaceCommentCount(listing);
+    return count === null ? tr("marketplaceComments") : `${tr("marketplaceComments")} · ${count}`;
+  }
+
+  function syncMarketplaceCommentCount(listingIdValue, count){
+    const id = String(listingIdValue || "");
+    const safeCount = Math.max(0, Number(count || 0));
+    state.items.forEach(item => {
+      if(listingId(item) === id) item.comment_count = safeCount;
+    });
+    state.localItems.forEach(item => {
+      if(listingId(item) === id) item.comment_count = safeCount;
+    });
+    if(state.detail && listingId(state.detail) === id) state.detail.comment_count = safeCount;
+    document.querySelectorAll(`[data-market-comment-count="${id}"]`).forEach(button => {
+      button.textContent = `${tr("marketplaceComments")} · ${safeCount}`;
+    });
+  }
+
+  function marketplaceContactButton(listing, className="marketplace-card-action"){
+    if(isOwnListing(listing)) return null;
+    const seller = normalizeSeller(listing);
+    const crossCampus = isCrossCampusListing(listing);
+    const button = element("button", className, tr("marketplaceContactSeller"));
+    button.type = "button";
+    button.disabled = crossCampus ? listing.can_message_seller !== true : !seller.username;
+    if(button.disabled && crossCampus) button.title = tr("marketplaceGlobalMessageUnavailable");
+    button.addEventListener("click", () => void contactMarketplaceSeller(listing, button));
+    return button;
+  }
+
   function listingCard(listing, options={}){
     const id = listingId(listing);
     const card = element("article", options.compact ? "marketplace-card marketplace-card-compact" : "marketplace-card");
@@ -969,6 +1125,23 @@
       favorite.setAttribute("aria-pressed", listing.favorited_by_me || listing.viewer?.favorited ? "true" : "false");
       favorite.addEventListener("click", () => void toggleFavorite(id, favorite));
       actions.append(favorite);
+      const contact = marketplaceContactButton(listing);
+      if(contact) actions.append(contact);
+    }
+    if(marketplaceCommentsAvailable(listing)){
+      const comments = element("button", "marketplace-card-action marketplace-card-comment-action", marketplaceCommentLabel(listing));
+      comments.type = "button";
+      comments.dataset.marketCommentCount = id;
+      comments.addEventListener("click", async () => {
+        const opened = await openListing(id, comments);
+        if(!opened) return;
+        window.requestAnimationFrame(() => {
+          const section = byId("marketplaceDetailContent")?.querySelector(".marketplace-comments");
+          section?.scrollIntoView({block:"nearest"});
+          section?.querySelector("input")?.focus({preventScroll:true});
+        });
+      });
+      actions.append(comments);
     }
     const share = element("button", "marketplace-card-action", tr("marketplaceShare"));
     share.type = "button";
@@ -1027,9 +1200,82 @@
     }
   }
 
+  function marketplaceSeedComments(seed){
+    const added = state.seedComments.get(seed.key) || [];
+    return [...(Array.isArray(seed.comments) ? seed.comments : []), ...added];
+  }
+
+  function marketplaceSeedCommentRow(seed, comment){
+    const commentKey = `${seed.key}:${comment.id}`;
+    const liked = state.seedCommentLikes.has(commentKey);
+    const row = element("article", "marketplace-comment");
+    const copy = element("div", "marketplace-comment-copy");
+    copy.append(
+      element("b", "", String(comment.author || tr("anonymousStudent"))),
+      element("p", "", marketplaceSeedText(comment.body || "")),
+      element("time", "", comment.local ? marketplaceSeedText({en:"now", "zh-CN":"刚刚", "zh-HK":"啱啱"}) : "")
+    );
+    const like = element(
+      "button",
+      `marketplace-comment-like${liked ? " liked" : ""}`,
+      `${tr(liked ? "marketplaceCommentUnlike" : "marketplaceCommentLike")} · ${Number(comment.likes || 0) + Number(liked)}`
+    );
+    like.type = "button";
+    like.setAttribute("aria-pressed", liked ? "true" : "false");
+    like.addEventListener("click", () => {
+      if(liked) state.seedCommentLikes.delete(commentKey);
+      else state.seedCommentLikes.add(commentKey);
+      rerenderMarketplaceSeed(seed.key, "comments");
+    });
+    row.append(copy, like);
+    return row;
+  }
+
+  function marketplaceSeedCommentSection(seed){
+    const section = element("section", "marketplace-comments marketplace-seed-comments");
+    section.setAttribute("aria-label", tr("marketplaceComments"));
+    const list = element("div", "marketplace-comment-list");
+    const comments = marketplaceSeedComments(seed);
+    comments.forEach(comment => list.append(marketplaceSeedCommentRow(seed, comment)));
+    if(!comments.length) list.append(element("p", "marketplace-comments-empty", tr("marketplaceCommentsEmpty")));
+    const form = element("form", "marketplace-comment-form");
+    const input = element("input");
+    input.type = "text";
+    input.maxLength = 1000;
+    input.autocomplete = "off";
+    input.placeholder = tr("marketplaceWriteComment");
+    input.setAttribute("aria-label", tr("marketplaceWriteComment"));
+    const submit = element("button", "", tr("marketplacePostComment"));
+    submit.type = "submit";
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const body = input.value.trim();
+      if(!body){
+        input.setCustomValidity(tr("marketplaceCommentRequired"));
+        input.reportValidity();
+        input.setCustomValidity("");
+        return;
+      }
+      const added = state.seedComments.get(seed.key) || [];
+      added.push({
+        id:`local-${Date.now()}-${added.length}`,
+        author:marketplaceSeedText({en:"You", "zh-CN":"你", "zh-HK":"你"}),
+        body,
+        likes:0,
+        local:true
+      });
+      state.seedComments.set(seed.key, added);
+      rerenderMarketplaceSeed(seed.key, "comments");
+    });
+    form.append(input, submit);
+    section.append(list, form);
+    return section;
+  }
+
   function marketplaceSeedCard(seed){
     const detailsVisible = state.seedDetails.has(seed.key);
     const saved = state.seedSaved.has(seed.key);
+    const commentsVisible = state.seedOpenComments.has(seed.key);
     const card = element("article", "marketplace-card");
     card.dataset.marketplaceSeed = seed.key;
     card.setAttribute("aria-label", marketplaceSeedText(seed.title));
@@ -1104,8 +1350,23 @@
     share.dataset.marketSeedAction = `${seed.key}:share`;
     share.addEventListener("click", () => void shareMarketplaceSeedListing(seed));
 
-    actions.append(details, save, share);
+    const comments = element(
+      "button",
+      `marketplace-card-action${commentsVisible ? " active" : ""}`,
+      `${tr("marketplaceComments")} · ${marketplaceSeedComments(seed).length}`
+    );
+    comments.type = "button";
+    comments.dataset.marketSeedAction = `${seed.key}:comments`;
+    comments.setAttribute("aria-expanded", commentsVisible ? "true" : "false");
+    comments.addEventListener("click", () => {
+      if(commentsVisible) state.seedOpenComments.delete(seed.key);
+      else state.seedOpenComments.add(seed.key);
+      rerenderMarketplaceSeed(seed.key, "comments");
+    });
+
+    actions.append(details, save, comments, share);
     body.append(actions);
+    if(commentsVisible) body.append(marketplaceSeedCommentSection(seed));
     card.append(body);
     return card;
   }
@@ -1511,6 +1772,227 @@
     return section;
   }
 
+  function marketplaceCommentLikeLabel(comment){
+    return `${tr(comment.liked_by_me ? "marketplaceCommentUnlike" : "marketplaceCommentLike")} · ${Math.max(0, Number(comment.like_count || 0))}`;
+  }
+
+  function updateMarketplaceCommentLikeButton(comment, button){
+    if(!button?.isConnected) return;
+    button.textContent = marketplaceCommentLikeLabel(comment);
+    button.classList.toggle("liked", comment.liked_by_me === true);
+    button.setAttribute("aria-pressed", comment.liked_by_me === true ? "true" : "false");
+  }
+
+  async function toggleMarketplaceCommentLike(comment, button){
+    const commentId = String(comment?.comment_id || "");
+    if(!UUID_RE.test(commentId) || state.busyCommentLikes.has(commentId)) return;
+    const context = currentContext();
+    const previousLiked = comment.liked_by_me === true;
+    const previousCount = Math.max(0, Number(comment.like_count || 0));
+    state.busyCommentLikes.add(commentId);
+    comment.liked_by_me = !previousLiked;
+    comment.like_count = Math.max(0, previousCount + (previousLiked ? -1 : 1));
+    if(button) button.disabled = true;
+    updateMarketplaceCommentLikeButton(comment, button);
+    try {
+      const {data, error} = await authClient.rpc("toggle_marketplace_listing_comment_like", {p_comment_id:commentId});
+      if(!contextIsCurrent(context)) return;
+      if(error) throw error;
+      const result = firstObject(parseJson(data, data)) || {};
+      comment.liked_by_me = result.liked === true || result.liked_by_me === true;
+      comment.like_count = Math.max(0, Number(result.like_count ?? comment.like_count));
+      updateMarketplaceCommentLikeButton(comment, button);
+    } catch(error){
+      if(contextIsCurrent(context)){
+        comment.liked_by_me = previousLiked;
+        comment.like_count = previousCount;
+        updateMarketplaceCommentLikeButton(comment, button);
+        setStatus(featureError(error), "error");
+      }
+    } finally {
+      if(contextIsCurrent(context)){
+        state.busyCommentLikes.delete(commentId);
+        if(button?.isConnected) button.disabled = false;
+      }
+    }
+  }
+
+  async function deleteMarketplaceComment(listing, comment, section){
+    const commentId = String(comment?.comment_id || "");
+    if(!UUID_RE.test(commentId)) return;
+    const confirmed = await ask({
+      title:tr("marketplaceDeleteComment"),
+      message:tr("marketplaceDeleteCommentConfirm"),
+      confirmLabel:tr("marketplaceDeleteComment"),
+      danger:true
+    });
+    if(!confirmed) return;
+    const context = currentContext();
+    try {
+      const {error} = await authClient.rpc("delete_marketplace_listing_comment", {p_comment_id:commentId});
+      if(!contextIsCurrent(context) || !section.isConnected) return;
+      if(error) throw error;
+      setStatus(tr("marketplaceCommentDeleted"), "success");
+      syncMarketplaceCommentCount(listingId(listing), Math.max(0, Number(listing.comment_count || 1) - 1));
+      await loadMarketplaceListingComments(listing, section);
+    } catch(error){
+      if(contextIsCurrent(context)) setStatus(featureError(error), "error");
+    }
+  }
+
+  function marketplaceCommentAuthor(comment){
+    const nested = comment?.author && typeof comment.author === "object"
+      ? comment.author
+      : {};
+    return {
+      id:String(comment?.author_id || nested.user_id || ""),
+      username:String(comment?.author_username || nested.username || ""),
+      displayName:String(comment?.display_name || nested.display_name || ""),
+      schoolName:String(comment?.school_name || nested.school_name || "")
+    };
+  }
+
+  function marketplaceCommentRow(listing, comment, section){
+    const row = element("article", "marketplace-comment");
+    const copy = element("div", "marketplace-comment-copy");
+    const commentAuthor = marketplaceCommentAuthor(comment);
+    const author = String(commentAuthor.displayName || commentAuthor.username || tr("anonymousStudent"));
+    const heading = element("div", "marketplace-comment-heading");
+    heading.append(element("b", "", author));
+    if(commentAuthor.schoolName && isCrossCampusListing(listing)){
+      heading.append(element("span", "", commentAuthor.schoolName));
+    }
+    copy.append(
+      heading,
+      element("p", "", String(comment.body || "")),
+      element("time", "", formatDate(comment.created_at))
+    );
+    const actions = element("div", "marketplace-comment-actions");
+    const like = element(
+      "button",
+      `marketplace-comment-like${comment.liked_by_me ? " liked" : ""}`,
+      marketplaceCommentLikeLabel(comment)
+    );
+    like.type = "button";
+    like.setAttribute("aria-pressed", comment.liked_by_me ? "true" : "false");
+    like.addEventListener("click", () => void toggleMarketplaceCommentLike(comment, like));
+    actions.append(like);
+    if(comment.can_delete === true || commentAuthor.id === String(state.userId || "")){
+      const remove = element("button", "marketplace-comment-delete", tr("marketplaceDeleteComment"));
+      remove.type = "button";
+      remove.addEventListener("click", () => void deleteMarketplaceComment(listing, comment, section));
+      actions.append(remove);
+    }
+    row.append(copy, actions);
+    return row;
+  }
+
+  async function loadMarketplaceListingComments(listing, section){
+    if(!section?.isConnected) return;
+    const list = section.querySelector(".marketplace-comment-list");
+    const status = section.querySelector(".marketplace-comment-status");
+    if(!list || !status) return;
+    const id = listingId(listing);
+    const context = currentContext();
+    list.replaceChildren(element("p", "marketplace-comments-loading", tr("loading")));
+    status.textContent = "";
+    try {
+      const {data, error} = await authClient.rpc("get_marketplace_listing_comments", {
+        p_listing_id:id,
+        p_limit:100,
+        p_offset:0
+      });
+      if(!contextIsCurrent(context) || !section.isConnected) return;
+      if(error) throw error;
+      const payload = firstObject(parseJson(data, data)) || {};
+      const comments = Array.isArray(payload.items)
+        ? payload.items
+        : Array.isArray(payload.comments)
+          ? payload.comments
+          : Array.isArray(data)
+            ? data
+            : [];
+      const count = Number(payload.comment_count ?? comments.length);
+      syncMarketplaceCommentCount(id, count);
+      list.replaceChildren();
+      if(!comments.length) list.append(element("p", "marketplace-comments-empty", tr("marketplaceCommentsEmpty")));
+      else comments.forEach(comment => list.append(marketplaceCommentRow(listing, comment, section)));
+    } catch(error){
+      if(contextIsCurrent(context) && section.isConnected){
+        list.replaceChildren(element("p", "marketplace-comments-empty", tr("marketplaceCommentsUnavailable")));
+        status.textContent = featureError(error);
+        status.className = "marketplace-comment-status error";
+      }
+    }
+  }
+
+  function marketplaceCommentsSection(listing){
+    const section = element("section", "marketplace-comments");
+    section.setAttribute("aria-label", tr("marketplaceComments"));
+    const heading = element("div", "marketplace-comments-heading");
+    const title = element("h3", "", marketplaceCommentLabel(listing));
+    title.dataset.marketCommentCount = listingId(listing);
+    heading.append(title);
+    const list = element("div", "marketplace-comment-list");
+    list.setAttribute("role", "feed");
+    const form = element("form", "marketplace-comment-form");
+    const input = element("input");
+    input.type = "text";
+    input.name = "marketplace-comment";
+    input.maxLength = 1000;
+    input.autocomplete = "off";
+    input.placeholder = tr("marketplaceWriteComment");
+    input.setAttribute("aria-label", tr("marketplaceWriteComment"));
+    const submit = element("button", "", tr("marketplacePostComment"));
+    submit.type = "submit";
+    const status = element("p", "marketplace-comment-status");
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      const body = input.value.trim();
+      if(!body){
+        input.setCustomValidity(tr("marketplaceCommentRequired"));
+        input.reportValidity();
+        input.setCustomValidity("");
+        return;
+      }
+      const context = currentContext();
+      input.disabled = true;
+      submit.disabled = true;
+      status.className = "marketplace-comment-status";
+      status.textContent = tr("marketplaceCommentPosting");
+      try {
+        const {error} = await authClient.rpc("add_marketplace_listing_comment", {
+          p_listing_id:listingId(listing),
+          p_body:body,
+          p_parent_comment_id:null
+        });
+        if(!contextIsCurrent(context) || !section.isConnected) return;
+        if(error) throw error;
+        input.value = "";
+        status.className = "marketplace-comment-status success";
+        status.textContent = tr("marketplaceCommentPosted");
+        syncMarketplaceCommentCount(listingId(listing), Number(listing.comment_count || 0) + 1);
+        await loadMarketplaceListingComments(listing, section);
+      } catch(error){
+        if(contextIsCurrent(context) && section.isConnected){
+          status.className = "marketplace-comment-status error";
+          status.textContent = featureError(error);
+        }
+      } finally {
+        if(contextIsCurrent(context) && section.isConnected){
+          input.disabled = false;
+          submit.disabled = false;
+        }
+      }
+    });
+    form.append(input, submit);
+    section.append(heading, list, form, status);
+    window.requestAnimationFrame(() => void loadMarketplaceListingComments(listing, section));
+    return section;
+  }
+
   function renderListingDetail(listing){
     const content = byId("marketplaceDetailContent");
     if(!content) return;
@@ -1601,15 +2083,7 @@
       favorite.setAttribute("aria-pressed", listing.favorited_by_me || listing.viewer?.favorited ? "true" : "false");
       favorite.addEventListener("click", () => void toggleFavorite(id, favorite));
       actions.append(favorite);
-      const message = detailAction(tr("marketplaceMessageSeller"));
-      if(crossCampus){
-        message.disabled = listing.can_message_seller !== true;
-        if(message.disabled) message.title = tr("marketplaceGlobalMessageUnavailable");
-        message.addEventListener("click", () => void startGlobalMarketplaceConversation(listing, message));
-      } else {
-        message.disabled = !seller.username;
-        message.addEventListener("click", () => void messageSeller(listing));
-      }
+      const message = marketplaceContactButton(listing, "marketplace-detail-action");
       actions.append(message);
       if(!crossCampus && String(listing.status || "active") === "active"){
         if(listing.status === "active" && getListingMode(listing) === "sale" && listing.negotiable === true){
@@ -1635,6 +2109,9 @@
     information.append(actions);
     const offers = crossCampus ? null : renderOffers(listing);
     if(offers) information.append(offers);
+    if(marketplaceCommentsAvailable(listing)){
+      information.append(marketplaceCommentsSection(listing));
+    }
     layout.append(information);
     content.append(layout);
   }
@@ -1649,6 +2126,20 @@
     const username = normalizeSeller(listing).username;
     if(!username) return;
     await messageUsername(username);
+  }
+
+  async function contactMarketplaceSeller(listing, trigger){
+    if(isOwnListing(listing)) return;
+    if(isCrossCampusListing(listing)){
+      await startGlobalMarketplaceConversation(listing, trigger);
+      return;
+    }
+    if(trigger) trigger.disabled = true;
+    try {
+      await messageSeller(listing);
+    } finally {
+      if(trigger?.isConnected) trigger.disabled = false;
+    }
   }
 
   async function startGlobalMarketplaceConversation(listing, trigger){
@@ -2484,6 +2975,10 @@
     state.loading = false;
     state.seedDetails.clear();
     state.seedSaved.clear();
+    state.seedOpenComments.clear();
+    state.seedCommentLikes.clear();
+    state.seedComments.clear();
+    state.busyCommentLikes.clear();
     state.busyListings.clear();
     state.busyOrders.clear();
     state.detail = null;

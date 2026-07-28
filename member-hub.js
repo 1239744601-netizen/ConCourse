@@ -3216,6 +3216,42 @@
     }
   }
 
+  async function toggleCommunityCommentLike(comment, button){
+    if(!comment?.comment_id || !button || button.disabled) return;
+    const wasLiked = comment.liked_by_me === true;
+    const previousCount = Math.max(0, Number(comment.like_count || 0));
+    const context = requestContext();
+    button.disabled = true;
+    try {
+      const response = await hubRpc("toggle_community_comment_like", {
+        p_comment_id:comment.comment_id
+      });
+      if(!contextIsCurrent(context) || !button.isConnected) return;
+      if(response.error){
+        setStatus("communityComposerStatus", featureError(response.error), "error");
+        return;
+      }
+      const result = parseJsonValue(response.data, response.data) || {};
+      comment.liked_by_me = result === true || result.liked === true || result.liked_by_me === true;
+      comment.like_count = Math.max(
+        0,
+        Number(
+          result.like_count
+          ?? previousCount + Number(comment.liked_by_me) - Number(wasLiked)
+        )
+      );
+      button.textContent = `${t(comment.liked_by_me ? "commentUnlike" : "commentLike")} · ${comment.like_count}`;
+      button.classList.toggle("liked", comment.liked_by_me);
+      button.setAttribute("aria-pressed", comment.liked_by_me ? "true" : "false");
+    } catch(requestError){
+      if(contextIsCurrent(context)){
+        setStatus("communityComposerStatus", featureError(requestError), "error");
+      }
+    } finally {
+      if(contextIsCurrent(context) && button.isConnected) button.disabled = false;
+    }
+  }
+
   async function reportComment(commentId){
     const reason = await requestHubAction({title:t("report"), message:t("reportReasonPrompt"), input:true, confirmLabel:t("report"), danger:true});
     if(!reason) return;
@@ -3262,15 +3298,66 @@
     if(!error && !commentRows.length){
       container.append(node("p", "hub-comment-status hub-comment-empty", t("commentsEmpty")));
     }
+    let replyTarget = null;
+    let replyContext = null;
+    let replyContextLabel = null;
+    let input = null;
+    const syncReplyContext = ({focus=false}={}) => {
+      if(!replyContext || !replyContextLabel || !input) return;
+      replyContext.hidden = !replyTarget;
+      replyContextLabel.textContent = replyTarget
+        ? t("replyingTo", {username:replyTarget.author})
+        : "";
+      input.placeholder = replyTarget
+        ? t("replyingTo", {username:replyTarget.author})
+        : t("writeComment");
+      if(focus) input.focus();
+    };
     commentRows.forEach(comment => {
-      const item = node("div", "hub-comment");
+      const isReply = !!comment.parent_comment_id;
+      const item = node("div", `hub-comment${isReply ? " is-reply" : ""}`);
+      item.dataset.commentId = comment.comment_id;
       const copy = node("div", "hub-comment-copy");
       copy.append(node("b", "", identityLabel(comment.display_name, comment.author_username)));
       if(hubState.feedScope === "cross" && comment.school_name){
         copy.append(node("small", "hub-comment-school", comment.school_name));
       }
+      if(isReply && (comment.parent_author_display_name || comment.parent_display_name || comment.parent_author_username)){
+        copy.append(node(
+          "small",
+          "hub-comment-reply-label",
+          t("replyingTo", {
+            username:identityLabel(
+              comment.parent_author_display_name || comment.parent_display_name,
+              comment.parent_author_username
+            )
+          })
+        ));
+      }
       copy.append(node("span", "", comment.body || ""), node("time", "", formatCompactDate(comment.created_at)));
       const actions = node("div", "hub-comment-actions");
+      const liked = comment.liked_by_me === true;
+      const likeButton = node(
+        "button",
+        `hub-comment-action hub-comment-like${liked ? " liked" : ""}`,
+        `${t(liked ? "commentUnlike" : "commentLike")} · ${Math.max(0, Number(comment.like_count || 0))}`
+      );
+      likeButton.type = "button";
+      likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
+      likeButton.onclick = () => void toggleCommunityCommentLike(comment, likeButton);
+      actions.append(likeButton);
+      if(!isReply){
+        const replyButton = node("button", "hub-comment-action hub-comment-reply", t("reply"));
+        replyButton.type = "button";
+        replyButton.onclick = () => {
+          replyTarget = {
+            commentId:comment.comment_id,
+            author:identityLabel(comment.display_name, comment.author_username)
+          };
+          syncReplyContext({focus:true});
+        };
+        actions.append(replyButton);
+      }
       if(hubState.feedScope !== "cross"){
         const profileButton = node("button", "", t("viewProfile"));
         profileButton.type = "button";
@@ -3296,7 +3383,17 @@
     });
     const form = node("form", "hub-comment-form");
     form.noValidate = true;
-    const input = node("input");
+    replyContext = node("div", "hub-comment-reply-context");
+    replyContextLabel = node("span");
+    const cancelReply = node("button", "hub-comment-reply-cancel", t("cancelReply"));
+    cancelReply.type = "button";
+    cancelReply.onclick = () => {
+      replyTarget = null;
+      syncReplyContext({focus:true});
+    };
+    replyContext.append(replyContextLabel, cancelReply);
+    replyContext.hidden = true;
+    input = node("input");
     input.type = "text";
     input.name = "comment";
     input.maxLength = 1000;
@@ -3318,7 +3415,11 @@
       submitStatus.className = "hub-comment-status";
       submitStatus.textContent = t("commentPosting");
       try {
-        const response = await hubRpc("add_post_comment", {p_post_id:postId, p_body:body});
+        const response = await hubRpc("add_post_comment", {
+          p_post_id:postId,
+          p_body:body,
+          p_parent_comment_id:replyTarget?.commentId || null
+        });
         if(!contextIsCurrent(commentContext) || !container.isConnected) return;
         if(response.error){
           submitStatus.className = "hub-comment-status error";
@@ -3353,7 +3454,7 @@
         form.requestSubmit();
       }
     });
-    form.append(input, button, submitStatus);
+    form.append(replyContext, input, button, submitStatus);
     container.append(form);
   }
 
@@ -3437,6 +3538,10 @@
         liked:false,
         saved:false,
         selectedPoll:-1,
+        commentsOpen:false,
+        commentLikes:new Set(),
+        replyTarget:null,
+        nextCommentId:0,
         comments:[],
         status:""
       });
@@ -3479,22 +3584,71 @@
     return avatar;
   }
 
-  function communitySeedCommentRow(comment, {own=false}={}){
+  function communitySeedCommentRow(comment, {
+    own=false,
+    commentKey="",
+    state=null,
+    onReply=null
+  }={}){
+    const localComment = own && comment && typeof comment === "object"
+      ? comment
+      : null;
     const author = own
       ? communitySeedText({en:"You", "zh-CN":"你", "zh-HK":"你"})
       : String(comment?.author || t("anonymousStudent"));
-    const body = own ? String(comment || "") : communitySeedText(comment?.body || comment);
+    const body = own
+      ? String(localComment?.body || comment || "")
+      : communitySeedText(comment?.body || comment);
     const time = own
       ? communitySeedText({en:"now", "zh-CN":"刚刚", "zh-HK":"啱啱"})
       : communitySeedText(comment?.time || "");
-    const row = node("article", "hub-community-example-comment");
+    const parentKey = String(localComment?.parentKey || "");
+    const parentAuthor = String(localComment?.parentAuthor || "");
+    const liked = !!state?.commentLikes?.has(commentKey);
+    const baseLikeCount = Math.max(0, Number(comment?.likeCount || 0));
+    const row = node(
+      "article",
+      `hub-community-example-comment${parentKey ? " is-reply" : ""}`
+    );
     const avatar = node("span", "hub-community-example-comment-avatar", initialsFor(author));
     avatar.setAttribute("aria-hidden", "true");
     const copy = node("div");
     const heading = node("p");
     heading.append(node("b", "", author));
     if(time) heading.append(node("time", "", time));
-    copy.append(heading, node("span", "", body));
+    copy.append(heading);
+    if(parentAuthor){
+      copy.append(node("small", "hub-comment-reply-label", t("replyingTo", {username:parentAuthor})));
+    }
+    copy.append(node("span", "", body));
+    const actions = node("div", "hub-community-example-comment-actions");
+    const like = node(
+      "button",
+      `hub-comment-action hub-comment-like${liked ? " liked" : ""}`,
+      `${t(liked ? "commentUnlike" : "commentLike")} · ${baseLikeCount + Number(liked)}`
+    );
+    like.type = "button";
+    like.setAttribute("aria-pressed", liked ? "true" : "false");
+    like.onclick = () => {
+      if(!state) return;
+      if(liked) state.commentLikes.delete(commentKey);
+      else state.commentLikes.add(commentKey);
+      state.status = "";
+      renderCommunityFeed(hubState.feed);
+    };
+    actions.append(like);
+    if(!parentKey){
+      const reply = node("button", "hub-comment-action hub-comment-reply", t("reply"));
+      reply.type = "button";
+      reply.onclick = () => {
+        if(typeof onReply === "function") onReply({
+          commentKey,
+          author
+        });
+      };
+      actions.append(reply);
+    }
+    copy.append(actions);
     row.append(avatar, copy);
     return row;
   }
@@ -3507,6 +3661,20 @@
       const state = communitySeedPostState(seed.key);
       const post = node("article", "hub-post-card hub-post-card--media hub-post-card--seed");
       post.dataset.communitySeed = seed.key;
+      const focusCommentInput = () => {
+        requestAnimationFrame(() => {
+          document
+            .querySelector(`[data-community-seed="${seed.key}"] .hub-community-example-comment-input`)
+            ?.focus();
+        });
+      };
+      const setReplyTarget = target => {
+        state.commentsOpen = true;
+        state.replyTarget = target;
+        state.status = "";
+        renderCommunityFeed(hubState.feed);
+        focusCommentInput();
+      };
 
       const author = node("div", "hub-post-author");
       const avatar = communitySeedAvatar(seed);
@@ -3582,7 +3750,14 @@
         `${t("comment")} · ${seed.comments.length + state.comments.length}`
       );
       comments.type = "button";
-      comments.onclick = () => post.querySelector(".hub-community-example-comment-input")?.focus();
+      comments.setAttribute("aria-expanded", state.commentsOpen ? "true" : "false");
+      comments.onclick = () => {
+        state.commentsOpen = !state.commentsOpen;
+        state.replyTarget = null;
+        state.status = "";
+        renderCommunityFeed(hubState.feed);
+        if(state.commentsOpen) focusCommentInput();
+      };
       const save = node(
         "button",
         `hub-post-action hub-post-action--save${state.saved ? " bookmarked" : ""}`,
@@ -3605,14 +3780,41 @@
       const commentList = node("div", "hub-community-example-comment-list");
       commentList.setAttribute("role", "feed");
       commentList.setAttribute("aria-label", `${t("comment")} · ${seed.comments.length + state.comments.length}`);
-      seed.comments.forEach(comment => {
-        commentList.append(communitySeedCommentRow(comment));
+      seed.comments.forEach((comment, index) => {
+        commentList.append(communitySeedCommentRow(comment, {
+          commentKey:`${seed.key}:seed:${index}`,
+          state,
+          onReply:setReplyTarget
+        }));
       });
       state.comments.forEach(comment => {
-        commentList.append(communitySeedCommentRow(comment, {own:true}));
+        commentList.append(communitySeedCommentRow(comment, {
+          own:true,
+          commentKey:`${seed.key}:local:${comment.id}`,
+          state,
+          onReply:setReplyTarget
+        }));
       });
       commentArea.append(commentList);
       const form = node("div", "hub-community-example-comment-form");
+      if(state.replyTarget){
+        const replyContext = node("div", "hub-comment-reply-context");
+        replyContext.append(
+          node("span", "", t("replyingTo", {username:state.replyTarget.author})),
+          (() => {
+            const cancel = node("button", "hub-comment-reply-cancel", t("cancelReply"));
+            cancel.type = "button";
+            cancel.onclick = () => {
+              state.replyTarget = null;
+              state.status = "";
+              renderCommunityFeed(hubState.feed);
+              focusCommentInput();
+            };
+            return cancel;
+          })()
+        );
+        form.append(replyContext);
+      }
       const input = node("input", "hub-community-example-comment-input");
       input.maxLength = 240;
       input.placeholder = t("writeComment");
@@ -3622,7 +3824,15 @@
       const addComment = () => {
         const value = input.value.trim();
         if(!value) return;
-        state.comments.push(value);
+        state.nextCommentId += 1;
+        state.comments.push({
+          id:state.nextCommentId,
+          body:value,
+          parentKey:state.replyTarget?.commentKey || "",
+          parentAuthor:state.replyTarget?.author || ""
+        });
+        state.commentsOpen = true;
+        state.replyTarget = null;
         state.status = t("commentPosted");
         renderCommunityFeed(hubState.feed);
       };
@@ -3636,6 +3846,7 @@
       form.append(input, submit);
       commentArea.append(form);
       if(state.status) commentArea.append(node("small", "hub-community-example-status", state.status));
+      commentArea.hidden = !state.commentsOpen;
       post.append(commentArea);
       collection.append(post);
     });

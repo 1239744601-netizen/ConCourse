@@ -2326,6 +2326,7 @@ input.market-search::placeholder {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
   margin-top: 11px;
   padding-top: 10px;
   border-top: 1px solid var(--market-line);
@@ -2334,7 +2335,7 @@ input.market-search::placeholder {
 .marketplace-card-action {
   min-width: 0;
   min-height: 42px;
-  flex: 1;
+  flex: 1 1 calc(50% - 6px);
   padding: 8px 10px;
   color: #595c63;
   background: #f3f3f5;
@@ -2352,6 +2353,182 @@ input.market-search::placeholder {
   background: #ecf5ff;
   filter: none;
   transform: none;
+}
+
+.marketplace-comments {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--market-line);
+}
+
+.marketplace-comments-heading {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.marketplace-comments-heading h3 {
+  margin: 0;
+  color: var(--market-ink);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.marketplace-comments-heading span {
+  max-width: 360px;
+  color: var(--market-muted);
+  font-size: 9px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.marketplace-comment-list {
+  min-width: 0;
+  display: grid;
+  max-height: 360px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.marketplace-comment {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 15px 2px;
+  border-bottom: 1px solid var(--market-line);
+}
+
+.marketplace-comment-copy,
+.marketplace-comment-heading {
+  min-width: 0;
+}
+
+.marketplace-comment-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.marketplace-comment-copy b {
+  color: var(--market-ink);
+  font-size: 10.5px;
+}
+
+.marketplace-comment-heading span,
+.marketplace-comment-copy time {
+  color: var(--market-muted);
+  font-size: 8px;
+}
+
+.marketplace-comment-copy p {
+  margin: 5px 0 0;
+  color: #444950;
+  font-size: 10.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.marketplace-comment-copy time {
+  display: block;
+  margin-top: 6px;
+}
+
+.marketplace-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.marketplace-comment-actions button,
+.marketplace-comment-like,
+.marketplace-comment-delete {
+  min-height: 32px;
+  padding: 5px 8px;
+  color: var(--market-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 8.5px;
+  font-weight: 760;
+}
+
+.marketplace-comment-actions button:hover,
+.marketplace-comment-like:hover,
+.marketplace-comment-like.liked,
+.marketplace-comment-like[aria-pressed="true"] {
+  color: var(--market-trust);
+  background: #e9f4ff;
+  filter: none;
+  transform: none;
+}
+
+.marketplace-comment-delete:hover {
+  color: var(--market-danger);
+  background: #fdebed;
+}
+
+.marketplace-comment-form {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.marketplace-comment-form input {
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 15px;
+  color: var(--market-ink);
+  background: #f6f7f9;
+  border: 1px solid var(--market-line-strong);
+  border-radius: 999px;
+}
+
+.marketplace-comment-form button {
+  min-height: 44px;
+  padding: 9px 17px;
+  color: #fff;
+  background: var(--market-navy);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.marketplace-comment-form button:hover {
+  background: #123f68;
+  filter: none;
+  transform: none;
+}
+
+.marketplace-comments-empty,
+.marketplace-comments-loading,
+.marketplace-comment-status {
+  margin: 0;
+  padding: 10px 2px;
+  color: var(--market-muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.marketplace-comment-status.success { color: var(--market-success); }
+.marketplace-comment-status.error { color: var(--market-danger); }
+
+.marketplace-seed-comments {
+  margin-top: 16px;
+  padding-top: 16px;
 }
 
 .marketplace-card-compact {
@@ -3374,6 +3551,28 @@ input.market-search::placeholder {
 
   .member-hub[data-active-view="marketplace"] .market-grid {
     gap: 30px 12px;
+  }
+
+  .marketplace-comments-heading {
+    align-items: flex-start;
+  }
+
+  .marketplace-comment {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .marketplace-comment-actions {
+    justify-content: flex-start;
+  }
+
+  .marketplace-comment-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .marketplace-comment-form button {
+    justify-self: start;
+    min-width: 112px;
   }
 }
 

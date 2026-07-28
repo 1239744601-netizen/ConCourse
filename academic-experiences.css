@@ -1502,9 +1502,16 @@ body.hub-active .member-hub {
     clamp(62px, 8vw, 112px) clamp(76px, 9vw, 132px) 0 0 !important;
 }
 
-/* Academic Insights only: the choice controls share one solid circular field.
-   The individual selects remain fully interactive without becoming nested
-   cards, so the component reads as one object rather than three boxes. */
+/* Academic Insights only: keep the controls compact, readable, and visually
+   distinct without turning each field into another nested card. */
+.member-hub
+  .hub-view[data-hub-view="overview"]
+  .hub-insight-layout {
+  grid-template-columns: minmax(360px, 420px) minmax(0, 1fr) !important;
+  gap: clamp(34px, 4vw, 64px) !important;
+  align-items: start;
+}
+
 .member-hub
   .hub-view[data-hub-view="overview"]
   .hub-insight-controls {
@@ -1512,9 +1519,9 @@ body.hub-active .member-hub {
   isolation: isolate;
   display: grid;
   align-content: center;
-  width: 100%;
-  aspect-ratio: 1;
-  padding: clamp(38px, 4vw, 52px) clamp(34px, 3.6vw, 46px) !important;
+  width: min(100%, 420px);
+  min-height: 316px;
+  padding: clamp(34px, 3.5vw, 46px) clamp(32px, 3.4vw, 44px) !important;
   overflow: hidden;
   color: #f5faff;
   background:
@@ -1522,7 +1529,7 @@ body.hub-active .member-hub {
     radial-gradient(circle at 30% 82%, rgba(3, 18, 34, .54), transparent 42%),
     #0a3558 !important;
   border: 1px solid rgba(127, 216, 255, .2) !important;
-  border-radius: 50% !important;
+  border-radius: 52px !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .08),
     inset 0 -24px 56px rgba(2, 16, 29, .22),
@@ -1535,10 +1542,10 @@ body.hub-active .member-hub {
   content: "";
   position: absolute;
   z-index: -1;
-  inset: 8%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(139, 216, 255, .08), transparent 64%);
+  inset: 30px auto 30px 0;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #4a82ff, #8bd8ff 54%, #efbb45);
   pointer-events: none;
 }
 
@@ -1547,6 +1554,8 @@ body.hub-active .member-hub {
   .hub-insight-controls .hub-filter-row {
   position: relative;
   z-index: 1;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   gap: 12px !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -1591,9 +1600,9 @@ body.hub-active .member-hub {
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  font-size: clamp(15px, 1.35vw, 18px) !important;
+  font-size: clamp(14px, 1.15vw, 16px) !important;
   font-weight: 760 !important;
-  text-overflow: ellipsis;
+  text-overflow: clip;
 }
 
 .member-hub
@@ -1673,6 +1682,37 @@ html[data-theme="day"]
   .hub-view[data-hub-view="overview"]
   .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear):disabled {
   color: rgba(8, 35, 60, .52) !important;
+}
+
+@media (max-width: 860px) {
+  .member-hub
+    .hub-view[data-hub-view="overview"]
+    .hub-insight-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .member-hub
+    .hub-view[data-hub-view="overview"]
+    .hub-insight-controls {
+    justify-self: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .member-hub
+    .hub-view[data-hub-view="overview"]
+    .hub-insight-controls {
+    min-height: 286px;
+    padding: 30px 22px !important;
+    border-radius: 40px !important;
+  }
+
+  .member-hub
+    .hub-view[data-hub-view="overview"]
+    .hub-insight-controls .hub-filter-row :is(#courseInsightScope, #courseInsightYear) {
+    padding-inline-end: 30px !important;
+    font-size: 13px !important;
+  }
 }
 
 /* The sticky destination rail and the active page's right column use the same

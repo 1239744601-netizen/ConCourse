@@ -134,10 +134,28 @@ test("Community, Market, and Messages seed interactions stay client-only", () =>
     "function renderCommunitySeedPosts(feed){",
     "function renderCommunityFeed(posts){"
   );
+  const communitySeedState = sourceSection(
+    hub,
+    "function communitySeedPostState(key){",
+    "async function shareCommunitySeedPost("
+  );
+  const communitySeedComment = sourceSection(
+    hub,
+    "function communitySeedCommentRow(comment, {",
+    "function renderCommunitySeedPosts(feed){"
+  );
   assert.match(hub, /hubState\.communitySeedState/);
   assert.match(communitySeeds, /communitySeedPostState\(seed\.key\)/);
   assert.match(communitySeeds, /state\.selectedPoll = index/);
-  assert.match(communitySeeds, /state\.comments\.push\(value\)/);
+  assert.match(communitySeedState, /commentsOpen:false/);
+  assert.match(communitySeedState, /commentLikes:new Set\(\)/);
+  assert.match(communitySeedState, /replyTarget:null/);
+  assert.match(communitySeeds, /state\.comments\.push\(\{/);
+  assert.match(communitySeeds, /commentArea\.hidden = !state\.commentsOpen/);
+  assert.match(communitySeeds, /comments\.setAttribute\("aria-expanded", state\.commentsOpen \? "true" : "false"\)/);
+  assert.match(communitySeedComment, /state\.commentLikes\.(?:add|delete)\(commentKey\)/);
+  assert.match(communitySeedComment, /hub-comment-action hub-comment-reply/);
+  assert.match(communitySeedComment, /t\("reply"\)/);
   assert.match(communitySeeds, /hub-post-action--like/);
   assert.match(communitySeeds, /hub-post-action--comment/);
   assert.match(communitySeeds, /hub-post-action--save/);
@@ -256,8 +274,12 @@ test("seed post comment totals match their complete scrollable conversations", (
     /\$\{t\("comment"\)\} · \$\{seed\.comments\.length \+ state\.comments\.length\}/
   );
   assert.match(seedRenderer, /const commentList = node\("div", "hub-community-example-comment-list"\)/);
-  assert.match(seedRenderer, /commentList\.append\(communitySeedCommentRow\(comment\)\)/);
+  assert.match(seedRenderer, /commentList\.append\(communitySeedCommentRow\(comment, \{/);
   assert.match(seedRenderer, /commentArea\.append\(commentList\)[\s\S]*?commentArea\.append\(form\)/);
+  assert.match(seedRenderer, /commentArea\.hidden = !state\.commentsOpen/);
+  assert.match(seedRenderer, /state\.replyTarget = target/);
+  assert.match(seedRenderer, /t\("replyingTo", \{username:state\.replyTarget\.author\}\)/);
+  assert.match(seedRenderer, /t\("cancelReply"\)/);
 
   const scrollableComments = cssRule(css, ".hub-community-example-comment-list");
   assert.match(scrollableComments, /max-height:\s*286px/);
@@ -425,19 +447,28 @@ test("Hub artwork, paper surface, and Community edge labels use the final full-b
   );
 });
 
-test("Course Choice Intelligence is one solid circular surface without nested boxes", () => {
+test("Course Choice Intelligence uses one readable rounded control without nested boxes", () => {
+  const insightLayout = cssRule(
+    css,
+    '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-layout'
+  );
+  assert.match(insightLayout, /grid-template-columns:\s*minmax\(360px,\s*420px\)\s*minmax\(0,\s*1fr\)/);
+
   const insightControls = cssRule(
     css,
     '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-controls'
   );
-  assert.match(insightControls, /aspect-ratio:\s*1/);
+  assert.match(insightControls, /width:\s*min\(100%,\s*420px\)/);
+  assert.match(insightControls, /min-height:\s*316px/);
   assert.match(insightControls, /background:[\s\S]*?#0a3558\s*!important/);
-  assert.match(insightControls, /border-radius:\s*50%\s*!important/);
+  assert.match(insightControls, /border-radius:\s*52px\s*!important/);
+  assert.doesNotMatch(insightControls, /aspect-ratio:/);
 
   const filterRow = cssRule(
     css,
     '.member-hub\n  .hub-view[data-hub-view="overview"]\n  .hub-insight-controls .hub-filter-row'
   );
+  assert.match(filterRow, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*!important/);
   assert.match(filterRow, /background:\s*transparent\s*!important/);
   assert.match(filterRow, /border:\s*0\s*!important/);
   assert.match(filterRow, /box-shadow:\s*none\s*!important/);
@@ -449,6 +480,7 @@ test("Course Choice Intelligence is one solid circular surface without nested bo
   assert.match(select, /background-color:\s*transparent\s*!important/);
   assert.match(select, /border:\s*0\s*!important/);
   assert.match(select, /box-shadow:\s*none\s*!important/);
+  assert.match(select, /text-overflow:\s*clip/);
 
   const refresh = cssRule(
     css,
