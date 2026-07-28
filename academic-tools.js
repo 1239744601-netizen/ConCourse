@@ -50,13 +50,13 @@
     en: Object.freeze({
       toolsWorkspaceTitle:"Citation Studio",
       toolsWorkspaceIntro:"Build a polished reference, check its in-text form, and keep a bibliography for your current project.",
-      toolsLocalNote:"Manual entries and saved bibliographies stay on this device. Scholarly keyword results use Crossref’s free public metadata; selected pages are checked by ConCourse.",
-      citationStyleLegend:"Citation style",
-      sourceTypeLegend:"Source type",
+      toolsLocalNote:"Your bibliography syncs to your account when available and remains on this device as a fallback. Scholarly keyword results use Crossref’s free public metadata; selected pages are checked by ConCourse.",
+      citationStyleLegend:"Citation Style",
+      sourceTypeLegend:"Source Type",
       sourceBook:"Book",
-      sourceJournal:"Journal article",
+      sourceJournal:"Journal Article",
       sourceWebsite:"Website",
-      citationEntryModeLegend:"Add this website",
+      citationEntryModeLegend:"Add This Website",
       citationAutomaticMode:"Find automatically",
       citationAutomaticModeHint:"Paste any public URL, or search scholarly works by title, author, DOI, or ISBN.",
       citationManualMode:"Enter manually",
@@ -81,7 +81,7 @@
       citationLookupTimedOut:"The selected page took too long to respond. No citation details were changed. Try again or enter the source manually.",
       citationLookupSignIn:"Sign in before using automatic website lookup.",
       citationLookupReplaceConfirm:"Finding a new source will replace the current website draft and edited reference. Continue?",
-      citationSearchResultsTitle:"Choose the correct source",
+      citationSearchResultsTitle:"Choose the Correct Source",
       citationSearchResultCount:"{count} results found",
       citationSearchNoResults:"No matching sources were found. Try a more specific title, author, or URL, or enter the source manually.",
       citationSearchExactOnly:"The exact page was found. Select it to import and review its details.",
@@ -92,7 +92,7 @@
       citationResultUnknownAuthor:"Author not listed",
       citationResultExact:"Exact URL match",
       citationSearchAttribution:"Scholarly metadata provided by Crossref",
-      citationDetailsLegend:"Source details",
+      citationDetailsLegend:"Source Details",
       citationAuthorType:"Author entry",
       citationPeople:"Person or people",
       citationOrganisation:"Organisation",
@@ -124,11 +124,11 @@
       citationPinpoint:"Cited page or locator",
       citationPinpointPlaceholder:"42, 115–117, or sec. 3",
       citationClear:"Clear fields",
-      citationPreviewEyebrow:"Live output",
-      citationPreviewTitle:"Your reference",
-      citationReferenceLabel:"Editable reference-list entry",
-      citationInlineLabel:"In-text citation",
-      citationNoteLabel:"Short note",
+      citationPreviewEyebrow:"Live Output",
+      citationPreviewTitle:"Your Reference",
+      citationReferenceLabel:"Editable Reference-List Entry",
+      citationInlineLabel:"In-Text Citation",
+      citationNoteLabel:"Short Note",
       citationPreviewPlaceholder:"Enter a title to generate a reference, or type one directly.",
       citationInlinePlaceholder:"The in-text form will appear here.",
       citationEdited:"Edited",
@@ -155,8 +155,8 @@
       citationJournalWarning:"Add the journal title for a complete article reference.",
       citationWebsiteWarning:"Add a URL for a complete website reference.",
       citationAuthorWarning:"No author was entered; the reference will begin with the title.",
-      bibliographyTitle:"Project bibliography",
-      bibliographyIntro:"Saved on this device and reformatted whenever you change styles.",
+      bibliographyTitle:"Project Bibliography",
+      bibliographyIntro:"Synced to your account when available, stored on this device as a fallback, and reformatted whenever you change styles.",
       bibliographyCount:"{count} saved",
       bibliographyCopyAll:"Copy all",
       bibliographyClearAll:"Clear all",
@@ -166,6 +166,8 @@
       bibliographyCleared:"Bibliography cleared.",
       bibliographyRemoved:"Reference removed.",
       bibliographyStorageFailed:"This browser could not save the bibliography. Check storage settings and try again.",
+      bibliographyCloudUnavailable:"Your bibliography is safe on this device, but account sync is temporarily unavailable.",
+      bibliographyCloudLoaded:"Your account bibliography is up to date.",
       bibliographyClearConfirm:"Remove every saved reference from this device?",
       styleCompassTitle:"Choose a style by discipline",
       styleApaUse:"Psychology, education, social sciences and many business courses.",
@@ -185,7 +187,7 @@
     "zh-CN": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"创建规范参考文献、查看文内引用，并为当前项目整理参考书目。",
-      toolsLocalNote:"手动输入和已保存的参考书目只保存在此设备。学术关键词结果使用 Crossref 免费公共元数据；所选网页由 ConCourse 核对。",
+      toolsLocalNote:"参考书目会在可用时同步至你的账号，并保存在此设备作为后备。学术关键词结果使用 Crossref 免费公共元数据；所选网页由 ConCourse 核对。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"资料类型",
       sourceBook:"书籍",
@@ -291,7 +293,7 @@
       citationWebsiteWarning:"请补充网址以获得完整网页引用。",
       citationAuthorWarning:"尚未输入作者；引用将从标题开始。",
       bibliographyTitle:"项目参考书目",
-      bibliographyIntro:"保存在此设备；切换格式时会自动重新排版。",
+      bibliographyIntro:"在可用时同步至你的账号，并保存在此设备作为后备；切换格式时会自动重新排版。",
       bibliographyCount:"已保存 {count} 条",
       bibliographyCopyAll:"复制全部",
       bibliographyClearAll:"全部清除",
@@ -301,6 +303,8 @@
       bibliographyCleared:"参考书目已清空。",
       bibliographyRemoved:"参考文献已移除。",
       bibliographyStorageFailed:"此浏览器无法保存参考书目，请检查存储设置后重试。",
+      bibliographyCloudUnavailable:"参考书目已安全保存在此设备，但账号同步暂时不可用。",
+      bibliographyCloudLoaded:"账号参考书目已是最新版本。",
       bibliographyClearConfirm:"确定移除此设备上的全部参考文献吗？",
       styleCompassTitle:"按学科选择格式",
       styleApaUse:"心理学、教育、社会科学及许多商科课程。",
@@ -320,7 +324,7 @@
     "zh-HK": Object.freeze({
       toolsWorkspaceTitle:"引用工作室",
       toolsWorkspaceIntro:"建立規範參考文獻、查看文內引用，並為而家嘅項目整理參考書目。",
-      toolsLocalNote:"手動輸入同已儲存嘅參考書目只會留喺呢部裝置。學術關鍵字結果使用 Crossref 免費公共元資料；所選網頁由 ConCourse 核對。",
+      toolsLocalNote:"參考書目會喺可用時同步到你嘅帳戶，並保留喺呢部裝置作後備。學術關鍵字結果使用 Crossref 免費公共元資料；所選網頁由 ConCourse 核對。",
       citationStyleLegend:"引用格式",
       sourceTypeLegend:"資料類型",
       sourceBook:"書籍",
@@ -426,7 +430,7 @@
       citationWebsiteWarning:"請加入網址以取得完整網頁引用。",
       citationAuthorWarning:"未輸入作者；引用會由標題開始。",
       bibliographyTitle:"項目參考書目",
-      bibliographyIntro:"儲存喺呢部裝置；轉換格式時會自動重新排版。",
+      bibliographyIntro:"可用時會同步到你嘅帳戶，並保留喺呢部裝置作後備；轉換格式時會自動重新排版。",
       bibliographyCount:"已儲存 {count} 條",
       bibliographyCopyAll:"複製全部",
       bibliographyClearAll:"全部清除",
@@ -436,6 +440,8 @@
       bibliographyCleared:"參考書目已清空。",
       bibliographyRemoved:"參考文獻已移除。",
       bibliographyStorageFailed:"呢個瀏覽器未能儲存參考書目，請檢查儲存設定後再試。",
+      bibliographyCloudUnavailable:"參考書目已安全保留喺呢部裝置，但帳戶同步暫時未能使用。",
+      bibliographyCloudLoaded:"帳戶參考書目已經係最新版本。",
       bibliographyClearConfirm:"確定移除呢部裝置上面嘅全部參考文獻？",
       styleCompassTitle:"按學科選擇格式",
       styleApaUse:"心理學、教育、社會科學同好多商科課程。",
@@ -478,7 +484,7 @@
       citationExampleImageAlt:"图书馆书桌上摆有研究书籍、手提电脑和来源笔记。",
       toolsWorkspaceTitle:"参考文献工作室",
       toolsWorkspaceIntro:"生成规范的参考文献、核对文内引用，并整理当前项目的参考书目。",
-      toolsLocalNote:"手动输入的来源与已保存的参考书目只保存在此设备。学术关键词结果来自 Crossref 免费公开元数据；所选网页会由 ConCourse 核对。",
+      toolsLocalNote:"参考书目会在可用时同步至你的账号，并保存在此设备作为后备。学术关键词结果来自 Crossref 免费公开元数据；所选网页会由 ConCourse 核对。",
       sourceTypeLegend:"来源类型",
       citationEntryModeLegend:"添加网页来源",
       citationAutomaticMode:"自动检索",
@@ -538,7 +544,7 @@
       citationExampleImageAlt:"圖書館書桌上放有研究書籍、手提電腦和來源筆記。",
       toolsWorkspaceTitle:"參考文獻工作室",
       toolsWorkspaceIntro:"建立格式規範的參考文獻、查看文內引用，並整理目前項目的參考書目。",
-      toolsLocalNote:"手動輸入的資料和已儲存的參考書目只會保留在此裝置。學術關鍵字搜尋結果來自 Crossref 的免費公開中繼資料；所選網頁會由 ConCourse 核對。",
+      toolsLocalNote:"參考書目會在可用時同步到你的帳戶，並保留在此裝置作後備。學術關鍵字搜尋結果來自 Crossref 的免費公開中繼資料；所選網頁會由 ConCourse 核對。",
       sourceTypeLegend:"來源類型",
       citationEntryModeLegend:"加入此網頁資料",
       citationAutomaticMode:"自動搜尋",
@@ -609,7 +615,7 @@
       citationJournalWarning:"請加入期刊名稱，以建立完整的文章參考文獻。",
       citationWebsiteWarning:"請加入網址，以建立完整的網頁參考文獻。",
       citationAuthorWarning:"尚未輸入作者；參考文獻將由標題開始。",
-      bibliographyIntro:"參考書目會儲存在此裝置，並在你切換引用格式時自動重新排版。",
+      bibliographyIntro:"參考書目會在可用時同步到你的帳戶，並保留在此裝置作後備；切換引用格式時會自動重新排版。",
       bibliographyCount:"已儲存 {count} 項",
       bibliographyEmpty:"已儲存的參考文獻會在此顯示。",
       bibliographyCopied:"已複製包含格式的參考書目。",
@@ -644,7 +650,10 @@
     lookupMode:"search",
     searchQuery:"",
     searchProvider:"",
-    searchResults:[]
+    searchResults:[],
+    remoteLibraryRequest:0,
+    remoteLibraryTimer:null,
+    remoteLibraryLoadedFor:""
   };
 
   const byId = id => document.getElementById(id);
@@ -1096,9 +1105,90 @@
     } catch(_error){ state.library = []; }
   }
 
+  function authenticatedCitationContext(){
+    const client = typeof authClient !== "undefined" ? authClient : null;
+    const user = typeof currentUser !== "undefined" ? currentUser : null;
+    return client && user?.id ? {client, userId:String(user.id)} : null;
+  }
+
+  function parseRemoteLibrary(value){
+    let payload = value;
+    if(typeof payload === "string"){
+      try { payload = JSON.parse(payload); }
+      catch(_error){ payload = []; }
+    }
+    const entries = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.entries)
+        ? payload.entries
+        : [];
+    return entries.map(normalizeRecord).filter(Boolean).slice(0, MAX_LIBRARY_ITEMS);
+  }
+
+  function mergeLibraries(remote, local){
+    const merged = [...remote];
+    local.forEach(record => {
+      const key = fingerprint(record);
+      const index = merged.findIndex(item => fingerprint(item) === key);
+      if(index >= 0) merged[index] = record;
+      else merged.push(record);
+    });
+    return merged.slice(-MAX_LIBRARY_ITEMS);
+  }
+
+  function queueRemoteLibrarySync(){
+    const context = authenticatedCitationContext();
+    if(!context) return;
+    if(state.remoteLibraryTimer) clearTimeout(state.remoteLibraryTimer);
+    const request = ++state.remoteLibraryRequest;
+    const snapshot = state.library.slice(0, MAX_LIBRARY_ITEMS).map(record => ({...record}));
+    state.remoteLibraryTimer = window.setTimeout(async () => {
+      state.remoteLibraryTimer = null;
+      try {
+        const {error} = await context.client.rpc("save_citation_library", {p_entries:snapshot});
+        if(request !== state.remoteLibraryRequest || currentUserId() !== context.userId) return;
+        if(error) throw error;
+        state.remoteLibraryLoadedFor = context.userId;
+      } catch(_error){
+        if(request === state.remoteLibraryRequest && currentUserId() === context.userId){
+          setStatus(tr("bibliographyCloudUnavailable"), "warning", true);
+        }
+      }
+    }, 300);
+  }
+
+  async function loadRemoteLibrary({force=false}={}){
+    const context = authenticatedCitationContext();
+    if(!context || (!force && state.remoteLibraryLoadedFor === context.userId)) return;
+    if(state.remoteLibraryTimer){
+      clearTimeout(state.remoteLibraryTimer);
+      state.remoteLibraryTimer = null;
+    }
+    const request = ++state.remoteLibraryRequest;
+    try {
+      const {data, error} = await context.client.rpc("get_citation_library");
+      if(request !== state.remoteLibraryRequest || currentUserId() !== context.userId) return;
+      if(error) throw error;
+      const remote = parseRemoteLibrary(data);
+      const merged = mergeLibraries(remote, state.library);
+      const remoteChanged = JSON.stringify(merged) !== JSON.stringify(remote);
+      state.library = merged;
+      state.remoteLibraryLoadedFor = context.userId;
+      try { localStorage.setItem(state.storageKey, JSON.stringify(state.library)); }
+      catch(_error){}
+      renderLibrary();
+      if(remoteChanged) queueRemoteLibrarySync();
+    } catch(_error){
+      if(request === state.remoteLibraryRequest && currentUserId() === context.userId){
+        setStatus(tr("bibliographyCloudUnavailable"), "warning", true);
+      }
+    }
+  }
+
   function saveLibrary(){
     try {
       localStorage.setItem(state.storageKey, JSON.stringify(state.library.slice(0, MAX_LIBRARY_ITEMS)));
+      queueRemoteLibrarySync();
       return true;
     } catch(_error){ return false; }
   }
@@ -1952,6 +2042,7 @@
     refreshLanguage();
     syncSourceFields({render:false});
     renderPreview();
+    void loadRemoteLibrary();
   }
 
   function deactivate(){
@@ -1959,6 +2050,9 @@
   }
 
   function reset(nextUserId){
+    if(state.remoteLibraryTimer){ clearTimeout(state.remoteLibraryTimer); state.remoteLibraryTimer = null; }
+    state.remoteLibraryRequest += 1;
+    state.remoteLibraryLoadedFor = "";
     if(state.previewTimer){ clearTimeout(state.previewTimer); state.previewTimer = null; }
     state.preview = null;
     resetFormState();

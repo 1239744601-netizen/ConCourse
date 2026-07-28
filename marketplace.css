@@ -2406,6 +2406,17 @@ input.market-search::placeholder {
   border-bottom: 1px solid var(--market-line);
 }
 
+.marketplace-comment.is-reply {
+  margin-inline-start: clamp(18px, 6%, 48px);
+  padding-inline-start: 14px;
+  border-inline-start: 2px solid color-mix(in srgb, var(--market-trust) 50%, transparent);
+}
+
+.marketplace-comment-reply-to {
+  color: var(--market-trust) !important;
+  font-weight: 720;
+}
+
 .marketplace-comment-copy,
 .marketplace-comment-heading {
   min-width: 0;
@@ -2478,6 +2489,57 @@ input.market-search::placeholder {
   background: #fdebed;
 }
 
+.marketplace-comments-load-more {
+  justify-self: start;
+  min-height: 38px;
+  padding: 7px 14px;
+  color: var(--market-trust);
+  background: color-mix(in srgb, var(--market-trust) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--market-trust) 24%, transparent);
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 9px;
+  font-weight: 780;
+}
+
+.marketplace-comments-load-more:hover,
+.marketplace-comments-load-more:focus-visible {
+  color: var(--market-ink);
+  background: color-mix(in srgb, var(--market-trust) 15%, transparent);
+  filter: none;
+  transform: none;
+}
+
+.marketplace-comment-reply-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 13px;
+  color: var(--market-ink);
+  background: color-mix(in srgb, var(--market-trust) 8%, transparent);
+  border-inline-start: 3px solid var(--market-trust);
+  border-radius: 8px 999px 999px 8px;
+  font-size: 9px;
+  font-weight: 720;
+}
+
+.marketplace-comment-reply-context[hidden] {
+  display: none !important;
+}
+
+.marketplace-comment-reply-context button {
+  min-height: 30px;
+  padding: 5px 10px;
+  color: var(--market-trust);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 8.5px;
+  font-weight: 780;
+}
+
 .marketplace-comment-form {
   min-width: 0;
   display: grid;
@@ -2525,6 +2587,57 @@ input.market-search::placeholder {
 
 .marketplace-comment-status.success { color: var(--market-success); }
 .marketplace-comment-status.error { color: var(--market-danger); }
+
+.marketplace-feed-warning {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 20px;
+  color: var(--market-ink);
+  background: color-mix(in srgb, #f3bd45 14%, var(--market-surface));
+  border-inline-start: 4px solid #d29a22;
+  border-radius: 8px 999px 999px 8px;
+}
+
+.marketplace-feed-warning-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.marketplace-feed-warning-copy strong {
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.marketplace-feed-warning-copy span {
+  color: var(--market-muted);
+  font-size: 8.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.marketplace-feed-warning-retry {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 7px 16px;
+  color: #fff;
+  background: var(--market-navy);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.marketplace-feed-warning-retry:hover,
+.marketplace-feed-warning-retry:focus-visible {
+  background: #123f68;
+  filter: none;
+  transform: none;
+}
 
 .marketplace-seed-comments {
   margin-top: 16px;
@@ -3573,6 +3686,12 @@ input.market-search::placeholder {
   .marketplace-comment-form button {
     justify-self: start;
     min-width: 112px;
+  }
+
+  .marketplace-feed-warning {
+    align-items: flex-start;
+    flex-direction: column;
+    border-radius: 12px 34px 34px 12px;
   }
 }
 

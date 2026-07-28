@@ -2,6 +2,7 @@
 
 (() => {
   const PAGE_SIZE = 24;
+  const COMMENT_PAGE_SIZE = 30;
   const MAX_MEDIA = 8;
   const MARKETPLACE_BUCKET = "marketplace-media";
   const UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
@@ -198,7 +199,15 @@
     marketplaceDeleteComment:"Delete",
     marketplaceDeleteCommentConfirm:"Delete this comment?",
     marketplaceCommentDeleted:"Comment deleted.",
+    marketplaceCommentReply:"Reply",
+    marketplaceCommentReplyingTo:"Replying to @{username}",
+    marketplaceCommentCancelReply:"Cancel reply",
+    marketplaceCommentsLoadMore:"Load more comments",
+    marketplaceCommentsLoadingMore:"Loading comments…",
     marketplaceContactSeller:"Contact seller",
+    marketplaceMessageOpenFailed:"Messages could not be opened. Open Messages and enter the seller’s exact username.",
+    marketplaceFeedDegraded:"Live marketplace listings could not be loaded. The campus examples below remain available while you reconnect.",
+    marketplaceRetry:"Retry",
     edit:"Edit",
     report:"Report",
     loadMore:"Load more",
@@ -241,7 +250,15 @@
       marketplaceDeleteComment:"删除",
       marketplaceDeleteCommentConfirm:"确定删除这条评论吗？",
       marketplaceCommentDeleted:"评论已删除。",
+      marketplaceCommentReply:"回复",
+      marketplaceCommentReplyingTo:"正在回复 @{username}",
+      marketplaceCommentCancelReply:"取消回复",
+      marketplaceCommentsLoadMore:"加载更多评论",
+      marketplaceCommentsLoadingMore:"正在加载评论…",
       marketplaceContactSeller:"私信卖家",
+      marketplaceMessageOpenFailed:"未能打开私信。请进入“私信”，并输入卖家的准确用户名。",
+      marketplaceFeedDegraded:"实时市集商品暂时无法加载。重新连接期间，仍可浏览下方校园示例。",
+      marketplaceRetry:"重试",
       marketplaceEmptyHint:"尝试其他关键词或筛选条件，也可以成为第一个发布校园好物的人。",
       marketplaceExampleShow:"预览示例",
       marketplaceExampleLabel:"示例商品 · 仅供预览",
@@ -297,7 +314,15 @@
       marketplaceDeleteComment:"刪除",
       marketplaceDeleteCommentConfirm:"確定刪除呢個留言？",
       marketplaceCommentDeleted:"留言已刪除。",
+      marketplaceCommentReply:"回覆",
+      marketplaceCommentReplyingTo:"正在回覆 @{username}",
+      marketplaceCommentCancelReply:"取消回覆",
+      marketplaceCommentsLoadMore:"載入更多留言",
+      marketplaceCommentsLoadingMore:"正在載入留言…",
       marketplaceContactSeller:"私訊賣家",
+      marketplaceMessageOpenFailed:"未能開啟私訊。請進入「私訊」，再輸入賣家嘅準確用戶名。",
+      marketplaceFeedDegraded:"即時市集商品暫時未能載入。重新連線期間，仍可瀏覽下面嘅校園示例。",
+      marketplaceRetry:"重試",
       marketplaceEmptyHint:"試下其他關鍵字或篩選條件，亦可以成為第一個發佈校園好物嘅人。",
       marketplaceExampleShow:"預覽示例",
       marketplaceExampleLabel:"示例商品 · 只供預覽",
@@ -335,6 +360,7 @@
     items:[],
     localItems:[],
     loading:false,
+    feedError:"",
     seedDetails:new Set(),
     seedSaved:new Set(),
     seedOpenComments:new Set(),
@@ -1488,7 +1514,21 @@
     const catalogue = byId("marketplaceCatalogue");
     if(catalogue){
       catalogue.dataset.empty = renderedCount ? "false" : "true";
-      catalogue.dataset.feedState = "ready";
+      catalogue.dataset.feedState = state.feedError ? "degraded" : "ready";
+    }
+    if(state.feedError){
+      const warning = element("div", "marketplace-feed-warning");
+      warning.setAttribute("role", "alert");
+      const copy = element("div", "marketplace-feed-warning-copy");
+      copy.append(
+        element("strong", "", tr("marketplaceFeedDegraded")),
+        element("span", "", state.feedError)
+      );
+      const retry = element("button", "marketplace-feed-warning-retry", tr("marketplaceRetry"));
+      retry.type = "button";
+      retry.addEventListener("click", () => void loadMarketplace({force:true}));
+      warning.append(copy, retry);
+      grid.append(warning);
     }
     if(state.mode === "orders"){
       state.items.forEach(order => grid.append(orderCard(order)));
@@ -1567,6 +1607,7 @@
       }
       state.offset = state.items.length;
       if(state.mode === "mine") state.ownListings = incoming;
+      state.feedError = "";
       renderGrid();
       setStatus("");
     } catch(error){
@@ -1579,6 +1620,7 @@
           state.hasMore = false;
           state.total = null;
           if(marketplaceSeedAvailable()){
+            state.feedError = message;
             renderGrid();
             if(catalogue) catalogue.dataset.feedState = "degraded";
           } else renderMarketplaceError(message);
@@ -1611,6 +1653,7 @@
     state.offset = 0;
     state.hasMore = false;
     state.total = null;
+    state.feedError = "";
     document.querySelectorAll("#marketplaceModes [data-market-mode]").forEach(button => {
       const active = button.dataset.marketMode === mode;
       button.classList.toggle("active", active);
@@ -1853,7 +1896,8 @@
   }
 
   function marketplaceCommentRow(listing, comment, section){
-    const row = element("article", "marketplace-comment");
+    const isReply = UUID_RE.test(String(comment?.parent_comment_id || ""));
+    const row = element("article", `marketplace-comment${isReply ? " is-reply" : ""}`);
     const copy = element("div", "marketplace-comment-copy");
     const commentAuthor = marketplaceCommentAuthor(comment);
     const author = String(commentAuthor.displayName || commentAuthor.username || tr("anonymousStudent"));
@@ -1861,6 +1905,11 @@
     heading.append(element("b", "", author));
     if(commentAuthor.schoolName && isCrossCampusListing(listing)){
       heading.append(element("span", "", commentAuthor.schoolName));
+    }
+    if(isReply){
+      const parent = comment?.parent_author && typeof comment.parent_author === "object" ? comment.parent_author : {};
+      const parentName = String(parent.display_name || parent.username || "");
+      if(parentName) heading.append(element("span", "marketplace-comment-reply-to", `↳ @${parentName}`));
     }
     copy.append(
       heading,
@@ -1877,6 +1926,24 @@
     like.setAttribute("aria-pressed", comment.liked_by_me ? "true" : "false");
     like.addEventListener("click", () => void toggleMarketplaceCommentLike(comment, like));
     actions.append(like);
+    if(!isReply){
+      const reply = element("button", "marketplace-comment-reply", tr("marketplaceCommentReply"));
+      reply.type = "button";
+      reply.addEventListener("click", () => {
+        const threadState = section._marketplaceCommentState;
+        if(!threadState) return;
+        threadState.replyTarget = {
+          commentId:String(comment.comment_id || ""),
+          username:String(commentAuthor.username || author)
+        };
+        const context = section.querySelector(".marketplace-comment-reply-context");
+        const contextText = context?.querySelector("span");
+        if(contextText) contextText.textContent = tr("marketplaceCommentReplyingTo", {username:threadState.replyTarget.username});
+        if(context) context.hidden = false;
+        section.querySelector(".marketplace-comment-form input")?.focus();
+      });
+      actions.append(reply);
+    }
     if(comment.can_delete === true || commentAuthor.id === String(state.userId || "")){
       const remove = element("button", "marketplace-comment-delete", tr("marketplaceDeleteComment"));
       remove.type = "button";
@@ -1887,20 +1954,29 @@
     return row;
   }
 
-  async function loadMarketplaceListingComments(listing, section){
+  async function loadMarketplaceListingComments(listing, section, {append=false}={}){
     if(!section?.isConnected) return;
     const list = section.querySelector(".marketplace-comment-list");
     const status = section.querySelector(".marketplace-comment-status");
-    if(!list || !status) return;
+    const loadMore = section.querySelector(".marketplace-comments-load-more");
+    const threadState = section._marketplaceCommentState;
+    if(!list || !status || !threadState || threadState.loading) return;
     const id = listingId(listing);
     const context = currentContext();
-    list.replaceChildren(element("p", "marketplace-comments-loading", tr("loading")));
+    const offset = append ? threadState.offset : 0;
+    threadState.loading = true;
+    list.setAttribute("aria-busy", "true");
+    if(!append) list.replaceChildren(element("p", "marketplace-comments-loading", tr("loading")));
+    if(loadMore){
+      loadMore.disabled = true;
+      loadMore.textContent = tr(append ? "marketplaceCommentsLoadingMore" : "marketplaceCommentsLoadMore");
+    }
     status.textContent = "";
     try {
       const {data, error} = await authClient.rpc("get_marketplace_listing_comments", {
         p_listing_id:id,
-        p_limit:100,
-        p_offset:0
+        p_limit:COMMENT_PAGE_SIZE,
+        p_offset:offset
       });
       if(!contextIsCurrent(context) || !section.isConnected) return;
       if(error) throw error;
@@ -1914,20 +1990,36 @@
             : [];
       const count = Number(payload.comment_count ?? comments.length);
       syncMarketplaceCommentCount(id, count);
-      list.replaceChildren();
-      if(!comments.length) list.append(element("p", "marketplace-comments-empty", tr("marketplaceCommentsEmpty")));
-      else comments.forEach(comment => list.append(marketplaceCommentRow(listing, comment, section)));
+      if(!append) list.replaceChildren();
+      if(!comments.length && !append) list.append(element("p", "marketplace-comments-empty", tr("marketplaceCommentsEmpty")));
+      else {
+        list.querySelector(".marketplace-comments-empty")?.remove();
+        comments.forEach(comment => list.append(marketplaceCommentRow(listing, comment, section)));
+      }
+      threadState.offset = offset + comments.length;
+      threadState.hasMore = payload.has_more === true || threadState.offset < count;
+      if(loadMore) loadMore.hidden = !threadState.hasMore;
     } catch(error){
       if(contextIsCurrent(context) && section.isConnected){
-        list.replaceChildren(element("p", "marketplace-comments-empty", tr("marketplaceCommentsUnavailable")));
+        if(!append) list.replaceChildren(element("p", "marketplace-comments-empty", tr("marketplaceCommentsUnavailable")));
         status.textContent = featureError(error);
         status.className = "marketplace-comment-status error";
+      }
+    } finally {
+      if(contextIsCurrent(context) && section.isConnected){
+        threadState.loading = false;
+        list.setAttribute("aria-busy", "false");
+        if(loadMore){
+          loadMore.disabled = false;
+          loadMore.textContent = tr("marketplaceCommentsLoadMore");
+        }
       }
     }
   }
 
   function marketplaceCommentsSection(listing){
     const section = element("section", "marketplace-comments");
+    section._marketplaceCommentState = {offset:0, hasMore:false, loading:false, replyTarget:null};
     section.setAttribute("aria-label", tr("marketplaceComments"));
     const heading = element("div", "marketplace-comments-heading");
     const title = element("h3", "", marketplaceCommentLabel(listing));
@@ -1935,6 +2027,10 @@
     heading.append(title);
     const list = element("div", "marketplace-comment-list");
     list.setAttribute("role", "feed");
+    const loadMore = element("button", "marketplace-comments-load-more", tr("marketplaceCommentsLoadMore"));
+    loadMore.type = "button";
+    loadMore.hidden = true;
+    loadMore.addEventListener("click", () => void loadMarketplaceListingComments(listing, section, {append:true}));
     const form = element("form", "marketplace-comment-form");
     const input = element("input");
     input.type = "text";
@@ -1945,6 +2041,18 @@
     input.setAttribute("aria-label", tr("marketplaceWriteComment"));
     const submit = element("button", "", tr("marketplacePostComment"));
     submit.type = "submit";
+    const replyContext = element("div", "marketplace-comment-reply-context");
+    replyContext.hidden = true;
+    const replyContextText = element("span");
+    const cancelReply = element("button", "", tr("marketplaceCommentCancelReply"));
+    cancelReply.type = "button";
+    cancelReply.addEventListener("click", () => {
+      section._marketplaceCommentState.replyTarget = null;
+      replyContext.hidden = true;
+      replyContextText.textContent = "";
+      input.focus();
+    });
+    replyContext.append(replyContextText, cancelReply);
     const status = element("p", "marketplace-comment-status");
     status.setAttribute("role", "status");
     status.setAttribute("aria-live", "polite");
@@ -1966,15 +2074,18 @@
         const {error} = await authClient.rpc("add_marketplace_listing_comment", {
           p_listing_id:listingId(listing),
           p_body:body,
-          p_parent_comment_id:null
+          p_parent_comment_id:section._marketplaceCommentState.replyTarget?.commentId || null
         });
         if(!contextIsCurrent(context) || !section.isConnected) return;
         if(error) throw error;
         input.value = "";
+        section._marketplaceCommentState.replyTarget = null;
+        replyContext.hidden = true;
+        replyContextText.textContent = "";
         status.className = "marketplace-comment-status success";
         status.textContent = tr("marketplaceCommentPosted");
         syncMarketplaceCommentCount(listingId(listing), Number(listing.comment_count || 0) + 1);
-        await loadMarketplaceListingComments(listing, section);
+        await loadMarketplaceListingComments(listing, section, {append:false});
       } catch(error){
         if(contextIsCurrent(context) && section.isConnected){
           status.className = "marketplace-comment-status error";
@@ -1988,7 +2099,7 @@
       }
     });
     form.append(input, submit);
-    section.append(heading, list, form, status);
+    section.append(heading, list, loadMore, replyContext, form, status);
     window.requestAnimationFrame(() => void loadMarketplaceListingComments(listing, section));
     return section;
   }
@@ -2124,8 +2235,8 @@
 
   async function messageSeller(listing){
     const username = normalizeSeller(listing).username;
-    if(!username) return;
-    await messageUsername(username);
+    if(!username) return false;
+    return messageUsername(username);
   }
 
   async function contactMarketplaceSeller(listing, trigger){
@@ -2136,7 +2247,8 @@
     }
     if(trigger) trigger.disabled = true;
     try {
-      await messageSeller(listing);
+      const opened = await messageSeller(listing);
+      if(!opened) setStatus(tr("marketplaceMessageOpenFailed"), "error");
     } finally {
       if(trigger?.isConnected) trigger.disabled = false;
     }
@@ -2173,14 +2285,23 @@
   }
 
   async function messageUsername(username){
-    if(!username || typeof hub().switchView !== "function") return;
+    const exactUsername = String(username || "").trim().replace(/^@/, "");
+    if(!exactUsername) return false;
+    if(typeof hub().startConversationWithUsername === "function"){
+      return hub().startConversationWithUsername(exactUsername);
+    }
+    if(typeof hub().switchView !== "function") return false;
     const context = currentContext();
     if(!byId("marketplaceDetailModal")?.hidden) closeDetail({restoreFocus:false, clearHash:true});
     await hub().switchView("messages");
-    if(!contextIsCurrent(context)) return;
+    if(!contextIsCurrent(context)) return false;
     const usernameInput = byId("chatUsername");
-    if(usernameInput) usernameInput.value = username;
-    byId("startConversation")?.click();
+    const start = byId("startConversation");
+    if(!usernameInput || !start || start.disabled) return false;
+    usernameInput.value = exactUsername;
+    usernameInput.dispatchEvent(new Event("input", {bubbles:true}));
+    start.click();
+    return true;
   }
 
   async function makeOffer(listing, trigger){
@@ -2973,6 +3094,7 @@
     state.items = [];
     state.localItems = [];
     state.loading = false;
+    state.feedError = "";
     state.seedDetails.clear();
     state.seedSaved.clear();
     state.seedOpenComments.clear();

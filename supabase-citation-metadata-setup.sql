@@ -58,4 +58,106 @@ to authenticated;
 comment on function public.consume_citation_fetch_quota() is
   'Atomically limits automatic citation metadata lookups to eight per signed-in user per minute.';
 
+-- Private, account-scoped bibliography persistence. The browser still keeps a
+-- local fallback, while these RPCs make saved references available on another
+-- signed-in device without exposing the table through PostgREST.
+create table if not exists public.citation_libraries (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  entries jsonb not null default '[]'::jsonb
+    check (
+      jsonb_typeof(entries) = 'array'
+      and jsonb_array_length(entries) <= 60
+      and octet_length(entries::text) <= 524288
+    ),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.citation_libraries enable row level security;
+revoke all on table public.citation_libraries
+from public, anon, authenticated;
+
+create or replace function public.get_citation_library()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+  saved_entries jsonb;
+begin
+  if caller is null then
+    raise exception 'Authentication required';
+  end if;
+
+  select library.entries
+  into saved_entries
+  from public.citation_libraries library
+  where library.user_id = caller;
+
+  return coalesce(saved_entries, '[]'::jsonb);
+end;
+$$;
+
+revoke all on function public.get_citation_library()
+from public, anon, authenticated;
+grant execute on function public.get_citation_library()
+to authenticated;
+
+create or replace function public.save_citation_library(
+  p_entries jsonb
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller uuid := auth.uid();
+begin
+  if caller is null then
+    raise exception 'Authentication required';
+  end if;
+  if jsonb_typeof(coalesce(p_entries, 'null'::jsonb)) <> 'array' then
+    raise exception 'Citation library must be an array';
+  end if;
+  if jsonb_array_length(p_entries) > 60
+     or octet_length(p_entries::text) > 524288 then
+    raise exception 'Citation library is too large';
+  end if;
+  if exists (
+    select 1
+    from jsonb_array_elements(p_entries) entry
+    where jsonb_typeof(entry) <> 'object'
+       or coalesce(entry->>'source', '') not in ('book', 'journal', 'website')
+       or coalesce(jsonb_typeof(entry->'title'), '') <> 'string'
+       or char_length(entry->>'title') not between 1 and 1000
+  ) then
+    raise exception 'Citation library contains an invalid entry';
+  end if;
+
+  insert into public.citation_libraries (user_id, entries, updated_at)
+  values (caller, p_entries, now())
+  on conflict (user_id) do update
+  set
+    entries = excluded.entries,
+    updated_at = excluded.updated_at;
+
+  return true;
+end;
+$$;
+
+revoke all on function public.save_citation_library(jsonb)
+from public, anon, authenticated;
+grant execute on function public.save_citation_library(jsonb)
+to authenticated;
+
+comment on function public.get_citation_library() is
+  'Returns only the signed-in user bibliography through an RPC-only surface.';
+comment on function public.save_citation_library(jsonb) is
+  'Validates and saves at most 60 references for the signed-in user.';
+
+notify pgrst, 'reload schema';
+
 commit;

@@ -436,6 +436,20 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
   white-space: nowrap;
 }
 
+.citation-auto-url-row .academic-tool-button.primary {
+  color: #061a2d;
+  background: linear-gradient(135deg, #ffe39a, #f1bd48);
+  border-color: #f4c65c;
+  box-shadow: 0 12px 28px rgba(1, 18, 32, .24);
+}
+
+.citation-auto-url-row .academic-tool-button.primary:hover,
+.citation-auto-url-row .academic-tool-button.primary:focus-visible {
+  color: #061a2d;
+  background: linear-gradient(135deg, #ffebba, #f5c95f);
+  border-color: #ffdf8b;
+}
+
 .citation-lookup-status {
   min-height: 20px;
   margin: 14px 0 0;
@@ -1098,6 +1112,10 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
 
 .citation-engine-state.error {
   color: #a82f3f;
+}
+
+.citation-engine-state.warning {
+  color: #f5d686;
 }
 
 .citation-engine-state.edited {

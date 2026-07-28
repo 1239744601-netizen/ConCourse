@@ -1672,3 +1672,88 @@ html[data-theme="night"]
     background: ButtonText;
   }
 }
+
+/* Backend and starter-content states stay visibly distinct. Starter posts
+   remain alongside live campus posts, while an RPC failure is never disguised
+   as an empty or demo-only feed. */
+.member-hub[data-active-view="community"] .hub-feed-error {
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  color: #8f2230;
+  background: rgba(255, 235, 238, .92);
+  border-left: 4px solid #d53b50;
+  border-radius: 8px 18px 18px 8px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.member-hub[data-active-view="community"] .hub-community-seed-disclosure {
+  margin: 4px 0 8px;
+  padding: 12px 0;
+  color: var(--community-muted);
+  border-top: 1px solid var(--community-line);
+  border-bottom: 1px solid var(--community-line);
+  font-size: 12px;
+  font-weight: 780;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.member-hub[data-active-view="community"] .hub-comments {
+  max-height: min(62vh, 680px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 8px;
+}
+
+.member-hub[data-active-view="community"] .hub-comment-pagination {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 4px;
+  color: var(--community-muted);
+  background: linear-gradient(180deg, rgba(255, 253, 248, .78), #fffdf8 32%);
+  border-top: 1px solid var(--community-line);
+  font-size: 12px;
+}
+
+.member-hub[data-active-view="community"] .hub-comment-load-more {
+  min-height: 36px;
+  padding: 7px 14px;
+  color: var(--community-blue);
+  background: rgba(47, 109, 246, .08);
+  border: 1px solid rgba(47, 109, 246, .2);
+  border-radius: 999px;
+  font-weight: 780;
+}
+
+.member-hub[data-active-view="community"] .hub-comment-load-more:hover {
+  background: rgba(47, 109, 246, .14);
+  filter: none;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="community"] .hub-feed-error {
+  color: #ffd5db;
+  background: rgba(112, 20, 36, .46);
+  border-left-color: #ff8294;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="community"] .hub-comment-pagination {
+  background: linear-gradient(180deg, rgba(8, 35, 59, .8), #08233b 32%);
+}
+
+@media (max-width: 560px) {
+  .member-hub[data-active-view="community"] .hub-comment-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .member-hub[data-active-view="community"] .hub-comment-load-more {
+    width: 100%;
+  }
+}

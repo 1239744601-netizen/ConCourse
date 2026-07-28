@@ -8,7 +8,6 @@
 
 import { createSupabaseContext } from "jsr:@supabase/server@1.4.0";
 
-const PRODUCTION_ORIGIN = "https://concoursehk.pages.dev";
 const MAX_URL_LENGTH = 2048;
 const MAX_REDIRECTS = 4;
 const MAX_REQUEST_BYTES = 4 * 1024;
@@ -23,7 +22,28 @@ const MAX_SEARCH_RESULTS = 10;
 const MAX_SEARCH_RESPONSE_BYTES = 512 * 1024;
 const CROSSREF_SEARCH_ENDPOINT = "https://api.crossref.org/works";
 const CROSSREF_WORK_ENDPOINT = "https://api.crossref.org/works/";
-const SEARCH_USER_AGENT = "ConCourseCitationBot/1.0 (+https://concoursehk.pages.dev/)";
+const normalizeOrigin = (value: string): string => {
+  try {
+    const url = new URL(value.trim());
+    return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password
+      ? url.origin
+      : "";
+  } catch (_error) {
+    return "";
+  }
+};
+const CONFIGURED_ORIGINS = new Set(
+  [
+    ...(Deno.env.get("CITATION_ALLOWED_ORIGINS") || "").split(","),
+    Deno.env.get("SITE_URL") || "",
+  ].map(normalizeOrigin).filter(Boolean),
+);
+const ALLOWED_HOST_SUFFIXES = (Deno.env.get("CITATION_ALLOWED_HOST_SUFFIXES") || ".pages.dev,.github.io")
+  .split(",")
+  .map((value) => value.trim().toLocaleLowerCase())
+  .filter((value) => /^\.[a-z0-9.-]+$/u.test(value));
+const BOT_CONTACT_URL = normalizeOrigin(Deno.env.get("CITATION_CONTACT_URL") || Deno.env.get("SITE_URL") || "");
+const SEARCH_USER_AGENT = `ConCourseCitationBot/1.1${BOT_CONTACT_URL ? ` (+${BOT_CONTACT_URL}/)` : ""}`;
 
 type MetadataResult = {
   sourceUrl: string;
@@ -93,22 +113,27 @@ async function cancelBody(response: Response | null): Promise<void> {
 }
 
 function allowedOrigin(origin: string | null): string | null {
-  if (!origin) return PRODUCTION_ORIGIN;
-  if (origin === PRODUCTION_ORIGIN) return origin;
+  if (!origin) return "";
   try {
     const value = new URL(origin);
-    if ((value.hostname === "localhost" || value.hostname === "127.0.0.1") && ["http:", "https:"].includes(value.protocol)) {
-      return origin;
-    }
+    if (!["http:", "https:"].includes(value.protocol) || value.username || value.password || value.origin !== origin) return null;
+    if (CONFIGURED_ORIGINS.has(value.origin)) return value.origin;
+    if (
+      ["localhost", "127.0.0.1", "::1"].includes(value.hostname)
+      && ["http:", "https:"].includes(value.protocol)
+    ) return value.origin;
+    if (
+      value.protocol === "https:"
+      && ALLOWED_HOST_SUFFIXES.some((suffix) => value.hostname.toLocaleLowerCase().endsWith(suffix))
+    ) return value.origin;
   } catch (_error) {
     // Invalid origins are rejected below.
   }
   return null;
 }
 
-function responseHeaders(origin: string): HeadersInit {
-  return {
-    "Access-Control-Allow-Origin": origin,
+function responseHeaders(origin: string | null): HeadersInit {
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Cache-Control": "no-store",
@@ -116,9 +141,11 @@ function responseHeaders(origin: string): HeadersInit {
     "Vary": "Origin",
     "X-Content-Type-Options": "nosniff",
   };
+  if (origin) headers["Access-Control-Allow-Origin"] = origin;
+  return headers;
 }
 
-function jsonResponse(origin: string, body: unknown, status = 200): Response {
+function jsonResponse(origin: string | null, body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: responseHeaders(origin) });
 }
 
@@ -469,7 +496,7 @@ async function fetchHtml(source: URL, deadline = performance.now() + FETCH_TIMEO
         headers: {
           Accept: "text/html,application/xhtml+xml;q=0.9",
           "Accept-Language": "en;q=0.8",
-          "User-Agent": "ConCourseCitationBot/1.0 (+https://concoursehk.pages.dev/)",
+          "User-Agent": SEARCH_USER_AGENT,
         },
       });
       remainingTime(deadline);
@@ -1190,8 +1217,9 @@ async function readJsonRequest(request: Request): Promise<LookupRequest> {
 
 export default {
   fetch: async (request: Request) => {
-    const origin = allowedOrigin(request.headers.get("origin"));
-    if (!origin) return new Response("Origin not allowed", { status: 403 });
+    const requestOrigin = request.headers.get("origin");
+    const origin = allowedOrigin(requestOrigin);
+    if (requestOrigin && origin === null) return new Response("Origin not allowed", { status: 403 });
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: responseHeaders(origin) });
     if (request.method !== "POST") return jsonResponse(origin, { error: "method_not_allowed" }, 405);
 

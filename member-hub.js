@@ -34,9 +34,12 @@
     actionBackgroundModals: [],
     profilePreviewBackgroundModals: [],
     insightRows: [],
+    insightDimensions: [],
     insightsLoaded: false,
     insightDemoMode: "",
     communitySeedState: new Map(),
+    communityFeedError: "",
+    postCommentPages: new Map(),
     feed: [],
     conversations: [],
     messageDemoMode: false,
@@ -49,8 +52,18 @@
     activeConversationContext: "",
     activeConversationCanSend: false,
     messages: [],
+    messageHasMore: false,
+    messageNextCursor: null,
+    messageLoadingOlder: false,
+    messageRealtimeChannel: null,
+    messageRealtimeActive: false,
+    messageRefreshTimer: 0,
     sendingMessage: false,
     messagePoll: null,
+    accountDeletionRequest: null,
+    accountDeletionLoading: false,
+    schoolVerificationRequest: null,
+    schoolVerificationLoading: false,
     loadingFeed: false,
     loadingConversations: false,
     feedScope: "school",
@@ -103,6 +116,8 @@
   const AVATAR_URL_CACHE_LIMIT = 48;
   const COMMUNITY_FEED_PAGE_SIZE = 30;
   const COMMUNITY_FEED_WINDOW = 90;
+  const COMMUNITY_COMMENT_PAGE_SIZE = 30;
+  const MESSAGE_PAGE_SIZE = 50;
   const HUB_RPC_TIMEOUT_MS = 15000;
   let hubStickyGeometryFrame = 0;
   let hubStickyGeometryObserver = null;
@@ -715,9 +730,12 @@
     hubState.socialReturnHandled = false;
     hubState.socialStatus = null;
     hubState.insightRows = [];
+    hubState.insightDimensions = [];
     hubState.insightsLoaded = false;
     hubState.insightDemoMode = "";
     hubState.communitySeedState = new Map();
+    hubState.communityFeedError = "";
+    hubState.postCommentPages = new Map();
     hubState.feed = [];
     hubState.conversations = [];
     hubState.messageDemoMode = false;
@@ -730,7 +748,14 @@
     hubState.activeConversationContext = "";
     hubState.activeConversationCanSend = false;
     hubState.messages = [];
+    hubState.messageHasMore = false;
+    hubState.messageNextCursor = null;
+    hubState.messageLoadingOlder = false;
     hubState.sendingMessage = false;
+    hubState.accountDeletionRequest = null;
+    hubState.accountDeletionLoading = false;
+    hubState.schoolVerificationRequest = null;
+    hubState.schoolVerificationLoading = false;
     hubState.loadingFeed = false;
     hubState.loadingConversations = false;
     hubState.feedScope = "school";
@@ -788,6 +813,7 @@
     ["communityComposerStatus", "communityFeedStatus", "chatStatus", "memberProfileStatus", "avatarUploadStatus", "courseInsightStatus"].forEach(id => setStatus(id, ""));
     setSocialConnectionStatus();
     renderSocialConnections();
+    if($("hubAccountTrustControls")) renderAccountTrustControls();
     $("chatHeading").textContent = t("selectConversation");
     $("chatSubheading").textContent = "";
     $("chatMessageInput").disabled = true;
@@ -930,8 +956,22 @@
       };
       image.src = url;
     };
-    if(directUrl) setImage(directUrl);
-    else void getAvatarUrl(path, revision).then(setImage);
+    if(directUrl){
+      image.src = directUrl;
+      image.hidden = false;
+      initials.hidden = true;
+      setImage(directUrl);
+      return;
+    }
+    const cached = touchAvatarUrl(cacheKey);
+    if(cached?.url){
+      image.src = cached.url;
+      image.hidden = false;
+      initials.hidden = true;
+      setImage(cached.url);
+      return;
+    }
+    void getAvatarUrl(path, revision).then(setImage);
   }
 
   function renderAvatarContainer(container, name, path, revision=0){
@@ -945,6 +985,13 @@
     const requestKey = avatarCacheKey(path, revision);
     image.dataset.avatarRequest = requestKey;
     if(!path) return;
+    const cached = touchAvatarUrl(requestKey);
+    if(cached?.url){
+      image.src = cached.url;
+      image.hidden = false;
+      container.classList.add("has-photo");
+      return;
+    }
     void getAvatarUrl(path, revision).then(url => {
       if(!url || image.dataset.avatarRequest !== requestKey || !image.isConnected) return;
       image.onload = () => {
@@ -1182,18 +1229,86 @@
     } else if(view === "messages"){
       await loadConversations();
     } else if(view === "profile"){
-      await Promise.all([loadMemberProfile(), loadSocialConnections({force:true})]);
+      ensureAccountTrustControls();
+      await Promise.all([
+        loadMemberProfile(),
+        loadSocialConnections({force:true}),
+        loadSchoolVerificationRequest(),
+        loadAccountDeletionRequest()
+      ]);
+    }
+  }
+
+  function messageViewIsActive(){
+    return (
+      document.visibilityState === "visible"
+      && hubState.activeView === "messages"
+      && !$("memberHub").hidden
+      && !!currentUser
+    );
+  }
+
+  function scheduleMessageRefresh(delay=250){
+    if(hubState.messageRefreshTimer) window.clearTimeout(hubState.messageRefreshTimer);
+    hubState.messageRefreshTimer = window.setTimeout(() => {
+      hubState.messageRefreshTimer = 0;
+      if(messageViewIsActive()) loadConversations({force:true, suppressStatus:true}).catch(console.warn);
+    }, delay);
+  }
+
+  function stopMessageRealtime(){
+    if(hubState.messageRefreshTimer){
+      window.clearTimeout(hubState.messageRefreshTimer);
+      hubState.messageRefreshTimer = 0;
+    }
+    const channel = hubState.messageRealtimeChannel;
+    hubState.messageRealtimeChannel = null;
+    hubState.messageRealtimeActive = false;
+    if(channel && authClient?.removeChannel){
+      Promise.resolve(authClient.removeChannel(channel)).catch(() => {});
+    }
+  }
+
+  function startMessageRealtime(){
+    stopMessageRealtime();
+    if(!authClient?.channel || !currentUser) return;
+    try {
+      const channel = authClient
+        .channel(`concourse-direct-messages-${currentUser.id}`)
+        .on(
+          "postgres_changes",
+          {event:"*", schema:"public", table:"direct_messages"},
+          () => scheduleMessageRefresh(160)
+        )
+        .on(
+          "postgres_changes",
+          {event:"*", schema:"public", table:"direct_conversations"},
+          () => scheduleMessageRefresh(160)
+        )
+        .subscribe(status => {
+          if(hubState.messageRealtimeChannel !== channel) return;
+          hubState.messageRealtimeActive = status === "SUBSCRIBED";
+          if(["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)){
+            hubState.messageRealtimeActive = false;
+          }
+        });
+      hubState.messageRealtimeChannel = channel;
+    } catch(error){
+      hubState.messageRealtimeActive = false;
+      console.warn("Realtime message updates are unavailable; polling remains active.", error);
     }
   }
 
   function configureMessagePolling(active){
     if(hubState.messagePoll){ clearInterval(hubState.messagePoll); hubState.messagePoll = null; }
+    stopMessageRealtime();
     if(!active) return;
+    startMessageRealtime();
+    // Realtime is the fast path. This slower poll remains as a dependable
+    // fallback when a project has not enabled the relevant Realtime tables.
     hubState.messagePoll = window.setInterval(() => {
-      if(document.visibilityState === "visible" && hubState.activeView === "messages" && !$("memberHub").hidden){
-        loadConversations({force:true}).catch(console.warn);
-      }
-    }, 12000);
+      if(messageViewIsActive()) loadConversations({force:true, suppressStatus:true}).catch(console.warn);
+    }, 30000);
   }
 
   async function loadMembership(){
@@ -1212,11 +1327,469 @@
       hubState.membership = data || null;
       if(hubState.membership?.status !== "verified"){
         hubState.insightRows = [];
+        hubState.insightDimensions = [];
         hubState.insightsLoaded = false;
       }
     }
     renderIdentity();
     return hubState.membership;
+  }
+
+  function accountTrustCopy(){
+    return communitySeedText({
+      en:{
+        verificationTitle:"Campus Identity Review",
+        verificationDescription:"A school name or email domain does not automatically verify enrolment. A ConCourse administrator reviews the evidence you submit.",
+        verificationMethod:"Evidence Method",
+        academicEmail:"Confirmed Academic Email",
+        institutionSso:"Institution SSO Reference",
+        manualReview:"Manual Review",
+        evidenceReference:"Evidence Reference",
+        verificationNote:"Note for the Reviewer",
+        submitVerification:"Submit for Review",
+        withdrawVerification:"Withdraw Request",
+        verificationUnavailable:"Campus verification requests become available after the latest Supabase migration is applied.",
+        verificationLoading:"Loading your campus-verification status…",
+        verificationAwaiting:"Your request is awaiting administrator review.",
+        verificationUnderReview:"An administrator is reviewing your request.",
+        verificationApproved:"Your campus identity is verified.",
+        verificationRejected:"The request was not approved. Review the administrator note before submitting new evidence.",
+        verificationWithdrawn:"The previous request was withdrawn. You may submit new evidence.",
+        verificationReady:"No active review request. Choose an evidence method to begin.",
+        requestSubmitted:"Your campus-verification request was submitted.",
+        requestWithdrawn:"Your campus-verification request was withdrawn.",
+        accountTitle:"Account Deletion",
+        accountDescription:"Request deletion of your profile, planner data, posts, and conversations. A seven-day safety window lets you cancel before processing. Limited security, dispute, or transaction records may be retained where legally required.",
+        requestDeletion:"Request Account Deletion",
+        cancelDeletion:"Cancel Deletion Request",
+        deletionReason:"You may add an optional reason. Submitting starts the seven-day safety window.",
+        deletionScheduled:"Deletion is scheduled for {date}. You can cancel while the request is still submitted.",
+        deletionProcessing:"Your deletion request is being processed and can no longer be cancelled here.",
+        deletionCancelled:"The most recent deletion request was cancelled.",
+        deletionCompleted:"Account deletion has been completed.",
+        deletionReady:"No active deletion request.",
+        deletionUnavailable:"Account deletion requests become available after the latest Supabase migration is applied.",
+        deletionRequested:"Your deletion request was submitted.",
+        deletionRequestCancelled:"Your deletion request was cancelled.",
+        actionFailed:"The request could not be completed. Please try again.",
+        requiredReference:"Add the SSO or evidence reference before submitting.",
+        requiredNote:"Add a short note describing the evidence for manual review."
+      },
+      "zh-CN":{
+        verificationTitle:"校园身份审核",
+        verificationDescription:"填写学校名称或匹配邮箱域名不会自动验证在读身份。你提交的证明将由 ConCourse 管理员审核。",
+        verificationMethod:"证明方式",
+        academicEmail:"已确认的学校邮箱",
+        institutionSso:"学校 SSO 参考资料",
+        manualReview:"人工审核",
+        evidenceReference:"证明资料",
+        verificationNote:"给审核员的说明",
+        submitVerification:"提交审核",
+        withdrawVerification:"撤回申请",
+        verificationUnavailable:"应用最新 Supabase 迁移后即可提交校园身份审核申请。",
+        verificationLoading:"正在加载校园身份审核状态…",
+        verificationAwaiting:"申请正在等待管理员审核。",
+        verificationUnderReview:"管理员正在审核你的申请。",
+        verificationApproved:"你的校园身份已验证。",
+        verificationRejected:"申请未获批准。请先查看管理员说明，再提交新的证明。",
+        verificationWithdrawn:"上一份申请已撤回，你可以提交新的证明。",
+        verificationReady:"目前没有进行中的审核。请选择证明方式。",
+        requestSubmitted:"校园身份审核申请已提交。",
+        requestWithdrawn:"校园身份审核申请已撤回。",
+        accountTitle:"删除账户",
+        accountDescription:"申请删除个人资料、规划数据、帖子和私信。处理前有七天安全期可取消；法律要求下可能保留少量安全、争议或交易记录。",
+        requestDeletion:"申请删除账户",
+        cancelDeletion:"取消删除申请",
+        deletionReason:"可填写原因（选填）。提交后将进入七天安全期。",
+        deletionScheduled:"账户计划于 {date} 删除。申请仍为已提交状态时可以取消。",
+        deletionProcessing:"删除申请正在处理，已无法在此取消。",
+        deletionCancelled:"最近一次删除申请已取消。",
+        deletionCompleted:"账户删除已经完成。",
+        deletionReady:"目前没有进行中的删除申请。",
+        deletionUnavailable:"应用最新 Supabase 迁移后即可提交账户删除申请。",
+        deletionRequested:"账户删除申请已提交。",
+        deletionRequestCancelled:"账户删除申请已取消。",
+        actionFailed:"暂时无法完成申请，请重试。",
+        requiredReference:"提交前请填写 SSO 或证明资料。",
+        requiredNote:"请简要说明用于人工审核的证明。"
+      },
+      "zh-HK":{
+        verificationTitle:"校園身份審核",
+        verificationDescription:"填寫院校名稱或相符電郵網域唔會自動驗證學生身份。你提交嘅證明會由 ConCourse 管理員審核。",
+        verificationMethod:"證明方式",
+        academicEmail:"已確認嘅院校電郵",
+        institutionSso:"院校 SSO 參考資料",
+        manualReview:"人手審核",
+        evidenceReference:"證明資料",
+        verificationNote:"畀審核員嘅說明",
+        submitVerification:"提交審核",
+        withdrawVerification:"撤回申請",
+        verificationUnavailable:"套用最新 Supabase 遷移後就可以提交校園身份審核申請。",
+        verificationLoading:"正在載入校園身份審核狀態…",
+        verificationAwaiting:"申請正等候管理員審核。",
+        verificationUnderReview:"管理員正審核你嘅申請。",
+        verificationApproved:"你嘅校園身份已驗證。",
+        verificationRejected:"申請未獲批准。請先查看管理員說明，再提交新證明。",
+        verificationWithdrawn:"上一份申請已撤回，你可以提交新證明。",
+        verificationReady:"目前無進行中嘅審核。請選擇證明方式。",
+        requestSubmitted:"校園身份審核申請已提交。",
+        requestWithdrawn:"校園身份審核申請已撤回。",
+        accountTitle:"刪除帳戶",
+        accountDescription:"申請刪除個人資料、規劃數據、帖文同私訊。處理前有七日安全期可以取消；法律要求下或會保留少量安全、爭議或交易記錄。",
+        requestDeletion:"申請刪除帳戶",
+        cancelDeletion:"取消刪除申請",
+        deletionReason:"可以填寫原因（選填）。提交後會進入七日安全期。",
+        deletionScheduled:"帳戶預定於 {date} 刪除。申請仍然係已提交狀態時可以取消。",
+        deletionProcessing:"刪除申請正處理中，已經唔可以喺呢度取消。",
+        deletionCancelled:"最近一次刪除申請已取消。",
+        deletionCompleted:"帳戶刪除已經完成。",
+        deletionReady:"目前無進行中嘅刪除申請。",
+        deletionUnavailable:"套用最新 Supabase 遷移後就可以提交帳戶刪除申請。",
+        deletionRequested:"帳戶刪除申請已提交。",
+        deletionRequestCancelled:"帳戶刪除申請已取消。",
+        actionFailed:"暫時未能完成申請，請再試。",
+        requiredReference:"提交前請填寫 SSO 或證明資料。",
+        requiredNote:"請簡短說明用作人手審核嘅證明。"
+      }
+    });
+  }
+
+  function ensureAccountTrustControls(){
+    const card = document.querySelector(".hub-profile-controls-card");
+    const save = card?.querySelector(".hub-profile-save");
+    if(!card || !save) return null;
+    let shell = $("hubAccountTrustControls");
+    if(shell) return shell;
+    shell = node("div", "hub-account-trust-controls");
+    shell.id = "hubAccountTrustControls";
+
+    const verification = node("section", "hub-account-trust-section hub-school-verification");
+    verification.id = "hubSchoolVerification";
+    const verificationHeading = node("h3");
+    verificationHeading.id = "hubSchoolVerificationHeading";
+    const verificationDescription = node("p", "hub-account-trust-description");
+    verificationDescription.id = "hubSchoolVerificationDescription";
+    const verificationStatus = node("p", "hub-account-trust-status");
+    verificationStatus.id = "hubSchoolVerificationStatus";
+    verificationStatus.setAttribute("role", "status");
+    verificationStatus.setAttribute("aria-live", "polite");
+    const verificationForm = node("div", "hub-account-trust-form");
+    const methodLabel = node("label");
+    const methodText = node("span");
+    methodText.id = "hubVerificationMethodLabel";
+    const method = document.createElement("select");
+    method.id = "hubVerificationMethod";
+    [
+      ["academic_email", "academicEmail"],
+      ["institution_sso", "institutionSso"],
+      ["manual_review", "manualReview"]
+    ].forEach(([value, key]) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.dataset.copyKey = key;
+      method.append(option);
+    });
+    methodLabel.append(methodText, method);
+    const referenceLabel = node("label");
+    const referenceText = node("span");
+    referenceText.id = "hubVerificationReferenceLabel";
+    const reference = node("input");
+    reference.id = "hubVerificationReference";
+    reference.maxLength = 500;
+    referenceLabel.append(referenceText, reference);
+    const noteLabel = node("label", "hub-account-trust-wide");
+    const noteText = node("span");
+    noteText.id = "hubVerificationNoteLabel";
+    const note = node("textarea");
+    note.id = "hubVerificationNote";
+    note.maxLength = 1000;
+    noteLabel.append(noteText, note);
+    const verificationActions = node("div", "hub-account-trust-actions hub-account-trust-wide");
+    const submit = node("button", "btn-primary");
+    submit.type = "button";
+    submit.id = "hubSubmitVerification";
+    submit.onclick = () => void submitSchoolVerification();
+    const withdraw = node("button", "btn-ghost");
+    withdraw.type = "button";
+    withdraw.id = "hubWithdrawVerification";
+    withdraw.onclick = () => void withdrawSchoolVerification();
+    verificationActions.append(submit, withdraw);
+    verificationForm.append(methodLabel, referenceLabel, noteLabel, verificationActions);
+    verification.append(verificationHeading, verificationDescription, verificationStatus, verificationForm);
+
+    const deletion = node("section", "hub-account-trust-section hub-account-deletion");
+    deletion.id = "hubAccountDeletion";
+    const deletionHeading = node("h3");
+    deletionHeading.id = "hubAccountDeletionHeading";
+    const deletionDescription = node("p", "hub-account-trust-description");
+    deletionDescription.id = "hubAccountDeletionDescription";
+    const deletionStatus = node("p", "hub-account-trust-status");
+    deletionStatus.id = "hubAccountDeletionStatus";
+    deletionStatus.setAttribute("role", "status");
+    deletionStatus.setAttribute("aria-live", "polite");
+    const deletionActions = node("div", "hub-account-trust-actions");
+    const requestDeletion = node("button", "btn-ghost hub-account-delete-button");
+    requestDeletion.type = "button";
+    requestDeletion.id = "hubRequestAccountDeletion";
+    requestDeletion.onclick = () => void requestAccountDeletion();
+    const cancelDeletion = node("button", "btn-ghost");
+    cancelDeletion.type = "button";
+    cancelDeletion.id = "hubCancelAccountDeletion";
+    cancelDeletion.onclick = () => void cancelAccountDeletion();
+    deletionActions.append(requestDeletion, cancelDeletion);
+    deletion.append(deletionHeading, deletionDescription, deletionStatus, deletionActions);
+    shell.append(verification, deletion);
+    card.insertBefore(shell, save);
+    method.onchange = renderAccountTrustControls;
+    renderAccountTrustControls();
+    return shell;
+  }
+
+  function renderAccountTrustControls(){
+    const shell = ensureAccountTrustControls();
+    if(!shell) return;
+    const copy = accountTrustCopy();
+    $("hubSchoolVerificationHeading").textContent = copy.verificationTitle;
+    $("hubSchoolVerificationDescription").textContent = copy.verificationDescription;
+    $("hubVerificationMethodLabel").textContent = copy.verificationMethod;
+    $("hubVerificationReferenceLabel").textContent = copy.evidenceReference;
+    $("hubVerificationNoteLabel").textContent = copy.verificationNote;
+    $("hubVerificationMethod").querySelectorAll("option").forEach(option => {
+      option.textContent = copy[option.dataset.copyKey];
+    });
+    $("hubSubmitVerification").textContent = copy.submitVerification;
+    $("hubWithdrawVerification").textContent = copy.withdrawVerification;
+    $("hubAccountDeletionHeading").textContent = copy.accountTitle;
+    $("hubAccountDeletionDescription").textContent = copy.accountDescription;
+    $("hubRequestAccountDeletion").textContent = copy.requestDeletion;
+    $("hubCancelAccountDeletion").textContent = copy.cancelDeletion;
+
+    const verificationState = hubState.schoolVerificationRequest;
+    const verificationPayload = verificationState?.data || {};
+    const latestRequest = verificationPayload.latest_request || null;
+    const membership = verificationPayload.membership || hubState.membership;
+    const requestStatus = latestRequest?.status || "";
+    const isVerified = membership?.status === "verified";
+    const isReviewing = ["submitted", "under_review"].includes(requestStatus);
+    let verificationMessage = copy.verificationReady;
+    if(hubState.schoolVerificationLoading) verificationMessage = copy.verificationLoading;
+    else if(verificationState?.setupMissing) verificationMessage = copy.verificationUnavailable;
+    else if(verificationState?.error) verificationMessage = verificationState.error;
+    else if(isVerified || requestStatus === "approved") verificationMessage = copy.verificationApproved;
+    else if(requestStatus === "submitted") verificationMessage = copy.verificationAwaiting;
+    else if(requestStatus === "under_review") verificationMessage = copy.verificationUnderReview;
+    else if(requestStatus === "rejected"){
+      verificationMessage = [copy.verificationRejected, latestRequest?.reviewer_note].filter(Boolean).join(" ");
+    } else if(requestStatus === "withdrawn") verificationMessage = copy.verificationWithdrawn;
+    $("hubSchoolVerificationStatus").textContent = verificationMessage;
+    $("hubSchoolVerificationStatus").className = `hub-account-trust-status${verificationState?.error || verificationState?.setupMissing ? " error" : isVerified ? " success" : ""}`;
+    const method = $("hubVerificationMethod").value;
+    $("hubVerificationReference").disabled = hubState.schoolVerificationLoading || method === "academic_email" || isVerified || isReviewing || verificationState?.setupMissing;
+    $("hubVerificationNote").disabled = hubState.schoolVerificationLoading || isVerified || isReviewing || verificationState?.setupMissing;
+    $("hubVerificationMethod").disabled = hubState.schoolVerificationLoading || isVerified || isReviewing || verificationState?.setupMissing;
+    $("hubSubmitVerification").hidden = isVerified || isReviewing;
+    $("hubSubmitVerification").disabled = hubState.schoolVerificationLoading || verificationState?.setupMissing;
+    $("hubWithdrawVerification").hidden = !isReviewing;
+    $("hubWithdrawVerification").disabled = hubState.schoolVerificationLoading;
+
+    const deletionState = hubState.accountDeletionRequest;
+    const deletionPayload = deletionState?.data || null;
+    const deletionStatus = deletionPayload?.status || "";
+    let deletionMessage = copy.deletionReady;
+    if(hubState.accountDeletionLoading) deletionMessage = t("loading");
+    else if(deletionState?.setupMissing) deletionMessage = copy.deletionUnavailable;
+    else if(deletionState?.error) deletionMessage = deletionState.error;
+    else if(deletionStatus === "submitted"){
+      deletionMessage = copy.deletionScheduled.replace("{date}", formatDate(deletionPayload.scheduled_for));
+    } else if(deletionStatus === "processing") deletionMessage = copy.deletionProcessing;
+    else if(deletionStatus === "cancelled") deletionMessage = copy.deletionCancelled;
+    else if(deletionStatus === "completed") deletionMessage = copy.deletionCompleted;
+    $("hubAccountDeletionStatus").textContent = deletionMessage;
+    $("hubAccountDeletionStatus").className = `hub-account-trust-status${deletionState?.error || deletionState?.setupMissing ? " error" : deletionStatus === "submitted" ? " warning" : ""}`;
+    $("hubRequestAccountDeletion").hidden = ["submitted", "processing", "completed"].includes(deletionStatus);
+    $("hubRequestAccountDeletion").disabled = hubState.accountDeletionLoading || deletionState?.setupMissing;
+    $("hubCancelAccountDeletion").hidden = deletionStatus !== "submitted";
+    $("hubCancelAccountDeletion").disabled = hubState.accountDeletionLoading;
+  }
+
+  async function loadSchoolVerificationRequest(){
+    ensureAccountTrustControls();
+    if(!authClient || !currentUser) return null;
+    const context = requestContext();
+    hubState.schoolVerificationLoading = true;
+    renderAccountTrustControls();
+    let response;
+    try { response = await hubRpc("get_my_school_verification"); }
+    catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return null;
+    hubState.schoolVerificationLoading = false;
+    if(response.error){
+      hubState.schoolVerificationRequest = {
+        data:null,
+        setupMissing:missingRpcError(response.error),
+        error:missingRpcError(response.error) ? "" : featureError(response.error)
+      };
+    } else {
+      const data = parseJsonValue(response.data, response.data) || {};
+      hubState.schoolVerificationRequest = {data, setupMissing:false, error:""};
+      if(data.membership) hubState.membership = data.membership;
+    }
+    renderIdentity();
+    renderAccountTrustControls();
+    return hubState.schoolVerificationRequest;
+  }
+
+  async function loadAccountDeletionRequest(){
+    ensureAccountTrustControls();
+    if(!authClient || !currentUser) return null;
+    const context = requestContext();
+    hubState.accountDeletionLoading = true;
+    renderAccountTrustControls();
+    let response;
+    try { response = await hubRpc("get_my_account_deletion_request"); }
+    catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return null;
+    hubState.accountDeletionLoading = false;
+    hubState.accountDeletionRequest = response.error
+      ? {
+          data:null,
+          setupMissing:missingRpcError(response.error),
+          error:missingRpcError(response.error) ? "" : featureError(response.error)
+        }
+      : {data:parseJsonValue(response.data, response.data), setupMissing:false, error:""};
+    renderAccountTrustControls();
+    return hubState.accountDeletionRequest;
+  }
+
+  async function submitSchoolVerification(){
+    if(hubState.schoolVerificationLoading || !authClient || !currentUser) return;
+    const copy = accountTrustCopy();
+    const method = $("hubVerificationMethod").value;
+    const reference = $("hubVerificationReference").value.trim();
+    const note = $("hubVerificationNote").value.trim();
+    if(method === "institution_sso" && !reference){
+      $("hubSchoolVerificationStatus").textContent = copy.requiredReference;
+      $("hubSchoolVerificationStatus").className = "hub-account-trust-status error";
+      $("hubVerificationReference").focus();
+      return;
+    }
+    if(method === "manual_review" && !reference && !note){
+      $("hubSchoolVerificationStatus").textContent = copy.requiredNote;
+      $("hubSchoolVerificationStatus").className = "hub-account-trust-status error";
+      $("hubVerificationNote").focus();
+      return;
+    }
+    const context = requestContext();
+    hubState.schoolVerificationLoading = true;
+    renderAccountTrustControls();
+    let response;
+    try {
+      response = await hubRpc("submit_school_verification_request", {
+        p_evidence_kind:method,
+        p_evidence_reference:reference || null,
+        p_user_note:note || null
+      });
+    } catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.schoolVerificationLoading = false;
+    if(response.error){
+      hubState.schoolVerificationRequest = {data:null, setupMissing:missingRpcError(response.error), error:featureError(response.error)};
+      renderAccountTrustControls();
+      return;
+    }
+    await Promise.all([loadSchoolVerificationRequest(), loadMembership()]);
+    if(contextIsCurrent(context)){
+      $("hubSchoolVerificationStatus").textContent = copy.requestSubmitted;
+      $("hubSchoolVerificationStatus").className = "hub-account-trust-status success";
+    }
+  }
+
+  async function withdrawSchoolVerification(){
+    const requestId = hubState.schoolVerificationRequest?.data?.latest_request?.request_id;
+    if(!requestId || hubState.schoolVerificationLoading) return;
+    const context = requestContext();
+    hubState.schoolVerificationLoading = true;
+    renderAccountTrustControls();
+    let response;
+    try { response = await hubRpc("withdraw_school_verification_request", {p_request_id:requestId}); }
+    catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.schoolVerificationLoading = false;
+    if(response.error){
+      hubState.schoolVerificationRequest = {...hubState.schoolVerificationRequest, error:featureError(response.error)};
+      renderAccountTrustControls();
+      return;
+    }
+    await loadSchoolVerificationRequest();
+    if(contextIsCurrent(context)){
+      $("hubSchoolVerificationStatus").textContent = accountTrustCopy().requestWithdrawn;
+      $("hubSchoolVerificationStatus").className = "hub-account-trust-status success";
+    }
+  }
+
+  async function requestAccountDeletion(){
+    if(hubState.accountDeletionLoading || !authClient || !currentUser) return;
+    const copy = accountTrustCopy();
+    const reason = await requestHubAction({
+      title:copy.requestDeletion,
+      message:copy.deletionReason,
+      input:true,
+      inputRequired:false,
+      maxLength:1000,
+      confirmLabel:copy.requestDeletion,
+      danger:true
+    });
+    if(reason === null) return;
+    const context = requestContext();
+    hubState.accountDeletionLoading = true;
+    renderAccountTrustControls();
+    let response;
+    try { response = await hubRpc("request_account_deletion", {p_reason:String(reason || "").trim() || null}); }
+    catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.accountDeletionLoading = false;
+    if(response.error){
+      hubState.accountDeletionRequest = {data:null, setupMissing:missingRpcError(response.error), error:featureError(response.error)};
+      renderAccountTrustControls();
+      return;
+    }
+    await loadAccountDeletionRequest();
+    if(contextIsCurrent(context)){
+      $("hubAccountDeletionStatus").textContent = copy.deletionRequested;
+      $("hubAccountDeletionStatus").className = "hub-account-trust-status success";
+    }
+  }
+
+  async function cancelAccountDeletion(){
+    if(hubState.accountDeletionLoading || !authClient || !currentUser) return;
+    const copy = accountTrustCopy();
+    const confirmed = await requestHubAction({
+      title:copy.cancelDeletion,
+      message:copy.deletionScheduled.replace(
+        "{date}",
+        formatDate(hubState.accountDeletionRequest?.data?.scheduled_for)
+      ),
+      confirmLabel:copy.cancelDeletion
+    });
+    if(!confirmed) return;
+    const context = requestContext();
+    hubState.accountDeletionLoading = true;
+    renderAccountTrustControls();
+    let response;
+    try { response = await hubRpc("cancel_account_deletion_request"); }
+    catch(error){ response = {error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.accountDeletionLoading = false;
+    if(response.error){
+      hubState.accountDeletionRequest = {...hubState.accountDeletionRequest, error:featureError(response.error)};
+      renderAccountTrustControls();
+      return;
+    }
+    await loadAccountDeletionRequest();
+    if(contextIsCurrent(context)){
+      $("hubAccountDeletionStatus").textContent = copy.deletionRequestCancelled;
+      $("hubAccountDeletionStatus").className = "hub-account-trust-status success";
+    }
   }
 
   async function syncFinalSchedule(snapshot=finalTimetable){
@@ -1502,7 +2075,116 @@
     setStatus("courseInsightStatus", t("insightExampleStatus"));
   }
 
-  function renderInsights(rows, {exampleMode=""}={}){
+  function formatInsightMeetingTimes(value){
+    const slots = parseJsonValue(value, []);
+    if(!Array.isArray(slots) || !slots.length) return "—";
+    return slots.map(slot => {
+      if(typeof slot === "string") return slot.trim();
+      const days = Array.isArray(slot?.days)
+        ? slot.days.filter(Boolean).join(" / ")
+        : String(slot?.day || slot?.weekday || "").trim();
+      const start = String(slot?.start || slot?.start_time || "").trim();
+      const end = String(slot?.end || slot?.end_time || "").trim();
+      return [
+        days,
+        start && end ? `${start}–${end}` : start || end
+      ].filter(Boolean).join(" · ");
+    }).filter(Boolean).join("; ") || "—";
+  }
+
+  function insightLiveModel(rows, dimensions){
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const safeDimensions = Array.isArray(dimensions) ? dimensions : [];
+    const courses = safeDimensions
+      .filter(item => item.dimension_type === "course")
+      .map(item => ({
+        course_key:item.course_key || item.dimension_key,
+        course_code:item.secondary_label || "",
+        course_name:item.primary_label || item.secondary_label || item.dimension_key,
+        selection_count:Number(item.selection_count || 0),
+        share_percent:insightPercent(item.share_percent)
+      }));
+    const effectiveCourses = courses.length ? courses : safeRows.map(item => ({
+      course_key:item.course_key,
+      course_code:item.course_code || "",
+      course_name:item.course_name || item.course_code || item.course_key,
+      selection_count:Number(item.selection_count || 0),
+      share_percent:insightPercent(item.share_percent)
+    }));
+    const sections = safeDimensions
+      .filter(item => item.dimension_type === "section")
+      .map(item => {
+        const secondary = String(item.secondary_label || "").split(" · ").filter(Boolean);
+        return {
+          section:item.primary_label || item.dimension_key,
+          professor:secondary.length > 1 ? secondary.at(-1) : "—",
+          schedule:formatInsightMeetingTimes(item.meeting_times),
+          selection_count:Number(item.selection_count || 0),
+          demand_percent:insightPercent(item.share_percent)
+        };
+      });
+    const professors = safeDimensions
+      .filter(item => item.dimension_type === "professor")
+      .map(item => ({
+        name:item.primary_label || item.dimension_key,
+        course_codes:item.secondary_label || "—",
+        section_count:Math.max(
+          1,
+          sections.filter(section => section.professor === item.primary_label).length
+        ),
+        selection_count:Number(item.selection_count || 0),
+        share_percent:insightPercent(item.share_percent)
+      }));
+    const allRows = [...safeRows, ...safeDimensions];
+    return {
+      summary:{
+        cohortSize:Math.max(0, ...allRows.map(item => Number(item.cohort_size || 0))),
+        courses:effectiveCourses.length,
+        sections:sections.length,
+        professors:professors.length
+      },
+      courses:effectiveCourses,
+      sections,
+      professors
+    };
+  }
+
+  function appendInsightLiveSummary(container, summary){
+    const labels = communitySeedText({
+      en:["Student Cohort", "Courses Tracked", "Sections Tracked", "Professors Tracked"],
+      "zh-CN":["学生群体", "课程数量", "班别数量", "教师数量"],
+      "zh-HK":["學生群組", "科目數量", "課堂組別", "教師人數"]
+    });
+    const values = [summary.cohortSize, summary.courses, summary.sections, summary.professors];
+    const list = node("div", "hub-insight-demo-summary hub-insight-live-summary");
+    list.setAttribute("role", "list");
+    values.forEach((value, index) => {
+      const item = node("div", "hub-insight-demo-kpi");
+      item.setAttribute("role", "listitem");
+      item.append(node("b", "", value), node("span", "", labels[index]));
+      list.append(item);
+    });
+    container.append(list);
+  }
+
+  function renderInsightLiveDashboard(rows, dimensions){
+    const container = $("courseInsightChart");
+    const model = insightLiveModel(rows, dimensions);
+    container.replaceChildren();
+    const dashboard = node("section", "hub-insight-demo-dashboard hub-insight-live-dashboard");
+    dashboard.dataset.insightSource = "live";
+    appendInsightLiveSummary(dashboard, model.summary);
+    const primary = node("div", "hub-insight-demo-primary");
+    appendInsightCourseDemand(primary, model.courses);
+    if(model.sections.length) appendInsightSectionDemand(primary, model.sections);
+    const secondary = node("div", "hub-insight-demo-secondary");
+    if(model.professors.length) appendInsightProfessorPatterns(secondary, model.professors);
+    dashboard.append(primary);
+    if(secondary.childElementCount) dashboard.append(secondary);
+    container.append(dashboard);
+  }
+
+  function renderInsights(rows, {exampleMode="", dimensions=hubState.insightDimensions}={}){
     const persistentPreview = $("previewCourseInsights");
     if(persistentPreview) persistentPreview.hidden = Boolean(exampleMode) || !Array.isArray(rows) || !rows.length;
     if(exampleMode){
@@ -1514,6 +2196,14 @@
     container.replaceChildren();
     if(!Array.isArray(rows) || !rows.length){
       insightEmpty(t("courseInsightNoData"), t("courseInsightPrivacy", {minimum:"5"}), {offerExample:true});
+      return;
+    }
+    if(Array.isArray(dimensions) && dimensions.length){
+      renderInsightLiveDashboard(rows, dimensions);
+      setStatus(
+        "courseInsightStatus",
+        t("courseChoiceParticipants", {count:rows[0].cohort_size || dimensions[0]?.cohort_size || 0})
+      );
       return;
     }
     rows.forEach(row => {
@@ -1556,21 +2246,45 @@
     insightEmpty(t("loading"), t("courseInsightLoading"));
     const yearValue = $("courseInsightYear").value;
     const scope = $("courseInsightScope").value;
-    const { data, error } = await authClient.rpc("get_course_choice_stats", {
-      p_scope: scope,
-      p_study_year: ["same_major_year", "university_year"].includes(scope) && yearValue ? Number(yearValue) : null
-    });
+    const parameters = {
+      p_scope:scope,
+      p_study_year:["same_major_year", "university_year"].includes(scope) && yearValue ? Number(yearValue) : null
+    };
+    let statsResponse;
+    let dimensionsResponse;
+    try {
+      [statsResponse, dimensionsResponse] = await Promise.all([
+        hubRpc("get_course_choice_stats", parameters),
+        hubRpc("get_course_choice_dimensions", {...parameters, p_course_key:null})
+      ]);
+    } catch(requestError){
+      statsResponse = {data:null, error:requestError};
+      dimensionsResponse = {data:null, error:requestError};
+    }
     if(!contextIsCurrent(context)) return;
     $("loadCourseInsights").disabled = false;
-    if(error){
-      insightEmpty(t("courseInsightUnavailable"), featureError(error));
-      setStatus("courseInsightStatus", featureError(error), "error");
+    if(statsResponse.error){
+      insightEmpty(t("courseInsightUnavailable"), featureError(statsResponse.error));
+      setStatus("courseInsightStatus", featureError(statsResponse.error), "error");
       return;
     }
-    setStatus("courseInsightStatus", "");
-    hubState.insightRows = data || [];
+    hubState.insightRows = Array.isArray(statsResponse.data) ? statsResponse.data : [];
+    hubState.insightDimensions = dimensionsResponse.error || !Array.isArray(dimensionsResponse.data)
+      ? []
+      : dimensionsResponse.data;
     hubState.insightsLoaded = true;
-    renderInsights(hubState.insightRows);
+    renderInsights(hubState.insightRows, {dimensions:hubState.insightDimensions});
+    if(dimensionsResponse.error && hubState.insightRows.length){
+      setStatus(
+        "courseInsightStatus",
+        communitySeedText({
+          en:"Course totals are available. Section and professor detail could not be loaded.",
+          "zh-CN":"课程总览可用，但班别与教师详情暂时无法加载。",
+          "zh-HK":"科目總覽可用，但課堂組別同教師詳情暫時未能載入。"
+        }),
+        "error"
+      );
+    }
   }
 
   const parseInterests = value => [...new Set(String(value || "").split(",").map(item => item.trim().slice(0, 45)).filter(Boolean))].slice(0, 20);
@@ -2962,6 +3676,8 @@
     if(nextScope === hubState.feedScope) return;
     hubState.feedScope = nextScope;
     hubState.feed = [];
+    hubState.communityFeedError = "";
+    hubState.postCommentPages.clear();
     hubState.feedOffset = 0;
     hubState.feedHasMore = false;
     hubState.openCommentPostIds.clear();
@@ -2976,6 +3692,8 @@
     const nextMode = communityFeedMode();
     if(nextMode !== hubState.feedMode){
       hubState.feed = [];
+      hubState.communityFeedError = "";
+      hubState.postCommentPages.clear();
       hubState.feedOffset = 0;
       hubState.feedHasMore = false;
       void loadCommunityFeed({force:true});
@@ -3275,27 +3993,102 @@
     await loadCommunityFeed({force:true});
   }
 
-  async function loadPostComments(postId, container){
-    const context = requestContext();
-    container.replaceChildren(node("div", "hub-comment", t("loading")));
-    let data = [];
-    let error = null;
-    try {
-      const response = await hubRpc("get_post_comments", {p_post_id:postId});
-      data = response.data || [];
-      error = response.error || null;
-    } catch(requestError){
-      error = requestError;
+  async function requestPostCommentPage(postId, cursor=null){
+    const beforeCreatedAt = messageCursorValue(cursor, "before_created_at", "created_at", "next_before_created_at");
+    const beforeId = messageCursorValue(cursor, "before_id", "id", "comment_id", "next_before_id");
+    let response = await hubRpc("get_post_comments_page", {
+      p_post_id:postId,
+      p_limit:COMMUNITY_COMMENT_PAGE_SIZE,
+      p_before_created_at:beforeCreatedAt,
+      p_before_id:beforeId
+    });
+    if(!response.error){
+      const payload = parseJsonValue(response.data, response.data) || {};
+      return {
+        items:Array.isArray(payload.items) ? payload.items : [],
+        totalCount:Math.max(0, Number(payload.total_count || 0)),
+        hasMore:payload.has_more === true,
+        nextCursor:parseJsonValue(payload.next_cursor, payload.next_cursor) || null,
+        error:null
+      };
     }
+    if(!missingRpcError(response.error)){
+      return {items:[], totalCount:0, hasMore:false, nextCursor:null, error:response.error};
+    }
+    response = await hubRpc("get_post_comments", {p_post_id:postId});
+    const rows = Array.isArray(response.data) ? response.data : [];
+    return {
+      items:rows,
+      totalCount:rows.length,
+      hasMore:false,
+      nextCursor:null,
+      error:response.error || null
+    };
+  }
+
+  function mergeCommentRows(existing, incoming){
+    const unique = new Map();
+    [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(incoming) ? incoming : [])]
+      .forEach(comment => {
+        const key = comment?.comment_id || comment?.id;
+        if(key) unique.set(key, comment);
+      });
+    return [...unique.values()];
+  }
+
+  async function loadPostComments(postId, container, {append=false, force=false}={}){
+    const context = requestContext();
+    let pageState = hubState.postCommentPages.get(postId) || {
+      items:[],
+      totalCount:0,
+      hasMore:false,
+      nextCursor:null,
+      loading:false,
+      error:""
+    };
+    if(force){
+      pageState = {...pageState, items:[], totalCount:0, hasMore:false, nextCursor:null, error:""};
+    }
+    if(pageState.loading) return;
+    pageState.loading = true;
+    hubState.postCommentPages.set(postId, pageState);
+    if(!append || !pageState.items.length){
+      container.replaceChildren(node("div", "hub-comment", t("loading")));
+    }
+    let page;
+    try {
+      page = await requestPostCommentPage(postId, append ? pageState.nextCursor : null);
+    } catch(requestError){
+      page = {items:[], totalCount:pageState.totalCount, hasMore:pageState.hasMore, nextCursor:pageState.nextCursor, error:requestError};
+    }
+    pageState.loading = false;
     if(!contextIsCurrent(context) || !container.isConnected) return;
+    if(page.error){
+      pageState.error = missingRpcError(page.error) ? t("memberSetupRequired") : t("commentsUnavailable");
+    } else {
+      pageState.error = "";
+      pageState.items = append
+        ? mergeCommentRows(page.items, pageState.items)
+        : mergeCommentRows([], page.items);
+      pageState.totalCount = Math.max(pageState.items.length, Number(page.totalCount || 0));
+      pageState.hasMore = page.hasMore;
+      pageState.nextCursor = page.nextCursor;
+      const feedPost = hubState.feed.find(post => post.post_id === postId);
+      if(feedPost && Number.isFinite(pageState.totalCount)){
+        feedPost.comment_count = pageState.totalCount;
+        const toggle = document.querySelector(`[data-post-id="${postId}"] .hub-post-action--comment`);
+        if(toggle) toggle.textContent = `${t("comment")} · ${pageState.totalCount}`;
+      }
+    }
+    hubState.postCommentPages.set(postId, pageState);
     container.replaceChildren();
-    if(error){
-      const loadStatus = node("p", "hub-comment-status error", missingRpcError(error) ? t("memberSetupRequired") : t("commentsUnavailable"));
+    if(pageState.error){
+      const loadStatus = node("p", "hub-comment-status error", pageState.error);
       loadStatus.setAttribute("role", "status");
       container.append(loadStatus);
     }
-    const commentRows = Array.isArray(data) ? data : [];
-    if(!error && !commentRows.length){
+    const commentRows = pageState.items;
+    if(!pageState.error && !commentRows.length){
       container.append(node("p", "hub-comment-status hub-comment-empty", t("commentsEmpty")));
     }
     let replyTarget = null;
@@ -3381,6 +4174,33 @@
       item.append(copy, actions);
       container.append(item);
     });
+    if(commentRows.length){
+      const pagination = node("div", "hub-comment-pagination");
+      pagination.append(node(
+        "span",
+        "",
+        communitySeedText({
+          en:`Showing ${commentRows.length} of ${Math.max(commentRows.length, pageState.totalCount)} comments`,
+          "zh-CN":`已显示 ${commentRows.length} / ${Math.max(commentRows.length, pageState.totalCount)} 条评论`,
+          "zh-HK":`已顯示 ${commentRows.length} / ${Math.max(commentRows.length, pageState.totalCount)} 則留言`
+        })
+      ));
+      if(pageState.hasMore && pageState.nextCursor){
+        const loadMore = node(
+          "button",
+          "hub-comment-load-more",
+          communitySeedText({en:"Load More Comments", "zh-CN":"加载更多评论", "zh-HK":"載入更多留言"})
+        );
+        loadMore.type = "button";
+        loadMore.onclick = () => {
+          loadMore.disabled = true;
+          loadMore.textContent = communitySeedText({en:"Loading…", "zh-CN":"正在加载…", "zh-HK":"正在載入…"});
+          void loadPostComments(postId, container, {append:true});
+        };
+        pagination.append(loadMore);
+      }
+      container.append(pagination);
+    }
     const form = node("form", "hub-comment-form");
     form.noValidate = true;
     replyContext = node("div", "hub-comment-reply-context");
@@ -3435,7 +4255,7 @@
           const toggle = document.querySelector(`[data-post-id="${postId}"] .hub-post-actions > button[aria-expanded]`);
           if(toggle) toggle.textContent = `${t("comment")} · ${feedPost.comment_count}`;
         }
-        await loadPostComments(postId, container);
+        await loadPostComments(postId, container, {force:true});
       } catch(requestError){
         if(contextIsCurrent(commentContext) && container.isConnected){
           submitStatus.className = "hub-comment-status error";
@@ -3656,6 +4476,17 @@
   function renderCommunitySeedPosts(feed){
     const collection = node("section", "hub-community-example hub-community-seed-feed");
     collection.setAttribute("aria-label", t("campusFeed"));
+    const disclosure = node(
+      "p",
+      "hub-community-seed-disclosure",
+      communitySeedText({
+        en:"ConCourse Starter Posts · Curated to show how Community works",
+        "zh-CN":"ConCourse 入门帖子 · 用于展示社区功能",
+        "zh-HK":"ConCourse 入門帖文 · 用嚟展示校園社群功能"
+      })
+    );
+    disclosure.setAttribute("role", "note");
+    collection.append(disclosure);
 
     COMMUNITY_SEED_POSTS.forEach(seed => {
       const state = communitySeedPostState(seed.key);
@@ -3858,6 +4689,11 @@
     if(!feed) return;
     updateCommunityLoadMore();
     const showSeedPosts = communitySeedAvailable();
+    if(hubState.communityFeedError){
+      const errorNotice = node("div", "hub-feed-error", hubState.communityFeedError);
+      errorNotice.setAttribute("role", "alert");
+      feed.append(errorNotice);
+    }
     if(!posts.length){
       if(showSeedPosts) renderCommunitySeedPosts(feed);
       else feed.append(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityEmpty" : "communityEmpty")));
@@ -3993,8 +4829,9 @@
   }
 
   async function loadCommunityFeed({force=false, append=false}={}){
+    const canShowSeedPosts = !append && communitySeedAvailable();
     if(!authClient || !currentUser){
-      if(!append && communitySeedAvailable()) renderCommunityFeed([]);
+      if(canShowSeedPosts) renderCommunityFeed([]);
       return;
     }
     if(append && hubState.loadingFeed) return;
@@ -4015,7 +4852,7 @@
     hubState.loadingFeed = true;
     updateCommunityLoadMore();
     if(!append && (!hubState.feed.length || hubState.feedMode !== mode)){
-      if(communitySeedAvailable()) renderCommunityFeed([]);
+      if(canShowSeedPosts) renderCommunityFeed([]);
       else replaceCommunityFeed(node("div", "hub-feed-empty", t(hubState.feedScope === "cross" ? "crossCommunityLoading" : "communityLoading")));
     }
     let data = null;
@@ -4036,16 +4873,13 @@
     hubState.loadingFeed = false;
     if(error){
       const message = featureError(error);
-      const canShowSeedPosts = !append && communitySeedAvailable();
-      if(canShowSeedPosts){
-        hubState.feed = [];
+      hubState.communityFeedError = message;
+      if(!append){
         hubState.feedMode = mode;
-        hubState.feedOffset = 0;
         hubState.feedHasMore = false;
-        renderCommunityFeed([]);
+        renderCommunityFeed(hubState.feed);
         setStatus("communityFeedStatus", message, "error");
-      } else if(!append) replaceCommunityFeed(node("div", "hub-feed-empty", message));
-      else setStatus("communityComposerStatus", featureError(error), "error");
+      } else setStatus("communityComposerStatus", featureError(error), "error");
       updateCommunityLoadMore();
       return;
     }
@@ -4122,6 +4956,7 @@
     hubState.feedMode = mode;
     hubState.feedOffset = offset + (Array.isArray(data) ? data.length : 0);
     hubState.feedHasMore = (Array.isArray(data) ? data.length : 0) === limit;
+    hubState.communityFeedError = "";
     renderCommunityFeed(hubState.feed);
     setStatus("communityFeedStatus", "");
     if(scrollAnchor){
@@ -4290,30 +5125,81 @@
     list.append(launcher);
   }
 
+  function updateConversationRow(button, conversation){
+    const name = conversation.other_display_name || conversation.other_username;
+    const avatarSignature = [
+      name || "",
+      conversation.other_avatar_path || "",
+      Number(conversation.other_avatar_revision || 0)
+    ].join("::");
+    button._conversation = conversation;
+    button.classList.toggle("active", conversation.conversation_id === hubState.activeConversationId);
+    button.setAttribute(
+      "aria-label",
+      `${identityLabel(conversation.other_display_name, conversation.other_username)}: ${conversation.last_message || t("messagesEmpty")}`
+    );
+    if(button.dataset.avatarSignature !== avatarSignature){
+      const nextAvatar = createAvatar(
+        name,
+        conversation.other_avatar_path,
+        conversation.other_avatar_revision
+      );
+      button.querySelector(".hub-avatar")?.replaceWith(nextAvatar);
+      button.dataset.avatarSignature = avatarSignature;
+    }
+    const copy = button.querySelector("[data-conversation-copy]");
+    if(copy){
+      copy.replaceChildren(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)));
+      const contextLabel = conversationContextLabel(conversation);
+      if(contextLabel) copy.append(node("small", "hub-conversation-context", contextLabel));
+      copy.append(node("span", "", conversation.last_message || t("messagesEmpty")));
+    }
+    return button;
+  }
+
+  function createConversationRow(conversation){
+    const button = node("button", "hub-conversation-button");
+    button.type = "button";
+    button.dataset.conversationId = conversation.conversation_id;
+    const avatar = createAvatar(
+      conversation.other_display_name || conversation.other_username,
+      conversation.other_avatar_path,
+      conversation.other_avatar_revision
+    );
+    button.dataset.avatarSignature = [
+      conversation.other_display_name || conversation.other_username || "",
+      conversation.other_avatar_path || "",
+      Number(conversation.other_avatar_revision || 0)
+    ].join("::");
+    const copy = node("div");
+    copy.dataset.conversationCopy = "true";
+    button.append(avatar, copy);
+    button.onclick = () => {
+      if(button._conversation) void openConversation(button._conversation);
+    };
+    return updateConversationRow(button, conversation);
+  }
+
   function renderConversations(conversations){
     const list = $("conversationList");
-    list.replaceChildren();
     if(!conversations.length){
+      list.replaceChildren();
       appendMessageExampleLauncher(list);
       if(!hubState.messageDemoDismissed) renderMessageExample();
       renderConversationPreview();
       return;
     }
     if(!hubState.messageDemoMode) removeMessageExampleClose();
+    const existing = new Map(
+      [...list.querySelectorAll("[data-conversation-id]")]
+        .map(button => [button.dataset.conversationId, button])
+    );
+    const fragment = document.createDocumentFragment();
     conversations.forEach(conversation => {
-      const button = node("button", "hub-conversation-button");
-      button.type = "button";
-      button.classList.toggle("active", conversation.conversation_id === hubState.activeConversationId);
-      const avatar = createAvatar(conversation.other_display_name || conversation.other_username, conversation.other_avatar_path, conversation.other_avatar_revision);
-      const copy = node("div");
-      copy.append(node("b", "", identityLabel(conversation.other_display_name, conversation.other_username)));
-      const contextLabel = conversationContextLabel(conversation);
-      if(contextLabel) copy.append(node("small", "hub-conversation-context", contextLabel));
-      copy.append(node("span", "", conversation.last_message || t("messagesEmpty")));
-      button.append(avatar, copy);
-      button.onclick = () => openConversation(conversation);
-      list.append(button);
+      const button = existing.get(conversation.conversation_id) || createConversationRow(conversation);
+      fragment.append(updateConversationRow(button, conversation));
     });
+    list.replaceChildren(fragment);
     renderConversationPreview();
   }
 
@@ -4382,6 +5268,9 @@
     hubState.activeConversationContext = "";
     hubState.activeConversationCanSend = false;
     hubState.messages = [];
+    hubState.messageHasMore = false;
+    hubState.messageNextCursor = null;
+    hubState.messageLoadingOlder = false;
     hubState.sendingMessage = false;
     $("chatHeading").textContent = message;
     $("chatSubheading").textContent = "";
@@ -4454,16 +5343,129 @@
     return hubState.conversations;
   }
 
-  function renderMessages(messages){
+  function messageSortKey(message){
+    return `${message?.created_at || ""}::${message?.message_id || message?.id || ""}`;
+  }
+
+  function normalizeMessageRows(rows){
+    const unique = new Map();
+    (Array.isArray(rows) ? rows : []).forEach(message => {
+      const key = message?.message_id || message?.id || messageSortKey(message);
+      if(key) unique.set(key, message);
+    });
+    return [...unique.values()].sort((left, right) => messageSortKey(left).localeCompare(messageSortKey(right)));
+  }
+
+  function messageCursorValue(cursor, ...keys){
+    for(const key of keys){
+      if(cursor?.[key] !== undefined && cursor?.[key] !== null) return cursor[key];
+    }
+    return null;
+  }
+
+  async function requestConversationMessagePage(conversationId, cursor=null){
+    const beforeCreatedAt = messageCursorValue(cursor, "before_created_at", "created_at", "next_before_created_at");
+    const beforeId = messageCursorValue(cursor, "before_id", "id", "message_id", "next_before_id");
+    let response = await hubRpc("get_conversation_messages_page", {
+      p_conversation_id:conversationId,
+      p_limit:MESSAGE_PAGE_SIZE,
+      p_before_created_at:beforeCreatedAt,
+      p_before_id:beforeId
+    });
+    if(!response.error){
+      const payload = parseJsonValue(response.data, response.data) || {};
+      return {
+        items:normalizeMessageRows(payload.items),
+        hasMore:payload.has_more === true,
+        nextCursor:parseJsonValue(payload.next_cursor, payload.next_cursor) || null,
+        legacy:false,
+        error:null
+      };
+    }
+    if(!missingRpcError(response.error)) return {items:[], hasMore:false, nextCursor:null, legacy:false, error:response.error};
+
+    // Older installations expose only a limit-based RPC. Increasing the limit
+    // still lets a user reach the complete conversation until the cursor
+    // migration is deployed.
+    const legacyLimit = Math.min(
+      500,
+      Math.max(MESSAGE_PAGE_SIZE, Number(cursor?.legacy_limit || MESSAGE_PAGE_SIZE))
+    );
+    response = await hubRpc("get_conversation_messages", {
+      p_conversation_id:conversationId,
+      p_limit:legacyLimit
+    });
+    return {
+      items:normalizeMessageRows(response.data),
+      hasMore:!response.error && Array.isArray(response.data) && response.data.length === legacyLimit && legacyLimit < 500,
+      nextCursor:response.error ? null : {legacy_limit:Math.min(500, legacyLimit + MESSAGE_PAGE_SIZE)},
+      legacy:true,
+      error:response.error || null
+    };
+  }
+
+  function renderMessages(messages, {preserveScroll=false, preserveTop=false}={}){
     const list = $("chatMessages");
+    const previousHeight = list.scrollHeight;
+    const previousTop = list.scrollTop;
     list.replaceChildren();
     if(!messages.length){ list.append(node("div", "hub-message-empty", t("messagesEmpty"))); return; }
+    if(hubState.messageHasMore){
+      const older = node(
+        "button",
+        "hub-message-load-older",
+        hubState.messageLoadingOlder
+          ? communitySeedText({en:"Loading Earlier Messages…", "zh-CN":"正在加载更早的消息…", "zh-HK":"正在載入較早嘅訊息…"})
+          : communitySeedText({en:"Load Earlier Messages", "zh-CN":"加载更早的消息", "zh-HK":"載入較早嘅訊息"})
+      );
+      older.type = "button";
+      older.disabled = hubState.messageLoadingOlder;
+      older.onclick = () => void loadOlderMessages();
+      list.append(older);
+    }
     messages.forEach(message => {
       const bubble = node("div", `hub-message${message.sender_id === currentUser?.id ? " mine" : ""}`, message.body || "");
       bubble.append(node("time", "", formatCompactDate(message.created_at)));
       list.append(bubble);
     });
-    requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+    requestAnimationFrame(() => {
+      if(preserveTop) list.scrollTop = previousTop;
+      else if(preserveScroll) list.scrollTop = Math.max(0, list.scrollHeight - previousHeight + previousTop);
+      else list.scrollTop = list.scrollHeight;
+    });
+  }
+
+  async function loadOlderMessages(){
+    if(
+      hubState.messageLoadingOlder
+      || !hubState.messageHasMore
+      || !hubState.activeConversationId
+      || !hubState.messageNextCursor
+    ) return;
+    const context = requestContext();
+    const conversationId = hubState.activeConversationId;
+    hubState.messageLoadingOlder = true;
+    renderMessages(hubState.messages, {preserveScroll:true});
+    let page;
+    try {
+      page = await requestConversationMessagePage(conversationId, hubState.messageNextCursor);
+    } catch(error){
+      page = {items:[], hasMore:hubState.messageHasMore, nextCursor:hubState.messageNextCursor, legacy:false, error};
+    }
+    if(!contextIsCurrent(context) || hubState.activeConversationId !== conversationId) return;
+    hubState.messageLoadingOlder = false;
+    if(page.error){
+      setStatus("chatStatus", featureError(page.error), "error");
+      renderMessages(hubState.messages, {preserveScroll:true});
+      return;
+    }
+    hubState.messages = page.legacy
+      ? page.items
+      : normalizeMessageRows([...page.items, ...hubState.messages]);
+    hubState.messageHasMore = page.hasMore;
+    hubState.messageNextCursor = page.nextCursor;
+    setStatus("chatStatus", "");
+    renderMessages(hubState.messages, {preserveScroll:true});
   }
 
   function renderActiveConversationHeader(){
@@ -4490,6 +5492,12 @@
     $("sendChatMessage").textContent = t("send");
     const context = requestContext();
     const request = ++hubState.conversationRequest;
+    const sameConversation = hubState.activeConversationId === conversation.conversation_id;
+    const messageList = $("chatMessages");
+    const preserveReadingPosition = (
+      sameConversation
+      && messageList.scrollHeight - messageList.scrollTop - messageList.clientHeight > 80
+    );
     hubState.activeConversationId = conversation.conversation_id;
     hubState.activeConversationUserId = conversation.other_user_id;
     hubState.activeConversationName = identityLabel(conversation.other_display_name, conversation.other_username);
@@ -4505,24 +5513,34 @@
     if(showLoading || !hubState.messages.length){
       $("chatMessages").replaceChildren(node("div", "hub-message-empty", t("messagesLoading")));
     }
-    let data = null;
-    let error = null;
+    if(!sameConversation){
+      hubState.messages = [];
+      hubState.messageHasMore = false;
+      hubState.messageNextCursor = null;
+      hubState.messageLoadingOlder = false;
+    }
+    let page = null;
     try {
-      const response = await hubRpc("get_conversation_messages", {p_conversation_id:conversation.conversation_id, p_limit:100});
-      data = response.data;
-      error = response.error;
+      page = await requestConversationMessagePage(conversation.conversation_id);
     } catch(requestError){
-      error = requestError;
+      page = {items:[], hasMore:false, nextCursor:null, legacy:false, error:requestError};
     }
     if(!contextIsCurrent(context) || request !== hubState.conversationRequest || hubState.activeConversationId !== conversation.conversation_id) return;
-    if(error){
-      $("chatMessages").replaceChildren(node("div", "hub-message-empty", featureError(error)));
-      setStatus("chatStatus", featureError(error), "error");
+    if(page.error){
+      $("chatMessages").replaceChildren(node("div", "hub-message-empty", featureError(page.error)));
+      setStatus("chatStatus", featureError(page.error), "error");
       return;
     }
     setStatus("chatStatus", "");
-    hubState.messages = Array.isArray(data) ? data : [];
-    renderMessages(hubState.messages);
+    const retainedHistory = sameConversation && hubState.messages.length > page.items.length;
+    hubState.messages = retainedHistory
+      ? normalizeMessageRows([...hubState.messages, ...page.items])
+      : page.items;
+    if(!retainedHistory){
+      hubState.messageHasMore = page.hasMore;
+      hubState.messageNextCursor = page.nextCursor;
+    }
+    renderMessages(hubState.messages, {preserveTop:preserveReadingPosition});
   }
 
   async function openConversationById(conversationId){
@@ -4696,7 +5714,7 @@
     if(!$("memberHub").hidden){
       if(hubState.activeView === "overview" && hubState.insightsLoaded){
         if(hubState.insightDemoMode) renderInsightExample(hubState.insightDemoMode);
-        else renderInsights(hubState.insightRows);
+        else renderInsights(hubState.insightRows, {dimensions:hubState.insightDimensions});
       }
       if(hubState.activeView === "community") renderCommunityFeed(hubState.feed);
       if(hubState.activeView === "community") renderConversationPreview();
@@ -4838,6 +5856,7 @@
       void startConversation();
     }
   });
+  $("chatUsername")?.addEventListener("input", () => setStatus("chatStatus", ""));
   $("refreshMessages")?.addEventListener("click", () => loadConversations({force:true}));
   $("reportConversation")?.addEventListener("click", reportConversation);
   $("blockConversationUser")?.addEventListener("click", blockConversationUser);
@@ -4896,7 +5915,11 @@
       else void switchView("community");
     } else renderCommunityFeed(hubState.feed);
   });
-  window.addEventListener("beforeunload", () => { revokeAvatarUrls(); revokeCommunityMediaUrls(); }, {once:true});
+  window.addEventListener("beforeunload", () => {
+    configureMessagePolling(false);
+    revokeAvatarUrls();
+    revokeCommunityMediaUrls();
+  }, {once:true});
 
   window.ConCourseHub = {
     show: showHub,
@@ -4921,6 +5944,7 @@
       updateCommunityPostCounter();
       syncCommunityScopeControls();
       syncAccess();
+      if($("hubAccountTrustControls")) renderAccountTrustControls();
       window.ConCourseMarketplace?.refreshLanguage();
       window.ConCourseAcademicTools?.refreshLanguage?.();
     }

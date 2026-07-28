@@ -4,6 +4,7 @@ import test from "node:test";
 
 const template = readFileSync(new URL("../supabase-confirm-signup-email.html", import.meta.url), "utf8");
 const inviteTemplate = readFileSync(new URL("../supabase-invite-email.html", import.meta.url), "utf8");
+const recoveryTemplate = readFileSync(new URL("../supabase-recovery-email.html", import.meta.url), "utf8");
 
 test("confirmation email is branded, accessible, and uses scanner-safe OTP verification", () => {
   assert.match(template, /<title>Verify your email for ConCourse<\/title>/);
@@ -12,8 +13,10 @@ test("confirmation email is branded, accessible, and uses scanner-safe OTP verif
   assert.match(template, /class="email-native-mark"/);
   assert.match(template, /color:#fff9ef[^>]*>C<\/span><span[^>]*color:#69d4f2[^>]*>C<\/span>/);
   assert.match(template, /Open ConCourse/);
+  assert.match(template, /href="\{\{ \.SiteURL \}\}"/);
   assert.match(template, /Never share this code/);
   assert.doesNotMatch(template, /\{\{ \.ConfirmationURL \}\}/);
+  assert.doesNotMatch(template, /https:\/\/concoursehk\.pages\.dev/i);
   assert.doesNotMatch(template, /<img|<svg|data:image|@import/i);
 });
 
@@ -44,4 +47,18 @@ test("invitation email remains responsive and resists automatic link recoloring"
   assert.match(inviteTemplate, /\[data-ogsc\]/);
   assert.match(inviteTemplate, /x-apple-data-detectors/);
   assert.match(inviteTemplate, /u \+ #body \.invite-address a/);
+});
+
+test("password recovery email is branded, responsive, and uses Supabase's secure action URL", () => {
+  assert.match(recoveryTemplate, /<title>Reset your ConCourse password<\/title>/);
+  assert.match(recoveryTemplate, /\{\{ \.ConfirmationURL \}\}/);
+  assert.match(recoveryTemplate, /\{\{ \.Email \}\}/);
+  assert.match(recoveryTemplate, /Reset password/);
+  assert.match(recoveryTemplate, /Didn&?rsquo;t request this\?/);
+  assert.match(recoveryTemplate, /class="email-native-mark"/);
+  assert.match(recoveryTemplate, /max-width:600px/);
+  assert.match(recoveryTemplate, /prefers-color-scheme: dark/);
+  assert.match(recoveryTemplate, /\[data-ogsc\]/);
+  assert.doesNotMatch(recoveryTemplate, /https:\/\/concoursehk\.pages\.dev/i);
+  assert.doesNotMatch(recoveryTemplate, /<img|<svg|data:image|@import/i);
 });

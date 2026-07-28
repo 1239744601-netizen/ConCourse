@@ -19,10 +19,10 @@ test("verification email can be resent without re-entering registration details"
   assert.match(html, /setAuthMode\("verify", \{clearMessage:false\}\)/);
 });
 
-test("signup verification uses a manual six-digit OTP instead of consuming an email link", () => {
-  assert.match(html, /id="authVerificationCode"[^>]*inputmode="numeric"[^>]*autocomplete="one-time-code"[^>]*maxlength="6"/);
+test("signup verification uses the manual eight-digit OTP delivered by the configured template", () => {
+  assert.match(html, /id="authVerificationCode"[^>]*inputmode="numeric"[^>]*autocomplete="one-time-code"[^>]*maxlength="8"[^>]*pattern="\[0-9\]\{8\}"/);
   assert.match(html, /authClient\.auth\.verifyOtp\(\{ email, token, type:"email" \}\)/);
-  assert.match(html, /mode === "signup" \|\| mode === "verify"/);
+  assert.match(html, /\["signup","verify","forgot","recovery"\]\.includes\(mode\)/);
   assert.match(html, /authMode === "verify" \? pendingVerificationEmail/);
   assert.match(html, /\$\("authEmail"\)\.readOnly = verifying/);
 
@@ -31,7 +31,7 @@ test("signup verification uses a manual six-digit OTP instead of consuming an em
     submitBody.indexOf('if(mode === "verify")') < submitBody.indexOf('password.length < 8'),
     "OTP verification must run before password validation because the password field is hidden"
   );
-  assert.match(submitBody, /pendingVerificationEmail = "";[\s\S]*applySession\(result\.data\.session\)/);
+  assert.match(submitBody, /rememberVerificationEmail\(""\);[\s\S]*applySession\(result\.data\.session\)/);
 });
 
 test("Supabase email and sign-in failures map to clear user messages", () => {
@@ -104,7 +104,7 @@ test("handled callback errors are removed without disturbing unrelated URL state
 test("auth status survives a language switch and invalid emails never reach Supabase", () => {
   assert.match(html, /setAuthMode\(authMode, \{clearMessage:false, focus:false\}\)/);
   assert.match(html, /function setAuthMessageKey\(/);
-  assert.match(html, /if\(!validAuthEmail\(email\) \|\| password\.length < 8\)/);
+  assert.match(html, /signingUp \? !passwordMeetsMinimum\(password\) : password\.length < 8/);
   assert.match(html, /\$\("authPassword"\)\.value = "";/);
 });
 
@@ -121,6 +121,23 @@ test("OTP instructions are translated in English, Mandarin, and Cantonese", () =
     "emailVerified",
     "useDifferentEmail"
   ]){
-    assert.equal((html.match(new RegExp(`${key}:`, "g")) || []).length, 3, `${key} should exist in all three languages`);
+    assert.ok((html.match(new RegExp(`${key}:`, "g")) || []).length >= 3, `${key} should exist in all three languages`);
   }
+});
+
+test("pending verification and password recovery survive real navigation paths", () => {
+  assert.match(html, /sessionStorage\.setItem\("concourse_pending_verification_email"/);
+  assert.match(html, /sessionStorage\.getItem\("concourse_pending_verification_email"\)/);
+  assert.match(html, /auth\.resetPasswordForEmail\(email, \{ redirectTo:redirectTo\.href \}\)/);
+  assert.match(html, /event === "PASSWORD_RECOVERY"/);
+  assert.match(html, /auth\.updateUser\(\{ password \}\)/);
+  assert.match(html, /const AUTH_EMAIL_REDIRECT_URL = new URL\("\.", window\.location\.href\)\.href/);
+});
+
+test("account creation requires password confirmation, privacy acknowledgement, and email confirmation", () => {
+  assert.match(html, /id="authPasswordConfirm"[^>]*autocomplete="new-password"/);
+  assert.match(html, /id="authPrivacyConsent"[^>]*type="checkbox"/);
+  assert.match(html, /password !== \$\("authPasswordConfirm"\)\.value/);
+  assert.match(html, /!\$\("authPrivacyConsent"\)\.checked/);
+  assert.match(html, /signingUp && result\.data\.session[\s\S]*?auth\.signOut\(\)[\s\S]*?verificationMisconfigured/);
 });

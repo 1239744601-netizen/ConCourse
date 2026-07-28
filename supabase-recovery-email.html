@@ -6,14 +6,13 @@
   <meta name="x-apple-disable-message-reformatting">
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
-  <title>Verify your email for ConCourse</title>
+  <title>Reset your ConCourse password</title>
   <style>
     :root { color-scheme: dark; supported-color-schemes: dark; }
     body, table, td, p, a { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
     body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
     table { border-collapse: collapse !important; }
     a { color: inherit; }
-    .code { user-select: all; -webkit-user-select: all; }
     .email-address-link { color: #69d4f2 !important; text-decoration: none !important; }
     .footer-link { color: #69d4f2 !important; text-decoration: underline !important; }
     .email-address a[x-apple-data-detectors],
@@ -28,12 +27,10 @@
     @media (prefers-color-scheme: dark) {
       .email-canvas { background: #061625 !important; }
       .email-card { background: #0b2238 !important; border-color: #24465f !important; }
-      .brand-name, .headline, .body-copy, .email-address, .security-title { color: #fff9ef !important; }
+      .brand-name, .headline, .body-copy, .security-title { color: #fff9ef !important; }
       .eyebrow { color: #f1be4f !important; }
       .muted-copy, .security-copy, .footer-copy { color: #b9c8d4 !important; }
       .email-address, .email-address-link, .footer-link { color: #69d4f2 !important; }
-      .code-panel { background: #102d47 !important; border-color: #315a75 !important; }
-      .code { color: #fff9ef !important; }
       .button-cell, .primary-button { background: #f1be4f !important; color: #071c33 !important; }
       .security-panel { background: #0e2941 !important; border-color: #2c4c63 !important; }
       .divider { border-color: #24465f !important; }
@@ -44,7 +41,6 @@
     [data-ogsc] .brand-name,
     [data-ogsc] .headline,
     [data-ogsc] .body-copy,
-    [data-ogsc] .email-address,
     [data-ogsc] .security-title { color: #fff9ef !important; }
     [data-ogsc] .eyebrow { color: #f1be4f !important; }
     [data-ogsc] .muted-copy,
@@ -53,14 +49,11 @@
     [data-ogsc] .email-address,
     [data-ogsc] .email-address-link,
     [data-ogsc] .footer-link { color: #69d4f2 !important; }
-    [data-ogsc] .code-panel { background: #102d47 !important; border-color: #315a75 !important; }
-    [data-ogsc] .code { color: #fff9ef !important; }
     [data-ogsc] .button-cell,
     [data-ogsc] .primary-button { background: #f1be4f !important; color: #071c33 !important; }
     [data-ogsc] .security-panel { background: #0e2941 !important; border-color: #2c4c63 !important; }
     [data-ogsb] .email-canvas { background: #061625 !important; }
     [data-ogsb] .email-card { background: #0b2238 !important; }
-    [data-ogsb] .code-panel { background: #102d47 !important; }
     [data-ogsb] .button-cell { background: #f1be4f !important; }
     [data-ogsb] .security-panel { background: #0e2941 !important; }
 
@@ -69,16 +62,15 @@
       .email-card { border-radius: 20px !important; }
       .content-cell { padding: 30px 22px 26px !important; }
       .headline { font-size: 28px !important; line-height: 34px !important; }
-      .code { font-size: 32px !important; letter-spacing: 6px !important; }
-      .button-cell { display: block !important; width: 100% !important; }
+      .button-table, .button-cell { width: 100% !important; }
+      .button-cell { display: block !important; }
       .primary-button { display: block !important; text-align: center !important; }
     }
   </style>
 </head>
 <body id="body" style="margin:0; padding:0; background:#061625;">
-  <!-- Preview text shown beside the subject line in many inboxes. -->
   <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent; mso-hide:all;">
-    Enter {{ .Token }} in ConCourse to finish creating your account.
+    Use this secure link to choose a new password for {{ .Email }}.
   </div>
 
   <table role="presentation" width="100%" class="email-canvas" bgcolor="#061625" style="width:100%; background:#061625;">
@@ -113,47 +105,38 @@
 
                     <div style="width:72px; height:2px; margin:30px 0 28px; background:#69d4f2; font-size:0; line-height:0;">&nbsp;</div>
 
-                    <div class="eyebrow" style="color:#f1be4f; font-size:12px; line-height:18px; font-weight:700; letter-spacing:1.7px; text-transform:uppercase;">Email verification</div>
-                    <h1 class="headline" style="margin:10px 0 16px; color:#fff9ef; font-size:32px; line-height:39px; font-weight:700; letter-spacing:-.8px;">Welcome to ConCourse.</h1>
-                    <p class="body-copy" style="margin:0; color:#d7e2e9; font-size:16px; line-height:25px;">You&rsquo;re one step away from your planning workspace and campus community. Enter the verification code below in ConCourse to confirm that this email belongs to you.</p>
+                    <div class="eyebrow" style="color:#f1be4f; font-size:12px; line-height:18px; font-weight:700; letter-spacing:1.7px; text-transform:uppercase;">Password recovery</div>
+                    <h1 class="headline" style="margin:10px 0 16px; color:#fff9ef; font-size:32px; line-height:39px; font-weight:700; letter-spacing:-.8px;">Choose a new password.</h1>
+                    <p class="body-copy" style="margin:0; color:#d7e2e9; font-size:16px; line-height:25px;">We received a request to reset the password for your ConCourse account. Continue below to choose a new password.</p>
 
-                    <p class="muted-copy" style="margin:24px 0 5px; color:#b9c8d4; font-size:12px; line-height:18px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;">Verify</p>
-                    <p class="email-address" style="margin:0 0 14px; color:#69d4f2; font-size:15px; line-height:22px; font-weight:600; word-break:break-word;"><a class="email-address-link" href="mailto:{{ .Email }}" style="color:#69d4f2; text-decoration:none;">{{ .Email }}</a></p>
+                    <p class="muted-copy" style="margin:24px 0 5px; color:#b9c8d4; font-size:12px; line-height:18px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;">Account</p>
+                    <p class="email-address" style="margin:0; color:#69d4f2; font-size:15px; line-height:22px; font-weight:600; word-break:break-word;"><a class="email-address-link" href="mailto:{{ .Email }}" style="color:#69d4f2; text-decoration:none;">{{ .Email }}</a></p>
 
-                    <table role="presentation" width="100%" class="code-panel" bgcolor="#102d47" style="width:100%; background:#102d47; border:1px solid #315a75; border-radius:16px;">
-                      <tr>
-                        <td align="center" style="padding:22px 12px 20px;">
-                          <div class="code" style="color:#fff9ef; font-size:36px; line-height:44px; font-weight:800; letter-spacing:8px; white-space:nowrap;">{{ .Token }}</div>
-                          <div class="muted-copy" style="margin-top:5px; color:#b9c8d4; font-size:12px; line-height:18px;">This code expires shortly. Only the newest code will work.</div>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <table role="presentation" style="margin:24px 0 0;">
+                    <table role="presentation" class="button-table" style="margin:26px 0 0;">
                       <tr>
                         <td class="button-cell" bgcolor="#f1be4f" style="background:#f1be4f; border-radius:13px; border-bottom:2px solid #69d4f2;">
-                          <a class="primary-button" href="{{ .SiteURL }}" target="_blank" style="display:inline-block; padding:15px 26px; background:#f1be4f; color:#071c33; font-size:16px; line-height:20px; font-weight:700; text-decoration:none; border-radius:13px;">Open ConCourse&nbsp;&nbsp;&rarr;</a>
+                          <a class="primary-button" href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block; padding:15px 26px; background:#f1be4f; color:#071c33; font-size:16px; line-height:20px; font-weight:700; text-decoration:none; border-radius:13px;">Reset password&nbsp;&nbsp;&rarr;</a>
                         </td>
                       </tr>
                     </table>
+                    <p class="muted-copy" style="margin:12px 0 0; color:#b9c8d4; font-size:12px; line-height:19px;">This secure link expires shortly and can be used only for this account.</p>
 
                     <table role="presentation" width="100%" class="security-panel" bgcolor="#0e2941" style="width:100%; margin-top:30px; background:#0e2941; border:1px solid #2c4c63; border-radius:14px;">
                       <tr>
                         <td style="padding:16px 18px;">
-                          <div class="security-title" style="color:#fff9ef; font-size:14px; line-height:20px; font-weight:700;">Keep your account secure</div>
-                          <div class="security-copy" style="margin-top:4px; color:#b9c8d4; font-size:13px; line-height:20px;">Never share this code. ConCourse will never ask for your password or verification code by email, message, or phone.</div>
+                          <div class="security-title" style="color:#fff9ef; font-size:14px; line-height:20px; font-weight:700;">Didn&rsquo;t request this?</div>
+                          <div class="security-copy" style="margin-top:4px; color:#b9c8d4; font-size:13px; line-height:20px;">You can safely ignore this email. Your password will stay unchanged. Never forward this recovery link or share your password.</div>
                         </td>
                       </tr>
                     </table>
 
                     <div class="divider" style="margin:30px 0 22px; border-top:1px solid #24465f; font-size:0; line-height:0;">&nbsp;</div>
-                    <p class="footer-copy" style="margin:0; color:#b9c8d4; font-size:12px; line-height:19px;">If you didn&rsquo;t create a ConCourse account, you can safely ignore this email.</p>
-                    <p class="footer-copy" style="margin:10px 0 0; color:#b9c8d4; font-size:12px; line-height:19px;">ConCourse Support &middot; <a class="footer-link" href="mailto:concourse.support@gmail.com" style="color:#69d4f2; text-decoration:underline;">concourse.support@gmail.com</a></p>
+                    <p class="footer-copy" style="margin:0; color:#b9c8d4; font-size:12px; line-height:19px;">ConCourse Support &middot; <a class="footer-link" href="mailto:concourse.support@gmail.com" style="color:#69d4f2; text-decoration:underline;">concourse.support@gmail.com</a></p>
                   </td>
                 </tr>
               </table>
 
-              <p class="footer-copy" style="margin:18px 12px 0; color:#9fb2c2; font-size:11px; line-height:17px; text-align:center;">This transactional email was sent because {{ .Email }} was used to create a ConCourse account.</p>
+              <p class="footer-copy" style="margin:18px 12px 0; color:#9fb2c2; font-size:11px; line-height:17px; text-align:center;">This security email was sent because a password reset was requested for {{ .Email }}.</p>
             </td>
           </tr>
         </table>

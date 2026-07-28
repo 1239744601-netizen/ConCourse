@@ -1,0 +1,272 @@
+/* ConCourse stabilization layer
+   Critical accessibility, authentication, and responsive fixes live at the
+   end of the cascade so older visual experiments cannot override them. */
+
+.site-notice {
+  position: fixed;
+  z-index: 1800;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(620px, calc(100vw - 32px));
+  padding: 14px 16px 14px 18px;
+  color: #f7fbff;
+  border: 1px solid rgba(139, 216, 255, .34);
+  border-radius: 18px;
+  background: rgba(6, 29, 51, .96);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .34);
+  transform: translateX(-50%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.site-notice.error {
+  border-color: rgba(255, 151, 151, .62);
+}
+
+.site-notice > span {
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.site-notice > button {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  padding: 0;
+  color: inherit;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .08);
+}
+
+.auth-card {
+  overflow: visible !important;
+}
+
+.auth-modal {
+  scroll-padding-block: 20px;
+}
+
+.auth-card label {
+  scroll-margin-top: 22px;
+}
+
+.auth-field-help {
+  margin: 6px 2px 10px !important;
+  color: #65798a !important;
+  font-size: 11.5px !important;
+  line-height: 1.45 !important;
+}
+
+.auth-password-control {
+  position: relative;
+}
+
+.auth-password-control > input {
+  padding-right: 78px !important;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  min-height: 34px;
+  padding: 0 10px;
+  color: #18568c;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(139, 216, 255, .18);
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 800;
+  transform: translateY(-50%);
+}
+
+.auth-password-toggle:hover {
+  color: #061526;
+  background: rgba(139, 216, 255, .34);
+  transform: translateY(-50%);
+}
+
+.auth-password-meter {
+  height: 5px;
+  margin: 9px 2px 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(50, 77, 98, .12);
+}
+
+.auth-password-meter > span {
+  display: block;
+  width: 8%;
+  height: 100%;
+  border-radius: inherit;
+  background: #d95b5b;
+  transition: width .2s ease, background-color .2s ease;
+}
+
+.auth-password-meter > span[data-strength="2"] {
+  background: #d49b28;
+}
+
+.auth-password-meter > span[data-strength="3"] {
+  background: #19835b;
+}
+
+.auth-confirm-password-field {
+  margin-bottom: 4px;
+}
+
+.auth-consent {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 13px 14px;
+  color: #263d50;
+  border: 1px solid rgba(47, 109, 246, .15);
+  border-radius: 14px;
+  background: rgba(237, 247, 252, .72);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.auth-consent input {
+  width: 18px !important;
+  min-height: 18px !important;
+  margin: 1px 0 0;
+}
+
+.auth-privacy-details {
+  margin: 9px 2px 0;
+  color: #526b7f;
+  font-size: 11.5px;
+}
+
+.auth-privacy-details summary {
+  width: fit-content;
+  color: #18568c;
+  cursor: pointer;
+  font-weight: 760;
+}
+
+.auth-privacy-details p {
+  margin: 8px 0 0 !important;
+  line-height: 1.55;
+}
+
+.auth-honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+.auth-help-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.auth-reset-panel {
+  margin-top: 16px;
+}
+
+.auth-verification-heading div > span {
+  max-width: 100% !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+.auth-card :where(input, select):user-invalid {
+  border-color: rgba(196, 50, 58, .66);
+}
+
+.auth-card :where(input, select, button, summary):focus-visible {
+  outline: 3px solid rgba(47, 109, 246, .38);
+  outline-offset: 3px;
+}
+
+html[lang="en"] :is(
+  h1,
+  h2,
+  h3,
+  .panel-heading h2,
+  .wishlist-header h2,
+  .schedule-page-header h1,
+  .hub-page-header h1,
+  .hub-section-heading h2,
+  .marketplace-section-heading h2,
+  .citation-panel h2,
+  .citation-panel h3
+) {
+  text-transform: capitalize;
+}
+
+@media (max-width: 1380px) and (min-width: 761px) {
+  body.app-active #landingScreen .header-row {
+    grid-template-columns: minmax(210px, auto) minmax(0, 1fr) !important;
+    grid-template-areas:
+      "brand utility"
+      "nav nav";
+    row-gap: 9px !important;
+  }
+
+  body.app-active #landingScreen .brand {
+    grid-area: brand;
+  }
+
+  body.app-active #landingScreen .primary-navigation {
+    grid-area: nav;
+  }
+
+  body.app-active #landingScreen .auth-bar {
+    grid-area: utility;
+    max-width: 100%;
+  }
+
+  body.app-active #landingScreen .auth-identity {
+    max-width: min(300px, 31vw) !important;
+  }
+
+  body.app-active #landingScreen .auth-academic,
+  body.app-active #landingScreen .auth-user {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .auth-card {
+    margin-block: 0 !important;
+    padding: 22px 18px !important;
+    border-radius: 24px !important;
+  }
+
+  .auth-modal {
+    align-items: flex-start !important;
+    padding-inline: 12px !important;
+  }
+
+  body.app-active #landingScreen .auth-identity {
+    max-width: 44vw !important;
+  }
+
+  body.app-active #landingScreen .auth-academic {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-password-meter > span {
+    transition: none;
+  }
+}

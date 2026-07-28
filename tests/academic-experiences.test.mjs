@@ -176,7 +176,7 @@ test("Community, Market, and Messages seed interactions stay client-only", () =>
   const messageExample = sourceSection(
     hub,
     "function messageExampleSeed(){",
-    "function renderConversations(conversations){"
+    "function updateConversationRow(button, conversation){"
   );
   assert.match(messageExample, /hubState\.messageDemoMessages/);
   assert.match(messageExample, /hubState\.messageDemoMode = true/);
@@ -328,7 +328,7 @@ test("message polling preserves stable rows and uses a real circular demo portra
   const messageLauncher = sourceSection(
     hub,
     "function appendMessageExampleLauncher(list){",
-    "function renderConversations(conversations){"
+    "function updateConversationRow(button, conversation){"
   );
   assert.match(messageLauncher, /createAvatar\("Alex Wong", null, 0, "hub-message-demo-avatar"\)/);
   assert.match(messageLauncher, /photo\.src = "concourse-campus-community\.jpg"/);
@@ -336,7 +336,7 @@ test("message polling preserves stable rows and uses a real circular demo portra
   const conversationLoader = sourceSection(
     hub,
     "async function loadConversations(",
-    "function renderMessages(messages){"
+    "function messageSortKey(message){"
   );
   assert.match(conversationLoader, /querySelector\("\.hub-conversation-button"\)/);
   assert.match(conversationLoader, /conversationRenderSignature\(hubState\.conversations\)/);
@@ -397,11 +397,11 @@ test("Community and Market render their empty-state examples before live feeds s
   );
   assert.match(
     communityLoader,
-    /if\(!authClient \|\| !currentUser\)\{[\s\S]*?communitySeedAvailable\(\)[\s\S]*?renderCommunityFeed\(\[\]\)/
+    /const canShowSeedPosts = !append && communitySeedAvailable\(\);[\s\S]*?if\(!authClient \|\| !currentUser\)\{[\s\S]*?if\(canShowSeedPosts\) renderCommunityFeed\(\[\]\)/
   );
   assert.match(
     communityLoader,
-    /if\(!append && \(!hubState\.feed\.length \|\| hubState\.feedMode !== mode\)\)\{[\s\S]*?communitySeedAvailable\(\)[\s\S]*?renderCommunityFeed\(\[\]\)/
+    /if\(!append && \(!hubState\.feed\.length \|\| hubState\.feedMode !== mode\)\)\{[\s\S]*?if\(canShowSeedPosts\) renderCommunityFeed\(\[\]\)/
   );
 
   const marketLoading = sourceSection(

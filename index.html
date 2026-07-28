@@ -6,18 +6,18 @@
 <title>ConCourse — Conquer your course registrations</title>
 <meta name="description" content="Plan your semester, meet your campus community, and exchange study materials and campus essentials on ConCourse." />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ConCourse Campus Market" />
-<meta property="og:description" content="Discover notes, textbooks, and campus essentials from your university community." />
+<meta property="og:title" content="ConCourse — Plan Your Semester and Connect on Campus" />
+<meta property="og:description" content="Build a conflict-free timetable, explore academic tools, join your campus community, and exchange useful student resources." />
 <meta property="og:url" content="https://concoursehk.pages.dev/" />
 <meta property="og:image" content="https://concoursehk.pages.dev/concourse-marketplace-og.png" />
 <meta property="og:image:width" content="1734" />
 <meta property="og:image:height" content="907" />
-<meta property="og:image:alt" content="ConCourse Campus Market — notes, textbooks, tech, and campus essentials" />
+<meta property="og:image:alt" content="ConCourse academic planning, campus community, and student marketplace" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="ConCourse Campus Market" />
-<meta name="twitter:description" content="Discover notes, textbooks, and campus essentials from your university community." />
+<meta name="twitter:title" content="ConCourse — Plan Your Semester and Connect on Campus" />
+<meta name="twitter:description" content="Build a conflict-free timetable, explore academic tools, join your campus community, and exchange useful student resources." />
 <meta name="twitter:image" content="https://concoursehk.pages.dev/concourse-marketplace-og.png" />
-<meta name="twitter:image:alt" content="ConCourse Campus Market — notes, textbooks, tech, and campus essentials" />
+<meta name="twitter:image:alt" content="ConCourse academic planning, campus community, and student marketplace" />
 <meta name="theme-color" content="#061526" />
 <script>
   (() => {
@@ -1728,6 +1728,7 @@
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
 <link rel="stylesheet" href="community-redesign.css?v=20260728-social-comments1" />
 <link rel="stylesheet" href="academic-experiences.css?v=20260728-readable-controls1" />
+<link rel="stylesheet" href="concourse-stabilization.css?v=20260728-stability1" />
 </head>
 <body>
 <header id="landingScreen">
@@ -1747,7 +1748,7 @@
     <button type="button" class="primary-navigation-button" id="topTimetableBtn" hidden data-i18n="timetableNav">Timetable</button>
     <button type="button" class="primary-navigation-button" id="hubOpenBtn" hidden data-i18n="studentHub">Student hub</button>
   </nav>
-  <div class="auth-bar" aria-label="Account controls">
+  <div class="auth-bar" aria-label="Account controls" data-i18n-aria-label="accountControls">
     <div class="auth-identity">
       <span class="auth-user" id="authUser">Not signed in</span>
       <span class="auth-academic" id="authAcademic" hidden></span>
@@ -1773,7 +1774,7 @@
         </svg>
       </span>
       <span class="language-text" data-i18n="language">Language</span>
-      <select class="language-select" id="languageSelect" aria-label="Website language">
+      <select class="language-select" id="languageSelect" aria-label="Website language" data-i18n-aria-label="websiteLanguage">
         <option value="en">English</option>
         <option value="zh-CN">普通话</option>
         <option value="zh-HK">粵語</option>
@@ -1804,6 +1805,11 @@
   </div>
 </header>
 
+<div class="site-notice" id="siteNotice" role="status" aria-live="polite" hidden>
+  <span id="siteNoticeText"></span>
+  <button type="button" id="siteNoticeClose" aria-label="Dismiss notification" data-i18n-aria-label="dismissNotification">×</button>
+</div>
+
 <div class="auth-modal" id="authModal" hidden>
   <section class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
     <div class="auth-card-head">
@@ -1811,19 +1817,34 @@
         <h2 id="authTitle" data-i18n="accountTitle">Your ConCourse account</h2>
         <p id="authSubtitle">Sign in to continue to your planning workspace.</p>
       </div>
-      <button type="button" class="btn-ghost auth-close" id="authCloseBtn" aria-label="Close sign-in dialog">×</button>
+      <button type="button" class="btn-ghost auth-close" id="authCloseBtn" aria-label="Close sign-in dialog" data-i18n-aria-label="closeSignInDialog">×</button>
     </div>
-    <div class="auth-mode-switch" role="group" aria-label="Account action">
+    <div class="auth-mode-switch" role="group" aria-label="Account action" data-i18n-aria-label="accountAction">
       <button type="button" class="auth-mode-btn active" id="signInBtn" aria-pressed="true" data-i18n="signIn">Sign in</button>
       <button type="button" class="auth-mode-btn" id="signUpBtn" aria-pressed="false" data-i18n="createAccount">Create account</button>
     </div>
-    <label for="authEmail" data-i18n="email">Email</label>
-    <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+    <label for="authEmail" id="authEmailLabel" data-i18n="email">Email</label>
+    <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required aria-describedby="authEmailHelp" />
+    <p class="auth-field-help" id="authEmailHelp" data-i18n="emailHelp">Use an address you can open now. You must verify it before entering ConCourse.</p>
     <div id="authPasswordField">
       <label for="authPassword" data-i18n="password">Password</label>
-      <input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters" data-i18n-placeholder="passwordPlaceholder" />
+      <div class="auth-password-control">
+        <input id="authPassword" type="password" minlength="10" autocomplete="current-password" placeholder="At least 10 characters" data-i18n-placeholder="passwordPlaceholder" required aria-describedby="authPasswordHelp passwordStrengthText" />
+        <button type="button" class="auth-password-toggle" id="authPasswordToggle" aria-label="Show password" data-i18n-aria-label="showPassword">
+          <span aria-hidden="true">Show</span>
+        </button>
+      </div>
+      <div class="auth-password-guidance" id="authPasswordGuidance" hidden>
+        <div class="auth-password-meter" aria-hidden="true"><span id="passwordStrengthBar"></span></div>
+        <p class="auth-field-help" id="passwordStrengthText" aria-live="polite"></p>
+      </div>
+      <p class="auth-field-help" id="authPasswordHelp" data-i18n="passwordHelp">Use at least 10 characters with a mix of letters, numbers, and symbols.</p>
     </div>
     <div class="registration-fields" id="registrationFields" hidden>
+      <div class="auth-confirm-password-field">
+        <label for="authPasswordConfirm" data-i18n="confirmPassword">Confirm password</label>
+        <input id="authPasswordConfirm" type="password" minlength="10" autocomplete="new-password" placeholder="Enter the password again" data-i18n-placeholder="confirmPasswordPlaceholder" />
+      </div>
       <label for="authUsername" data-i18n="username">Username</label>
       <div class="username-wrap">
         <input id="authUsername" type="text" minlength="3" maxlength="24" autocomplete="username" placeholder="Choose a unique username" data-i18n-placeholder="usernamePlaceholder" aria-describedby="usernameStatus" />
@@ -1887,6 +1908,18 @@
         <option value="Psychology"></option>
         <option value="Sociology"></option>
       </datalist>
+      <label class="auth-honeypot" aria-hidden="true">
+        <span>Leave this field empty</span>
+        <input id="authWebsiteCheck" type="text" tabindex="-1" autocomplete="off" />
+      </label>
+      <label class="auth-consent">
+        <input id="authPrivacyConsent" type="checkbox" />
+        <span data-i18n="privacyConsent">I understand how ConCourse uses my account, academic profile, and community data.</span>
+      </label>
+      <details class="auth-privacy-details">
+        <summary data-i18n="privacySummary">Privacy summary</summary>
+        <p data-i18n="privacyDetails">Your legal name and contact details are restricted to authorised administrators and are not shown publicly. Academic and community data is stored under account-level access rules. You may request account deletion from your profile. Operational and legal retention may apply.</p>
+      </details>
     </div>
     <div class="auth-verification-panel" id="authVerificationPanel" hidden>
       <div class="auth-verification-heading">
@@ -1897,12 +1930,24 @@
         </div>
       </div>
       <label for="authVerificationCode" data-i18n="verificationCode">Verification code</label>
-      <input class="auth-verification-code" id="authVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" data-i18n-placeholder="verificationCodePlaceholder" aria-describedby="authVerificationHelp" />
-      <p class="auth-verification-help" id="authVerificationHelp" data-i18n="verificationCodeHelp">Enter the six-digit code from the newest ConCourse email. You can paste it here.</p>
+      <input class="auth-verification-code" id="authVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{8}" placeholder="00000000" data-i18n-placeholder="verificationCodePlaceholder" aria-describedby="authVerificationHelp" />
+      <p class="auth-verification-help" id="authVerificationHelp" data-i18n="verificationCodeHelp">Enter the eight-digit code from the newest ConCourse email. You can paste it here.</p>
       <button type="button" class="auth-change-email" id="authChangeEmailBtn" data-i18n="useDifferentEmail">Use a different email</button>
+    </div>
+    <div class="auth-reset-panel" id="authResetPanel" hidden>
+      <label for="authNewPassword" data-i18n="newPassword">New password</label>
+      <div class="auth-password-control">
+        <input id="authNewPassword" type="password" minlength="10" autocomplete="new-password" placeholder="At least 10 characters" data-i18n-placeholder="passwordPlaceholder" />
+        <button type="button" class="auth-password-toggle" id="authNewPasswordToggle" aria-label="Show password" data-i18n-aria-label="showPassword"><span aria-hidden="true">Show</span></button>
+      </div>
+      <label for="authNewPasswordConfirm" data-i18n="confirmPassword">Confirm password</label>
+      <input id="authNewPasswordConfirm" type="password" minlength="10" autocomplete="new-password" placeholder="Enter the password again" data-i18n-placeholder="confirmPasswordPlaceholder" />
     </div>
     <button type="button" class="btn-primary auth-submit" id="authSubmitBtn">Sign in</button>
     <p class="auth-message" id="authMessage" aria-live="polite"></p>
+    <div class="auth-help-row" id="authHelpRow">
+      <button type="button" class="auth-resend" id="authForgotPasswordBtn" data-i18n="forgotPassword">Forgot password?</button>
+    </div>
     <div class="auth-resend-row" id="authResendRow">
       <span data-i18n="verificationEmailMissing">Still waiting for a verification email?</span>
       <button type="button" class="auth-resend" id="authResendBtn" data-i18n="resendVerification">Resend verification email</button>
@@ -3386,6 +3431,198 @@ Object.entries(HUB_COPY_REFINEMENTS).forEach(([language, copy]) => {
   TRANSLATIONS[language] = Object.assign(TRANSLATIONS[language] || {}, copy);
 });
 
+const AUTH_AND_DISPLAY_COPY = Object.freeze({
+  en:Object.freeze({
+    signIn:"Sign In", signOut:"Sign Out", createAccount:"Create Account", saveNow:"Save Now",
+    studentHub:"Student Hub", accountTitle:"Your ConCourse Account", startPlanning:"Start Planning",
+    courseBuilder:"Course Builder", semesterCriteria:"Semester Criteria", schedulePreferences:"Schedule Preferences",
+    academicProfile:"Academic Profile", courseWishlist:"Course Wishlist", weeklyTimetable:"Weekly Timetable",
+    bestSchedule:"Best Conflict-Free Schedule", finalTimetableTitle:"Final Semester Timetable",
+    saveFinalTimetable:"Save as Final Timetable", enterStudentHub:"Enter Student Hub",
+    hubCommunity:"Campus Community", hubMarketplace:"Campus Market", hubMessages:"Messages",
+    hubAcademicTools:"Academic Tools", hubInsights:"Academic Insights", hubProfile:"Profile",
+    courseChoiceIntelligence:"Course Choice Intelligence", finalScheduleRecord:"Final Schedule Record",
+    finalCourses:"Final Courses", personalDetails:"Personal Details", socialConnections:"Social Connections",
+    privacyAndSafety:"Privacy and Safety", authenticatedConnections:"Authenticated Connections",
+    selfReportedProfiles:"Self-Reported Profiles", identityAndTrust:"Identity and Trust",
+    completeYourProfile:"Complete Your Profile", privateConversations:"Private Conversations",
+    marketplaceRecentListings:"Recent Listings", marketplaceTransactionFlow:"Transaction Flow",
+    marketplaceRightsTitle:"Trade Responsibly", marketplaceSellerStudio:"Seller Studio",
+    marketplaceCreateListing:"Create a Listing",
+    emailHelp:"Use an address you can open now. You must verify it before entering ConCourse.",
+    passwordPlaceholder:"At least 10 characters",
+    passwordHelp:"Use at least 10 characters with a mix of letters, numbers, and symbols.",
+    confirmPassword:"Confirm Password", confirmPasswordPlaceholder:"Enter the password again",
+    showPassword:"Show password", hidePassword:"Hide password", showPasswordShort:"Show", hidePasswordShort:"Hide",
+    passwordWeak:"Password strength: weak", passwordFair:"Password strength: fair", passwordStrong:"Password strength: strong",
+    passwordMismatch:"The passwords do not match.", passwordTooWeak:"Use at least 10 characters and include letters and numbers.",
+    privacyConsent:"I understand how ConCourse uses my account, academic profile, and community data.",
+    privacySummary:"Privacy Summary",
+    privacyDetails:"Your legal name and contact details are restricted to authorised administrators and are not shown publicly. Academic and community data is stored under account-level access rules. You may request account deletion from your profile. Operational and legal retention may apply.",
+    realNamePrivacy:"Stored separately from your public profile. Authorised administrators can access it for account support, safety, and legal obligations; it is not shown to other students.",
+    accountControls:"Account Controls", accountAction:"Account Action", websiteLanguage:"Website Language",
+    closeSignInDialog:"Close Sign-In Dialog", dismissNotification:"Dismiss Notification",
+    privacyConsentRequired:"Review and accept the privacy summary before creating your account.",
+    forgotPassword:"Forgot Password?", sendResetLink:"Send Reset Link", resetPasswordTitle:"Reset Your Password",
+    resetPasswordSubtitle:"Enter your email and ConCourse will send a secure password-reset link.",
+    resetEmailSent:"If an account exists for that email, a password-reset link has been requested. Check the newest message and your spam folder.",
+    resetEmailFailed:"A password-reset link could not be requested right now. Please try again later.",
+    newPassword:"New Password", updatePassword:"Update Password",
+    passwordUpdated:"Your password has been updated. You can continue to ConCourse.",
+    recoveryExpired:"This password-reset session is missing or has expired. Request a new link.",
+    signedOutError:"ConCourse could not sign you out. Check your connection and try again.",
+    verificationMisconfigured:"Account creation is paused because required email verification is disabled in Supabase. Turn on Confirm Email before accepting new accounts.",
+    finalTimetableSyncComplete:"Your final timetable and course-choice insights are saved.",
+    finalTimetableSyncFailed:"Your timetable is saved privately, but course-choice insights could not be updated. Check the latest Supabase migration and try saving again.",
+    stateSaveFailed:"Your latest planner changes could not be saved. Check your connection and try Save Now.",
+    profileSyncFailed:"Your planner was saved, but the degree and study-year fields could not be copied to your profile. Run the latest Supabase migration, then save again.",
+    stateLoadFailed:"Your saved planner could not be loaded. Check your connection and refresh the page.",
+    profileLoadPartial:"Your timetable loaded, but part of your academic profile is unavailable. Run the latest Supabase migration to restore it.",
+    accountCreated:"Registration received. If {email} is eligible, an eight-digit code will arrive there. Enter the newest code below.",
+    verificationCodePlaceholder:"00000000",
+    verificationCodeHelp:"Enter the eight-digit code from the newest ConCourse email. You can paste it here.",
+    invalidVerificationCode:"Enter the eight-digit code from your email.",
+    authEmailNotConfirmed:"This email has not been verified. Resend a code, then enter the eight digits from the newest email.",
+    invalidCredentials:"Enter a valid email and a password of at least 10 characters.",
+    breakEndAfterStart:"The break end time must be later than its start time.",
+    breakDuplicate:"That break window has already been added.",
+    sessionLimit:"This course has {count} weekly session(s). {next}",
+    sessionLimitMulti:"Save this option before starting the next one.",
+    sessionLimitFixed:"Remove a session to change it, or choose two sessions per week.",
+    selectSessionDay:"Choose the day on which this session meets.",
+    sessionEndAfterStart:"The session end time must be later than its start time.",
+    sessionUniqueDay:"Each weekly session must use a different day.",
+    sessionOverlap:"This session overlaps another session in the same option.",
+    optionNeedsSessions:"Complete all {count} weekly session(s) before saving this option.",
+    optionDuplicate:"That time option has already been saved.",
+    courseNameRequired:"Enter a course name.",
+    sessionsChanged:"The weekly session count changed. Rebuild this course's time options.",
+    finishCurrentOption:"Complete all {count} weekly session(s) in the current option, or clear it.",
+    courseScheduleRequired:"Add this course's complete weekly schedule before adding the course.",
+    wishlistRequired:"Add Courses First",
+    wishlistRequiredDetail:"Build your course wishlist before generating a timetable.",
+    semesterCreditsRequired:"Set the required minimum credits for this semester before generating a timetable.",
+    creditRangeConflict:"The maximum credit value ({maximum}) is lower than the required minimum ({minimum}).",
+    courseCountConflict:"{required} course(s) are marked as required, but the requested total is {requested}. Increase the total or revise the required courses.",
+    noScheduleTitle:"No Matching Schedule",
+    noScheduleBaseCause:"the required {credits} credits cannot be reached without a time conflict",
+    noScheduleFreeCause:"the selected free weekdays leave too little room",
+    noScheduleMustCause:"required courses overlap one another",
+    noScheduleSelfCause:"one course contains overlapping weekly sessions",
+    noScheduleAdvice:"Try reducing the required credits or free weekdays, adding section options, or increasing the credit limit.",
+    searchTooBroadTitle:"Search Is Too Broad",
+    searchTooBroadBody:"ConCourse reached its safety limit before it could rank every option. Narrow the credit range, choose free weekdays, remove unused course options, or mark required courses, then generate again."
+  }),
+  "zh-CN":Object.freeze({
+    emailHelp:"请使用现在可以查收邮件的地址。完成验证后才能进入 ConCourse。",
+    passwordPlaceholder:"至少 10 个字符",
+    passwordHelp:"请使用至少 10 个字符，并组合字母、数字和符号。",
+    confirmPassword:"确认密码", confirmPasswordPlaceholder:"再次输入密码",
+    showPassword:"显示密码", hidePassword:"隐藏密码", showPasswordShort:"显示", hidePasswordShort:"隐藏",
+    passwordWeak:"密码强度：弱", passwordFair:"密码强度：一般", passwordStrong:"密码强度：强",
+    passwordMismatch:"两次输入的密码不一致。", passwordTooWeak:"请使用至少 10 个字符，并同时包含字母和数字。",
+    privacyConsent:"我了解 ConCourse 如何使用我的账户、学术资料和社区数据。",
+    privacySummary:"隐私摘要",
+    privacyDetails:"你的法定姓名和联系资料仅限获授权的管理员访问，不会公开显示。学术与社区数据受账户级访问规则保护。你可以在个人资料中申请删除账户；为满足运营或法律要求，部分记录可能需要保留。",
+    realNamePrivacy:"这些资料与公开个人资料分开保存。获授权的管理员可在提供账户支持、保障安全或履行法律义务时访问；其他学生无法查看。",
+    accountControls:"账户控制", accountAction:"账户操作", websiteLanguage:"网站语言",
+    closeSignInDialog:"关闭登录窗口", dismissNotification:"关闭通知",
+    privacyConsentRequired:"创建账户前，请阅读并同意隐私摘要。",
+    forgotPassword:"忘记密码？", sendResetLink:"发送重置链接", resetPasswordTitle:"重置密码",
+    resetPasswordSubtitle:"输入邮箱，ConCourse 会发送安全的密码重置链接。",
+    resetEmailSent:"如果该邮箱已有账户，系统已请求发送密码重置链接。请查看最新邮件和垃圾邮件文件夹。",
+    resetEmailFailed:"暂时无法请求密码重置链接，请稍后重试。",
+    newPassword:"新密码", updatePassword:"更新密码", passwordUpdated:"密码已更新，你可以继续使用 ConCourse。",
+    recoveryExpired:"密码重置会话不存在或已过期，请重新申请链接。",
+    signedOutError:"暂时无法退出登录，请检查网络后重试。",
+    verificationMisconfigured:"由于 Supabase 已关闭必需的邮箱验证，账户创建已暂停。接受新账户前，请开启“确认邮箱”。",
+    finalTimetableSyncComplete:"你的最终课表和选课趋势资料已保存。",
+    finalTimetableSyncFailed:"你的课表已私密保存，但选课趋势资料未能更新。请检查最新的 Supabase 迁移后再次保存。",
+    stateSaveFailed:"最新的课表规划更改未能保存。请检查网络，然后点击“立即保存”重试。",
+    profileSyncFailed:"课表规划已保存，但学位层次和就读学年未能同步到个人资料。请执行最新的 Supabase 迁移后再次保存。",
+    stateLoadFailed:"已保存的课表规划未能载入。请检查网络并刷新页面。",
+    profileLoadPartial:"课表已载入，但部分学术资料暂时无法使用。请执行最新的 Supabase 迁移以恢复。",
+    accountCreated:"注册请求已接收。如果 {email} 符合发送条件，八位验证码将发送到该邮箱。请在下方输入最新验证码。",
+    verificationCodePlaceholder:"00000000", verificationCodeHelp:"输入最新 ConCourse 邮件中的八位验证码，也可以直接粘贴。",
+    invalidVerificationCode:"请输入邮件中的八位验证码。",
+    authEmailNotConfirmed:"此邮箱尚未验证。请重新发送验证码，并输入最新邮件中的八位数字。",
+    invalidCredentials:"请输入有效邮箱和至少 10 位密码。",
+    breakEndAfterStart:"休息时段的结束时间必须晚于开始时间。", breakDuplicate:"这个休息时段已添加。",
+    sessionLimit:"这门课程每周有 {count} 节课。{next}", sessionLimitMulti:"请先保存此时间选项，再建立下一个选项。", sessionLimitFixed:"如需更改，请先移除一节课，或选择每周两节课。",
+    selectSessionDay:"请选择这节课的上课日。", sessionEndAfterStart:"下课时间必须晚于上课时间。",
+    sessionUniqueDay:"每周各节课必须安排在不同日期。", sessionOverlap:"这节课与同一选项内的另一节课时间重叠。",
+    optionNeedsSessions:"保存此选项前，请完成全部 {count} 节每周课程。", optionDuplicate:"这个时间选项已保存。",
+    courseNameRequired:"请输入课程名称。", sessionsChanged:"每周上课次数已更改，请重新建立这门课程的时间选项。",
+    finishCurrentOption:"请完成当前选项的全部 {count} 节每周课程，或将其清空。", courseScheduleRequired:"添加课程前，请先填写完整的每周上课安排。",
+    wishlistRequired:"请先添加课程", wishlistRequiredDetail:"生成课表前，请先建立课程愿望清单。",
+    semesterCreditsRequired:"生成课表前，请填写本学期的最低必修学分。", creditRangeConflict:"最高学分（{maximum}）低于最低要求（{minimum}）。",
+    courseCountConflict:"你已将 {required} 门课程设为必修，但目标总数只有 {requested} 门。请增加总数或调整必修课程。",
+    noScheduleTitle:"没有符合条件的课表", noScheduleBaseCause:"无法在没有时间冲突的情况下达到 {credits} 学分",
+    noScheduleFreeCause:"指定的空闲工作日令可排课时间不足", noScheduleMustCause:"必修课程之间时间重叠",
+    noScheduleSelfCause:"某门课程本身的每周课节时间重叠", noScheduleAdvice:"请尝试降低学分或空闲日要求、增加班别选项，或提高学分上限。",
+    searchTooBroadTitle:"搜索范围过大", searchTooBroadBody:"ConCourse 在完成全部方案排名前已达到安全上限。请缩小学分范围、指定空闲日、移除不用的课程选项，或标记必修课程后重新生成。",
+    studyYear1:"第 1 学年", studyYear2:"第 2 学年", studyYear3:"第 3 学年", studyYear4:"第 4 学年",
+    studyYear5:"第 5 学年", studyYear6:"第 6 学年", studyYear7:"第 7 学年", studyYear8:"第 8 学年",
+    hubCommunity:"校园社群", hubMessages:"私信"
+  }),
+  "zh-HK":Object.freeze({
+    emailHelp:"請使用而家可以查收電郵嘅地址。完成驗證後先可以進入 ConCourse。",
+    passwordPlaceholder:"至少 10 個字元",
+    passwordHelp:"請使用至少 10 個字元，並混合英文字母、數字同符號。",
+    confirmPassword:"確認密碼", confirmPasswordPlaceholder:"再次輸入密碼",
+    showPassword:"顯示密碼", hidePassword:"隱藏密碼", showPasswordShort:"顯示", hidePasswordShort:"隱藏",
+    passwordWeak:"密碼強度：弱", passwordFair:"密碼強度：一般", passwordStrong:"密碼強度：強",
+    passwordMismatch:"兩次輸入嘅密碼唔一致。", passwordTooWeak:"請使用至少 10 個字元，並同時包含英文字母同數字。",
+    privacyConsent:"我明白 ConCourse 會點樣使用我嘅帳戶、學術資料同社群資料。",
+    privacySummary:"私隱摘要",
+    privacyDetails:"你嘅法定姓名同聯絡資料只限獲授權嘅管理員存取，唔會公開顯示。學術同社群資料受帳戶層級存取規則保護。你可以喺個人資料提出刪除帳戶申請；為符合營運或法律要求，部分記錄可能需要保留。",
+    realNamePrivacy:"呢啲資料會同公開個人資料分開儲存。獲授權嘅管理員可以喺提供帳戶支援、保障安全或者履行法律責任時存取；其他學生睇唔到。",
+    accountControls:"帳戶控制", accountAction:"帳戶操作", websiteLanguage:"網站語言",
+    closeSignInDialog:"關閉登入視窗", dismissNotification:"關閉通知",
+    privacyConsentRequired:"建立帳戶前，請閱讀並同意私隱摘要。",
+    forgotPassword:"忘記密碼？", sendResetLink:"傳送重設連結", resetPasswordTitle:"重設密碼",
+    resetPasswordSubtitle:"輸入電郵，ConCourse 會傳送安全嘅密碼重設連結。",
+    resetEmailSent:"如果呢個電郵已有帳戶，系統已要求傳送密碼重設連結。請查看最新電郵同垃圾郵件資料夾。",
+    resetEmailFailed:"暫時未能要求密碼重設連結，請稍後再試。",
+    newPassword:"新密碼", updatePassword:"更新密碼", passwordUpdated:"密碼已更新，你可以繼續使用 ConCourse。",
+    recoveryExpired:"密碼重設階段不存在或已過期，請重新申請連結。",
+    signedOutError:"暫時未能登出，請檢查網絡後再試。",
+    verificationMisconfigured:"由於 Supabase 已關閉必要嘅電郵驗證，帳戶建立已暫停。接受新帳戶前，請開啟「確認電郵」。",
+    finalTimetableSyncComplete:"你嘅最終時間表同選科趨勢資料已儲存。",
+    finalTimetableSyncFailed:"你嘅時間表已私人儲存，但選科趨勢資料未能更新。請檢查最新 Supabase 遷移後再儲存。",
+    stateSaveFailed:"最新嘅時間表規劃更改未能儲存。請檢查網絡，然後撳「立即儲存」再試。",
+    profileSyncFailed:"時間表規劃已儲存，但學位程度同就讀學年未能同步到個人資料。請執行最新 Supabase 遷移後再儲存。",
+    stateLoadFailed:"已儲存嘅時間表規劃未能載入。請檢查網絡並重新整理頁面。",
+    profileLoadPartial:"時間表已載入，但部分學術資料暫時未能使用。請執行最新 Supabase 遷移以恢復。",
+    accountCreated:"登記要求已收到。如果 {email} 符合傳送條件，八位驗證碼會傳送到呢個電郵。請喺下方輸入最新驗證碼。",
+    verificationCodePlaceholder:"00000000", verificationCodeHelp:"輸入最新 ConCourse 電郵入面嘅八位驗證碼，亦可以直接貼上。",
+    invalidVerificationCode:"請輸入電郵入面嘅八位驗證碼。",
+    authEmailNotConfirmed:"呢個電郵仲未驗證。請重新傳送驗證碼，再輸入最新電郵入面嘅八位數字。",
+    invalidCredentials:"請輸入有效電郵同至少 10 位密碼。",
+    breakEndAfterStart:"休息時段嘅結束時間必須遲過開始時間。", breakDuplicate:"呢個休息時段已經加入。",
+    sessionLimit:"呢科每星期有 {count} 節課。{next}", sessionLimitMulti:"請先儲存呢個時間選項，再建立下一個選項。", sessionLimitFixed:"如要更改，請先移除一節課，或者選擇每星期兩節課。",
+    selectSessionDay:"請選擇呢節課嘅上課日。", sessionEndAfterStart:"落堂時間必須遲過上堂時間。",
+    sessionUniqueDay:"每星期各節課必須安排喺唔同日子。", sessionOverlap:"呢節課同同一選項入面另一節課嘅時間重疊。",
+    optionNeedsSessions:"儲存呢個選項前，請完成全部 {count} 節每周課堂。", optionDuplicate:"呢個時間選項已經儲存。",
+    courseNameRequired:"請輸入科目名稱。", sessionsChanged:"每星期上堂次數已更改，請重新建立呢科嘅時間選項。",
+    finishCurrentOption:"請完成目前選項嘅全部 {count} 節每周課堂，或者將佢清空。", courseScheduleRequired:"加入科目前，請先填妥完整嘅每周上堂安排。",
+    wishlistRequired:"請先加入科目", wishlistRequiredDetail:"產生時間表前，請先建立選科清單。",
+    semesterCreditsRequired:"產生時間表前，請填寫今個學期嘅最低必修學分。", creditRangeConflict:"最高學分（{maximum}）低過最低要求（{minimum}）。",
+    courseCountConflict:"你已經將 {required} 科設為必修，但目標總數只有 {requested} 科。請增加總數或者調整必修科目。",
+    noScheduleTitle:"搵唔到符合條件嘅時間表", noScheduleBaseCause:"未能喺冇時間衝突嘅情況下達到 {credits} 學分",
+    noScheduleFreeCause:"指定嘅空閒平日令可排課時間不足", noScheduleMustCause:"必修科目之間時間重疊",
+    noScheduleSelfCause:"某科本身嘅每周課堂時間重疊", noScheduleAdvice:"請嘗試降低學分或空閒日要求、增加班別選項，或者提高學分上限。",
+    searchTooBroadTitle:"搜尋範圍過大", searchTooBroadBody:"ConCourse 喺完成全部方案排名前已達到安全上限。請收窄學分範圍、指定空閒日、移除唔需要嘅科目選項，或者標記必修科目後再產生。",
+    studyYear1:"第 1 學年", studyYear2:"第 2 學年", studyYear3:"第 3 學年", studyYear4:"第 4 學年",
+    studyYear5:"第 5 學年", studyYear6:"第 6 學年", studyYear7:"第 7 學年", studyYear8:"第 8 學年",
+    hubCommunity:"校園社群", hubMessages:"私訊"
+  })
+});
+
+Object.entries(AUTH_AND_DISPLAY_COPY).forEach(([language, copy]) => {
+  TRANSLATIONS[language] = Object.assign(TRANSLATIONS[language] || {}, copy);
+});
+
 function t(key, variables={}){
   const english = {
     signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", appearance:"Page appearance", dayMode:"Day", nightMode:"Night", useDayMode:"Use day appearance", useNightMode:"Use night appearance", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
@@ -3558,7 +3795,10 @@ function invalidateSchedules(){
 // The publishable key is safe in browser code when Row Level Security is enabled.
 const SUPABASE_URL = "https://uqnwvxceznsxbxhkspeo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Sl_mKACQoAp70JNH3og2uw_hMFXSZn4";
-const AUTH_EMAIL_REDIRECT_URL = "https://concoursehk.pages.dev/";
+// Keep auth callbacks on whichever trusted host is serving this build. This
+// supports GitHub Pages, Cloudflare Pages, local QA, and future custom domains
+// without shipping a stale hard-coded URL.
+const AUTH_EMAIL_REDIRECT_URL = new URL(".", window.location.href).href;
 const SUPABASE_CONFIGURED =
   /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL) &&
   !SUPABASE_PUBLISHABLE_KEY.startsWith("PASTE_");
@@ -3577,6 +3817,9 @@ let authResendRequestInFlight = false;
 let authResendAvailableAt = 0;
 let authResendCooldownTimer = null;
 let authMessageState = null;
+let authRecoverySessionReady = false;
+let authModalReturnFocus = null;
+let authFormOpenedAt = Date.now();
 let selectedSchool = null;
 let schoolSearchTimer = null;
 let schoolLookupController = null;
@@ -3589,6 +3832,34 @@ const schoolSearchCache = new Map();
 const ROR_DIRECTORY_URL = "https://api.ror.org/v2/organizations";
 const HIPO_DIRECTORY_URL = "https://universities.hipolabs.com/search";
 const DIRECTORY_TIMEOUT_MS = 5500;
+
+function showSiteNotice(message, {error=false, timeout=7000}={}){
+  const notice = $("siteNotice");
+  if(!notice || !message) return;
+  $("siteNoticeText").textContent = message;
+  notice.classList.toggle("error", error);
+  notice.hidden = false;
+  clearTimeout(showSiteNotice.timer);
+  if(timeout > 0) showSiteNotice.timer = setTimeout(() => { notice.hidden = true; }, timeout);
+}
+
+function clearSiteNotice(){
+  clearTimeout(showSiteNotice.timer);
+  if($("siteNotice")) $("siteNotice").hidden = true;
+}
+
+function rememberVerificationEmail(email){
+  pendingVerificationEmail = String(email || "").trim();
+  try {
+    if(pendingVerificationEmail) sessionStorage.setItem("concourse_pending_verification_email", pendingVerificationEmail);
+    else sessionStorage.removeItem("concourse_pending_verification_email");
+  } catch(_error){}
+}
+
+function restoreVerificationEmail(){
+  try { return sessionStorage.getItem("concourse_pending_verification_email") || ""; }
+  catch(_error){ return ""; }
+}
 
 function getAcademicIdentity(){
   const metadata = currentUser?.user_metadata || {};
@@ -3782,6 +4053,96 @@ function validAuthEmail(email){
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function passwordStrength(password){
+  let score = 0;
+  if(password.length >= 10) score += 1;
+  if(password.length >= 14) score += 1;
+  if(/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
+  if(/\d/.test(password)) score += 1;
+  if(/[^A-Za-z0-9]/.test(password)) score += 1;
+  return Math.min(3, Math.floor(score * 3 / 5));
+}
+
+function passwordMeetsMinimum(password){
+  return password.length >= 10 && /[A-Za-z]/.test(password) && /\d/.test(password);
+}
+
+function renderPasswordStrength(){
+  const password = $("authPassword").value;
+  const score = passwordStrength(password);
+  const key = score >= 3 ? "passwordStrong" : score >= 2 ? "passwordFair" : "passwordWeak";
+  $("passwordStrengthBar").style.width = `${Math.max(8, score * 33.333)}%`;
+  $("passwordStrengthBar").dataset.strength = String(score);
+  $("passwordStrengthText").textContent = password ? t(key) : t("passwordHelp");
+}
+
+function setPasswordVisibility(input, button){
+  const revealing = input.type === "password";
+  input.type = revealing ? "text" : "password";
+  renderPasswordVisibilityButton(input, button);
+}
+
+function renderPasswordVisibilityButton(input, button){
+  const visible = input.type === "text";
+  button.setAttribute("aria-label", t(visible ? "hidePassword" : "showPassword"));
+  button.querySelector("span").textContent = t(visible ? "hidePasswordShort" : "showPasswordShort");
+}
+
+async function requestPasswordReset(){
+  const email = $("authEmail").value.trim();
+  if(!validAuthEmail(email)){
+    setAuthMessageKey("invalidEmailForResend", true);
+    $("authEmail").focus();
+    return;
+  }
+  setAuthMessageKey("resendingVerification");
+  const redirectTo = new URL(AUTH_EMAIL_REDIRECT_URL);
+  redirectTo.searchParams.set("auth_action", "recovery");
+  try {
+    const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo:redirectTo.href });
+    if(error) throw error;
+    setAuthMessageKey("resetEmailSent");
+  } catch(error){
+    console.error("Password-reset request failed:", error);
+    setAuthMessageKey("resetEmailFailed", true);
+  }
+}
+
+async function updateRecoveredPassword(){
+  const password = $("authNewPassword").value;
+  const confirmation = $("authNewPasswordConfirm").value;
+  if(!authRecoverySessionReady){
+    setAuthMessageKey("recoveryExpired", true);
+    return;
+  }
+  if(!passwordMeetsMinimum(password)){
+    setAuthMessageKey("passwordTooWeak", true);
+    $("authNewPassword").focus();
+    return;
+  }
+  if(password !== confirmation){
+    setAuthMessageKey("passwordMismatch", true);
+    $("authNewPasswordConfirm").focus();
+    return;
+  }
+  try {
+    const { error } = await authClient.auth.updateUser({ password });
+    if(error){
+      setFriendlyAuthError(error, "authRequestFailed");
+      return;
+    }
+    authRecoverySessionReady = false;
+    $("authNewPassword").value = "";
+    $("authNewPasswordConfirm").value = "";
+    setAuthMessageKey("passwordUpdated");
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+    window.setTimeout(closeAuthModal, 900);
+  } catch(error){
+    console.error("Password update failed:", error);
+    setAuthMessageKey("authRequestFailed", true);
+  }
+}
+
 async function resendVerificationEmail(){
   if(!authClient || authRequestInFlight || authResendRequestInFlight || Date.now() < authResendAvailableAt) return;
   const email = (authMode === "verify" ? pendingVerificationEmail : $("authEmail").value).trim();
@@ -3806,7 +4167,7 @@ async function resendVerificationEmail(){
       setAuthMessageKey(key || "resendFailed", true);
       return;
     }
-    pendingVerificationEmail = email;
+    rememberVerificationEmail(email);
     $("authEmail").value = email;
     $("authVerificationCode").value = "";
     setAuthMode("verify", {clearMessage:false});
@@ -3823,6 +4184,9 @@ async function resendVerificationEmail(){
 
 function openAuthModal(){
   if(!authClient) return;
+  authModalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  if(!pendingVerificationEmail) rememberVerificationEmail(restoreVerificationEmail());
+  authFormOpenedAt = Date.now();
   setAuthMode(pendingVerificationEmail ? "verify" : "signin");
   $("authModal").hidden = false;
   setAuthMessage("");
@@ -3832,24 +4196,66 @@ function openAuthModal(){
 function closeAuthModal(){
   $("authModal").hidden = true;
   $("authPassword").value = "";
+  $("authPasswordConfirm").value = "";
+  $("authNewPassword").value = "";
+  $("authNewPasswordConfirm").value = "";
   $("authVerificationCode").value = "";
   $("schoolResults").hidden = true;
+  if(authModalReturnFocus?.isConnected) authModalReturnFocus.focus();
+  authModalReturnFocus = null;
 }
 
 function setAuthMode(mode, {clearMessage=true, focus=true}={}){
-  authMode = mode === "signup" || mode === "verify" ? mode : "signin";
+  authMode = ["signup","verify","forgot","recovery"].includes(mode) ? mode : "signin";
   const signingUp = authMode === "signup";
   const verifying = authMode === "verify";
+  const forgot = authMode === "forgot";
+  const recovering = authMode === "recovery";
   const accountCreation = signingUp || verifying;
   $("registrationFields").hidden = !signingUp;
   $("authVerificationPanel").hidden = !verifying;
-  $("authPasswordField").hidden = verifying;
+  $("authResetPanel").hidden = !recovering;
+  $("authPasswordField").hidden = verifying || forgot || recovering;
+  $("signInBtn").closest(".auth-mode-switch").hidden = verifying || forgot || recovering;
+  $("authEmailLabel").hidden = recovering;
+  $("authEmail").hidden = recovering;
+  $("authEmailHelp").hidden = recovering;
   $("authEmail").readOnly = verifying;
   $("authVerificationEmail").textContent = verifying ? pendingVerificationEmail : "";
-  $("authSubmitBtn").textContent = t(verifying ? "verifyEmail" : signingUp ? "createAccount" : "signIn");
-  $("authSubtitle").textContent = t(verifying ? "verificationSubtitle" : signingUp ? "signUpSubtitle" : "signInSubtitle");
+  $("authSubmitBtn").textContent = t(
+    verifying ? "verifyEmail" :
+    signingUp ? "createAccount" :
+    forgot ? "sendResetLink" :
+    recovering ? "updatePassword" :
+    "signIn"
+  );
+  $("authTitle").textContent = t(forgot || recovering ? "resetPasswordTitle" : "accountTitle");
+  $("authSubtitle").textContent = t(
+    verifying ? "verificationSubtitle" :
+    signingUp ? "signUpSubtitle" :
+    forgot ? "resetPasswordSubtitle" :
+    recovering ? "passwordHelp" :
+    "signInSubtitle"
+  );
   $("authNote").textContent = t(verifying ? "verificationNote" : signingUp ? "signUpNote" : "signInNote");
   $("authPassword").autocomplete = signingUp ? "new-password" : "current-password";
+  $("authEmail").required = !recovering;
+  $("authPassword").required = authMode === "signin" || signingUp;
+  $("authVerificationCode").required = verifying;
+  $("authNewPassword").required = recovering;
+  $("authNewPasswordConfirm").required = recovering;
+  [
+    "authUsername",
+    "authGivenName",
+    "authFamilyName",
+    "schoolName",
+    "majorStudy",
+    "authPasswordConfirm",
+    "authPrivacyConsent"
+  ].forEach(id => { $(id).required = signingUp; });
+  $("authPasswordGuidance").hidden = !signingUp;
+  $("authHelpRow").hidden = authMode !== "signin";
+  $("authResendRow").hidden = !verifying;
   $("signInBtn").classList.toggle("active", !accountCreation);
   $("signUpBtn").classList.toggle("active", accountCreation);
   $("signInBtn").setAttribute("aria-pressed", String(!accountCreation));
@@ -3857,9 +4263,14 @@ function setAuthMode(mode, {clearMessage=true, focus=true}={}){
   if(clearMessage) setAuthMessage("");
   else renderAuthMessageState();
   renderAuthResendButton();
+  renderPasswordStrength();
+  renderPasswordVisibilityButton($("authPassword"), $("authPasswordToggle"));
+  renderPasswordVisibilityButton($("authNewPassword"), $("authNewPasswordToggle"));
   if(!focus) return;
   if(verifying) setTimeout(() => $("authVerificationCode").focus(), 0);
   else if(signingUp) setTimeout(() => $("authUsername").focus(), 0);
+  else if(recovering) setTimeout(() => $("authNewPassword").focus(), 0);
+  else setTimeout(() => $("authEmail").focus(), 0);
 }
 
 function normalizeUsername(value){
@@ -4281,42 +4692,45 @@ async function saveUserState({silent=false}={}){
   if(!silent) button.textContent = t("saving");
   const userState = collectUserState();
 
-  const { error } = await authClient
-    .from("user_state")
-    .upsert({
-      user_id: userId,
-      state: userState,
-      updated_at: new Date().toISOString()
-    }, { onConflict: "user_id" });
+  try {
+    const { error } = await authClient
+      .from("user_state")
+      .upsert({
+        user_id: userId,
+        state: userState,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id" });
 
-  if(currentUser?.id !== userId || loadedUserId !== userId) return false;
-  if(error){
-    button.textContent = t("saveFailed");
-    setAuthMessage(error.message, true);
+    if(currentUser?.id !== userId || loadedUserId !== userId) return false;
+    if(error) throw error;
+
+    const degreeLevel = userState.academic.degreeLevel;
+    const studyYear = userState.academic.studyYear;
+    if(degreeLevel && studyYear){
+      const { error: profileError } = await authClient
+        .from("profiles")
+        .update({ degree_level:degreeLevel, study_year:studyYear })
+        .eq("user_id", userId);
+      if(currentUser?.id !== userId || loadedUserId !== userId) return false;
+      if(profileError){
+        console.warn("Academic level was saved in planner state but could not be mirrored to the profile table:", profileError);
+        showSiteNotice(t("profileSyncFailed"), {error:true, timeout:9000});
+      } else {
+        loadedAcademicProfile = { ...loadedAcademicProfile, degree_level:degreeLevel, study_year:studyYear };
+      }
+    }
+
+    button.textContent = t("saved");
+    setTimeout(() => {
+      if(currentUser?.id === userId && loadedUserId === userId) button.textContent = t("saveNow");
+    }, 1300);
+    return true;
+  } catch(error){
+    if(currentUser?.id === userId && loadedUserId === userId) button.textContent = t("saveFailed");
+    showSiteNotice(t("stateSaveFailed"), {error:true, timeout:9000});
     console.error("Could not save ConCourse state:", error);
     return false;
   }
-
-  const degreeLevel = userState.academic.degreeLevel;
-  const studyYear = userState.academic.studyYear;
-  if(degreeLevel && studyYear){
-    const { error: profileError } = await authClient
-      .from("profiles")
-      .update({ degree_level:degreeLevel, study_year:studyYear })
-      .eq("user_id", userId);
-    if(currentUser?.id !== userId || loadedUserId !== userId) return false;
-    if(profileError){
-      console.warn("Academic level was saved in planner state but could not be mirrored to the profile table:", profileError);
-    } else {
-      loadedAcademicProfile = { ...loadedAcademicProfile, degree_level:degreeLevel, study_year:studyYear };
-    }
-  }
-
-  button.textContent = t("saved");
-  setTimeout(() => {
-    if(currentUser?.id === userId && loadedUserId === userId) button.textContent = t("saveNow");
-  }, 1300);
-  return true;
 }
 
 function queueUserStateSave(){
@@ -4343,13 +4757,14 @@ async function loadUserState(){
     if(!currentUser || currentUser.id !== userId) return;
     if(error){
       $("saveAccountBtn").textContent = t("loadFailed");
-      setAuthMessage(error.message, true);
+      showSiteNotice(t("stateLoadFailed"), {error:true, timeout:9000});
       console.error("Could not load ConCourse state:", error);
       return;
     }
     if(profileResponse.error){
       console.warn("Could not load the extended academic profile. Run the latest Supabase setup SQL:", profileResponse.error);
       loadedAcademicProfile = {};
+      showSiteNotice(t("profileLoadPartial"), {error:true, timeout:9000});
     } else {
       loadedAcademicProfile = profileResponse.data || {};
     }
@@ -4363,7 +4778,7 @@ async function loadUserState(){
   } catch(error){
     if(currentUser?.id === userId){
       $("saveAccountBtn").textContent = t("loadFailed");
-      setAuthMessage(t("authRequestFailed"), true);
+      showSiteNotice(t("stateLoadFailed"), {error:true, timeout:9000});
     }
     console.error("Could not load ConCourse state:", error);
   } finally {
@@ -4372,6 +4787,16 @@ async function loadUserState(){
 }
 
 function applySession(session){
+  if(session?.user && !session.user.email_confirmed_at && !authRecoverySessionReady){
+    rememberVerificationEmail(session.user.email || "");
+    window.setTimeout(() => {
+      authClient?.auth.signOut();
+      $("authModal").hidden = false;
+      setAuthMode("verify", {clearMessage:false});
+      setAuthMessageKey("authEmailNotConfirmed", true);
+    }, 0);
+    session = null;
+  }
   const previousUserId = currentUser?.id || null;
   currentUser = session?.user || null;
   const signedIn = !!currentUser;
@@ -4428,10 +4853,18 @@ async function submitAuth(mode){
 
   try {
     const email = (mode === "verify" ? pendingVerificationEmail : $("authEmail").value).trim();
+    if(mode === "forgot"){
+      await requestPasswordReset();
+      return;
+    }
+    if(mode === "recovery"){
+      await updateRecoveredPassword();
+      return;
+    }
     if(mode === "verify"){
-      const token = $("authVerificationCode").value.replace(/\D/g, "").slice(0, 6);
+      const token = $("authVerificationCode").value.replace(/\D/g, "").slice(0, 8);
       $("authVerificationCode").value = token;
-      if(!validAuthEmail(email) || !/^\d{6}$/.test(token)){
+      if(!validAuthEmail(email) || !/^\d{8}$/.test(token)){
         setAuthMessageKey("invalidVerificationCode", true);
         $("authVerificationCode").focus();
         return;
@@ -4454,7 +4887,7 @@ async function submitAuth(mode){
         return;
       }
 
-      pendingVerificationEmail = "";
+      rememberVerificationEmail("");
       $("authVerificationCode").value = "";
       setAuthMessageKey("emailVerified");
       applySession(result.data.session);
@@ -4462,12 +4895,27 @@ async function submitAuth(mode){
     }
 
     const password = $("authPassword").value;
-    if(!validAuthEmail(email) || password.length < 8){
+    const signingUp = mode === "signup";
+    if(!validAuthEmail(email) || (signingUp ? !passwordMeetsMinimum(password) : password.length < 8)){
       setAuthMessageKey("invalidCredentials", true);
+      (!validAuthEmail(email) ? $("authEmail") : $("authPassword")).focus();
       return;
     }
 
-    const signingUp = mode === "signup";
+    if(signingUp && $("authWebsiteCheck").value){
+      setAuthMessageKey("authSignUpFailed", true);
+      return;
+    }
+    if(signingUp && password !== $("authPasswordConfirm").value){
+      setAuthMessageKey("passwordMismatch", true);
+      $("authPasswordConfirm").focus();
+      return;
+    }
+    if(signingUp && !$("authPrivacyConsent").checked){
+      setAuthMessageKey("privacyConsentRequired", true);
+      $("authPrivacyConsent").focus();
+      return;
+    }
     const username = normalizeUsername($("authUsername").value);
     const givenName = $("authGivenName").value.trim();
     const middleName = $("authMiddleName").value.trim();
@@ -4534,18 +4982,30 @@ async function submitAuth(mode){
       setFriendlyAuthError(result.error, signingUp ? "authSignUpFailed" : "authSignInFailed");
       return;
     }
+    if(signingUp && result.data.session){
+      // ConCourse requires email verification. A session returned directly
+      // after sign-up means Supabase's "Confirm email" protection is disabled.
+      await authClient.auth.signOut();
+      setAuthMessageKey("verificationMisconfigured", true);
+      return;
+    }
     if(signingUp && !result.data.session){
       // Avoid an immediate duplicate request consuming Supabase's email quota.
-      pendingVerificationEmail = email;
+      rememberVerificationEmail(email);
       $("authEmail").value = email;
       $("authVerificationCode").value = "";
       startAuthResendCooldown(60);
       $("authPassword").value = "";
       setAuthMode("verify", {clearMessage:false});
       setAuthMessageKey("accountCreated", false, {email});
-    } else {
-      pendingVerificationEmail = "";
+    } else if(result.data.user?.email_confirmed_at){
+      rememberVerificationEmail("");
       setAuthMessageKey("signedInSuccess");
+    } else {
+      await authClient.auth.signOut();
+      rememberVerificationEmail(email);
+      setAuthMode("verify", {clearMessage:false});
+      setAuthMessageKey("authEmailNotConfirmed", true);
     }
   } catch(error){
     setAuthMessageKey("authRequestFailed", true);
@@ -4559,6 +5019,8 @@ async function submitAuth(mode){
 }
 
 function initializeAccount(){
+  rememberVerificationEmail(restoreVerificationEmail());
+  $("siteNoticeClose").onclick = clearSiteNotice;
   $("authOpenBtn").onclick = openAuthModal;
   $("startAppBtn").onclick = enterPlanner;
   $("topTimetableBtn").onclick = openTimetableDestination;
@@ -4572,13 +5034,44 @@ function initializeAccount(){
   $("authCloseBtn").onclick = closeAuthModal;
   $("authUsername").addEventListener("input", handleUsernameInput);
   $("schoolName").addEventListener("input", handleSchoolInput);
+  $("authPassword").addEventListener("input", renderPasswordStrength);
+  $("authPasswordToggle").onclick = () => {
+    setPasswordVisibility($("authPassword"), $("authPasswordToggle"));
+    $("authPasswordConfirm").type = $("authPassword").type;
+  };
+  $("authNewPasswordToggle").onclick = () => {
+    setPasswordVisibility($("authNewPassword"), $("authNewPasswordToggle"));
+    $("authNewPasswordConfirm").type = $("authNewPassword").type;
+  };
+  $("authForgotPasswordBtn").onclick = () => setAuthMode("forgot");
+  $("authModal").querySelectorAll("input").forEach(input => {
+    input.addEventListener("input", () => {
+      if(authMessageState?.isError) setAuthMessage("");
+    });
+  });
   document.addEventListener("click", e => {
     if(!e.target.closest(".school-search-wrap")) $("schoolResults").hidden = true;
   });
   $("authModal").addEventListener("click", e => { if(e.target === $("authModal")) closeAuthModal(); });
   document.addEventListener("keydown", e => {
-    if(e.key === "Escape" && !$("authModal").hidden) closeAuthModal();
-    if(e.key !== "Enter" || e.repeat || e.isComposing || $("authModal").hidden || !$("schoolResults").hidden) return;
+    if($("authModal").hidden) return;
+    if(e.key === "Escape"){
+      closeAuthModal();
+      return;
+    }
+    if(e.key === "Tab"){
+      const focusable = [...$("authModal").querySelectorAll(
+        'button:not([disabled]):not([hidden]), input:not([disabled]):not([hidden]), select:not([disabled]):not([hidden]), summary, [tabindex]:not([tabindex="-1"])'
+      )].filter(element => element.offsetParent !== null);
+      if(focusable.length){
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+      }
+      return;
+    }
+    if(e.key !== "Enter" || e.repeat || e.isComposing || !$("schoolResults").hidden) return;
     if(e.target instanceof HTMLButtonElement || e.target instanceof HTMLSelectElement) return;
     e.preventDefault();
     submitAuth(authMode);
@@ -4597,43 +5090,64 @@ function initializeAccount(){
   authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   const callbackError = readAuthCallbackError();
   $("signInBtn").onclick = () => {
-    pendingVerificationEmail = "";
+    rememberVerificationEmail("");
     $("authVerificationCode").value = "";
     setAuthMode("signin");
   };
   $("signUpBtn").onclick = () => {
-    pendingVerificationEmail = "";
+    rememberVerificationEmail("");
     $("authVerificationCode").value = "";
     setAuthMode("signup");
   };
   $("authSubmitBtn").onclick = () => submitAuth(authMode);
   $("authResendBtn").onclick = resendVerificationEmail;
   $("authChangeEmailBtn").onclick = () => {
-    pendingVerificationEmail = "";
+    rememberVerificationEmail("");
     $("authVerificationCode").value = "";
     $("authPassword").value = "";
     setAuthMode("signup");
     setTimeout(() => $("authEmail").focus(), 0);
   };
   $("authVerificationCode").addEventListener("input", event => {
-    event.currentTarget.value = event.currentTarget.value.replace(/\D/g, "").slice(0, 6);
+    event.currentTarget.value = event.currentTarget.value.replace(/\D/g, "").slice(0, 8);
   });
+  renderPasswordStrength();
   renderAuthResendButton();
   $("saveAccountBtn").onclick = () => saveUserState();
   $("signOutBtn").onclick = async () => {
-    const { error } = await authClient.auth.signOut();
-    if(error) setFriendlyAuthError(error);
+    try {
+      const { error } = await authClient.auth.signOut();
+      if(error) throw error;
+    } catch(error){
+      console.error("Sign-out failed:", error);
+      showSiteNotice(t("signedOutError"), {error:true});
+    }
   };
 
   authClient.auth.getSession().then(({data,error}) => {
-    if(error) setFriendlyAuthError(error);
-    applySession(data?.session || null);
-    if(callbackError) showAuthCallbackError(callbackError);
+    if(error) showSiteNotice(friendlyAuthError(error), {error:true});
+    const recoveryRequested = new URL(window.location.href).searchParams.get("auth_action") === "recovery";
+    if(recoveryRequested && data?.session){
+      authRecoverySessionReady = true;
+      applySession(data.session);
+      $("authModal").hidden = false;
+      setAuthMode("recovery");
+    } else {
+      applySession(data?.session || null);
+      if(callbackError) showAuthCallbackError(callbackError);
+    }
   });
-  authClient.auth.onAuthStateChange((_event, session) => {
+  authClient.auth.onAuthStateChange((event, session) => {
     // Return from Supabase's auth callback before starting profile/state reads.
     // Calling another Supabase API inside this callback can deadlock the client.
-    window.setTimeout(() => applySession(session), 0);
+    window.setTimeout(() => {
+      if(event === "PASSWORD_RECOVERY") authRecoverySessionReady = true;
+      applySession(session);
+      if(event === "PASSWORD_RECOVERY"){
+        $("authModal").hidden = false;
+        setAuthMode("recovery");
+      }
+    }, 0);
   });
 }
 
@@ -4674,8 +5188,8 @@ $("freeDayPicker").addEventListener("click", e => {
 // ---------- Break windows to keep free ----------
 $("addBreak").addEventListener("click", () => {
   const start = toMin($("breakStart").value), end = toMin($("breakEnd").value);
-  if(!(end > start)){ alert("Break end time must be after its start time."); return; }
-  if(breaks.some(b => b.start === start && b.end === end)){ alert("That break window is already added."); return; }
+  if(!(end > start)){ alert(t("breakEndAfterStart")); return; }
+  if(breaks.some(b => b.start === start && b.end === end)){ alert(t("breakDuplicate")); return; }
   breaks.push({ start, end });
   breaks.sort((a,b)=>a.start-b.start);
   renderBreaks();
@@ -4741,18 +5255,21 @@ $("sessionsPerWeek").addEventListener("change", () => {
 $("addSlot").addEventListener("click", () => {
   const n = sessionsPerWeek();
   if(pendingSlots.length >= n){
-    alert(`This course has ${n} session${n>1?"s":""} per week. ${isMulti()?"Save this option, then start the next one.":"Remove one to change it, or set 2 sessions per week."}`);
+    alert(t("sessionLimit", {
+      count:n,
+      next:t(isMulti() ? "sessionLimitMulti" : "sessionLimitFixed")
+    }));
     return;
   }
-  if(selectedDays.size === 0){ alert("Pick the day this session meets."); return; }
+  if(selectedDays.size === 0){ alert(t("selectSessionDay")); return; }
   const start = toMin($("sStart").value), end = toMin($("sEnd").value);
-  if(!(end > start)){ alert("End time must be after start time."); return; }
+  if(!(end > start)){ alert(t("sessionEndAfterStart")); return; }
   const cand = { days: [...selectedDays].sort(), start, end };
   if(pendingSlots.some(s => s.days.some(d => cand.days.includes(d)))){
-    alert("Each weekly session must be on a different day.");
+    alert(t("sessionUniqueDay"));
     return;
   }
-  for(const s of pendingSlots){ if(slotsOverlap(s, cand)){ alert("This session overlaps the other session in this option. Put them on different days/times."); return; } }
+  for(const s of pendingSlots){ if(slotsOverlap(s, cand)){ alert(t("sessionOverlap")); return; } }
   pendingSlots.push(cand);
   selectedDays.clear();
   syncDayChipGroup("dayPicker", selectedDays);
@@ -4762,10 +5279,10 @@ $("addSlot").addEventListener("click", () => {
 // ---------- Save the current option (multi-offer only) ----------
 $("saveOption").addEventListener("click", () => {
   const n = sessionsPerWeek();
-  if(pendingSlots.length !== n){ alert(`Each time option needs all ${n} session${n>1?"s":""} first.`); return; }
+  if(pendingSlots.length !== n){ alert(t("optionNeedsSessions", {count:n})); return; }
   const key = optionKey({ sessions: pendingSlots });
   if(savedOptions.some(option => optionKey(option) === key)){
-    alert("That time option is already saved.");
+    alert(t("optionDuplicate"));
     return;
   }
   savedOptions.push({ sessions: pendingSlots.slice() });
@@ -4804,12 +5321,12 @@ function renderSavedOptions(){
 // ---------- Add course ----------
 $("addCourse").addEventListener("click", () => {
   const name = $("cName").value.trim();
-  if(!name){ alert("Enter a course name."); return; }
+  if(!name){ alert(t("courseNameRequired")); return; }
   const multi = isMulti(), n = sessionsPerWeek();
 
   // Assemble the whole-schedule options. Each option = a fixed bundle of n sessions.
   if(savedOptions.some(option => option.sessions.length !== n)){
-    alert("The number of sessions changed. Rebuild the course's time options.");
+    alert(t("sessionsChanged"));
     return;
   }
   const options = savedOptions.slice();
@@ -4817,9 +5334,9 @@ $("addCourse").addEventListener("click", () => {
     const pendingOption = { sessions: pendingSlots.slice() };
     if(!options.some(option => optionKey(option) === optionKey(pendingOption))) options.push(pendingOption);
   }
-  else if(pendingSlots.length > 0){ alert(`Finish the current option first — it needs all ${n} session${n>1?"s":""} (or clear it).`); return; }
+  else if(pendingSlots.length > 0){ alert(t("finishCurrentOption", {count:n})); return; }
 
-  if(options.length === 0){ alert(`Add this course's ${n} session${n>1?"s":""} (its weekly schedule) first.`); return; }
+  if(options.length === 0){ alert(t("courseScheduleRequired", {count:n})); return; }
   if(!multi && options.length > 1){ options.length = 1; }
 
   courses.push({
@@ -4950,7 +5467,17 @@ $("saveFinalTimetable").addEventListener("click", async () => {
     finalTimetable = previousFinalTimetable;
     renderFinalTimetableStatus();
   } else {
-    await window.ConCourseHub?.syncFinalSchedule(snapshot);
+    try {
+      const hubSynced = await window.ConCourseHub?.syncFinalSchedule(snapshot);
+      if(hubSynced === false){
+        showSiteNotice(t("finalTimetableSyncFailed"), {error:true, timeout:9000});
+      } else {
+        showSiteNotice(t("finalTimetableSyncComplete"));
+      }
+    } catch(error){
+      console.error("Final timetable analytics sync failed:", error);
+      showSiteNotice(t("finalTimetableSyncFailed"), {error:true, timeout:9000});
+    }
   }
   if(currentUser?.id !== userId || loadedUserId !== userId) return;
   button.disabled = false;
@@ -4965,7 +5492,7 @@ function generate(){
     return;
   }
   if(courses.length === 0){
-    setPlannerAlert("<b>Add courses first.</b> Build your wishlist before generating a timetable.");
+    setPlannerAlert(`<b>${escapeHtml(t("wishlistRequired"))}</b> ${escapeHtml(t("wishlistRequiredDetail"))}`);
     return;
   }
   const prefs = readPrefs();
@@ -4973,13 +5500,13 @@ function generate(){
   // Required credits is MANDATORY
   const minCrRaw = $("minCredits").value.trim();
   if(minCrRaw === ""){
-    setPlannerAlert("<b>Required information:</b> Set the minimum credits for this semester before generating a timetable.");
+    setPlannerAlert(`<b>${escapeHtml(t("requiredInformation"))}</b> ${escapeHtml(t("semesterCreditsRequired"))}`);
     $("minCredits").focus(); solutions=[]; clearResults(); return;
   }
   const minCr = Math.max(0, parseInt(minCrRaw)||0);
   const maxCr = $("maxCredits").value.trim()==="" ? Infinity : Math.max(0, parseInt($("maxCredits").value)||0);
   if(maxCr < minCr){
-    setPlannerAlert(`<b>Credit range conflict:</b> The maximum (${maxCr}) is lower than the required minimum (${minCr}).`);
+    setPlannerAlert(`<b>${escapeHtml(t("requiredInformation"))}</b> ${escapeHtml(t("creditRangeConflict", {maximum:maxCr, minimum:minCr}))}`);
     solutions=[]; clearResults(); return;
   }
 
@@ -4992,13 +5519,17 @@ function generate(){
   const exactN = Math.max(1, parseInt($("exactN").value)||1);
   const requiredCount = courses.filter(c=>c.required).length;
   if(countMode === "exact" && exactN < requiredCount){
-    setPlannerAlert(`<b>Course-count conflict:</b> ${requiredCount} course(s) are required, but the requested total is ${exactN}. Increase the total or revise the required courses.`);
+    setPlannerAlert(`<b>${escapeHtml(t("requiredInformation"))}</b> ${escapeHtml(t("courseCountConflict", {required:requiredCount, requested:exactN}))}`);
     solutions=[]; clearResults(); return;
   }
 
   const results = [];
   const seen = new Set();
   const MAX_RESULTS = 20000;
+  const MAX_SEARCH_NODES = 400000;
+  const SEARCH_TIME_BUDGET_MS = 850;
+  const searchStartedAt = performance.now();
+  let visitedSearchNodes = 0;
   let resultsTruncated = false;
   const chosen = [];                              // {course, slots:[...]}
   let minAnyCourses = Infinity;                   // fewest courses IGNORING free-day rule (to detect tradeoff)
@@ -5027,6 +5558,14 @@ function generate(){
 
   function backtrack(i, credits){
     if(resultsTruncated) return;
+    visitedSearchNodes += 1;
+    if(
+      visitedSearchNodes > MAX_SEARCH_NODES ||
+      performance.now() - searchStartedAt > SEARCH_TIME_BUDGET_MS
+    ){
+      resultsTruncated = true;
+      return;
+    }
     if(i === courses.length){
       if(chosen.length === 0) return;
       if(countMode === "exact" && chosen.length !== exactN) return;   // exactly N courses
@@ -5070,7 +5609,7 @@ function generate(){
 
   if(resultsTruncated){
     solutions = [];
-    renderSearchLimit(MAX_RESULTS);
+    renderSearchLimit(Math.min(MAX_RESULTS, MAX_SEARCH_NODES));
     return;
   }
 
@@ -5155,12 +5694,12 @@ function renderNoSolution(minCr, freeReq){
   $("scoreArea").innerHTML = ""; $("statArea").innerHTML = ""; $("altArea").innerHTML = ""; $("droppedArea").innerHTML="";
   $("colorModeBar").style.display = "none";
   const causes = [
-    `you can't reach the required <b>${minCr} credits</b> without a time conflict`,
-    freeReq ? `the requested <b>free weekday(s)</b> leave too little room` : ``,
-    `"must take" courses overlap each other`,
-    `a course's own weekly sessions overlap each other`,
+    t("noScheduleBaseCause", {credits:minCr}),
+    freeReq ? t("noScheduleFreeCause") : "",
+    t("noScheduleMustCause"),
+    t("noScheduleSelfCause")
   ].filter(Boolean);
-  const message = `<b>No matching schedule.</b> Likely causes: ${causes.join("; ")}. Try lowering required credits, reducing free weekdays, adding more section options, or relaxing the credit cap.`;
+  const message = `<b>${escapeHtml(t("noScheduleTitle"))}.</b> ${escapeHtml(causes.join("; "))}. ${escapeHtml(t("noScheduleAdvice"))}`;
   $("warnArea").innerHTML = `<div class="conflict-warn">${message}</div>`;
   setPlannerAlert(message);
   $("calArea").innerHTML = `<div class="empty-note">${escapeHtml(t("noValidTimetable"))}</div>`;
@@ -5173,7 +5712,7 @@ function renderSearchLimit(limit){
   $("droppedArea").innerHTML = "";
   $("colorModeBar").style.display = "none";
   $("colorLegend").innerHTML = "";
-  const message = `<b>Search is too broad.</b> More than ${limit.toLocaleString()} valid schedules were found, so an incomplete ranking is not shown. Narrow the credit range, choose free weekdays, or mark required courses, then generate again.`;
+  const message = `<b>${escapeHtml(t("searchTooBroadTitle"))}.</b> ${escapeHtml(t("searchTooBroadBody", {limit:limit.toLocaleString()}))}`;
   $("warnArea").innerHTML = `<div class="conflict-warn">${message}</div>`;
   setPlannerAlert(message);
   $("calArea").innerHTML = `<div class="empty-note">${escapeHtml(t("tooManyTimetables"))}</div>`;
@@ -5410,6 +5949,12 @@ $("loadSample").addEventListener("click", () => {
       { sessions:[ {days:[1],start:toMin("16:00"),end:toMin("18:00")}, {days:[3],start:toMin("16:00"),end:toMin("17:00")} ] },   // Sec 1002: Mon + Wed
     ]},
   ];
+  if(!$("degreeLevel").value) $("degreeLevel").value = "bachelor";
+  if(!$("studyYear").value) $("studyYear").value = "3";
+  $("minCredits").value = "21";
+  $("maxCredits").value = "21";
+  $("freeCount").value = "0";
+  setPlannerAlert("");
   invalidateSchedules();
   renderCourses();
   queueUserStateSave();
