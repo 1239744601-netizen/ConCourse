@@ -221,7 +221,7 @@ test("the Edge Function authenticates, validates strict requests, and allows exa
   assert.doesNotMatch(source, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(
     readme,
-    /VERIFICATION_ALLOWED_ORIGINS="https:\/\/concoursehk\.pages\.dev,https:\/\/1239744601-netizen\.github\.io"/,
+    /VERIFICATION_ALLOWED_ORIGINS="https:\/\/concourse-95c\.pages\.dev,https:\/\/concoursehk\.pages\.dev,https:\/\/1239744601-netizen\.github\.io"/,
   );
 });
 
