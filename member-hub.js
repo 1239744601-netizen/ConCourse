@@ -3469,7 +3469,11 @@
     if(code === "verification_not_configured") return copy.academicEmailSetupRequired;
     if(code === "verification_service_unreachable" || code === "origin_not_allowed") return copy.academicEmailConnectionFailed;
     if(code === "account_email_unconfirmed") return copy.academicEmailAccountUnconfirmed;
-    if(code === "already_verified") return copy.academicEmailAlreadyVerified;
+    if(code === "already_verified"){
+      return isAcademicEmailVerifiedStudent()
+        ? copy.academicEmailAlreadyVerified
+        : copy.academicEmailUpgradeRequired;
+    }
     if(code === "academic_email_not_allowed" || code === "school_profile_required") return copy.academicEmailSchoolRequired;
     if(code === "academic_email_in_use") return copy.academicEmailInUse;
     if(code === "review_already_active") return copy.academicEmailReviewActive;

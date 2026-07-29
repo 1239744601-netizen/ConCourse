@@ -164,6 +164,15 @@ test("academic-email delivery and code failures stay visible and keyboard recove
   );
 });
 
+test("legacy already-verified responses do not claim academic-email confirmation", () => {
+  const errorMapper = functionBlock(client, "academicEmailUserError");
+
+  assert.match(
+    errorMapper,
+    /code === "already_verified"[\s\S]*?isAcademicEmailVerifiedStudent\(\)[\s\S]*?\?\s*copy\.academicEmailAlreadyVerified[\s\S]*?:\s*copy\.academicEmailUpgradeRequired/
+  );
+});
+
 test("identity-review errors provide a user-triggered retry path", () => {
   const controls = sourceBetween(
     client,
