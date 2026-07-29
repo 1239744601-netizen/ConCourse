@@ -1718,8 +1718,9 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260729-profile-entry2" />
+<link rel="stylesheet" href="member-hub.css?v=20260729-academic-email1" />
 <link rel="stylesheet" href="marketplace.css?v=20260728-verification-center2" />
+<link rel="stylesheet" href="hkbu-portal.css?v=20260728-foundation1" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260722-authotp1" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
@@ -5601,6 +5602,130 @@ function renderCourses(){
   });
 }
 
+function normalizeImportedPlannerCourse(value, index){
+  if(!value || typeof value !== "object") return null;
+  const clean = (input, max) => String(input ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+  const name = clean(value.name || value.title, 220);
+  const code = clean(value.code || value.course_code, 80).toUpperCase();
+  if(!name || !code) return null;
+  const toMinutes = input => {
+    if(Number.isInteger(input) && input >= 0 && input <= 1440) return input;
+    const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(input || ""));
+    return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+  };
+  const options = (Array.isArray(value.options) ? value.options : [])
+    .slice(0, 24)
+    .map(option => {
+      const sessions = (Array.isArray(option?.sessions) ? option.sessions : [])
+        .slice(0, 6)
+        .map(session => {
+          const days = [...new Set((Array.isArray(session?.days) ? session.days : [])
+            .map(Number)
+            .filter(day => Number.isInteger(day) && day >= 1 && day <= 6))]
+            .sort((left, right) => left - right);
+          const start = toMinutes(session?.start);
+          const end = toMinutes(session?.end);
+          if(!days.length || start === null || end === null || end <= start) return null;
+          return {
+            days,
+            start,
+            end,
+            venue: clean(session?.venue, 160) || null
+          };
+        })
+        .filter(Boolean);
+      return sessions.length ? {
+        sessions,
+        section: clean(option?.section, 40) || null
+      } : null;
+    })
+    .filter(Boolean);
+  if(!options.length) return null;
+  const credits = Number(value.credits ?? value.units);
+  const externalId = clean(
+    value.external_id || value.externalId || `${code}:${value.section || index}`,
+    180
+  );
+  const capturedAt = clean(value.source?.captured_at || value.captured_at, 80) || null;
+  const term = clean(value.source?.term || value.term, 120) || null;
+  return {
+    id: uid(),
+    name,
+    code,
+    prof: clean(value.professor || value.prof || value.instructor, 180),
+    credits: Number.isFinite(credits) ? Math.max(0, Math.min(99, credits)) : 0,
+    required: value.required === true || value.assignment === "assigned",
+    sessionsPerWeek: Math.max(...options.map(option => option.sessions.length)),
+    multiOffer: options.length > 1,
+    options,
+    source: {
+      kind: "hkbu_portal_import",
+      external_id: externalId,
+      term,
+      captured_at: capturedAt
+    }
+  };
+}
+
+function importCourseSelection(values, {
+  replacePortal=true,
+  academicProfile=null,
+  source=null
+}={}){
+  if(!currentUser || loadedUserId !== currentUser.id){
+    openAuthModal();
+    throw new Error("Sign in to ConCourse before importing student portal courses.");
+  }
+  const requested = Array.isArray(values) ? values.slice(0, 60) : [];
+  const normalized = requested
+    .map((value, index) => normalizeImportedPlannerCourse({
+      ...value,
+      source: {...(source || {}), ...(value?.source || {})}
+    }, index))
+    .filter(Boolean);
+  const incomingCodes = new Set(normalized.map(course => course.code).filter(Boolean));
+  const retained = courses.filter(course => {
+    if(replacePortal && course?.source?.kind === "hkbu_portal_import") return false;
+    return !incomingCodes.has(String(course?.code || "").trim().toUpperCase());
+  });
+  const retainedCapacity = Math.max(0, 60 - normalized.length);
+  courses = [...retained.slice(0, retainedCapacity), ...normalized];
+
+  if(academicProfile && typeof academicProfile === "object"){
+    const degreeLevel = ["bachelor", "master", "phd"].includes(academicProfile.degree_level)
+      ? academicProfile.degree_level
+      : "";
+    const studyYear = Number(academicProfile.study_year);
+    if(degreeLevel) $("degreeLevel").value = degreeLevel;
+    if(Number.isInteger(studyYear) && studyYear >= 1 && studyYear <= 8){
+      $("studyYear").value = String(studyYear);
+    }
+  }
+
+  invalidateSchedules();
+  renderCourses();
+  renderFinalTimetableStatus();
+  queueUserStateSave();
+  return {
+    requested: requested.length,
+    imported: normalized.length,
+    skipped: requested.length - normalized.length,
+    totalPlannerCourses: courses.length
+  };
+}
+
+window.ConCoursePlanner = Object.assign(window.ConCoursePlanner || {}, {
+  importCourseSelection,
+  open: showPlannerEditor,
+  getSessionContext(){
+    return {
+      signedIn: !!currentUser,
+      userId: currentUser?.id || null,
+      loaded: !!currentUser && loadedUserId === currentUser.id
+    };
+  }
+});
+
 // ---------- Conflict detection ----------
 function slotsOverlap(a, b){
   if(!a.days.some(d => b.days.includes(d))) return false;
@@ -6194,7 +6319,10 @@ initializeTheme();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260729-profile-entry2"></script>
+<script src="institution-portal-policy.js?v=20260729-institution1"></script>
+<script src="course-catalog.js?v=20260728-foundation1"></script>
+<script src="member-hub.js?v=20260729-academic-email1"></script>
+<script src="hkbu-portal.js?v=20260728-foundation1"></script>
 <script src="marketplace.js?v=20260728-verification-center2"></script>
 <script src="academic-tools.js?v=20260724-seeds2"></script>
 </body>

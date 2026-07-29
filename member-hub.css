@@ -2190,8 +2190,13 @@ body.hub-active .member-hub::after {
 }
 
 .member-hub .hub-student-verification-progress {
+  --verification-step-gap: clamp(14px, 2vw, 28px);
+  --verification-step-size: 48px;
+  --verification-step-track: rgba(64, 111, 145, .24);
+  --verification-step-track-complete: linear-gradient(90deg, #72d0f7, #edc45d);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--verification-step-gap);
   margin: clamp(24px, 3vw, 34px) 0;
   padding: 0;
   list-style: none;
@@ -2199,32 +2204,33 @@ body.hub-active .member-hub::after {
 
 .member-hub .hub-student-verification-progress li {
   position: relative;
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-rows: var(--verification-step-size) auto;
+  justify-items: center;
   gap: 10px;
   min-width: 0;
-  padding-right: 14px;
+  padding: 0;
   color: var(--muted);
+  text-align: center;
 }
 
 .member-hub .hub-student-verification-progress li:not(:last-child)::after {
   content: "";
   position: absolute;
   z-index: 0;
-  top: 19px;
-  right: 0;
-  left: 43px;
+  top: calc((var(--verification-step-size) - 2px) / 2);
+  left: calc(50% + (var(--verification-step-size) / 2));
+  width: calc(100% + var(--verification-step-gap) - var(--verification-step-size));
   height: 2px;
-  background: rgba(64, 111, 145, .2);
+  background: var(--verification-step-track);
 }
 
 .member-hub .hub-student-verification-step-number {
   position: relative;
   z-index: 1;
   display: grid;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  width: var(--verification-step-size);
+  height: var(--verification-step-size);
   place-items: center;
   color: #516d82;
   background: #f8fbfe;
@@ -2241,15 +2247,17 @@ body.hub-active .member-hub::after {
 }
 
 .member-hub .hub-student-verification-progress li.complete:not(:last-child)::after {
-  background: linear-gradient(90deg, #72d0f7, #edc45d);
+  background: var(--verification-step-track-complete);
 }
 
 .member-hub .hub-student-verification-progress b {
   position: relative;
   z-index: 1;
+  max-width: 18ch;
   overflow-wrap: anywhere;
   color: inherit;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.35;
 }
 
 .member-hub .hub-student-verification-progress li.current b,
@@ -2368,6 +2376,102 @@ body.hub-active .member-hub::after {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.member-hub .hub-student-verification-recovery {
+  display: flex;
+  margin: -10px 0 20px;
+}
+
+.member-hub .hub-student-verification-recovery[hidden] {
+  display: none !important;
+}
+
+.member-hub .hub-student-verification-recovery .btn-ghost {
+  min-height: 44px;
+  padding: 9px 18px;
+  border-radius: 999px;
+}
+
+.member-hub .hub-student-verification-academic {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  padding: clamp(18px, 3vw, 26px);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(114, 208, 247, .18), transparent 38%),
+    rgba(255, 255, 255, .48);
+  border: 1px solid rgba(49, 105, 145, .18);
+  border-radius: 32px;
+}
+
+.member-hub .hub-student-verification-academic[hidden] {
+  display: none !important;
+}
+
+.member-hub .hub-student-verification-academic label {
+  display: grid;
+  gap: 8px;
+}
+
+.member-hub .hub-student-verification-academic label > span {
+  color: var(--hub-ink-soft);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.member-hub .hub-student-verification-academic input {
+  min-height: 54px;
+  padding: 12px 18px;
+  color: var(--hub-ink);
+  background: rgba(255, 255, 255, .78);
+  border: 1px solid rgba(49, 105, 145, .25);
+  border-radius: 20px;
+  font: inherit;
+}
+
+.member-hub .hub-student-verification-academic input:focus-visible {
+  outline: 3px solid rgba(47, 109, 246, .32);
+  outline-offset: 2px;
+}
+
+.member-hub .hub-student-verification-send-code,
+.member-hub .hub-student-verification-code > button {
+  min-height: 54px;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.member-hub .hub-student-verification-code {
+  display: grid;
+  grid-template-columns: minmax(180px, .55fr) auto;
+  grid-column: 1 / -1;
+  gap: 14px;
+  align-items: end;
+}
+
+.member-hub .hub-student-verification-code[hidden] {
+  display: none !important;
+}
+
+.member-hub .hub-student-verification-code input {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .18em;
+}
+
+.member-hub .hub-student-verification-academic .hub-student-verification-privacy,
+.member-hub .hub-student-verification-academic .hub-academic-email-status {
+  grid-column: 1 / -1;
+}
+
+.member-hub .hub-student-verification-academic .hub-student-verification-privacy {
+  margin-top: 2px;
+}
+
+.member-hub .hub-academic-email-status {
+  margin: 0;
 }
 
 .member-hub .hub-student-verification-safety {
@@ -2602,11 +2706,18 @@ html[data-theme="night"] .member-hub .hub-school-verification {
 }
 
 html[data-theme="night"] .member-hub .hub-student-verification-method,
+html[data-theme="night"] .member-hub .hub-student-verification-academic,
 html[data-theme="night"] .member-hub .hub-student-verification-history-item,
 html[data-theme="night"] .member-hub .hub-student-verification-file,
 html[data-theme="night"] .member-hub .hub-student-verification-privacy {
   background: rgba(4, 28, 50, .62);
   border-color: rgba(117, 203, 249, .2);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-academic input {
+  color: #f4f8fc;
+  background: rgba(1, 18, 34, .48);
+  border-color: rgba(117, 203, 249, .26);
 }
 
 html[data-theme="night"] .member-hub .hub-student-verification-method.selected {
@@ -2618,6 +2729,11 @@ html[data-theme="night"] .member-hub .hub-student-verification-step-number {
   color: #b9d3e8;
   background: #092b48;
   border-color: rgba(117, 203, 249, .24);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-progress {
+  --verification-step-track: rgba(117, 203, 249, .28);
+  --verification-step-track-complete: linear-gradient(90deg, #72d0f7, #edc45d);
 }
 
 html[data-theme="night"] .member-hub .hub-student-verification-method b,
@@ -2733,31 +2849,46 @@ html[data-theme="night"] .member-hub .hub-student-verification-status-badge.unde
   }
 
   .member-hub .hub-student-verification-progress {
-    gap: 4px;
+    --verification-step-gap: 0px;
+    --verification-step-size: 44px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 
   .member-hub .hub-student-verification-progress li {
-    display: grid;
+    grid-template-columns: var(--verification-step-size) minmax(0, 1fr);
+    grid-template-rows: minmax(var(--verification-step-size), auto);
+    align-items: center;
     justify-items: start;
-    gap: 6px;
+    gap: 14px;
+    min-height: 72px;
+    text-align: left;
   }
 
   .member-hub .hub-student-verification-progress li:not(:last-child)::after {
-    top: 20px;
-    left: 40px;
+    top: var(--verification-step-size);
+    bottom: 0;
+    left: calc((var(--verification-step-size) - 2px) / 2);
+    width: 2px;
+    height: auto;
   }
 
   .member-hub .hub-student-verification-progress b {
-    font-size: 10px;
+    max-width: none;
+    font-size: 13px;
   }
 
   .member-hub .hub-student-verification-documents,
-  .member-hub .hub-student-verification-file {
+  .member-hub .hub-student-verification-file,
+  .member-hub .hub-student-verification-academic,
+  .member-hub .hub-student-verification-code {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .member-hub .hub-student-verification-file-remove,
-  .member-hub .hub-student-verification-file-picker {
+  .member-hub .hub-student-verification-file-picker,
+  .member-hub .hub-student-verification-send-code,
+  .member-hub .hub-student-verification-code > button {
     width: 100%;
   }
 }

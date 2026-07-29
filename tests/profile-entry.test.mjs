@@ -151,6 +151,6 @@ test("identity review falls back to the compatible status RPC before reporting f
   );
   assert.match(
     loader,
-    /setupMissing:missingRpcError\(response\.error\)[\s\S]*?error:missingRpcError\(response\.error\) \? "" : featureError\(response\.error\)/
+    /setupMissing:missingRpcError\(response\.error\)[\s\S]*?error:missingRpcError\(response\.error\) \? "" : schoolVerificationUserError\(response\.error\)/
   );
 });
