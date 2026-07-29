@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "source": {
+    "institution": "hkbu",
+    "mode": "user_portal_import",
+    "captured_at": "2026-07-28T08:15:00+08:00",
+    "term": "Semester 1 2026-27",
+    "parser_version": "1.2.0",
+    "pages": [
+      "personal_timetable",
+      "degree_progress"
+    ]
+  },
+  "academic_profile": {
+    "programme": "BSc Computer Science",
+    "major": "Computer Science",
+    "catalogue_year": "2024-25",
+    "degree_level": "undergraduate",
+    "study_year": 3
+  },
+  "assigned_courses": [
+    {
+      "course_code": "COMP 1005",
+      "title": "Programming Fundamentals",
+      "units": 3,
+      "section": "00001",
+      "status": "Enrolled",
+      "meetings": [
+        {
+          "days": [
+            "Mon"
+          ],
+          "start": "09:30",
+          "end": "11:20",
+          "venue": "SCT501"
+        }
+      ]
+    }
+  ],
+  "completed_courses": [
+    {
+      "course_code": "COMP2005",
+      "units": 3,
+      "result_scope": "completion_only"
+    }
+  ],
+  "remaining_requirements": [
+    {
+      "requirement_id": "CS-ELECTIVE-1",
+      "group": "Computer Science elective",
+      "units_required": 6,
+      "units_remaining": 3,
+      "allowed_course_codes": [
+        "COMP3005",
+        "MATH2005"
+      ],
+      "portal_text": "Complete one approved Computer Science elective."
+    }
+  ],
+  "catalogue_courses": [
+    {
+      "course_code": "MATH2005",
+      "title": "Discrete Mathematics",
+      "units": 3,
+      "teaching_medium": "English",
+      "prerequisite_text": "COMP2005",
+      "corequisite_text": null,
+      "target_students": "All students",
+      "sections": [
+        {
+          "section": "00001",
+          "meetings": [
+            {
+              "days": [
+                "Tue"
+              ],
+              "start": "12:30",
+              "end": "15:20",
+              "venue": "AAB502"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

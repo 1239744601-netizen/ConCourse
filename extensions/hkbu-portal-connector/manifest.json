@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "ConCourse HKBU Portal Connector",
+  "version": "0.1.0",
+  "description": "User-operated, privacy-minimising import of visible HKBU course tables into ConCourse.",
+  "minimum_chrome_version": "102",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "action": {
+    "default_title": "ConCourse HKBU Portal Connector",
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  }
+}

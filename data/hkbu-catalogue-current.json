@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "institution": "hkbu",
+  "term": "Semester 1 2026-27",
+  "catalogue_url": "hkbu-2026-27-s1-catalog.json",
+  "captured_at": "2026-07-28",
+  "publication_status": "reference_only",
+  "course_count": 1182,
+  "section_count": 2251,
+  "content_sha256": "c1ffc9dd5e7d28136a509eac6cc52873ee4c4f6993987b30271cefd71b5f4cee"
+}

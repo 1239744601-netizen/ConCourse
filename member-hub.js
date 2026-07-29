@@ -156,7 +156,13 @@
     github: Object.freeze({provider:"github", label:"GitHub", mark:"GH"})
   });
   const SOCIAL_RETURN_KEY = "concourse_social_connection_return";
-  const SOCIAL_OAUTH_RETURN_URL = "https://concoursehk.pages.dev/";
+  const SOCIAL_OAUTH_RETURN_URL = (() => {
+    try {
+      return new URL("/", window.location.origin).href;
+    } catch {
+      return "/";
+    }
+  })();
   const AVATAR_URL_CACHE_LIMIT = 48;
   const COMMUNITY_FEED_PAGE_SIZE = 30;
   const COMMUNITY_FEED_WINDOW = 90;

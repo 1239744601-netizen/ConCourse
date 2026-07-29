@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ConCourse HKBU Connector</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div class="mark" aria-hidden="true">CC</div>
+      <div>
+        <p class="eyebrow">ConCourse helper</p>
+        <h1>HKBU Portal Connector</h1>
+      </div>
+    </header>
+
+    <section class="status-card" aria-labelledby="connectionTitle">
+      <div>
+        <p class="eyebrow" id="connectionTitle">Session connection</p>
+        <strong id="connectionState">Checking…</strong>
+      </div>
+      <span class="status-dot" id="statusDot" aria-hidden="true"></span>
+    </section>
+
+    <p class="page-context" id="pageContext">Checking this tab…</p>
+    <p class="message" id="message" role="status" aria-live="polite"></p>
+
+    <div class="actions">
+      <button class="button primary" id="scanButton" type="button">Scan this HKBU page</button>
+      <button class="button secondary" id="sendButton" type="button" disabled>Send to this ConCourse tab</button>
+      <button class="button danger" id="purgeButton" type="button" disabled>Disconnect &amp; purge</button>
+    </div>
+
+    <section class="preview-card" id="previewCard" hidden aria-labelledby="previewTitle">
+      <div class="preview-heading">
+        <h2 id="previewTitle">Private preview</h2>
+        <span id="previewCount"></span>
+      </div>
+      <pre id="preview"></pre>
+    </section>
+
+    <section class="privacy" aria-labelledby="privacyTitle">
+      <h2 id="privacyTitle">Private by design</h2>
+      <p>
+        Nothing runs until you click. The helper reads visible academic table cells and only a
+        bounded semester token from visible selected-term controls, captions, or headings on the
+        three listed HKBU hosts. It never reads passwords, cookies, login form values, email
+        addresses, student numbers, names, instructors, or grades.
+      </p>
+      <p>
+        A redacted snapshot stays only in Chrome session storage until you send or purge it.
+        ConCourse must treat every import as user-provided and unverified.
+      </p>
+    </section>
+  </main>
+  <script src="parser.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
