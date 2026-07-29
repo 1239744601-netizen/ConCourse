@@ -696,7 +696,7 @@
     return t("featureUnavailable");
   };
 
-  const missingRpcError = error => /Could not find the function|schema cache|PGRST202/i.test(errorText(error));
+  const missingRpcError = error => /Could not find the function|function .* does not exist|relation .* does not exist|schema cache|PGRST202|42883|42P01/i.test(errorText(error));
 
   const conversationStartError = error => {
     const message = errorText(error);
@@ -1371,6 +1371,9 @@
     document.querySelectorAll("[data-hub-target]").forEach(button => {
       const active = button.dataset.hubTarget === view;
       button.classList.toggle("active", active);
+      if(button.hasAttribute("data-profile-entry")){
+        button.setAttribute("aria-expanded", String(active));
+      }
       if(button.classList.contains("hub-nav-button")){
         if(active) button.setAttribute("aria-current", "page");
         else button.removeAttribute("aria-current");
@@ -3078,7 +3081,13 @@
     try { response = await hubRpc("get_my_school_verification_v2"); }
     catch(error){ response = {data:null, error}; }
     let enhanced = !response.error;
-    if(response.error && missingRpcError(response.error)){
+    if(response.error){
+      const enhancedError = response.error;
+      console.warn("Enhanced school verification status is unavailable; trying the compatible status endpoint.", {
+        code:enhancedError?.code || "",
+        message:enhancedError?.message || "",
+        details:enhancedError?.details || ""
+      });
       try { response = await hubRpc("get_my_school_verification"); }
       catch(error){ response = {data:null, error}; }
       enhanced = false;
@@ -9033,6 +9042,9 @@
     await switchView(button.dataset.hubTarget);
     const hub = $("memberHub");
     if(!hub || hub.hidden) return;
+    if(button.hasAttribute("data-profile-entry")){
+      $("hubProfileHeading")?.focus({preventScroll:true});
+    }
     const offset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--app-bar-offset")) || 76;
     const top = Math.max(0, hub.getBoundingClientRect().top + window.scrollY - offset);
     window.scrollTo({

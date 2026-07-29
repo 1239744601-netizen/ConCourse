@@ -1718,7 +1718,7 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260728-verification-center2" />
+<link rel="stylesheet" href="member-hub.css?v=20260729-profile-entry2" />
 <link rel="stylesheet" href="marketplace.css?v=20260728-verification-center2" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260722-authotp1" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
@@ -2205,7 +2205,7 @@
   <div class="hub-shell">
     <aside class="hub-sidebar">
       <div class="hub-member-card">
-        <button type="button" class="hub-avatar-button" id="hubEditProfileShortcut" data-hub-target="profile" aria-label="Edit profile" data-i18n-aria-label="editProfile">
+        <button type="button" class="hub-avatar-button" id="hubEditProfileShortcut" data-hub-target="profile" data-profile-entry aria-controls="hubProfileView" aria-label="Edit profile" data-i18n-aria-label="editProfile">
           <span class="hub-avatar" id="hubUserInitials" aria-hidden="true">CC</span>
           <img class="hub-avatar-image" id="hubUserAvatar" alt="" hidden />
           <span class="hub-avatar-edit-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm16.5-10.3a.93.93 0 0 0 0-1.3l-1.4-1.4a.93.93 0 0 0-1.3 0l-1.1 1.1 3.5 3.5 1.1-1.1Z"/></svg></span>
@@ -2215,7 +2215,7 @@
           <span id="hubUserAcademic">Your academic community</span>
           <small class="hub-membership-status pending" id="hubMembershipStatus" data-i18n="membershipPending">School verification pending</small>
           <small class="hub-admin-role-badge" id="hubAdminRoleBadge" hidden></small>
-          <button type="button" class="hub-profile-shortcut" data-hub-target="profile" data-i18n="editProfile">Edit profile</button>
+          <button type="button" class="hub-profile-shortcut" data-hub-target="profile" data-profile-entry aria-controls="hubProfileView" data-i18n="editProfile">Edit profile</button>
         </div>
       </div>
       <nav class="hub-navigation" aria-label="Student hub sections" data-i18n-aria-label="hubNavigation">
@@ -2224,7 +2224,6 @@
         <button type="button" class="hub-nav-button" data-hub-target="messages"><b data-i18n="hubMessages">Messages</b></button>
         <button type="button" class="hub-nav-button" id="hubAcademicToolsNav" data-hub-target="academic-tools" aria-controls="hubAcademicToolsView"><b data-i18n="hubAcademicTools">Academic tools</b></button>
         <button type="button" class="hub-nav-button" data-hub-target="overview"><b data-i18n="hubInsights">Academic insights</b></button>
-        <button type="button" class="hub-nav-button" data-hub-target="profile"><b data-i18n="hubProfile">Profile</b></button>
         <button type="button" class="hub-nav-button hub-owner-console-nav" id="hubOwnerConsoleNav" data-hub-target="owner-console" aria-controls="hubOwnerConsoleView" hidden><b id="hubOwnerConsoleNavLabel">Verification Center</b></button>
       </nav>
     </aside>
@@ -2636,7 +2635,7 @@
             <article class="hub-rail-card hub-rail-profile">
               <div class="hub-rail-profile-row"><div class="hub-avatar" id="hubRailInitials" aria-hidden="true">CC</div><div><b id="hubRailName">ConCourse student</b><span id="hubRailAcademic">Your academic community</span></div></div>
               <div class="hub-profile-progress"><span><b data-i18n="profileStrength">Profile strength</b><strong id="hubRailProfileStrength">0%</strong></span><div><i id="hubRailProfileStrengthBar"></i></div></div>
-              <button type="button" class="btn-ghost" data-hub-target="profile" data-i18n="editProfile">Edit profile</button>
+              <button type="button" class="btn-ghost" data-hub-target="profile" data-profile-entry aria-controls="hubProfileView" data-i18n="editProfile">Edit profile</button>
             </article>
             <article class="hub-rail-card hub-rail-links">
               <button type="button" class="hub-rail-link" id="communityShowSaved" aria-pressed="false"><span><b data-i18n="savedPosts">Saved posts</b><small data-i18n="savedPostsPrivate">Only visible to you</small></span><i aria-hidden="true">→</i></button>
@@ -2868,8 +2867,8 @@
         </article>
       </section>
 
-      <section class="hub-view" data-hub-view="profile" hidden>
-        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="identityAndTrust">Identity and trust</p><h2 data-i18n="completeYourProfile">Complete your profile</h2></div><p data-i18n="profileDescription">Add optional details that help schoolmates recognize you. You control visibility and whether people may message you.</p></div>
+      <section class="hub-view" id="hubProfileView" data-hub-view="profile" aria-labelledby="hubProfileHeading" hidden>
+        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="identityAndTrust">Identity and trust</p><h2 id="hubProfileHeading" tabindex="-1" data-i18n="completeYourProfile">Complete your profile</h2></div><p data-i18n="profileDescription">Add optional details that help schoolmates recognize you. You control visibility and whether people may message you.</p></div>
         <div class="hub-profile-grid">
           <article class="hub-card">
             <div class="hub-card-heading"><div><h2 data-i18n="personalDetails">Personal details</h2></div><p data-i18n="privateContactNote">Phone and WhatsApp details remain private in this release.</p></div>
@@ -6195,7 +6194,7 @@ initializeTheme();
 initializeLanguage();
 initializeAccount();
 </script>
-<script src="member-hub.js?v=20260728-verification-center2"></script>
+<script src="member-hub.js?v=20260729-profile-entry2"></script>
 <script src="marketplace.js?v=20260728-verification-center2"></script>
 <script src="academic-tools.js?v=20260724-seeds2"></script>
 </body>
