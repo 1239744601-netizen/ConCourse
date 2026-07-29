@@ -1988,15 +1988,6 @@ begin
       where verification_request.id = p_case_id;
       to_status := 'under_review';
     elsif safe_action in ('approve', 'reject') then
-      safe_verification_method := lower(trim(coalesce(
-        safe_options ->> 'verification_method',
-        'manual'
-      )));
-      if safe_verification_method not in (
-        'academic_email', 'institution_sso', 'manual'
-      ) then
-        raise exception 'Invalid verification method';
-      end if;
       if safe_action = 'reject' and safe_note is null then
         raise exception 'A rejection note is required';
       end if;
@@ -2015,6 +2006,24 @@ begin
       if membership_row.status = 'verified' then
         raise exception 'This membership has already been verified';
       end if;
+      if safe_action = 'approve'
+         and membership_row.status = 'revoked' then
+        raise exception 'A revoked membership cannot be approved';
+      end if;
+      if safe_action = 'approve'
+         and school_row.evidence_kind = 'academic_email' then
+        raise exception
+          'Academic email verification completes only through the code flow';
+      end if;
+
+      -- Reviewer-supplied options are never authorization evidence. SSO and
+      -- document/manual cases may be reviewed, but only a successful separate
+      -- academic-email code challenge may grant verified student status.
+      safe_verification_method := case school_row.evidence_kind
+        when 'institution_sso' then 'institution_sso'
+        when 'manual_review' then 'manual'
+        else null
+      end;
 
       to_status := case
         when safe_action = 'approve' then 'approved'
@@ -2037,12 +2046,13 @@ begin
       if safe_action = 'approve' then
         update public.school_memberships membership
         set
-          status = 'verified',
-          verification_method = safe_verification_method,
-          verified_at = now(),
+          status = 'pending',
+          verification_method = null,
+          verified_at = null,
           updated_at = now()
         where membership.user_id = school_row.user_id
-          and membership.school_key = school_row.school_key;
+          and membership.school_key = school_row.school_key
+          and membership.status not in ('verified', 'revoked');
       else
         update public.school_memberships membership
         set
@@ -2052,7 +2062,7 @@ begin
           updated_at = now()
         where membership.user_id = school_row.user_id
           and membership.school_key = school_row.school_key
-          and membership.status <> 'verified';
+          and membership.status not in ('verified', 'revoked');
       end if;
 
       audit_metadata := jsonb_build_object(
@@ -2060,7 +2070,9 @@ begin
         case
           when safe_action = 'approve' then safe_verification_method
           else null
-        end
+        end,
+        'student_status_granted',
+        false
       );
     else
       raise exception 'Unsupported school verification action';

@@ -1,9 +1,9 @@
 # Academic Email Verification
 
 This authenticated Edge Function sends and confirms an eight-digit ownership
-code for a student's institution email. A correct code submits an
-`academic_email` evidence request to the existing human-review queue. It does
-**not** set a membership to `verified`.
+code for a student's institution email. A correct code is the only proof that
+can activate `Verified Student` status. A confirmed private ConCourse sign-in
+email, manual review, SSO reference, or uploaded document does **not** qualify.
 
 ## Security boundary
 
@@ -19,10 +19,17 @@ code for a student's institution email. A correct code submits an
 - Resends are limited to one per minute, three per hour, eight per account per
   day, and five per destination per day.
 - A challenge accepts at most eight confirmation attempts.
-- A confirmed address creates a submitted review request. A reviewer must still
-  approve it through the Verification Center.
+- A confirmed address atomically creates an approved academic-email evidence
+  record and activates Verified Student status.
+- A database provenance trigger rejects every attempt to mark a membership
+  verified unless that same account has a valid confirmed academic-email
+  challenge and approved academic-email evidence record.
 
 Run `supabase-academic-email-verification.sql` before deploying this function.
+After every other account-trust and verification migration has been applied,
+run `supabase-academic-email-student-status.sql` **LAST**. That final migration
+installs the database provenance guard and removes any legacy Verified Student
+status that is not backed by a confirmed academic-email code.
 
 ## Secrets
 
@@ -126,16 +133,18 @@ const { data, error } = await supabase.functions.invoke(
 );
 ```
 
-Success means the request is waiting for a reviewer:
+Success means the academic inbox is confirmed and Verified Student status is
+active:
 
 ```json
 {
-  "status": "submitted_for_review",
+  "status": "verified",
   "request_id": "00000000-0000-4000-8000-000000000000",
-  "human_review_required": true
+  "human_review_required": false
 }
 ```
 
 The UI may call `get_my_academic_email_verification_state()` to restore the
 latest masked address, expiry, resend time, and remaining attempts after a page
-refresh. It must not describe code confirmation as final student verification.
+refresh. The sign-in address is account-access information only and must never
+be presented as student-verification evidence.

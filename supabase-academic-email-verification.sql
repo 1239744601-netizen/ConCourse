@@ -5,9 +5,9 @@
 --   2. supabase-verification-center.sql
 --   3. supabase-student-verification-evidence.sql
 --
--- This migration is incremental and safe to rerun. Confirming an email proves
--- control of that address only. It creates a submitted verification request;
--- it never verifies a school membership without an authorised human review.
+-- This migration is incremental and safe to rerun. Only a successful code
+-- confirmation for a separately entered, administrator-allow-listed academic
+-- email may grant verified student status. A private/login email never counts.
 
 begin;
 
@@ -486,6 +486,9 @@ begin
   if membership.status = 'verified' then
     raise exception 'Your school membership is already verified';
   end if;
+  if membership.status = 'revoked' then
+    raise exception 'Your school membership is not eligible for email verification';
+  end if;
   if not private.academic_email_domain_is_allowed(
     membership.school_key,
     normalized_email
@@ -496,9 +499,10 @@ begin
     select 1
     from public.school_verification_requests active_request
     where active_request.user_id = caller
+      and active_request.evidence_kind = 'academic_email'
       and active_request.status in ('submitted', 'under_review')
   ) then
-    raise exception 'A school verification request is already being reviewed';
+    raise exception 'An academic email verification request is already active';
   end if;
 
   return jsonb_build_object(
@@ -696,7 +700,7 @@ begin
     for update;
   end if;
 
-  if not found or membership.status = 'verified' then
+  if not found or membership.status in ('verified', 'revoked') then
     raise exception 'School membership is unavailable for verification';
   end if;
   if not private.academic_email_domain_is_allowed(
@@ -709,9 +713,10 @@ begin
     select 1
     from public.school_verification_requests active_request
     where active_request.user_id = p_user_id
+      and active_request.evidence_kind = 'academic_email'
       and active_request.status in ('submitted', 'under_review')
   ) then
-    raise exception 'A school verification request is already being reviewed';
+    raise exception 'An academic email verification request is already active';
   end if;
 
   if exists (
@@ -868,8 +873,8 @@ grant execute on function
   public.mark_academic_email_challenge_delivery(uuid,uuid,boolean,text,text)
   to service_role;
 
--- Service-only confirmation. A correct code submits evidence to the existing
--- reviewer queue. It does not set school_memberships.status = 'verified'.
+-- Service-only confirmation. A correct code atomically records the approved
+-- academic-email proof and grants verified student status.
 create or replace function public.confirm_academic_email_verification_challenge(
   p_challenge_id uuid,
   p_user_id uuid,
@@ -886,6 +891,8 @@ declare
   membership public.school_memberships%rowtype;
   new_request_id uuid;
   attempts_remaining integer;
+  prior_membership_status text;
+  confirmed_at_value timestamptz;
 begin
   if coalesce(auth.role(), '') <> 'service_role' then
     raise exception 'Service role required';
@@ -907,10 +914,38 @@ begin
     return jsonb_build_object('status', 'unavailable');
   end if;
   if challenge.request_id is not null and challenge.confirmed_at is not null then
-    return jsonb_build_object(
-      'status', 'submitted_for_review',
-      'request_id', challenge.request_id
-    );
+    select school_membership.*
+    into membership
+    from public.school_memberships school_membership
+    where school_membership.user_id = p_user_id;
+
+    if found
+       and membership.status = 'verified'
+       and membership.verification_method = 'academic_email'
+       and membership.school_key = challenge.school_key
+       and membership.school_name = challenge.school_name
+       and exists (
+         select 1
+         from public.school_verification_requests verification_request
+         where verification_request.id = challenge.request_id
+           and verification_request.user_id = challenge.user_id
+           and verification_request.school_key = challenge.school_key
+           and verification_request.school_name = challenge.school_name
+           and verification_request.evidence_kind = 'academic_email'
+           and lower(verification_request.evidence_reference) =
+             challenge.academic_email
+           and verification_request.status = 'approved'
+           and verification_request.decision_verification_method =
+             'academic_email'
+       ) then
+      return jsonb_build_object(
+        'status', 'verified',
+        'request_id', challenge.request_id,
+        'verified_at', membership.verified_at
+      );
+    end if;
+
+    return jsonb_build_object('status', 'unavailable');
   end if;
   if challenge.delivery_status <> 'sent'
      or challenge.superseded_at is not null then
@@ -969,7 +1004,7 @@ begin
   if not found
      or membership.school_key <> challenge.school_key
      or membership.school_name <> challenge.school_name
-     or membership.status = 'verified'
+     or membership.status in ('verified', 'revoked')
      or not private.academic_email_domain_is_allowed(
        membership.school_key,
        challenge.academic_email
@@ -980,6 +1015,7 @@ begin
     select 1
     from public.school_verification_requests active_request
     where active_request.user_id = p_user_id
+      and active_request.evidence_kind = 'academic_email'
       and active_request.status in ('submitted', 'under_review')
   ) then
     return jsonb_build_object('status', 'request_already_active');
@@ -988,6 +1024,7 @@ begin
     select count(*)
     from public.school_verification_requests recent_request
     where recent_request.user_id = p_user_id
+      and recent_request.evidence_kind = 'academic_email'
       and recent_request.submitted_at > now() - interval '30 days'
   ) >= 5 then
     return jsonb_build_object('status', 'request_limit_reached');
@@ -1003,17 +1040,22 @@ begin
     return jsonb_build_object('status', 'email_already_in_use');
   end if;
 
-  update public.school_memberships school_membership
+  prior_membership_status := membership.status;
+  confirmed_at_value := now();
+
+  -- A pending SSO/document/manual case must not block the only flow that can
+  -- grant verified student status.
+  update public.school_verification_requests active_request
   set
-    status = case
-      when school_membership.status in ('rejected', 'revoked') then 'pending'
-      else school_membership.status
-    end,
-    verification_method = null,
-    verified_at = null,
-    updated_at = now()
-  where school_membership.user_id = p_user_id
-    and school_membership.status <> 'verified';
+    status = 'withdrawn',
+    reviewer_note = coalesce(
+      active_request.reviewer_note,
+      'Superseded by successful academic-email code verification.'
+    ),
+    updated_at = confirmed_at_value
+  where active_request.user_id = p_user_id
+    and active_request.evidence_kind <> 'academic_email'
+    and active_request.status in ('submitted', 'under_review');
 
   insert into public.school_verification_requests (
     user_id,
@@ -1022,24 +1064,42 @@ begin
     evidence_kind,
     evidence_reference,
     user_note,
-    status
+    status,
+    reviewed_at,
+    reviewed_by,
+    reviewer_note,
+    decision_verification_method
   ) values (
     p_user_id,
     challenge.school_name,
     challenge.school_key,
     'academic_email',
     challenge.academic_email,
-    'Academic email ownership confirmed by an expiring code; human review required.',
-    'submitted'
+    'Academic email ownership confirmed by an expiring code.',
+    'approved',
+    confirmed_at_value,
+    null,
+    'Automatically approved after successful academic-email code confirmation.',
+    'academic_email'
   )
   returning id into new_request_id;
 
   update private.academic_email_verification_challenges challenge_row
   set
-    confirmed_at = now(),
+    confirmed_at = confirmed_at_value,
     request_id = new_request_id
   where challenge_row.id = challenge.id
     and challenge_row.user_id = p_user_id;
+
+  update public.school_memberships school_membership
+  set
+    status = 'verified',
+    verification_method = 'academic_email',
+    verified_at = confirmed_at_value,
+    updated_at = confirmed_at_value
+  where school_membership.user_id = p_user_id
+    and school_membership.school_key = challenge.school_key
+    and school_membership.school_name = challenge.school_name;
 
   update private.academic_email_verification_challenges other_challenge
   set superseded_at = now()
@@ -1060,20 +1120,22 @@ begin
     'school_verification',
     new_request_id,
     p_user_id,
-    'academic_email_confirmed',
-    null,
-    'submitted',
+    'academic_email_verified',
+    prior_membership_status,
+    'verified',
     null,
     jsonb_build_object(
       'school_key', challenge.school_key,
       'evidence_kind', 'academic_email',
-      'human_review_required', true
+      'academic_email', private.mask_academic_email(challenge.academic_email),
+      'human_review_required', false
     )
   );
 
   return jsonb_build_object(
-    'status', 'submitted_for_review',
-    'request_id', new_request_id
+    'status', 'verified',
+    'request_id', new_request_id,
+    'verified_at', confirmed_at_value
   );
 end;
 $$;

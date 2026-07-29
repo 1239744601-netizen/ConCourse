@@ -749,7 +749,7 @@
     if(/verified school membership|membership must be verified|school verification/i.test(message)) return t("schoolVerificationRequired");
     if(/payload too large|maximum.*size|file.*size|entity too large/i.test(message) || status === 413) return t("mediaUploadRejected");
     if(error?.mediaUpload && membershipRequired && (status === 401 || status === 403 || /row.level|policy|unauthori[sz]ed|permission/i.test(message))){
-      return hubState.membership?.status === "verified" ? t("mediaSetupRequired") : t("schoolVerificationRequired");
+      return isAcademicEmailVerifiedStudent() ? t("mediaSetupRequired") : t("schoolVerificationRequired");
     }
     if(/bucket.*not found|not found.*bucket|row.level|policy|permission|mime|content.?type|schema cache|does not exist/i.test(message) || [400, 404, 409].includes(status)) return t("mediaSetupRequired");
     if(/fetch|network|offline|timeout|connection/i.test(message)) return t("mediaUploadNetwork");
@@ -1222,12 +1222,20 @@
     scheduleHubStickyGeometry();
   }
 
+  function isAcademicEmailVerifiedStudent(membership=hubState.membership){
+    return Boolean(
+      membership?.status === "verified"
+      && membership?.verification_method === "academic_email"
+      && membership?.verified_at
+    );
+  }
+
   function getInstitutionContext(){
     const rawStatus = String(hubState.membership?.status || "").trim().toLowerCase();
-    const status = ["verified", "pending", "rejected", "revoked"].includes(rawStatus)
-      ? rawStatus
-      : "unverified";
-    const verified = status === "verified";
+    const verified = isAcademicEmailVerifiedStudent();
+    const status = verified
+      ? "verified"
+      : (["pending", "rejected", "revoked"].includes(rawStatus) ? rawStatus : "unverified");
     return Object.freeze({
       status,
       verified,
@@ -1255,16 +1263,24 @@
     $("hubRailName").textContent = name;
     $("hubRailAcademic").textContent = academicLabel();
     renderOwnAvatars();
-    const membershipStatus = ["verified", "rejected", "revoked"].includes(hubState.membership?.status)
-      ? hubState.membership.status
-      : "pending";
-    $("hubMembershipStatus").textContent = t(`membership${membershipStatus[0].toLocaleUpperCase()}${membershipStatus.slice(1)}`);
+    const rawMembershipStatus = String(hubState.membership?.status || "").trim().toLocaleLowerCase();
+    const membershipStatus = isAcademicEmailVerifiedStudent()
+      ? "verified"
+      : (["rejected", "revoked"].includes(rawMembershipStatus)
+        ? rawMembershipStatus
+        : (rawMembershipStatus === "verified" ? "academic-email-required" : "pending"));
+    const membershipCopyKey = membershipStatus === "academic-email-required"
+      ? "membershipAcademicEmailRequired"
+      : `membership${membershipStatus[0].toLocaleUpperCase()}${membershipStatus.slice(1)}`;
+    $("hubMembershipStatus").textContent = t(membershipCopyKey);
     $("hubMembershipStatus").className = `hub-membership-status ${membershipStatus}`;
     publishInstitutionContext();
     renderHubHeader();
     $("hubNetworkScope").textContent = membershipStatus === "verified"
       ? getInstitutionContext().schoolName || "—"
-      : t("membershipPending");
+      : t(membershipStatus === "academic-email-required"
+        ? "membershipAcademicEmailRequired"
+        : "membershipPending");
     const strength = profileStrength();
     $("hubRailProfileStrength").textContent = `${strength}%`;
     $("hubRailProfileStrengthBar").style.width = `${strength}%`;
@@ -1395,8 +1411,8 @@
     if(view === "overview"){
       renderOverview();
       await loadMembership();
-      if(hubState.membership?.status === "verified" && !hubState.insightsLoaded) await loadCourseInsights();
-      else if(hubState.membership?.status !== "verified" && !hubState.insightsLoaded){
+      if(isAcademicEmailVerifiedStudent() && !hubState.insightsLoaded) await loadCourseInsights();
+      else if(!isAcademicEmailVerifiedStudent() && !hubState.insightsLoaded){
         insightEmpty(t("courseInsightUnavailable"), hubState.membershipError || t("schoolVerificationRequired"));
       }
     } else if(view === "community"){
@@ -1509,7 +1525,7 @@
     const context = requestContext();
     const { data, error } = await authClient
       .from("school_memberships")
-      .select("school_name, school_key, status")
+      .select("school_name, school_key, status, verification_method, verified_at")
       .eq("user_id", context.userId)
       .maybeSingle();
     if(!contextIsCurrent(context)) return null;
@@ -1522,7 +1538,7 @@
     } else {
       hubState.membershipError = "";
       hubState.membership = data || null;
-      if(hubState.membership?.status !== "verified"){
+      if(!isAcademicEmailVerifiedStudent()){
         hubState.insightRows = [];
         hubState.insightDimensions = [];
         hubState.insightsLoaded = false;
@@ -1536,11 +1552,11 @@
     return communitySeedText({
       en:{
         verificationTitle:"Verify Your Student Status",
-        verificationDescription:"Choose one method. An authorised ConCourse reviewer makes the decision; an email-domain match never approves a request automatically.",
+        verificationDescription:"Only an approved academic email confirmed with its verification code can qualify this account as a Verified Student. A private sign-in email never counts. SSO references and student documents can support an administrator review, but cannot grant Verified Student status.",
         verificationMethod:"Choose a Verification Method",
         verificationStepProfile:"School Profile",
-        verificationStepEvidence:"Private Evidence",
-        verificationStepReview:"Human Review",
+        verificationStepEvidence:"Verification Evidence",
+        verificationStepReview:"Verified Student",
         verificationProgressLabel:"Student Verification Progress",
         verificationStepComplete:"Complete",
         verificationStepCurrent:"Current Step",
@@ -1548,7 +1564,8 @@
         claimedSchool:"Claimed Institution",
         verifiedSchool:"Verified Institution",
         verifiedFor:"Verified for {school}",
-        accountEmail:"Confirmed Account Email",
+        accountEmail:"ConCourse Sign-In Email",
+        accountEmailHelp:"Account access only. This private email does not verify student status.",
         membershipState:"Current Status",
         academicEmail:"Academic Email Code",
         academicEmailHelp:"Enter a separate institution email and confirm the eight-digit code sent to that inbox.",
@@ -1559,21 +1576,26 @@
         academicEmailCode:"Eight-Digit Verification Code",
         academicEmailCodePlaceholder:"00000000",
         verifyAcademicEmailCode:"Verify Code",
-        academicEmailPrivacy:"The address is used only for student-status review. A code proves control of the inbox; an authorised reviewer still makes the final decision.",
+        academicEmailPrivacy:"This address is used only for student verification. Only an approved institutional domain and successful code confirmation can qualify the account as a Verified Student.",
         academicEmailStateLoading:"Loading your academic-email verification status…",
+        academicEmailCodeWaiting:"Send a code to your academic email, then enter the eight digits below.",
+        academicEmailSending:"Your verification email is being prepared…",
         academicEmailCodeSent:"Code sent to {email}. It expires in 10 minutes. Check Junk or your university quarantine if it is not in Inbox.",
         academicEmailCodeRestored:"The newest code was sent to {email}. Enter it below, or send a new code after the waiting period.",
-        academicEmailConfirmedForReview:"Academic email confirmed. Your student-status request is now waiting for human review.",
+        academicEmailConfirmedForReview:"Academic email confirmed. Your account is now recognized as a Verified Student.",
+        academicEmailAwaitingCompletion:"Academic email confirmed. Verification is awaiting completion.",
         academicEmailInvalid:"Enter a valid academic email address.",
         academicEmailInvalidCode:"Enter the eight-digit code from the newest email.",
         academicEmailWrongCode:"That code is not correct. {count} attempts remain.",
         academicEmailExpired:"That code expired. Send a new code.",
         academicEmailLocked:"Too many incorrect attempts. Send a new code after the waiting period.",
         academicEmailDeliveryFailed:"The message could not be delivered. Check the address, then try again.",
+        academicEmailSuperseded:"A newer code was requested. Enter the newest code or send another after the waiting period.",
         academicEmailSetupRequired:"Academic-email delivery is not active yet. Apply the academic-email migration, deploy its Edge Function, and configure a verified sender.",
         academicEmailConnectionFailed:"The verification service could not be reached. Check the function deployment and allowed website origins, then try again.",
         academicEmailAccountUnconfirmed:"Confirm your ConCourse account email before verifying a separate academic email.",
-        academicEmailAlreadyVerified:"Your student status is already verified.",
+        academicEmailAlreadyVerified:"Your academic email and Verified Student status are already confirmed.",
+        academicEmailUpgradeRequired:"Your previous school review does not verify student status. Confirm an approved academic email to become a Verified Student.",
         academicEmailSchoolRequired:"Use an approved academic email for your institution. Legacy accounts can be linked only when the domain maps to one supported school.",
         academicEmailInUse:"That academic email is already attached to another student-status review.",
         academicEmailReviewActive:"A student-status review is already active.",
@@ -1582,9 +1604,9 @@
         verificationSessionExpired:"Your session expired. Sign in again, then retry.",
         schoolProfileIncomplete:"Add or resolve your institution before Step 1 can be completed.",
         institutionSso:"Institution SSO Reference",
-        institutionSsoHelp:"Provide a non-secret reference from your institution portal.",
+        institutionSsoHelp:"Provide a non-secret reference from your institution portal for administrator review. This method cannot grant Verified Student status.",
         studentDocument:"Student Document Review",
-        studentDocumentHelp:"Privately submit a redacted student document for an authorised reviewer.",
+        studentDocumentHelp:"Privately submit a redacted student document for administrator review. This method cannot grant Verified Student status.",
         manualReview:"Student Document Review",
         evidenceReference:"Institution Portal Reference",
         ssoSafety:"Never enter a password, one-time code, recovery code, or authentication link.",
@@ -1610,7 +1632,7 @@
         statusNotSubmitted:"Not Submitted",
         statusSubmitted:"Submitted",
         statusUnderReview:"Under Review",
-        statusApproved:"Approved",
+        statusApproved:"Supporting Evidence Approved — Academic Email Required",
         statusVerified:"Verified",
         statusRejected:"Not Approved",
         statusWithdrawn:"Withdrawn",
@@ -1621,8 +1643,8 @@
         verificationLoading:"Loading your campus-verification status…",
         verificationAwaiting:"Your request is awaiting administrator review.",
         verificationUnderReview:"An administrator is reviewing your request.",
-        verificationApproved:"Your campus identity is verified.",
-        verificationApprovalSyncPending:"Your request was approved. Verified status will appear after the institution membership record is confirmed.",
+        verificationApproved:"Your academic email is confirmed and your account is recognized as a Verified Student.",
+        verificationApprovalSyncPending:"Your supporting review was approved, but an approved academic email and verification code are still required for Verified Student status.",
         verificationRejected:"The request was not approved. Review the administrator note before submitting new evidence.",
         verificationWithdrawn:"The previous request was withdrawn. You may submit new evidence.",
         verificationReady:"No active review request. Choose an evidence method to begin.",
@@ -1681,11 +1703,11 @@
       },
       "zh-CN":{
         verificationTitle:"验证你的在读身份",
-        verificationDescription:"请选择一种方式。审核决定由 ConCourse 授权审核员作出；邮箱域名匹配不会自动通过验证。",
+        verificationDescription:"只有通过验证码确认、且与院校匹配的学校邮箱，才能使账户获得“已验证学生”身份。私人登录邮箱不计入验证。学校 SSO 参考资料和学生证明文件可用于管理员审核，但不能授予“已验证学生”身份。",
         verificationMethod:"选择验证方式",
         verificationStepProfile:"学校资料",
-        verificationStepEvidence:"私密证明",
-        verificationStepReview:"人工审核",
+        verificationStepEvidence:"验证资料",
+        verificationStepReview:"已验证学生",
         verificationProgressLabel:"学生身份验证进度",
         verificationStepComplete:"已完成",
         verificationStepCurrent:"当前步骤",
@@ -1693,7 +1715,8 @@
         claimedSchool:"申报院校",
         verifiedSchool:"已验证院校",
         verifiedFor:"已验证：{school}",
-        accountEmail:"已确认的账户邮箱",
+        accountEmail:"ConCourse 登录邮箱",
+        accountEmailHelp:"仅用于登录和账户安全；此私人邮箱不能验证学生身份。",
         membershipState:"当前状态",
         academicEmail:"学校邮箱验证码",
         academicEmailHelp:"输入独立的学校邮箱，并填写发送到该邮箱的八位验证码。",
@@ -1704,21 +1727,26 @@
         academicEmailCode:"八位验证码",
         academicEmailCodePlaceholder:"00000000",
         verifyAcademicEmailCode:"确认验证码",
-        academicEmailPrivacy:"此邮箱仅用于在读身份审核。验证码只证明你可以使用该邮箱；最终决定仍由授权审核员作出。",
+        academicEmailPrivacy:"此邮箱仅用于学生身份验证。只有获准的院校邮箱域名并成功确认验证码，账户才能获得“已验证学生”身份。",
         academicEmailStateLoading:"正在加载学校邮箱验证状态…",
+        academicEmailCodeWaiting:"请先向学校邮箱发送验证码，再在下方输入八位数字。",
+        academicEmailSending:"正在准备学校邮箱验证邮件…",
         academicEmailCodeSent:"验证码已发送至 {email}，10 分钟内有效。若收件箱没有，请查看垃圾邮件或学校隔离区。",
         academicEmailCodeRestored:"最新验证码已发送至 {email}。请在下方输入；等待期结束后也可以发送新验证码。",
-        academicEmailConfirmedForReview:"学校邮箱已确认，你的在读身份申请正在等待人工审核。",
+        academicEmailConfirmedForReview:"学校邮箱已确认，你的账户现在已获得“已验证学生”身份。",
+        academicEmailAwaitingCompletion:"学校邮箱已确认，正在等待验证流程完成。",
         academicEmailInvalid:"请输入有效的学校邮箱地址。",
         academicEmailInvalidCode:"请输入最新邮件中的八位验证码。",
         academicEmailWrongCode:"验证码不正确，还可尝试 {count} 次。",
         academicEmailExpired:"验证码已过期，请发送新验证码。",
         academicEmailLocked:"错误次数过多，请在等待期后发送新验证码。",
         academicEmailDeliveryFailed:"邮件未能送达。请检查地址后重试。",
+        academicEmailSuperseded:"你已申请更新的验证码。请输入最新验证码，或在等待期结束后重新发送。",
         academicEmailSetupRequired:"学校邮箱发送功能尚未启用。请应用学校邮箱迁移、部署 Edge Function，并配置已验证的发件人。",
         academicEmailConnectionFailed:"无法连接学校邮箱验证服务。请检查函数部署和允许的网站来源后重试。",
         academicEmailAccountUnconfirmed:"请先确认 ConCourse 账户邮箱，再验证独立的学校邮箱。",
-        academicEmailAlreadyVerified:"你的在读身份已经通过验证。",
+        academicEmailAlreadyVerified:"你的学校邮箱及“已验证学生”身份已经确认。",
+        academicEmailUpgradeRequired:"之前的学校审核不能验证学生身份。请确认获准的学校邮箱，成为“已验证学生”。",
         academicEmailSchoolRequired:"请使用与院校匹配的获准学校邮箱。旧账户只有在域名唯一对应受支持院校时才可建立待审核关联。",
         academicEmailInUse:"此学校邮箱已用于另一份在读身份审核。",
         academicEmailReviewActive:"已有一份在读身份审核正在进行。",
@@ -1727,9 +1755,9 @@
         verificationSessionExpired:"登录状态已过期。请重新登录后再试。",
         schoolProfileIncomplete:"请先补充或确认院校，才能完成第一步。",
         institutionSso:"学校 SSO 参考资料",
-        institutionSsoHelp:"提供学校门户中的非敏感参考资料。",
+        institutionSsoHelp:"提供学校门户中的非敏感参考资料，供管理员审核。此方式不能授予“已验证学生”身份。",
         studentDocument:"学生证明文件审核",
-        studentDocumentHelp:"私密提交已遮盖敏感信息的学生证明，由授权审核员查看。",
+        studentDocumentHelp:"私密提交已遮盖敏感信息的学生证明，供管理员审核。此方式不能授予“已验证学生”身份。",
         manualReview:"学生证明文件审核",
         evidenceReference:"学校门户参考资料",
         ssoSafety:"切勿输入密码、一次性验证码、恢复码或身份验证链接。",
@@ -1755,7 +1783,7 @@
         statusNotSubmitted:"未提交",
         statusSubmitted:"已提交",
         statusUnderReview:"审核中",
-        statusApproved:"申请已批准",
+        statusApproved:"辅助资料已批准——仍须验证学校邮箱",
         statusVerified:"已验证",
         statusRejected:"未获批准",
         statusWithdrawn:"已撤回",
@@ -1766,8 +1794,8 @@
         verificationLoading:"正在加载校园身份审核状态…",
         verificationAwaiting:"申请正在等待管理员审核。",
         verificationUnderReview:"管理员正在审核你的申请。",
-        verificationApproved:"你的校园身份已验证。",
-        verificationApprovalSyncPending:"申请已获批准。院校成员记录确认后才会显示已验证状态。",
+        verificationApproved:"你的学校邮箱已确认，账户现已获得“已验证学生”身份。",
+        verificationApprovalSyncPending:"辅助资料审核已获批准，但仍须使用获准的学校邮箱完成验证码确认，才能获得“已验证学生”身份。",
         verificationRejected:"申请未获批准。请先查看管理员说明，再提交新的证明。",
         verificationWithdrawn:"上一份申请已撤回，你可以提交新的证明。",
         verificationReady:"目前没有进行中的审核。请选择证明方式。",
@@ -1826,11 +1854,11 @@
       },
       "zh-HK":{
         verificationTitle:"驗證你嘅在讀身份",
-        verificationDescription:"請揀一種方式。審核決定由 ConCourse 授權審核員作出；電郵網域相符唔會自動通過驗證。",
+        verificationDescription:"只有用驗證碼確認、而且同院校相符嘅院校電郵，先可以令帳戶成為「已驗證學生」。私人登入電郵唔計入驗證。院校 SSO 參考資料同學生證明文件可以支援管理員審核，但唔可以授予「已驗證學生」身份。",
         verificationMethod:"選擇驗證方式",
         verificationStepProfile:"院校資料",
-        verificationStepEvidence:"私密證明",
-        verificationStepReview:"人手審核",
+        verificationStepEvidence:"驗證資料",
+        verificationStepReview:"已驗證學生",
         verificationProgressLabel:"學生身份驗證進度",
         verificationStepComplete:"已完成",
         verificationStepCurrent:"目前步驟",
@@ -1838,7 +1866,8 @@
         claimedSchool:"申報院校",
         verifiedSchool:"已驗證院校",
         verifiedFor:"已驗證：{school}",
-        accountEmail:"已確認嘅帳戶電郵",
+        accountEmail:"ConCourse 登入電郵",
+        accountEmailHelp:"只用於登入同帳戶安全；呢個私人電郵唔會驗證學生身份。",
         membershipState:"目前狀態",
         academicEmail:"院校電郵驗證碼",
         academicEmailHelp:"輸入獨立嘅院校電郵，然後填寫傳送到該信箱嘅八位驗證碼。",
@@ -1849,21 +1878,26 @@
         academicEmailCode:"八位驗證碼",
         academicEmailCodePlaceholder:"00000000",
         verifyAcademicEmailCode:"確認驗證碼",
-        academicEmailPrivacy:"呢個電郵只會用作在讀身份審核。驗證碼只證明你可以使用該信箱；最後決定仍由獲授權審核員作出。",
+        academicEmailPrivacy:"呢個電郵只會用作學生身份驗證。只有獲准嘅院校電郵網域同成功確認驗證碼，先可以令帳戶成為「已驗證學生」。",
         academicEmailStateLoading:"正在載入院校電郵驗證狀態…",
+        academicEmailCodeWaiting:"請先將驗證碼傳送到院校電郵，再喺下面輸入八位數字。",
+        academicEmailSending:"正在準備院校電郵驗證郵件…",
         academicEmailCodeSent:"驗證碼已傳送到 {email}，10 分鐘內有效。如果收件箱冇收到，請查看垃圾郵件或院校隔離區。",
         academicEmailCodeRestored:"最新驗證碼已傳送到 {email}。請喺下面輸入；等候期完咗亦可以傳送新驗證碼。",
-        academicEmailConfirmedForReview:"院校電郵已確認，你嘅在讀身份申請正等候人手審核。",
+        academicEmailConfirmedForReview:"院校電郵已確認，你嘅帳戶而家已成為「已驗證學生」。",
+        academicEmailAwaitingCompletion:"院校電郵已確認，正等候驗證流程完成。",
         academicEmailInvalid:"請輸入有效嘅院校電郵地址。",
         academicEmailInvalidCode:"請輸入最新電郵入面嘅八位驗證碼。",
         academicEmailWrongCode:"驗證碼唔正確，仲可以試 {count} 次。",
         academicEmailExpired:"驗證碼已過期，請傳送新驗證碼。",
         academicEmailLocked:"錯誤次數太多，請喺等候期之後傳送新驗證碼。",
         academicEmailDeliveryFailed:"電郵未能送達。請檢查地址之後再試。",
+        academicEmailSuperseded:"你已經申請咗更新嘅驗證碼。請輸入最新驗證碼，或者等候期完咗再傳送。",
         academicEmailSetupRequired:"院校電郵傳送功能未啟用。請套用院校電郵遷移、部署 Edge Function，並設定已驗證嘅寄件人。",
         academicEmailConnectionFailed:"未能連接院校電郵驗證服務。請檢查函數部署同獲准網站來源，然後再試。",
         academicEmailAccountUnconfirmed:"請先確認 ConCourse 帳戶電郵，再驗證另一個院校電郵。",
-        academicEmailAlreadyVerified:"你嘅在讀身份已經通過驗證。",
+        academicEmailAlreadyVerified:"你嘅院校電郵同「已驗證學生」身份已經確認。",
+        academicEmailUpgradeRequired:"之前嘅院校審核唔會驗證學生身份。請確認獲准嘅院校電郵，成為「已驗證學生」。",
         academicEmailSchoolRequired:"請使用同院校相符嘅獲准電郵。舊帳戶只有喺網域唯一對應受支援院校時先可以建立待審核連結。",
         academicEmailInUse:"呢個院校電郵已用於另一份在讀身份審核。",
         academicEmailReviewActive:"已經有一份在讀身份審核進行中。",
@@ -1872,9 +1906,9 @@
         verificationSessionExpired:"登入狀態已過期。請重新登入後再試。",
         schoolProfileIncomplete:"請先補充或確認院校，先可以完成第一步。",
         institutionSso:"院校 SSO 參考資料",
-        institutionSsoHelp:"提供院校門戶內嘅非敏感參考資料。",
+        institutionSsoHelp:"提供院校門戶內嘅非敏感參考資料，畀管理員審核。呢個方式唔可以授予「已驗證學生」身份。",
         studentDocument:"學生證明文件審核",
-        studentDocumentHelp:"私密提交已遮蓋敏感資料嘅學生證明，由獲授權審核員查看。",
+        studentDocumentHelp:"私密提交已遮蓋敏感資料嘅學生證明，畀管理員審核。呢個方式唔可以授予「已驗證學生」身份。",
         manualReview:"學生證明文件審核",
         evidenceReference:"院校門戶參考資料",
         ssoSafety:"切勿輸入密碼、一次性驗證碼、復原碼或身份驗證連結。",
@@ -1900,7 +1934,7 @@
         statusNotSubmitted:"未提交",
         statusSubmitted:"已提交",
         statusUnderReview:"審核中",
-        statusApproved:"申請已批准",
+        statusApproved:"輔助資料已批准——仍要驗證院校電郵",
         statusVerified:"已驗證",
         statusRejected:"未獲批准",
         statusWithdrawn:"已撤回",
@@ -1911,8 +1945,8 @@
         verificationLoading:"正在載入校園身份審核狀態…",
         verificationAwaiting:"申請正等候管理員審核。",
         verificationUnderReview:"管理員正審核你嘅申請。",
-        verificationApproved:"你嘅校園身份已驗證。",
-        verificationApprovalSyncPending:"申請已獲批准。院校成員紀錄確認後先會顯示已驗證狀態。",
+        verificationApproved:"你嘅院校電郵已確認，帳戶而家已成為「已驗證學生」。",
+        verificationApprovalSyncPending:"輔助資料審核已獲批准，但仍然要用獲准嘅院校電郵完成驗證碼確認，先可以成為「已驗證學生」。",
         verificationRejected:"申請未獲批准。請先查看管理員說明，再提交新證明。",
         verificationWithdrawn:"上一份申請已撤回，你可以提交新證明。",
         verificationReady:"目前無進行中嘅審核。請選擇證明方式。",
@@ -2551,16 +2585,21 @@
 
     const identitySummary = node("div", "hub-student-verification-identity");
     [
-      ["hubVerificationSchoolLabel", "hubVerificationSchoolValue"],
-      ["hubVerificationEmailLabel", "hubVerificationEmailValue"],
-      ["hubVerificationMembershipLabel", "hubVerificationMembershipValue"]
-    ].forEach(([labelId, valueId]) => {
+      ["hubVerificationSchoolLabel", "hubVerificationSchoolValue", ""],
+      ["hubVerificationEmailLabel", "hubVerificationEmailValue", "hubVerificationEmailNote"],
+      ["hubVerificationMembershipLabel", "hubVerificationMembershipValue", ""]
+    ].forEach(([labelId, valueId, noteId]) => {
       const item = node("div");
       const label = node("span");
       label.id = labelId;
       const value = node("strong");
       value.id = valueId;
       item.append(label, value);
+      if(noteId){
+        const note = node("small", "hub-student-verification-identity-note");
+        note.id = noteId;
+        item.append(note);
+      }
       identitySummary.append(item);
     });
 
@@ -3135,7 +3174,13 @@
     const latestRequest = verificationPayload.latest_request || null;
     const membership = verificationPayload.membership || hubState.membership;
     const requestStatus = latestRequest?.status || "";
-    const isVerified = membership?.status === "verified";
+    const membershipApproved = membership?.status === "verified";
+    const isVerified = Boolean(
+      membership?.status === "verified"
+      && membership?.verification_method === "academic_email"
+      && membership?.verified_at
+    );
+    const requiresAcademicEmailUpgrade = membershipApproved && !isVerified;
     const isReviewing = ["submitted", "under_review"].includes(requestStatus);
     const isApprovalSyncPending = requestStatus === "approved" && !isVerified;
     const academicBusy = hubState.academicEmailVerificationLoading
@@ -3149,7 +3194,12 @@
       || (latestRequest?.evidence_kind === "manual_review" ? "student_document" : latestRequest?.evidence_kind)
       || ""
     );
-    if(
+    const approvedNonAcademicEvidence = requestStatus === "approved"
+      && latestMethod
+      && latestMethod !== "academic_email";
+    if(isVerified || requiresAcademicEmailUpgrade || approvedNonAcademicEvidence){
+      $("hubVerificationMethod").value = "academic_email";
+    } else if(
       (isReviewing || isVerified || requestStatus === "approved")
       && ["academic_email", "institution_sso", "student_document"].includes(latestMethod)
     ){
@@ -3164,10 +3214,13 @@
     $("hubVerificationSchoolValue").textContent = membership?.school_name || hubState.profile?.school_name || copy.noValue;
     $("hubVerificationEmailLabel").textContent = copy.accountEmail;
     $("hubVerificationEmailValue").textContent = currentUser?.email || copy.noValue;
+    $("hubVerificationEmailNote").textContent = copy.accountEmailHelp;
     $("hubVerificationMembershipLabel").textContent = copy.membershipState;
     $("hubVerificationMembershipValue").textContent = isVerified
       ? copy.verifiedFor.replace("{school}", membership?.school_name || copy.noValue)
-      : schoolVerificationStatusLabel(requestStatus, copy);
+      : (requiresAcademicEmailUpgrade
+        ? copy.academicEmailUpgradeRequired
+        : schoolVerificationStatusLabel(requestStatus, copy));
 
     const schoolProfileComplete = Boolean(
       membership?.school_name
@@ -3175,9 +3228,7 @@
     );
     const progressState = isVerified
       ? "complete"
-      : (isReviewing || isApprovalSyncPending
-        ? "review"
-        : (schoolProfileComplete ? "evidence" : "profile"));
+      : (schoolProfileComplete ? "evidence" : "profile");
     document.querySelectorAll("#hubVerificationProgress [data-verification-step]").forEach(item => {
       const step = item.dataset.verificationStep;
       const completed = (step === "profile" && schoolProfileComplete)
@@ -3204,6 +3255,8 @@
     else if(verificationState?.setupMissing) verificationMessage = copy.verificationUnavailable;
     else if(verificationState?.error) verificationMessage = verificationState.error;
     else if(isVerified) verificationMessage = copy.verificationApproved;
+    else if(requiresAcademicEmailUpgrade) verificationMessage = copy.academicEmailUpgradeRequired;
+    else if(approvedNonAcademicEvidence) verificationMessage = copy.academicEmailUpgradeRequired;
     else if(isApprovalSyncPending) verificationMessage = copy.verificationApprovalSyncPending;
     else if(requestStatus === "submitted") verificationMessage = copy.verificationAwaiting;
     else if(requestStatus === "under_review") verificationMessage = copy.verificationUnderReview;
@@ -3215,7 +3268,9 @@
     $("hubSchoolVerificationStatus").className = `hub-account-trust-status${
       verificationState?.error || verificationState?.setupMissing || documentUnsupported
         ? " error"
-        : (isVerified ? " success" : (isReviewing || isApprovalSyncPending ? " warning" : ""))
+        : (isVerified ? " success" : (
+          requiresAcademicEmailUpgrade || isReviewing || isApprovalSyncPending ? " warning" : ""
+        ))
     }`;
     $("hubVerificationRecovery").hidden = !(
       verificationState?.error
@@ -3225,7 +3280,11 @@
     );
     $("hubRetrySchoolVerification").disabled = busy;
 
-    const locked = busy || isVerified || isReviewing || isApprovalSyncPending || verificationState?.setupMissing;
+    const locked = busy || isVerified;
+    const nonAcademicLocked = locked
+      || isReviewing
+      || isApprovalSyncPending
+      || verificationState?.setupMissing;
     document.querySelectorAll('input[name="hubVerificationMethodChoice"]').forEach(radio => {
       radio.checked = radio.value === method;
       radio.disabled = locked;
@@ -3235,6 +3294,10 @@
     const academicChallengeId = String(academicPayload.challenge_id || "");
     const academicDelivered = academicPayload.delivery_status === "sent"
       || academicPayload.status === "sent";
+    const academicDeliveryPending = ["pending", "sending"].includes(String(academicPayload.delivery_status || ""))
+      || ["pending", "sending"].includes(String(academicPayload.status || ""));
+    const academicDeliveryFailed = ["failed", "delivery_failed"].includes(String(academicPayload.delivery_status || ""))
+      || ["failed", "delivery_failed"].includes(String(academicPayload.status || ""));
     const academicExpiry = new Date(academicPayload.expires_at || 0).getTime();
     const academicExpired = academicPayload.challenge_status === "expired"
       || (
@@ -3245,12 +3308,13 @@
     const academicLocked = academicPayload.challenge_status === "locked"
       || Number(academicPayload.attempts_remaining) <= 0;
     const academicSuperseded = academicPayload.challenge_status === "superseded";
-    const academicConfirmed = Boolean(
-      academicPayload.confirmed_at
+    const academicVerified = academicPayload.status === "verified" || isVerified;
+    const academicAwaitingCompletion = academicPayload.status === "submitted_for_review";
+    const academicConfirmed = Boolean(academicVerified
+      || academicAwaitingCompletion
+      || academicPayload.confirmed_at
       || academicPayload.request_id
-      || academicPayload.status === "submitted_for_review"
-      || academicPayload.challenge_status === "confirmed"
-    );
+      || academicPayload.challenge_status === "confirmed");
     const academicChallengeActive = Boolean(
       academicChallengeId
       && academicDelivered
@@ -3265,7 +3329,10 @@
     if(hubState.academicEmailVerificationLoading) academicMessage = copy.academicEmailStateLoading;
     else if(academicState.setupMissing) academicMessage = copy.academicEmailSetupRequired;
     else if(academicState.error) academicMessage = academicState.error;
-    else if(academicConfirmed) academicMessage = copy.academicEmailConfirmedForReview;
+    else if(academicVerified) academicMessage = copy.academicEmailConfirmedForReview;
+    else if(academicConfirmed) academicMessage = copy.academicEmailAwaitingCompletion;
+    else if(academicDeliveryFailed) academicMessage = copy.academicEmailDeliveryFailed;
+    else if(academicSuperseded) academicMessage = copy.academicEmailSuperseded;
     else if(academicExpired) academicMessage = copy.academicEmailExpired;
     else if(academicLocked) academicMessage = copy.academicEmailLocked;
     else if(academicChallengeActive && academicPayload.masked_email){
@@ -3274,17 +3341,22 @@
           ? copy.academicEmailCodeSent
           : copy.academicEmailCodeRestored
       ).replace("{email}", academicPayload.masked_email);
-    }
+    } else if(academicDeliveryPending) academicMessage = copy.academicEmailSending;
+    else academicMessage = copy.academicEmailCodeWaiting;
     $("hubAcademicEmailStatus").textContent = academicMessage;
     $("hubAcademicEmailStatus").className = `hub-account-trust-status hub-academic-email-status${
-      academicState.error || academicState.setupMissing
+      academicState.error || academicState.setupMissing || academicDeliveryFailed
         ? " error"
-        : (academicConfirmed
+        : (academicVerified
           ? " success"
-          : ((academicChallengeActive || academicExpired || academicLocked) ? " warning" : ""))
+          : ((academicConfirmed
+            || academicChallengeActive
+            || academicDeliveryPending
+            || academicSuperseded
+            || academicExpired
+            || academicLocked) ? " warning" : ""))
     }`;
     $("hubAcademicEmailPanel").hidden = method !== "academic_email";
-    $("hubAcademicEmailCodeField").hidden = !academicChallengeActive;
     $("hubSendAcademicEmailCode").textContent = academicChallengeId
       ? copy.resendAcademicEmailCode
       : copy.sendAcademicEmailCode;
@@ -3295,14 +3367,14 @@
     $("hubVerificationReferenceField").hidden = method !== "institution_sso";
     $("hubVerificationDocumentPanel").hidden = method !== "student_document";
     $("hubVerificationNoteField").hidden = method === "academic_email";
-    $("hubVerificationReference").disabled = locked || method !== "institution_sso";
-    $("hubVerificationNote").disabled = locked;
-    $("hubVerificationDocumentType").disabled = locked || method !== "student_document";
-    $("hubVerificationFiles").disabled = locked || method !== "student_document" || !hubState.schoolVerificationEnhanced;
+    $("hubVerificationReference").disabled = nonAcademicLocked || method !== "institution_sso";
+    $("hubVerificationNote").disabled = nonAcademicLocked;
+    $("hubVerificationDocumentType").disabled = nonAcademicLocked || method !== "student_document";
+    $("hubVerificationFiles").disabled = nonAcademicLocked || method !== "student_document" || !hubState.schoolVerificationEnhanced;
     $("hubVerificationChooseFiles").disabled = $("hubVerificationFiles").disabled;
     $("hubVerificationChooseFiles").classList.toggle("disabled", $("hubVerificationFiles").disabled);
-    $("hubVerificationRedaction").disabled = locked || method !== "student_document";
-    renderSchoolVerificationFiles({disabled:locked});
+    $("hubVerificationRedaction").disabled = nonAcademicLocked || method !== "student_document";
+    renderSchoolVerificationFiles({disabled:nonAcademicLocked});
     renderSchoolVerificationHistory(verificationPayload, copy);
     $("hubSubmitVerification").hidden = method === "academic_email" || isVerified || isReviewing || isApprovalSyncPending;
     $("hubSubmitVerification").disabled = busy || verificationState?.setupMissing || documentUnsupported;
@@ -3591,7 +3663,7 @@
       requestAnimationFrame(() => codeInput.focus());
       return;
     }
-    if(response.data.status !== "submitted_for_review"){
+    if(response.data.status !== "verified" && response.data.status !== "submitted_for_review"){
       hubState.academicEmailVerificationState = {
         ...(hubState.academicEmailVerificationState || {}),
         error:copy.actionFailed
@@ -3599,25 +3671,56 @@
       renderAccountTrustControls();
       return;
     }
+    const verifiedImmediately = response.data.status === "verified";
+    const verifiedAt = String(response.data.verified_at || new Date().toISOString());
     codeInput.value = "";
     hubState.academicEmailVerificationState = {
       data:{
         ...(hubState.academicEmailVerificationState?.data || {}),
-        status:"submitted_for_review",
-        confirmed_at:new Date().toISOString(),
+        status:verifiedImmediately ? "verified" : "submitted_for_review",
+        confirmed_at:verifiedAt,
         request_id:String(response.data.request_id || "")
       },
       setupMissing:false,
       error:""
     };
+    if(verifiedImmediately){
+      const responseMembership = response.data.membership && typeof response.data.membership === "object"
+        ? response.data.membership
+        : {};
+      const verifiedMembership = {
+        ...(hubState.membership || {}),
+        ...responseMembership,
+        status:"verified",
+        verification_method:"academic_email",
+        verified_at:verifiedAt
+      };
+      hubState.membership = verifiedMembership;
+      if(hubState.schoolVerificationRequest?.data){
+        hubState.schoolVerificationRequest = {
+          ...hubState.schoolVerificationRequest,
+          data:{
+            ...hubState.schoolVerificationRequest.data,
+            membership:verifiedMembership
+          }
+        };
+      }
+      renderIdentity();
+      renderAccountTrustControls();
+    }
     await Promise.all([
       loadSchoolVerificationRequest(),
       loadMembership(),
       loadAcademicEmailVerificationState()
     ]);
     if(contextIsCurrent(context)){
-      $("hubAcademicEmailStatus").textContent = copy.academicEmailConfirmedForReview;
-      $("hubAcademicEmailStatus").className = "hub-account-trust-status hub-academic-email-status success";
+      const confirmed = isAcademicEmailVerifiedStudent();
+      $("hubAcademicEmailStatus").textContent = confirmed
+        ? copy.academicEmailConfirmedForReview
+        : copy.academicEmailAwaitingCompletion;
+      $("hubAcademicEmailStatus").className = `hub-account-trust-status hub-academic-email-status ${
+        confirmed ? "success" : "warning"
+      }`;
     }
   }
 

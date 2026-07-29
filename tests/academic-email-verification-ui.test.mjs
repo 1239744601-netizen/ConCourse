@@ -68,6 +68,26 @@ test("academic email ownership has separate email, delivery, code, and confirmat
   );
 });
 
+test("the academic-email code field stays visible and is disabled until a delivered challenge is active", () => {
+  const controls = sourceBetween(
+    client,
+    "function ensureAccountTrustControls(){",
+    "\n  function schoolVerificationMethodLabel"
+  );
+  const renderer = functionBlock(client, "renderAccountTrustControls");
+
+  assert.doesNotMatch(controls, /academicCodeField\.hidden = true/);
+  assert.doesNotMatch(renderer, /hubAcademicEmailCodeField"\)\.hidden/);
+  assert.match(
+    renderer,
+    /hubAcademicEmailCode"\)\.disabled = locked \|\| !academicChallengeActive/
+  );
+  assert.match(
+    renderer,
+    /hubVerifyAcademicEmailCode"\)\.disabled = locked \|\| !academicChallengeActive/
+  );
+});
+
 test("Send Code and Verify Code invoke distinct authenticated actions", () => {
   const controls = sourceBetween(
     client,
@@ -115,6 +135,35 @@ test("challenge state exposes only a masked destination in a live status region"
   );
 });
 
+test("academic-email delivery and code failures stay visible and keyboard recoverable", () => {
+  const errorMapper = functionBlock(client, "academicEmailUserError");
+  const confirmation = functionBlock(
+    client,
+    "confirmAcademicEmailVerificationCode"
+  );
+  const renderer = functionBlock(client, "renderAccountTrustControls");
+
+  for(const failure of [
+    "academic_email_not_allowed",
+    "email_delivery_failed",
+    "invalid_code",
+    "code_expired",
+    "code_locked"
+  ]){
+    assert.ok(
+      errorMapper.includes(`"${failure}"`),
+      `missing user-facing academic-email failure ${failure}`
+    );
+  }
+  assert.match(confirmation, /\^\\d\{8\}\$/);
+  assert.match(confirmation, /setAttribute\("aria-invalid", "true"\)/);
+  assert.match(confirmation, /codeInput\.focus\(\)/);
+  assert.match(
+    renderer,
+    /academicState\.error[\s\S]*?hubAcademicEmailStatus/
+  );
+});
+
 test("identity-review errors provide a user-triggered retry path", () => {
   const controls = sourceBetween(
     client,
@@ -146,7 +195,7 @@ test("school profile progress fails closed when the membership institution is mi
   );
 });
 
-test("confirming an academic email submits human-review evidence and never verifies membership", () => {
+test("confirming an academic email refreshes a strictly academic-email verified membership", () => {
   const confirmation = sourceBetween(
     migration,
     "create or replace function public.confirm_academic_email_verification_challenge(",
@@ -156,14 +205,23 @@ test("confirming an academic email submits human-review evidence and never verif
     client,
     "confirmAcademicEmailVerificationCode"
   );
+  const membershipLoader = functionBlock(client, "loadMembership");
+  const renderer = functionBlock(client, "renderAccountTrustControls");
 
-  assert.match(confirmation, /insert into public\.school_verification_requests/);
-  assert.match(confirmation, /'submitted'/);
-  assert.match(confirmation, /'status', 'submitted_for_review'/);
-  assert.doesNotMatch(confirmation, /set\s+status\s*=\s*'verified'/i);
-  assert.match(confirmation, /'status', 'submitted_for_review'/);
-  assert.doesNotMatch(
+  assert.match(confirmation, /status = 'verified'/);
+  assert.match(confirmation, /verification_method = 'academic_email'/);
+  assert.match(confirmation, /'status', 'verified'/);
+  assert.match(clientConfirmation, /response\.data\.status !== "verified"/);
+  assert.match(
     clientConfirmation,
-    /hubState\.membership[\s\S]*?status\s*[:=]\s*["']verified["']/i
+    /loadMembership\(\)/
+  );
+  assert.match(
+    membershipLoader,
+    /\.select\("school_name, school_key, status, verification_method/
+  );
+  assert.match(
+    renderer,
+    /membership\?\.status === "verified"\s*&&\s*membership\?\.verification_method === "academic_email"/
   );
 });

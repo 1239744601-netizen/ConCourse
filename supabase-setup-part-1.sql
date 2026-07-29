@@ -386,17 +386,28 @@ create table if not exists public.school_memberships (
   updated_at timestamptz not null default now()
 );
 
--- A verified row is authorization-bearing, so it must carry an auditable
--- verification method and timestamp. Any legacy row without both is demoted.
+-- A verified row is authorization-bearing. Only a separately confirmed
+-- academic-email challenge may grant student status; a confirmed ConCourse
+-- login email, SSO reference, document, or manual review never does.
 update public.school_memberships
 set status = 'pending', verification_method = null, verified_at = null, updated_at = now()
-where status = 'verified' and (verification_method is null or verified_at is null);
+where status = 'verified'
+  and (
+    verification_method is distinct from 'academic_email'
+    or verified_at is null
+  );
 alter table public.school_memberships drop constraint if exists school_memberships_school_key_check;
 alter table public.school_memberships add constraint school_memberships_school_key_check
   check (char_length(school_key) between 2 and 500);
 alter table public.school_memberships drop constraint if exists school_memberships_verified_evidence;
 alter table public.school_memberships add constraint school_memberships_verified_evidence
-  check (status <> 'verified' or (verification_method is not null and verified_at is not null));
+  check (
+    status <> 'verified'
+    or (
+      verification_method is not distinct from 'academic_email'
+      and verified_at is not null
+    )
+  );
 
 create index if not exists school_memberships_school_status_idx
   on public.school_memberships (school_key, status);

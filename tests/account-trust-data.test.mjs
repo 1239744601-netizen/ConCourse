@@ -7,22 +7,33 @@ const migration = readFileSync(
   "utf8"
 );
 
-test("school verification stays review-gated and does not trust typed institution data", () => {
+test("legacy school review remains pending and cannot grant Verified Student status", () => {
   assert.match(migration, /create table if not exists public\.school_verification_requests/);
   assert.match(migration, /create table if not exists public\.concourse_admins/);
   assert.match(migration, /create or replace function public\.get_my_school_verification\(\)/);
   assert.match(migration, /create or replace function public\.submit_school_verification_request\(/);
   assert.match(migration, /create or replace function public\.review_school_verification_request\(/);
   assert.match(migration, /private\.is_concourse_admin\(caller, array\['owner', 'reviewer'\]::text\[\]\)/);
-  assert.match(migration, /status = 'verified',[\s\S]*verification_method = safe_method/);
-  assert.match(migration, /matching a domain never grants verification/i);
   const submitFunction = migration.match(
     /create or replace function public\.submit_school_verification_request\([\s\S]*?\n\$\$;/
+  )?.[0] || "";
+  const reviewFunction = migration.match(
+    /create or replace function public\.review_school_verification_request\([\s\S]*?\n\$\$;/
   )?.[0] || "";
   assert.doesNotMatch(
     submitFunction,
     /set\s+status\s*=\s*'verified'/,
     "submitting evidence must never verify a membership"
+  );
+  assert.doesNotMatch(
+    reviewFunction,
+    /update public\.school_memberships[\s\S]{0,500}?status\s*=\s*'verified'/,
+    "legacy/manual administrator review must not grant Verified Student status"
+  );
+  assert.doesNotMatch(
+    reviewFunction,
+    /update public\.school_memberships[\s\S]{0,500}?verification_method\s*=\s*safe_method/,
+    "legacy/manual administrator review must not assign a verified method"
   );
   assert.match(
     migration,

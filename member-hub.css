@@ -178,6 +178,7 @@ body.hub-active {
 .hub-member-copy span { margin-top: 3px; color: var(--muted); font-size: 11px; }
 .hub-membership-status { width: max-content; max-width: 100%; margin-top: 6px; padding: 2px 6px; color: #936000; background: #fff3d5; border-radius: 999px; font-size: 8px; font-weight: 800; }
 .hub-membership-status.verified { color: #087a57; background: #e3f7ef; }
+.hub-membership-status.academic-email-required { color: #8b5b00; background: #fff0c7; }
 .hub-membership-status.rejected,
 .hub-membership-status.revoked { color: #ae2732; background: #fdebed; }
 .hub-profile-shortcut {
@@ -2300,6 +2301,12 @@ body.hub-active .member-hub::after {
   font-size: 14px;
 }
 
+.member-hub .hub-student-verification-identity-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .member-hub .hub-student-verification-form {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -2434,6 +2441,11 @@ body.hub-active .member-hub::after {
 .member-hub .hub-student-verification-academic input:focus-visible {
   outline: 3px solid rgba(47, 109, 246, .32);
   outline-offset: 2px;
+}
+
+.member-hub .hub-student-verification-academic input:disabled {
+  cursor: not-allowed;
+  opacity: .68;
 }
 
 .member-hub .hub-student-verification-send-code,
@@ -2758,6 +2770,7 @@ html[data-theme="night"] .member-hub .hub-student-verification-history-item bloc
 }
 
 html[data-theme="night"] .member-hub .hub-student-verification-method small,
+html[data-theme="night"] .member-hub .hub-student-verification-identity-note,
 html[data-theme="night"] .member-hub .hub-student-verification-file-help,
 html[data-theme="night"] .member-hub .hub-student-verification-file-empty,
 html[data-theme="night"] .member-hub .hub-student-verification-file small,

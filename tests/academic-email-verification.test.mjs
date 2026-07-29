@@ -176,20 +176,26 @@ test("resends and guesses are bounded and audit events are append-only", () => {
   );
 });
 
-test("a correct code submits human-review evidence and never auto-verifies", () => {
+test("a correct academic-email code is the only path that auto-verifies student status", () => {
   const confirm = sqlFunction("public.confirm_academic_email_verification_challenge");
-  assert.match(confirm, /insert into public\.school_verification_requests/);
-  assert.match(confirm, /'academic_email'/);
-  assert.match(confirm, /'submitted'/);
-  assert.match(confirm, /private\.append_verification_audit_event/);
-  assert.match(confirm, /'human_review_required', true/);
-  assert.match(confirm, /'status', 'submitted_for_review'/);
-  assert.doesNotMatch(confirm, /set\s+status\s*=\s*'verified'/);
-  assert.doesNotMatch(confirm, /verification_method\s*=\s*'academic_email'/);
+  assert.match(confirm, /challenge\.code_hash <> safe_hash/);
+  assert.match(confirm, /challenge_row\.user_id = p_user_id/);
+  assert.match(confirm, /membership\.school_key <> challenge\.school_key/);
   assert.match(
-    migration,
-    /Administrators cannot review their own verification request|human review required/i,
+    confirm,
+    /private\.academic_email_domain_is_allowed\(\s*membership\.school_key,\s*challenge\.academic_email\s*\)/
   );
+  assert.match(confirm, /update public\.school_memberships/);
+  assert.match(confirm, /status = 'verified'/);
+  assert.match(confirm, /verification_method = 'academic_email'/);
+  assert.match(confirm, /confirmed_at_value := now\(\)/);
+  assert.match(confirm, /verified_at = confirmed_at_value/);
+  assert.match(confirm, /'academic_email'/);
+  assert.match(confirm, /private\.append_verification_audit_event/);
+  assert.match(confirm, /'status', 'verified'/);
+  assert.doesNotMatch(confirm, /'human_review_required', true/);
+  assert.match(source, /status === "verified"/);
+  assert.doesNotMatch(source, /status === "submitted_for_review"/);
 });
 
 test("the Edge Function authenticates, validates strict requests, and allows exact origins", () => {

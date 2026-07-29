@@ -378,6 +378,25 @@ test("atomic review actions prevent self-review and enforce assignment conflicts
   );
 });
 
+test("administrator review may decide evidence but cannot grant Verified Student status", () => {
+  const review = assertProtectedRpc("review_verification_center_case");
+  const schoolBranch = sourceBetween(
+    review,
+    "if safe_workflow = 'school_verification' then",
+    "elsif safe_workflow = 'payment_evidence' then"
+  );
+
+  assert.match(schoolBranch, /safe_action in \('approve', 'reject'\)/);
+  assert.doesNotMatch(
+    schoolBranch,
+    /update public\.school_memberships[\s\S]*?status\s*=\s*'verified'/i
+  );
+  assert.doesNotMatch(
+    schoolBranch,
+    /verification_method\s*=\s*safe_verification_method/i
+  );
+});
+
 test("browser review can annotate payment evidence but cannot mutate provider money state", () => {
   const review = assertProtectedRpc("review_verification_center_case");
   const paymentBranch = sourceBetween(

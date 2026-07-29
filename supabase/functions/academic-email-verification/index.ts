@@ -466,8 +466,8 @@ function verificationEmail(code: string): { subject: string; text: string; html:
     "",
     `Your ConCourse verification code is: ${code}`,
     "",
-    "This code expires in 10 minutes. After confirmation, your student status",
-    "will still be reviewed by an authorised ConCourse reviewer.",
+    "This code expires in 10 minutes. Confirming it connects this academic",
+    "address to your account and activates Verified Student status.",
     "",
     "If you did not request this code, you can ignore this email.",
     "ConCourse Support",
@@ -492,7 +492,7 @@ function verificationEmail(code: string): { subject: string; text: string; html:
             <div aria-label="Verification code ${safeCode}" style="padding:24px;border-radius:20px;background:#0a2a49;color:#ffffff;text-align:center;font-size:40px;font-weight:800;letter-spacing:.22em">${safeCode}</div>
           </td></tr>
           <tr><td style="padding:4px 40px 36px;color:#49667f;font-size:15px;line-height:1.6">
-            <p style="margin:0">Confirming this address proves email ownership only. An authorised ConCourse reviewer still decides your student-status request.</p>
+            <p style="margin:0">Confirming this code proves that you control this academic inbox and activates Verified Student status. A private sign-in email never qualifies.</p>
             <p style="margin:18px 0 0">If you did not request this code, you can safely ignore this email. Never share this code with anyone.</p>
           </td></tr>
         </table>
@@ -721,12 +721,12 @@ async function confirmCode(
     },
   ));
   const status = typeof result?.status === "string" ? result.status : "";
-  if (status === "submitted_for_review") {
+  if (status === "verified") {
     const requestId = parseUuid(result?.request_id);
     return {
       status,
       request_id: requestId,
-      human_review_required: true,
+      human_review_required: false,
     };
   }
   if (status === "invalid_code") {

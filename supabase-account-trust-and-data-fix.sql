@@ -280,22 +280,19 @@ set search_path = ''
 as $$
 declare
   caller uuid := auth.uid();
-  caller_email text;
   caller_email_confirmed_at timestamptz;
   caller_school public.school_memberships%rowtype;
-  profile_school_domain text;
   safe_evidence_kind text := lower(trim(coalesce(p_evidence_kind, '')));
   safe_evidence_reference text := nullif(trim(coalesce(p_evidence_reference, '')), '');
   safe_user_note text := nullif(trim(coalesce(p_user_note, '')), '');
-  email_domain text;
   request_id uuid;
 begin
   if caller is null then
     raise exception 'Authentication required';
   end if;
 
-  select app_user.email, app_user.email_confirmed_at
-  into caller_email, caller_email_confirmed_at
+  select app_user.email_confirmed_at
+  into caller_email_confirmed_at
   from auth.users app_user
   where app_user.id = caller;
 
@@ -345,25 +342,11 @@ begin
   end if;
 
   if safe_evidence_kind = 'academic_email' then
-    email_domain := lower(split_part(coalesce(caller_email, ''), '@', 2));
-    if email_domain = '' then
-      raise exception 'A confirmed academic email is required';
-    end if;
-
-    select lower(nullif(trim(profile.school_domain), ''))
-    into profile_school_domain
-    from public.profiles profile
-    where profile.user_id = caller;
-
-    if profile_school_domain is not null
-       and email_domain <> profile_school_domain
-       and email_domain not like '%.' || profile_school_domain then
-      raise exception 'Your confirmed email does not match the claimed institution domain';
-    end if;
-
-    -- Store only the already-confirmed account email. The request still
-    -- requires human review; matching a domain never grants verification.
-    safe_evidence_reference := lower(caller_email);
+    -- A confirmed private/login address is account authentication, not
+    -- student-status evidence. Academic email ownership must go through the
+    -- separate expiring-code flow.
+    raise exception
+      'Use the academic email code flow to verify student status';
   elsif safe_evidence_kind = 'institution_sso'
         and safe_evidence_reference is null then
     raise exception 'An institution SSO reference is required';
@@ -376,7 +359,7 @@ begin
   update public.school_memberships membership
   set
     status = case
-      when membership.status in ('rejected', 'revoked') then 'pending'
+      when membership.status = 'rejected' then 'pending'
       else membership.status
     end,
     verification_method = null,
@@ -526,7 +509,7 @@ as $$
 declare
   caller uuid := auth.uid();
   safe_decision text := lower(trim(coalesce(p_decision, '')));
-  safe_method text := lower(trim(coalesce(p_verification_method, 'manual')));
+  safe_method text;
   safe_note text := nullif(trim(coalesce(p_reviewer_note, '')), '');
   request_row public.school_verification_requests%rowtype;
   membership_row public.school_memberships%rowtype;
@@ -536,9 +519,6 @@ begin
   end if;
   if safe_decision not in ('approve', 'reject') then
     raise exception 'Decision must be approve or reject';
-  end if;
-  if safe_method not in ('academic_email', 'institution_sso', 'manual') then
-    raise exception 'Invalid verification method';
   end if;
   if safe_note is not null and char_length(safe_note) > 1000 then
     raise exception 'Reviewer note is too long';
@@ -571,6 +551,22 @@ begin
   if membership_row.status = 'verified' then
     raise exception 'This membership has already been verified';
   end if;
+  if safe_decision = 'approve'
+     and membership_row.status = 'revoked' then
+    raise exception 'A revoked membership cannot be approved';
+  end if;
+
+  if safe_decision = 'approve'
+     and request_row.evidence_kind = 'academic_email' then
+    raise exception
+      'Academic email verification completes only through the code flow';
+  end if;
+
+  safe_method := case request_row.evidence_kind
+    when 'institution_sso' then 'institution_sso'
+    when 'manual_review' then 'manual'
+    else null
+  end;
 
   update public.school_verification_requests verification_request
   set
@@ -588,12 +584,13 @@ begin
   if safe_decision = 'approve' then
     update public.school_memberships membership
     set
-      status = 'verified',
-      verification_method = safe_method,
-      verified_at = now(),
+      status = 'pending',
+      verification_method = null,
+      verified_at = null,
       updated_at = now()
     where membership.user_id = request_row.user_id
-      and membership.school_key = request_row.school_key;
+      and membership.school_key = request_row.school_key
+      and membership.status not in ('verified', 'revoked');
   else
     update public.school_memberships membership
     set
@@ -603,7 +600,7 @@ begin
       updated_at = now()
     where membership.user_id = request_row.user_id
       and membership.school_key = request_row.school_key
-      and membership.status <> 'verified';
+      and membership.status not in ('verified', 'revoked');
   end if;
 
   return true;
