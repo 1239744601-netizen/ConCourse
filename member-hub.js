@@ -70,6 +70,11 @@
     accountDeletionLoading: false,
     schoolVerificationRequest: null,
     schoolVerificationLoading: false,
+    schoolVerificationFiles: [],
+    schoolVerificationFilePreparing: false,
+    schoolVerificationEnhanced: false,
+    verificationEvidenceByCase: new Map(),
+    verificationEvidenceLoading: new Set(),
     supportRequests: [],
     supportRequestsLoading: false,
     supportRequestSubmitting: false,
@@ -154,6 +159,17 @@
   const MESSAGE_PAGE_SIZE = 50;
   const HUB_RPC_TIMEOUT_MS = 15000;
   const VERIFICATION_PAGE_SIZE = 40;
+  const SCHOOL_VERIFICATION_EVIDENCE_BUCKET = "school-verification-evidence";
+  const SCHOOL_VERIFICATION_MAX_FILES = 3;
+  const SCHOOL_VERIFICATION_MAX_FILE_BYTES = 8 * 1024 * 1024;
+  const SCHOOL_VERIFICATION_EVIDENCE_TTL_SECONDS = 60;
+  const SCHOOL_VERIFICATION_DOCUMENT_TYPES = Object.freeze([
+    Object.freeze({id:"student_id", labelKey:"documentStudentId"}),
+    Object.freeze({id:"enrollment_letter", labelKey:"documentEnrollmentLetter"}),
+    Object.freeze({id:"class_schedule", labelKey:"documentClassSchedule"}),
+    Object.freeze({id:"portal_screenshot", labelKey:"documentPortalScreenshot"}),
+    Object.freeze({id:"other", labelKey:"documentOther"})
+  ]);
   const VERIFICATION_WORKFLOWS = Object.freeze([
     Object.freeze({id:"school_verification", scope:"school_verification.review", tabId:"verificationTabSchool", countId:"verificationTabSchoolCount", labelKey:"workflowSchool"}),
     Object.freeze({id:"payment_evidence", scope:"payment_evidence.review", tabId:"verificationTabPayments", countId:"verificationTabPaymentsCount", labelKey:"workflowPayments"}),
@@ -222,9 +238,9 @@
       author:"Maya Chen",
       avatar:Object.freeze({src:"concourse-community-library.jpg", position:"53% 30%"}),
       meta:Object.freeze({
-        en:"Hong Kong Baptist University · Finance · 24 min",
-        "zh-CN":"香港浸会大学 · 金融学 · 24 分钟前",
-        "zh-HK":"香港浸會大學 · 金融 · 24 分鐘前"
+        en:"University student · Finance · 24 min",
+        "zh-CN":"大学生 · 金融学 · 24 分钟前",
+        "zh-HK":"大學生 · 金融 · 24 分鐘前"
       }),
       body:Object.freeze({
         en:"Our FIN 3010 revision group mapped the toughest valuation topics today. We are opening the next session to anyone who wants to compare approaches before the midterm.",
@@ -333,9 +349,9 @@
       author:"Aisha Rahman",
       avatar:Object.freeze({src:"concourse-community-club.jpg", position:"35% 28%"}),
       meta:Object.freeze({
-        en:"HKBU Sustainability Society · 42 min",
-        "zh-CN":"浸大可持续发展学会 · 42 分钟前",
-        "zh-HK":"浸大可持續發展學會 · 42 分鐘前"
+        en:"Campus Sustainability Society · 42 min",
+        "zh-CN":"校园可持续发展学会 · 42 分钟前",
+        "zh-HK":"校園可持續發展學會 · 42 分鐘前"
       }),
       body:Object.freeze({
         en:"Plant swap this Thursday beside the central lawn. Bring one cutting, seedling, or clean reusable item; first-time growers are absolutely welcome.",
@@ -486,9 +502,9 @@
       author:"Leo Kwok",
       avatar:Object.freeze({src:"concourse-campus-community.jpg", position:"82% 34%"}),
       meta:Object.freeze({
-        en:"Hong Kong Baptist University · Computer Science · 1 h",
-        "zh-CN":"香港浸会大学 · 计算机科学 · 1 小时前",
-        "zh-HK":"香港浸會大學 · 電腦科學 · 1 小時前"
+        en:"University student · Computer Science · 1 h",
+        "zh-CN":"大学生 · 计算机科学 · 1 小时前",
+        "zh-HK":"大學生 · 電腦科學 · 1 小時前"
       }),
       body:Object.freeze({
         en:"Our project team tested the new courtyard study tables this morning. Strong Wi-Fi, quiet before noon, and enough shade for a long working session.",
@@ -828,6 +844,11 @@
     hubState.accountDeletionLoading = false;
     hubState.schoolVerificationRequest = null;
     hubState.schoolVerificationLoading = false;
+    hubState.schoolVerificationFiles = [];
+    hubState.schoolVerificationFilePreparing = false;
+    hubState.schoolVerificationEnhanced = false;
+    hubState.verificationEvidenceByCase = new Map();
+    hubState.verificationEvidenceLoading = new Set();
     hubState.supportRequests = [];
     hubState.supportRequestsLoading = false;
     hubState.supportRequestSubmitting = false;
@@ -926,6 +947,7 @@
     if($("chatUsernameSuggestions")) $("chatUsernameSuggestions").hidden = true;
     $("chatUsername")?.setAttribute("aria-expanded", "false");
     ["loadCourseInsights", "publishCommunityPost", "startConversation"].forEach(id => { if($(id)) $(id).disabled = false; });
+    publishInstitutionContext();
   }
 
   function academicLabel(){
@@ -1189,6 +1211,30 @@
     scheduleHubStickyGeometry();
   }
 
+  function getInstitutionContext(){
+    const rawStatus = String(hubState.membership?.status || "").trim().toLowerCase();
+    const status = ["verified", "pending", "rejected", "revoked"].includes(rawStatus)
+      ? rawStatus
+      : "unverified";
+    const verified = status === "verified";
+    return Object.freeze({
+      status,
+      verified,
+      schoolName:verified
+        ? String(hubState.membership?.school_name || "").replace(/\s+/g, " ").trim().slice(0, 240)
+        : "",
+      schoolKey:verified
+        ? String(hubState.membership?.school_key || "").trim().toLowerCase().slice(0, 500)
+        : ""
+    });
+  }
+
+  function publishInstitutionContext(){
+    window.dispatchEvent(new CustomEvent("concourse:institution-context", {
+      detail:getInstitutionContext()
+    }));
+  }
+
   function renderIdentity(){
     if(!currentUser) return;
     const username = currentUser.user_metadata?.username || currentUser.email?.split("@")[0] || t("anonymousStudent");
@@ -1203,8 +1249,11 @@
       : "pending";
     $("hubMembershipStatus").textContent = t(`membership${membershipStatus[0].toLocaleUpperCase()}${membershipStatus.slice(1)}`);
     $("hubMembershipStatus").className = `hub-membership-status ${membershipStatus}`;
+    publishInstitutionContext();
     renderHubHeader();
-    $("hubNetworkScope").textContent = getAcademicIdentity().school || "—";
+    $("hubNetworkScope").textContent = membershipStatus === "verified"
+      ? getInstitutionContext().schoolName || "—"
+      : t("membershipPending");
     const strength = profileStrength();
     $("hubRailProfileStrength").textContent = `${strength}%`;
     $("hubRailProfileStrengthBar").style.width = `${strength}%`;
@@ -1467,17 +1516,55 @@
   function accountTrustCopy(){
     return communitySeedText({
       en:{
-        verificationTitle:"Campus Identity Review",
-        verificationDescription:"A school name or email domain does not automatically verify enrolment. A ConCourse administrator reviews the evidence you submit.",
-        verificationMethod:"Evidence Method",
+        verificationTitle:"Verify Your Student Status",
+        verificationDescription:"Choose one method. An authorised ConCourse reviewer makes the decision; an email-domain match never approves a request automatically.",
+        verificationMethod:"Choose a Verification Method",
+        verificationStepProfile:"School Profile",
+        verificationStepEvidence:"Private Evidence",
+        verificationStepReview:"Human Review",
+        claimedSchool:"Claimed Institution",
+        verifiedSchool:"Verified Institution",
+        verifiedFor:"Verified for {school}",
+        accountEmail:"Confirmed Account Email",
+        membershipState:"Current Status",
         academicEmail:"Confirmed Academic Email",
+        academicEmailHelp:"Use the confirmed email already linked to your ConCourse account.",
         institutionSso:"Institution SSO Reference",
-        manualReview:"Manual Review",
-        evidenceReference:"Evidence Reference",
-        verificationNote:"Note for the Reviewer",
-        submitVerification:"Submit for Review",
+        institutionSsoHelp:"Provide a non-secret reference from your institution portal.",
+        studentDocument:"Student Document Review",
+        studentDocumentHelp:"Privately submit a redacted student document for an authorised reviewer.",
+        manualReview:"Student Document Review",
+        evidenceReference:"Institution Portal Reference",
+        ssoSafety:"Never enter a password, one-time code, recovery code, or authentication link.",
+        verificationNote:"Optional Context for the Reviewer",
+        documentType:"Document Type",
+        documentStudentId:"Student ID",
+        documentEnrollmentLetter:"Enrolment Letter",
+        documentClassSchedule:"Current Class Schedule",
+        documentPortalScreenshot:"Student Portal Screenshot",
+        documentOther:"Other Enrolment Evidence",
+        chooseEvidenceFiles:"Choose Private Files",
+        evidenceFilesHelp:"JPG, PNG, WebP, or PDF · up to 3 files · 8 MB each.",
+        evidencePrivacy:"Only you and authorised school reviewers can access these private files. Cover student numbers, birth dates, addresses, grades, QR or barcodes, and financial details. Do not upload a passport or other government ID.",
+        redactionConfirmation:"I removed information that is not needed to verify enrolment.",
+        selectedEvidence:"Selected Private Evidence",
+        removeEvidence:"Remove",
+        noEvidenceSelected:"No private files selected.",
+        verificationHistory:"Request History",
+        verificationHistoryEmpty:"No previous verification requests.",
+        reviewerFeedback:"Reviewer Feedback",
+        submittedOn:"Submitted",
+        reviewedOn:"Reviewed",
+        statusNotSubmitted:"Not Submitted",
+        statusSubmitted:"Submitted",
+        statusUnderReview:"Under Review",
+        statusVerified:"Verified",
+        statusRejected:"Not Approved",
+        statusWithdrawn:"Withdrawn",
+        submitVerification:"Submit Verification Request",
         withdrawVerification:"Withdraw Request",
         verificationUnavailable:"Campus verification requests become available after the latest Supabase migration is applied.",
+        verificationEvidenceUnavailable:"Private document review requires the Student Verification migration. Academic email and SSO review are still available.",
         verificationLoading:"Loading your campus-verification status…",
         verificationAwaiting:"Your request is awaiting administrator review.",
         verificationUnderReview:"An administrator is reviewing your request.",
@@ -1503,6 +1590,18 @@
         actionFailed:"The request could not be completed. Please try again.",
         requiredReference:"Add the SSO or evidence reference before submitting.",
         requiredNote:"Add a short note describing the evidence for manual review.",
+        requiredEvidence:"Choose at least one private evidence file.",
+        requiredRedaction:"Confirm that unnecessary personal information has been removed.",
+        evidenceFileLimit:"You can submit up to 3 private files.",
+        evidenceFileTooLarge:"Each private file must be 8 MB or smaller.",
+        evidenceFileType:"Choose a JPG, PNG, WebP, or PDF file.",
+        evidenceFileInvalid:"The file contents do not match a supported file type.",
+        evidencePreparing:"Checking private evidence…",
+        evidenceUploading:"Securely uploading file {current} of {total}…",
+        evidenceValidating:"Validating file {current} of {total} in the protected review service…",
+        evidenceReady:"Private evidence is ready to submit.",
+        evidenceValidationUnavailable:"This file could not be safely validated. Choose another file or try again later.",
+        evidenceUploadFailed:"The private evidence upload could not be completed. No verification request was created.",
         supportTitle:"Support Request",
         supportDescription:"Send an access, marketplace, academic, privacy, or general request to the ConCourse team.",
         supportCategory:"Category",
@@ -1523,20 +1622,59 @@
         supportPrivacy:"Privacy",
         supportSafety:"Safety",
         supportTechnical:"Technical",
-        supportOther:"Other"
+        supportOther:"Other",
+        noValue:"Not Provided"
       },
       "zh-CN":{
-        verificationTitle:"校园身份审核",
-        verificationDescription:"填写学校名称或匹配邮箱域名不会自动验证在读身份。你提交的证明将由 ConCourse 管理员审核。",
-        verificationMethod:"证明方式",
+        verificationTitle:"验证你的在读身份",
+        verificationDescription:"请选择一种方式。审核决定由 ConCourse 授权审核员作出；邮箱域名匹配不会自动通过验证。",
+        verificationMethod:"选择验证方式",
+        verificationStepProfile:"学校资料",
+        verificationStepEvidence:"私密证明",
+        verificationStepReview:"人工审核",
+        claimedSchool:"申报院校",
+        verifiedSchool:"已验证院校",
+        verifiedFor:"已验证：{school}",
+        accountEmail:"已确认的账户邮箱",
+        membershipState:"当前状态",
         academicEmail:"已确认的学校邮箱",
+        academicEmailHelp:"使用已连接到 ConCourse 账户并完成确认的邮箱。",
         institutionSso:"学校 SSO 参考资料",
-        manualReview:"人工审核",
-        evidenceReference:"证明资料",
-        verificationNote:"给审核员的说明",
-        submitVerification:"提交审核",
+        institutionSsoHelp:"提供学校门户中的非敏感参考资料。",
+        studentDocument:"学生证明文件审核",
+        studentDocumentHelp:"私密提交已遮盖敏感信息的学生证明，由授权审核员查看。",
+        manualReview:"学生证明文件审核",
+        evidenceReference:"学校门户参考资料",
+        ssoSafety:"切勿输入密码、一次性验证码、恢复码或身份验证链接。",
+        verificationNote:"给审核员的补充说明（选填）",
+        documentType:"文件类型",
+        documentStudentId:"学生证",
+        documentEnrollmentLetter:"在读证明",
+        documentClassSchedule:"本学期课表",
+        documentPortalScreenshot:"学生门户截图",
+        documentOther:"其他在读证明",
+        chooseEvidenceFiles:"选择私密文件",
+        evidenceFilesHelp:"支持 JPG、PNG、WebP 或 PDF；最多 3 份；每份不超过 8 MB。",
+        evidencePrivacy:"只有你和获授权的学校审核员可以查看这些私密文件。请遮盖学号、出生日期、地址、成绩、二维码／条形码及财务信息。请勿上传护照或其他政府签发的身份证件。",
+        redactionConfirmation:"我已遮盖与验证在读身份无关的信息。",
+        selectedEvidence:"已选择的私密证明",
+        removeEvidence:"移除",
+        noEvidenceSelected:"尚未选择私密文件。",
+        verificationHistory:"申请记录",
+        verificationHistoryEmpty:"尚无验证申请记录。",
+        reviewerFeedback:"审核员说明",
+        submittedOn:"提交时间",
+        reviewedOn:"审核时间",
+        statusNotSubmitted:"未提交",
+        statusSubmitted:"已提交",
+        statusUnderReview:"审核中",
+        statusVerified:"已验证",
+        statusRejected:"未获批准",
+        statusWithdrawn:"已撤回",
+        submitVerification:"提交验证申请",
         withdrawVerification:"撤回申请",
         verificationUnavailable:"应用最新 Supabase 迁移后即可提交校园身份审核申请。",
+        verificationEvidenceUnavailable:"私密文件审核需要应用“学生验证”迁移。学校邮箱和 SSO 审核仍可使用。",
         verificationLoading:"正在加载校园身份审核状态…",
         verificationAwaiting:"申请正在等待管理员审核。",
         verificationUnderReview:"管理员正在审核你的申请。",
@@ -1562,6 +1700,18 @@
         actionFailed:"暂时无法完成申请，请重试。",
         requiredReference:"提交前请填写 SSO 或证明资料。",
         requiredNote:"请简要说明用于人工审核的证明。",
+        requiredEvidence:"请至少选择一份私密证明文件。",
+        requiredRedaction:"请确认已遮盖不必要的个人信息。",
+        evidenceFileLimit:"最多可提交 3 份私密文件。",
+        evidenceFileTooLarge:"每份私密文件不得超过 8 MB。",
+        evidenceFileType:"请选择 JPG、PNG、WebP 或 PDF 文件。",
+        evidenceFileInvalid:"文件内容与支持的文件类型不符。",
+        evidencePreparing:"正在检查私密证明…",
+        evidenceUploading:"正在安全上传第 {current}／{total} 份文件…",
+        evidenceValidating:"正在通过受保护的审核服务验证第 {current}／{total} 份文件…",
+        evidenceReady:"私密证明已准备好提交。",
+        evidenceValidationUnavailable:"无法安全验证此文件。请选择其他文件或稍后重试。",
+        evidenceUploadFailed:"无法完成私密证明上传，验证申请尚未创建。",
         supportTitle:"支持申请",
         supportDescription:"向 ConCourse 团队提交账户访问、市集、学术、隐私或一般问题。",
         supportCategory:"类别",
@@ -1582,20 +1732,59 @@
         supportPrivacy:"隐私",
         supportSafety:"安全",
         supportTechnical:"技术问题",
-        supportOther:"其他"
+        supportOther:"其他",
+        noValue:"未提供"
       },
       "zh-HK":{
-        verificationTitle:"校園身份審核",
-        verificationDescription:"填寫院校名稱或相符電郵網域唔會自動驗證學生身份。你提交嘅證明會由 ConCourse 管理員審核。",
-        verificationMethod:"證明方式",
+        verificationTitle:"驗證你嘅在讀身份",
+        verificationDescription:"請揀一種方式。審核決定由 ConCourse 授權審核員作出；電郵網域相符唔會自動通過驗證。",
+        verificationMethod:"選擇驗證方式",
+        verificationStepProfile:"院校資料",
+        verificationStepEvidence:"私密證明",
+        verificationStepReview:"人手審核",
+        claimedSchool:"申報院校",
+        verifiedSchool:"已驗證院校",
+        verifiedFor:"已驗證：{school}",
+        accountEmail:"已確認嘅帳戶電郵",
+        membershipState:"目前狀態",
         academicEmail:"已確認嘅院校電郵",
+        academicEmailHelp:"使用已連接到 ConCourse 帳戶並完成確認嘅電郵。",
         institutionSso:"院校 SSO 參考資料",
-        manualReview:"人手審核",
-        evidenceReference:"證明資料",
-        verificationNote:"畀審核員嘅說明",
-        submitVerification:"提交審核",
+        institutionSsoHelp:"提供院校門戶內嘅非敏感參考資料。",
+        studentDocument:"學生證明文件審核",
+        studentDocumentHelp:"私密提交已遮蓋敏感資料嘅學生證明，由獲授權審核員查看。",
+        manualReview:"學生證明文件審核",
+        evidenceReference:"院校門戶參考資料",
+        ssoSafety:"切勿輸入密碼、一次性驗證碼、復原碼或身份驗證連結。",
+        verificationNote:"畀審核員嘅補充說明（選填）",
+        documentType:"文件類型",
+        documentStudentId:"學生證",
+        documentEnrollmentLetter:"在讀證明",
+        documentClassSchedule:"本學期時間表",
+        documentPortalScreenshot:"學生門戶截圖",
+        documentOther:"其他在讀證明",
+        chooseEvidenceFiles:"選擇私密文件",
+        evidenceFilesHelp:"支援 JPG、PNG、WebP 或 PDF；最多 3 份；每份不超過 8 MB。",
+        evidencePrivacy:"只有你同獲授權嘅院校審核員可以查看呢啲私密文件。請遮蓋學號、出生日期、地址、成績、二維碼／條碼同財務資料。請勿上載護照或其他政府簽發嘅身份證明文件。",
+        redactionConfirmation:"我已遮蓋同驗證在讀身份無關嘅資料。",
+        selectedEvidence:"已選擇嘅私密證明",
+        removeEvidence:"移除",
+        noEvidenceSelected:"未有選擇私密文件。",
+        verificationHistory:"申請記錄",
+        verificationHistoryEmpty:"未有驗證申請記錄。",
+        reviewerFeedback:"審核員說明",
+        submittedOn:"提交時間",
+        reviewedOn:"審核時間",
+        statusNotSubmitted:"未提交",
+        statusSubmitted:"已提交",
+        statusUnderReview:"審核中",
+        statusVerified:"已驗證",
+        statusRejected:"未獲批准",
+        statusWithdrawn:"已撤回",
+        submitVerification:"提交驗證申請",
         withdrawVerification:"撤回申請",
         verificationUnavailable:"套用最新 Supabase 遷移後就可以提交校園身份審核申請。",
+        verificationEvidenceUnavailable:"私密文件審核需要套用「學生驗證」遷移。院校電郵同 SSO 審核仍然可以使用。",
         verificationLoading:"正在載入校園身份審核狀態…",
         verificationAwaiting:"申請正等候管理員審核。",
         verificationUnderReview:"管理員正審核你嘅申請。",
@@ -1621,6 +1810,18 @@
         actionFailed:"暫時未能完成申請，請再試。",
         requiredReference:"提交前請填寫 SSO 或證明資料。",
         requiredNote:"請簡短說明用作人手審核嘅證明。",
+        requiredEvidence:"請至少選擇一份私密證明文件。",
+        requiredRedaction:"請確認已遮蓋不必要嘅個人資料。",
+        evidenceFileLimit:"最多可以提交 3 份私密文件。",
+        evidenceFileTooLarge:"每份私密文件唔可以超過 8 MB。",
+        evidenceFileType:"請選擇 JPG、PNG、WebP 或 PDF 文件。",
+        evidenceFileInvalid:"文件內容同支援嘅文件類型不符。",
+        evidencePreparing:"正在檢查私密證明…",
+        evidenceUploading:"正在安全上載第 {current}／{total} 份文件…",
+        evidenceValidating:"正在透過受保護嘅審核服務驗證第 {current}／{total} 份文件…",
+        evidenceReady:"私密證明已準備好提交。",
+        evidenceValidationUnavailable:"未能安全驗證呢份文件。請選擇其他文件或稍後再試。",
+        evidenceUploadFailed:"未能完成私密證明上載，驗證申請尚未建立。",
         supportTitle:"支援申請",
         supportDescription:"向 ConCourse 團隊提交帳戶存取、市集、學術、私隱或一般問題。",
         supportCategory:"類別",
@@ -1641,7 +1842,8 @@
         supportPrivacy:"私隱",
         supportSafety:"安全",
         supportTechnical:"技術問題",
-        supportOther:"其他"
+        supportOther:"其他",
+        noValue:"未提供"
       }
     });
   }
@@ -1687,6 +1889,13 @@
         schoolKey:"School Key",
         evidenceMethod:"Evidence Method",
         evidenceReference:"Evidence Reference",
+        privateEvidence:"Private Student Evidence",
+        loadEvidence:"Review Private Evidence",
+        evidenceLoading:"Loading protected evidence…",
+        evidenceNone:"No private files are attached to this request.",
+        openEvidence:"Open Securely",
+        evidenceOpenFailed:"The protected file could not be opened. Confirm your reviewer access and try again.",
+        evidencePrivacyNote:"Links are created only when requested and expire after 60 seconds. Files pass structural safety checks, not antivirus scanning. Use a managed device and do not copy or retain evidence outside the review workflow.",
         applicantNote:"Applicant Note",
         submittedAt:"Submitted",
         reviewedAt:"Reviewed",
@@ -1836,6 +2045,13 @@
         schoolKey:"学校标识",
         evidenceMethod:"证明方式",
         evidenceReference:"证明资料",
+        privateEvidence:"私密学生证明",
+        loadEvidence:"查看私密证明",
+        evidenceLoading:"正在加载受保护的证明…",
+        evidenceNone:"此申请没有附加私密文件。",
+        openEvidence:"安全打开",
+        evidenceOpenFailed:"无法打开受保护文件。请确认审核权限后重试。",
+        evidencePrivacyNote:"文件链接仅在需要时生成，并在 60 秒后失效。文件已通过结构安全检查，但并非病毒扫描。请使用受管理的设备，且不要在审核流程外复制或保留证明。",
         applicantNote:"申请人说明",
         submittedAt:"提交时间",
         reviewedAt:"审核时间",
@@ -1985,6 +2201,13 @@
         schoolKey:"院校識別碼",
         evidenceMethod:"證明方式",
         evidenceReference:"證明資料",
+        privateEvidence:"私密學生證明",
+        loadEvidence:"查看私密證明",
+        evidenceLoading:"正在載入受保護嘅證明…",
+        evidenceNone:"呢份申請無附加私密文件。",
+        openEvidence:"安全開啟",
+        evidenceOpenFailed:"未能開啟受保護文件。請確認審核權限後再試。",
+        evidencePrivacyNote:"文件連結只會喺需要時建立，並於 60 秒後失效。文件已通過結構安全檢查，但並非病毒掃描。請使用受管理嘅裝置，亦唔好喺審核流程以外複製或保留證明。",
         applicantNote:"申請人說明",
         submittedAt:"提交時間",
         reviewedAt:"審核時間",
@@ -2175,30 +2398,148 @@
     verificationStatus.id = "hubSchoolVerificationStatus";
     verificationStatus.setAttribute("role", "status");
     verificationStatus.setAttribute("aria-live", "polite");
-    const verificationForm = node("div", "hub-account-trust-form");
-    const methodLabel = node("label");
-    const methodText = node("span");
-    methodText.id = "hubVerificationMethodLabel";
-    const method = document.createElement("select");
-    method.id = "hubVerificationMethod";
+    const verificationProgress = node("ol", "hub-student-verification-progress");
+    verificationProgress.id = "hubVerificationProgress";
     [
-      ["academic_email", "academicEmail"],
-      ["institution_sso", "institutionSso"],
-      ["manual_review", "manualReview"]
-    ].forEach(([value, key]) => {
-      const option = document.createElement("option");
-      option.value = value;
-      option.dataset.copyKey = key;
-      method.append(option);
+      ["profile", "verificationStepProfile"],
+      ["evidence", "verificationStepEvidence"],
+      ["review", "verificationStepReview"]
+    ].forEach(([step, copyKey], index) => {
+      const item = node("li");
+      item.dataset.verificationStep = step;
+      item.dataset.copyKey = copyKey;
+      item.append(node("span", "hub-student-verification-step-number", String(index + 1)), node("b"));
+      verificationProgress.append(item);
     });
-    methodLabel.append(methodText, method);
-    const referenceLabel = node("label");
+
+    const identitySummary = node("div", "hub-student-verification-identity");
+    [
+      ["hubVerificationSchoolLabel", "hubVerificationSchoolValue"],
+      ["hubVerificationEmailLabel", "hubVerificationEmailValue"],
+      ["hubVerificationMembershipLabel", "hubVerificationMembershipValue"]
+    ].forEach(([labelId, valueId]) => {
+      const item = node("div");
+      const label = node("span");
+      label.id = labelId;
+      const value = node("strong");
+      value.id = valueId;
+      item.append(label, value);
+      identitySummary.append(item);
+    });
+
+    const verificationForm = node("form", "hub-account-trust-form hub-student-verification-form");
+    verificationForm.id = "hubStudentVerificationForm";
+    verificationForm.noValidate = true;
+    const methodValue = node("input");
+    methodValue.type = "hidden";
+    methodValue.id = "hubVerificationMethod";
+    methodValue.value = "academic_email";
+    const methodFieldset = node("fieldset", "hub-student-verification-methods hub-account-trust-wide");
+    const methodLegend = node("legend");
+    methodLegend.id = "hubVerificationMethodLabel";
+    methodFieldset.append(methodLegend);
+    [
+      ["academic_email", "academicEmail", "academicEmailHelp"],
+      ["institution_sso", "institutionSso", "institutionSsoHelp"],
+      ["student_document", "studentDocument", "studentDocumentHelp"]
+    ].forEach(([value, titleKey, helpKey], index) => {
+      const card = node("label", "hub-student-verification-method");
+      card.dataset.method = value;
+      const radio = node("input");
+      radio.type = "radio";
+      radio.name = "hubVerificationMethodChoice";
+      radio.value = value;
+      radio.checked = index === 0;
+      radio.addEventListener("change", () => {
+        if(!radio.checked) return;
+        methodValue.value = radio.value;
+        renderAccountTrustControls();
+      });
+      const copyBlock = node("span");
+      const title = node("b");
+      title.dataset.copyKey = titleKey;
+      const help = node("small");
+      help.dataset.copyKey = helpKey;
+      copyBlock.append(title, help);
+      card.append(radio, copyBlock);
+      methodFieldset.append(card);
+    });
+
+    const referenceLabel = node("label", "hub-student-verification-reference hub-account-trust-wide");
+    referenceLabel.id = "hubVerificationReferenceField";
     const referenceText = node("span");
     referenceText.id = "hubVerificationReferenceLabel";
     const reference = node("input");
     reference.id = "hubVerificationReference";
     reference.maxLength = 500;
-    referenceLabel.append(referenceText, reference);
+    reference.setAttribute("aria-describedby", "hubVerificationSsoSafety hubSchoolVerificationStatus");
+    reference.addEventListener("input", () => reference.removeAttribute("aria-invalid"));
+    const ssoSafety = node("small", "hub-student-verification-safety");
+    ssoSafety.id = "hubVerificationSsoSafety";
+    referenceLabel.append(referenceText, reference, ssoSafety);
+
+    const documentPanel = node("section", "hub-student-verification-documents hub-account-trust-wide");
+    documentPanel.id = "hubVerificationDocumentPanel";
+    const documentTypeLabel = node("label", "hub-student-verification-document-type");
+    const documentTypeText = node("span");
+    documentTypeText.id = "hubVerificationDocumentTypeLabel";
+    const documentType = document.createElement("select");
+    documentType.id = "hubVerificationDocumentType";
+    SCHOOL_VERIFICATION_DOCUMENT_TYPES.forEach(({id, labelKey}) => {
+      const option = node("option");
+      option.value = id;
+      option.dataset.copyKey = labelKey;
+      documentType.append(option);
+    });
+    documentTypeLabel.append(documentTypeText, documentType);
+    const fileInput = node("input");
+    fileInput.type = "file";
+    fileInput.id = "hubVerificationFiles";
+    fileInput.multiple = true;
+    fileInput.accept = ".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf";
+    fileInput.className = "hub-visually-hidden";
+    fileInput.tabIndex = -1;
+    fileInput.setAttribute("aria-describedby", "hubVerificationFilesHelp hubVerificationPrivacy hubSchoolVerificationStatus");
+    fileInput.addEventListener("change", () => {
+      fileInput.removeAttribute("aria-invalid");
+      void prepareSchoolVerificationFiles(fileInput.files);
+    });
+    const filePicker = node("button", "btn-ghost hub-student-verification-file-picker");
+    filePicker.type = "button";
+    filePicker.id = "hubVerificationChooseFiles";
+    filePicker.setAttribute("aria-describedby", "hubVerificationFilesHelp hubSchoolVerificationStatus");
+    filePicker.addEventListener("click", () => {
+      if(!fileInput.disabled) fileInput.click();
+    });
+    const fileHelp = node("small", "hub-student-verification-file-help");
+    fileHelp.id = "hubVerificationFilesHelp";
+    const selectedHeading = node("h4");
+    selectedHeading.id = "hubVerificationSelectedHeading";
+    const fileList = node("div", "hub-student-verification-file-list");
+    fileList.id = "hubVerificationFileList";
+    fileList.setAttribute("aria-live", "polite");
+    const privacy = node("p", "hub-student-verification-privacy");
+    privacy.id = "hubVerificationPrivacy";
+    const acknowledgementLabel = node("label", "hub-student-verification-acknowledgement");
+    const acknowledgement = node("input");
+    acknowledgement.type = "checkbox";
+    acknowledgement.id = "hubVerificationRedaction";
+    acknowledgement.setAttribute("aria-describedby", "hubVerificationPrivacy hubSchoolVerificationStatus");
+    acknowledgement.addEventListener("change", () => acknowledgement.removeAttribute("aria-invalid"));
+    const acknowledgementText = node("span");
+    acknowledgementText.id = "hubVerificationRedactionLabel";
+    acknowledgementLabel.append(acknowledgement, acknowledgementText);
+    documentPanel.append(
+      documentTypeLabel,
+      fileInput,
+      filePicker,
+      fileHelp,
+      selectedHeading,
+      fileList,
+      privacy,
+      acknowledgementLabel
+    );
+
     const noteLabel = node("label", "hub-account-trust-wide");
     const noteText = node("span");
     noteText.id = "hubVerificationNoteLabel";
@@ -2208,16 +2549,40 @@
     noteLabel.append(noteText, note);
     const verificationActions = node("div", "hub-account-trust-actions hub-account-trust-wide");
     const submit = node("button", "btn-primary");
-    submit.type = "button";
+    submit.type = "submit";
     submit.id = "hubSubmitVerification";
-    submit.onclick = () => void submitSchoolVerification();
     const withdraw = node("button", "btn-ghost");
     withdraw.type = "button";
     withdraw.id = "hubWithdrawVerification";
     withdraw.onclick = () => void withdrawSchoolVerification();
     verificationActions.append(submit, withdraw);
-    verificationForm.append(methodLabel, referenceLabel, noteLabel, verificationActions);
-    verification.append(verificationHeading, verificationDescription, verificationStatus, verificationForm);
+    verificationForm.append(
+      methodValue,
+      methodFieldset,
+      referenceLabel,
+      documentPanel,
+      noteLabel,
+      verificationActions
+    );
+    verificationForm.addEventListener("submit", event => {
+      event.preventDefault();
+      void submitSchoolVerification();
+    });
+    const history = node("section", "hub-student-verification-history");
+    const historyHeading = node("h4");
+    historyHeading.id = "hubVerificationHistoryHeading";
+    const historyList = node("ol");
+    historyList.id = "hubVerificationHistoryList";
+    history.append(historyHeading, historyList);
+    verification.append(
+      verificationHeading,
+      verificationDescription,
+      verificationProgress,
+      identitySummary,
+      verificationStatus,
+      verificationForm,
+      history
+    );
 
     const deletion = node("section", "hub-account-trust-section hub-account-deletion");
     deletion.id = "hubAccountDeletion";
@@ -2310,9 +2675,201 @@
 
     shell.append(verification, deletion, support);
     card.insertBefore(shell, save);
-    method.onchange = renderAccountTrustControls;
     renderAccountTrustControls();
     return shell;
+  }
+
+  function schoolVerificationMethodLabel(method, copy=accountTrustCopy()){
+    const key = {
+      academic_email:"academicEmail",
+      institution_sso:"institutionSso",
+      student_document:"studentDocument",
+      manual_review:"studentDocument"
+    }[String(method || "")] || "studentDocument";
+    return copy[key];
+  }
+
+  function schoolVerificationStatusLabel(status, copy=accountTrustCopy()){
+    const key = {
+      submitted:"statusSubmitted",
+      under_review:"statusUnderReview",
+      approved:"statusVerified",
+      rejected:"statusRejected",
+      withdrawn:"statusWithdrawn"
+    }[String(status || "")] || "statusNotSubmitted";
+    return copy[key];
+  }
+
+  function schoolVerificationFileSize(size){
+    const bytes = Number(size || 0);
+    if(!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+    if(bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+  }
+
+  function schoolVerificationDocumentLabel(type, copy=accountTrustCopy()){
+    const document = SCHOOL_VERIFICATION_DOCUMENT_TYPES.find(candidate => candidate.id === type);
+    return copy[document?.labelKey || "documentOther"];
+  }
+
+  async function schoolVerificationFileDescriptor(file){
+    const copy = accountTrustCopy();
+    if(!(file instanceof Blob) || !file.size) throw new Error(copy.evidenceFileInvalid);
+    if(file.size > SCHOOL_VERIFICATION_MAX_FILE_BYTES) throw new Error(copy.evidenceFileTooLarge);
+    const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    const isPdf = bytes.length >= 5 && String.fromCharCode(...bytes.slice(0, 5)) === "%PDF-";
+    const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const isPng = bytes.length >= 8
+      && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47
+      && bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a;
+    const isWebp = bytes.length >= 12
+      && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF"
+      && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+    const detected = isPdf
+      ? {mimeType:"application/pdf", extension:"pdf"}
+      : (isJpeg
+        ? {mimeType:"image/jpeg", extension:"jpg"}
+        : (isPng
+          ? {mimeType:"image/png", extension:"png"}
+          : (isWebp ? {mimeType:"image/webp", extension:"webp"} : null)));
+    if(!detected) throw new Error(copy.evidenceFileInvalid);
+    const declared = String(file.type || "").toLocaleLowerCase();
+    if(declared && declared !== detected.mimeType && !(declared === "image/jpg" && detected.mimeType === "image/jpeg")){
+      throw new Error(copy.evidenceFileInvalid);
+    }
+    const safeName = String(file.name || `evidence.${detected.extension}`)
+      .replace(/[\/\\\u0000-\u001f\u007f]/g, "-")
+      .trim()
+      .slice(0, 180) || `evidence.${detected.extension}`;
+    return {
+      id:crypto.randomUUID(),
+      file,
+      name:safeName,
+      mimeType:detected.mimeType,
+      extension:detected.extension,
+      sizeBytes:file.size,
+      documentType:$("hubVerificationDocumentType")?.value || "student_id"
+    };
+  }
+
+  async function prepareSchoolVerificationFiles(files){
+    const copy = accountTrustCopy();
+    const candidates = [...(files || [])];
+    if(!candidates.length || hubState.schoolVerificationFilePreparing) return;
+    const available = SCHOOL_VERIFICATION_MAX_FILES - hubState.schoolVerificationFiles.length;
+    if(available <= 0){
+      $("hubSchoolVerificationStatus").textContent = copy.evidenceFileLimit;
+      $("hubSchoolVerificationStatus").className = "hub-account-trust-status error";
+      if($("hubVerificationFiles")) $("hubVerificationFiles").value = "";
+      return;
+    }
+    const context = requestContext();
+    hubState.schoolVerificationFilePreparing = true;
+    $("hubSchoolVerificationStatus").textContent = copy.evidencePreparing;
+    $("hubSchoolVerificationStatus").className = "hub-account-trust-status";
+    renderAccountTrustControls();
+    let lastError = "";
+    const prepared = [];
+    try {
+      for(const file of candidates.slice(0, available)){
+        try {
+          prepared.push(await schoolVerificationFileDescriptor(file));
+        } catch(error){
+          lastError = error?.message || copy.evidenceFileInvalid;
+        }
+      }
+      if(!contextIsCurrent(context)) return;
+      if(candidates.length > available) lastError = copy.evidenceFileLimit;
+      hubState.schoolVerificationFiles.push(...prepared);
+    } finally {
+      if(contextIsCurrent(context)){
+        hubState.schoolVerificationFilePreparing = false;
+        if($("hubVerificationFiles")) $("hubVerificationFiles").value = "";
+        renderAccountTrustControls();
+        $("hubSchoolVerificationStatus").textContent = lastError || copy.evidenceReady;
+        $("hubSchoolVerificationStatus").className = `hub-account-trust-status ${lastError ? "error" : "success"}`;
+      }
+    }
+  }
+
+  function renderSchoolVerificationFiles({disabled=false}={}){
+    const list = $("hubVerificationFileList");
+    if(!list) return;
+    const copy = accountTrustCopy();
+    list.replaceChildren();
+    if(!hubState.schoolVerificationFiles.length){
+      list.append(node("p", "hub-student-verification-file-empty", copy.noEvidenceSelected));
+      return;
+    }
+    hubState.schoolVerificationFiles.forEach((item, index) => {
+      const row = node("article", "hub-student-verification-file");
+      const details = node("div");
+      details.append(
+        node("b", "", item.name),
+        node("small", "", `${item.mimeType.replace("application/", "").replace("image/", "").toLocaleUpperCase()} · ${schoolVerificationFileSize(item.sizeBytes)}`)
+      );
+      const type = document.createElement("select");
+      type.setAttribute("aria-label", `${copy.documentType}: ${item.name}`);
+      SCHOOL_VERIFICATION_DOCUMENT_TYPES.forEach(({id, labelKey}) => {
+        const option = node("option", "", copy[labelKey]);
+        option.value = id;
+        type.append(option);
+      });
+      type.value = item.documentType;
+      type.disabled = disabled;
+      type.addEventListener("change", () => { item.documentType = type.value; });
+      const remove = node("button", "btn-ghost hub-student-verification-file-remove", copy.removeEvidence);
+      remove.type = "button";
+      remove.disabled = disabled;
+      remove.setAttribute("aria-label", `${copy.removeEvidence}: ${item.name}`);
+      remove.onclick = () => {
+        hubState.schoolVerificationFiles = hubState.schoolVerificationFiles.filter(candidate => candidate.id !== item.id);
+        renderAccountTrustControls();
+        requestAnimationFrame(() => {
+          const remaining = [...document.querySelectorAll(".hub-student-verification-file-remove")];
+          (remaining[Math.min(index, Math.max(0, remaining.length - 1))] || $("hubVerificationChooseFiles"))?.focus();
+        });
+      };
+      row.append(details, type, remove);
+      list.append(row);
+    });
+  }
+
+  function renderSchoolVerificationHistory(payload, copy=accountTrustCopy()){
+    const list = $("hubVerificationHistoryList");
+    if(!list) return;
+    list.replaceChildren();
+    let history = Array.isArray(payload?.history) ? payload.history : [];
+    if(!history.length && payload?.latest_request) history = [payload.latest_request];
+    if(!history.length){
+      const empty = node("li", "hub-student-verification-history-empty", copy.verificationHistoryEmpty);
+      list.append(empty);
+      return;
+    }
+    history.forEach(request => {
+      const status = String(request?.status || "");
+      const item = node("li", "hub-student-verification-history-item");
+      const heading = node("div");
+      heading.append(
+        node("b", "", schoolVerificationMethodLabel(request?.submission_method || request?.evidence_kind, copy)),
+        node("span", `hub-student-verification-status-badge ${status.replace(/[^a-z_]/g, "")}`, schoolVerificationStatusLabel(status, copy))
+      );
+      const metadata = [
+        request?.submitted_at ? `${copy.submittedOn}: ${formatDate(request.submitted_at)}` : "",
+        request?.reviewed_at ? `${copy.reviewedOn}: ${formatDate(request.reviewed_at)}` : ""
+      ].filter(Boolean);
+      item.append(heading);
+      if(metadata.length) item.append(node("small", "", metadata.join(" · ")));
+      if(Number(request?.evidence_count) > 0){
+        item.append(node("small", "", `${copy.selectedEvidence}: ${Number(request.evidence_count).toLocaleString(locale())}`));
+      }
+      if(request?.reviewer_note){
+        const feedback = node("blockquote");
+        feedback.append(node("b", "", copy.reviewerFeedback), node("span", "", request.reviewer_note));
+        item.append(feedback);
+      }
+      list.append(item);
+    });
   }
 
   function renderAccountTrustControls(){
@@ -2324,8 +2881,22 @@
     $("hubVerificationMethodLabel").textContent = copy.verificationMethod;
     $("hubVerificationReferenceLabel").textContent = copy.evidenceReference;
     $("hubVerificationNoteLabel").textContent = copy.verificationNote;
-    $("hubVerificationMethod").querySelectorAll("option").forEach(option => {
+    document.querySelectorAll(".hub-student-verification-method [data-copy-key]").forEach(element => {
+      element.textContent = copy[element.dataset.copyKey];
+    });
+    $("hubVerificationSsoSafety").textContent = copy.ssoSafety;
+    $("hubVerificationDocumentTypeLabel").textContent = copy.documentType;
+    $("hubVerificationDocumentType").querySelectorAll("option").forEach(option => {
       option.textContent = copy[option.dataset.copyKey];
+    });
+    $("hubVerificationChooseFiles").textContent = copy.chooseEvidenceFiles;
+    $("hubVerificationFilesHelp").textContent = copy.evidenceFilesHelp;
+    $("hubVerificationSelectedHeading").textContent = copy.selectedEvidence;
+    $("hubVerificationPrivacy").textContent = copy.evidencePrivacy;
+    $("hubVerificationRedactionLabel").textContent = copy.redactionConfirmation;
+    $("hubVerificationHistoryHeading").textContent = copy.verificationHistory;
+    document.querySelectorAll("#hubVerificationProgress [data-copy-key]").forEach(item => {
+      item.querySelector("b").textContent = copy[item.dataset.copyKey];
     });
     $("hubSubmitVerification").textContent = copy.submitVerification;
     $("hubWithdrawVerification").textContent = copy.withdrawVerification;
@@ -2351,26 +2922,88 @@
     const requestStatus = latestRequest?.status || "";
     const isVerified = membership?.status === "verified";
     const isReviewing = ["submitted", "under_review"].includes(requestStatus);
+    const busy = hubState.schoolVerificationLoading || hubState.schoolVerificationFilePreparing;
+    const latestMethod = String(
+      latestRequest?.submission_method
+      || (latestRequest?.evidence_kind === "manual_review" ? "student_document" : latestRequest?.evidence_kind)
+      || ""
+    );
+    if(
+      (isReviewing || isVerified || requestStatus === "approved")
+      && ["academic_email", "institution_sso", "student_document"].includes(latestMethod)
+    ){
+      $("hubVerificationMethod").value = latestMethod;
+      $("hubVerificationReference").value = latestRequest?.evidence_reference || "";
+      $("hubVerificationNote").value = latestRequest?.user_note || "";
+    }
+    const method = $("hubVerificationMethod").value;
+    const documentUnsupported = method === "student_document" && !hubState.schoolVerificationEnhanced;
+
+    $("hubVerificationSchoolLabel").textContent = isVerified ? copy.verifiedSchool : copy.claimedSchool;
+    $("hubVerificationSchoolValue").textContent = membership?.school_name || hubState.profile?.school_name || copy.noValue;
+    $("hubVerificationEmailLabel").textContent = copy.accountEmail;
+    $("hubVerificationEmailValue").textContent = currentUser?.email || copy.noValue;
+    $("hubVerificationMembershipLabel").textContent = copy.membershipState;
+    $("hubVerificationMembershipValue").textContent = isVerified
+      ? copy.verifiedFor.replace("{school}", membership?.school_name || copy.noValue)
+      : schoolVerificationStatusLabel(requestStatus, copy);
+
+    const progressState = isVerified || requestStatus === "approved"
+      ? "complete"
+      : (isReviewing ? "review" : "evidence");
+    document.querySelectorAll("#hubVerificationProgress [data-verification-step]").forEach(item => {
+      const step = item.dataset.verificationStep;
+      const completed = step === "profile"
+        || (step === "evidence" && ["review", "complete"].includes(progressState))
+        || progressState === "complete";
+      const current = (progressState === "evidence" && step === "evidence")
+        || (progressState === "review" && step === "review")
+        || (progressState === "complete" && step === "review");
+      item.classList.toggle("complete", completed);
+      item.classList.toggle("current", current);
+      if(current) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
+    });
+
     let verificationMessage = copy.verificationReady;
-    if(hubState.schoolVerificationLoading) verificationMessage = copy.verificationLoading;
+    if(busy) verificationMessage = hubState.schoolVerificationFilePreparing ? copy.evidencePreparing : copy.verificationLoading;
     else if(verificationState?.setupMissing) verificationMessage = copy.verificationUnavailable;
     else if(verificationState?.error) verificationMessage = verificationState.error;
     else if(isVerified || requestStatus === "approved") verificationMessage = copy.verificationApproved;
     else if(requestStatus === "submitted") verificationMessage = copy.verificationAwaiting;
     else if(requestStatus === "under_review") verificationMessage = copy.verificationUnderReview;
-    else if(requestStatus === "rejected"){
-      verificationMessage = [copy.verificationRejected, latestRequest?.reviewer_note].filter(Boolean).join(" ");
-    } else if(requestStatus === "withdrawn") verificationMessage = copy.verificationWithdrawn;
+    else if(requestStatus === "rejected") verificationMessage = copy.verificationRejected;
+    else if(requestStatus === "withdrawn") verificationMessage = copy.verificationWithdrawn;
+    else if(documentUnsupported) verificationMessage = copy.verificationEvidenceUnavailable;
     $("hubSchoolVerificationStatus").textContent = verificationMessage;
-    $("hubSchoolVerificationStatus").className = `hub-account-trust-status${verificationState?.error || verificationState?.setupMissing ? " error" : isVerified ? " success" : ""}`;
-    const method = $("hubVerificationMethod").value;
-    $("hubVerificationReference").disabled = hubState.schoolVerificationLoading || method === "academic_email" || isVerified || isReviewing || verificationState?.setupMissing;
-    $("hubVerificationNote").disabled = hubState.schoolVerificationLoading || isVerified || isReviewing || verificationState?.setupMissing;
-    $("hubVerificationMethod").disabled = hubState.schoolVerificationLoading || isVerified || isReviewing || verificationState?.setupMissing;
+    $("hubSchoolVerificationStatus").className = `hub-account-trust-status${
+      verificationState?.error || verificationState?.setupMissing || documentUnsupported
+        ? " error"
+        : (isVerified || requestStatus === "approved" ? " success" : (isReviewing ? " warning" : ""))
+    }`;
+
+    const locked = busy || isVerified || isReviewing || verificationState?.setupMissing;
+    document.querySelectorAll('input[name="hubVerificationMethodChoice"]').forEach(radio => {
+      radio.checked = radio.value === method;
+      radio.disabled = locked;
+      radio.closest(".hub-student-verification-method")?.classList.toggle("selected", radio.checked);
+    });
+    $("hubVerificationReferenceField").hidden = method !== "institution_sso";
+    $("hubVerificationDocumentPanel").hidden = method !== "student_document";
+    $("hubVerificationReference").disabled = locked || method !== "institution_sso";
+    $("hubVerificationNote").disabled = locked;
+    $("hubVerificationDocumentType").disabled = locked || method !== "student_document";
+    $("hubVerificationFiles").disabled = locked || method !== "student_document" || !hubState.schoolVerificationEnhanced;
+    $("hubVerificationChooseFiles").disabled = $("hubVerificationFiles").disabled;
+    $("hubVerificationChooseFiles").classList.toggle("disabled", $("hubVerificationFiles").disabled);
+    $("hubVerificationRedaction").disabled = locked || method !== "student_document";
+    renderSchoolVerificationFiles({disabled:locked});
+    renderSchoolVerificationHistory(verificationPayload, copy);
     $("hubSubmitVerification").hidden = isVerified || isReviewing;
-    $("hubSubmitVerification").disabled = hubState.schoolVerificationLoading || verificationState?.setupMissing;
+    $("hubSubmitVerification").disabled = busy || verificationState?.setupMissing || documentUnsupported;
     $("hubWithdrawVerification").hidden = !isReviewing;
-    $("hubWithdrawVerification").disabled = hubState.schoolVerificationLoading;
+    $("hubWithdrawVerification").disabled = busy;
+    $("hubStudentVerificationForm").setAttribute("aria-busy", busy ? "true" : "false");
 
     const deletionState = hubState.accountDeletionRequest;
     const deletionPayload = deletionState?.data || null;
@@ -2442,10 +3075,17 @@
     hubState.schoolVerificationLoading = true;
     renderAccountTrustControls();
     let response;
-    try { response = await hubRpc("get_my_school_verification"); }
+    try { response = await hubRpc("get_my_school_verification_v2"); }
     catch(error){ response = {data:null, error}; }
+    let enhanced = !response.error;
+    if(response.error && missingRpcError(response.error)){
+      try { response = await hubRpc("get_my_school_verification"); }
+      catch(error){ response = {data:null, error}; }
+      enhanced = false;
+    }
     if(!contextIsCurrent(context)) return null;
     hubState.schoolVerificationLoading = false;
+    hubState.schoolVerificationEnhanced = enhanced && !response.error;
     if(response.error){
       hubState.schoolVerificationRequest = {
         data:null,
@@ -2555,42 +3195,171 @@
     $("hubSupportRequestStatus").className = "hub-account-trust-status success";
   }
 
+  async function discardSchoolVerificationReservations(reservations){
+    const items = Array.isArray(reservations) ? reservations : [];
+    const paths = items.map(item => item.storagePath).filter(Boolean);
+    if(paths.length && authClient){
+      try {
+        const removal = await authClient.storage.from(SCHOOL_VERIFICATION_EVIDENCE_BUCKET).remove(paths);
+        if(removal.error) console.warn("Private verification evidence cleanup was deferred.", removal.error);
+      } catch(error){
+        console.warn("Private verification evidence cleanup was deferred.", error);
+      }
+    }
+    await Promise.all(items.map(async item => {
+      if(!item.evidenceId) return;
+      try {
+        await hubRpc("discard_school_verification_evidence_reservation", {p_evidence_id:item.evidenceId});
+      } catch(_error){}
+    }));
+  }
+
+  async function uploadSchoolVerificationEvidence(context){
+    const copy = accountTrustCopy();
+    const reservations = [];
+    const files = [...hubState.schoolVerificationFiles];
+    try {
+      for(const [index, item] of files.entries()){
+        if(!contextIsCurrent(context)) throw new Error("Stale verification submission");
+        $("hubSchoolVerificationStatus").textContent = copy.evidenceUploading
+          .replace("{current}", String(index + 1))
+          .replace("{total}", String(files.length));
+        $("hubSchoolVerificationStatus").className = "hub-account-trust-status";
+        let reservation;
+        try {
+          reservation = await hubRpc("reserve_school_verification_evidence", {
+            p_document_type:item.documentType,
+            p_original_file_name:item.name,
+            p_mime_type:item.mimeType,
+            p_size_bytes:item.sizeBytes
+          });
+        } catch(error){
+          reservation = {data:null, error};
+        }
+        if(reservation.error) throw reservation.error;
+        const payload = parseJsonValue(reservation.data, reservation.data) || {};
+        const evidenceId = String(payload.evidence_id || payload.id || "");
+        const storagePath = String(payload.storage_path || "");
+        if(!evidenceId || !storagePath) throw new Error(copy.evidenceUploadFailed);
+        const record = {evidenceId, storagePath};
+        reservations.push(record);
+        let upload;
+        try {
+          upload = await authClient.storage.from(SCHOOL_VERIFICATION_EVIDENCE_BUCKET).upload(storagePath, item.file, {
+            upsert:false,
+            contentType:item.mimeType,
+            cacheControl:"0"
+          });
+        } catch(error){
+          throw error;
+        }
+        if(upload.error) throw upload.error;
+        $("hubSchoolVerificationStatus").textContent = copy.evidenceValidating
+          .replace("{current}", String(index + 1))
+          .replace("{total}", String(files.length));
+        $("hubSchoolVerificationStatus").className = "hub-account-trust-status";
+        let validation;
+        try {
+          validation = await authClient.functions.invoke(
+            "validate-school-verification-evidence",
+            {body:{evidence_id:evidenceId}}
+          );
+        } catch(error){
+          validation = {data:null, error};
+        }
+        const validationPayload = parseJsonValue(validation.data, validation.data) || {};
+        if(validation.error || validationPayload.status !== "validated"){
+          throw new Error(copy.evidenceValidationUnavailable);
+        }
+      }
+      return reservations;
+    } catch(error){
+      await discardSchoolVerificationReservations(reservations);
+      throw error;
+    }
+  }
+
   async function submitSchoolVerification(){
     if(hubState.schoolVerificationLoading || !authClient || !currentUser) return;
     const copy = accountTrustCopy();
     const method = $("hubVerificationMethod").value;
     const reference = $("hubVerificationReference").value.trim();
     const note = $("hubVerificationNote").value.trim();
+    ["hubVerificationReference", "hubVerificationFiles", "hubVerificationRedaction"].forEach(id => {
+      $(id)?.removeAttribute("aria-invalid");
+    });
     if(method === "institution_sso" && !reference){
       $("hubSchoolVerificationStatus").textContent = copy.requiredReference;
       $("hubSchoolVerificationStatus").className = "hub-account-trust-status error";
+      $("hubVerificationReference").setAttribute("aria-invalid", "true");
       $("hubVerificationReference").focus();
       return;
     }
-    if(method === "manual_review" && !reference && !note){
-      $("hubSchoolVerificationStatus").textContent = copy.requiredNote;
+    if(method === "student_document" && !hubState.schoolVerificationFiles.length){
+      $("hubSchoolVerificationStatus").textContent = copy.requiredEvidence;
       $("hubSchoolVerificationStatus").className = "hub-account-trust-status error";
-      $("hubVerificationNote").focus();
+      $("hubVerificationFiles").setAttribute("aria-invalid", "true");
+      $("hubVerificationChooseFiles").focus();
+      return;
+    }
+    if(method === "student_document" && !$("hubVerificationRedaction").checked){
+      $("hubSchoolVerificationStatus").textContent = copy.requiredRedaction;
+      $("hubSchoolVerificationStatus").className = "hub-account-trust-status error";
+      $("hubVerificationRedaction").setAttribute("aria-invalid", "true");
+      $("hubVerificationRedaction").focus();
       return;
     }
     const context = requestContext();
     hubState.schoolVerificationLoading = true;
     renderAccountTrustControls();
+    let reservations = [];
     let response;
     try {
-      response = await hubRpc("submit_school_verification_request", {
-        p_evidence_kind:method,
+      if(method === "student_document"){
+        if(!hubState.schoolVerificationEnhanced) throw new Error(copy.verificationEvidenceUnavailable);
+        reservations = await uploadSchoolVerificationEvidence(context);
+      }
+      response = await hubRpc("submit_school_verification_request_v2", {
+        p_submission_method:method,
         p_evidence_reference:reference || null,
-        p_user_note:note || null
+        p_user_note:note || null,
+        p_evidence_ids:reservations.map(item => item.evidenceId),
+        p_redaction_confirmed:method === "student_document" ? $("hubVerificationRedaction").checked : false
       });
+      if(response.error && missingRpcError(response.error) && method !== "student_document"){
+        response = await hubRpc("submit_school_verification_request", {
+          p_evidence_kind:method,
+          p_evidence_reference:reference || null,
+          p_user_note:note || null
+        });
+      }
     } catch(error){ response = {error}; }
-    if(!contextIsCurrent(context)) return;
+    if(!contextIsCurrent(context)){
+      if(reservations.length) await discardSchoolVerificationReservations(reservations);
+      return;
+    }
     hubState.schoolVerificationLoading = false;
     if(response.error){
-      hubState.schoolVerificationRequest = {data:null, setupMissing:missingRpcError(response.error), error:featureError(response.error)};
+      if(reservations.length) await discardSchoolVerificationReservations(reservations);
+      const validationFailed = errorText(response.error).includes(copy.evidenceValidationUnavailable);
+      hubState.schoolVerificationRequest = {
+        ...(hubState.schoolVerificationRequest || {}),
+        setupMissing:false,
+        error:validationFailed
+          ? copy.evidenceValidationUnavailable
+          : (
+            missingRpcError(response.error) && method === "student_document"
+              ? copy.verificationEvidenceUnavailable
+              : featureError(response.error)
+          )
+      };
       renderAccountTrustControls();
       return;
     }
+    hubState.schoolVerificationFiles = [];
+    $("hubVerificationReference").value = "";
+    $("hubVerificationNote").value = "";
+    $("hubVerificationRedaction").checked = false;
     await Promise.all([loadSchoolVerificationRequest(), loadMembership()]);
     if(contextIsCurrent(context)){
       $("hubSchoolVerificationStatus").textContent = copy.requestSubmitted;
@@ -3343,6 +4112,130 @@
     return !["start_review", "approve", "accept_evidence", "return_to_queue"].includes(action);
   }
 
+  async function openSchoolVerificationEvidence(item, caseId){
+    const copy = ownerConsoleCopy();
+    const preview = window.open("", "_blank");
+    if(preview){
+      try { preview.opener = null; }
+      catch(_error){}
+      preview.document.title = copy.evidenceLoading;
+      preview.document.body.textContent = copy.evidenceLoading;
+    }
+    let authorization;
+    try {
+      authorization = await hubRpc("authorize_school_verification_evidence_access", {
+        p_evidence_id:item.evidence_id
+      });
+    } catch(error){
+      authorization = {data:null, error};
+    }
+    const authorizationPayload = parseJsonValue(authorization.data, authorization.data) || {};
+    const storagePath = String(authorizationPayload.storage_path || "");
+    if(authorization.error || !storagePath){
+      if(preview) preview.close();
+      const current = hubState.verificationEvidenceByCase.get(caseId) || {items:[]};
+      hubState.verificationEvidenceByCase.set(caseId, {...current, error:copy.evidenceOpenFailed});
+      renderVerificationCenter();
+      return;
+    }
+    let signed;
+    try {
+      signed = await authClient.storage
+        .from(SCHOOL_VERIFICATION_EVIDENCE_BUCKET)
+        .createSignedUrl(storagePath, SCHOOL_VERIFICATION_EVIDENCE_TTL_SECONDS);
+    } catch(error){
+      signed = {data:null, error};
+    }
+    if(signed.error || !signed.data?.signedUrl){
+      if(preview) preview.close();
+      const current = hubState.verificationEvidenceByCase.get(caseId) || {items:[]};
+      hubState.verificationEvidenceByCase.set(caseId, {...current, error:copy.evidenceOpenFailed});
+      renderVerificationCenter();
+      return;
+    }
+    if(preview) preview.location.replace(signed.data.signedUrl);
+    else window.open(signed.data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function loadSchoolVerificationCaseEvidence(caseId){
+    if(!caseId || hubState.verificationEvidenceLoading.has(caseId) || !canReviewSchoolCases()) return;
+    const context = requestContext();
+    hubState.verificationEvidenceLoading.add(caseId);
+    hubState.verificationEvidenceByCase.delete(caseId);
+    renderVerificationCenter();
+    let response;
+    try {
+      response = await hubRpc("get_school_verification_case_evidence", {p_request_id:caseId});
+    } catch(error){ response = {data:null, error}; }
+    if(!contextIsCurrent(context)) return;
+    hubState.verificationEvidenceLoading.delete(caseId);
+    if(response.error){
+      hubState.verificationEvidenceByCase.set(caseId, {
+        items:[],
+        error:missingRpcError(response.error) ? ownerConsoleCopy().unavailable : featureError(response.error)
+      });
+    } else {
+      const payload = parseJsonValue(response.data, response.data);
+      hubState.verificationEvidenceByCase.set(caseId, {
+        items:Array.isArray(payload) ? payload : (Array.isArray(payload?.items) ? payload.items : []),
+        error:""
+      });
+    }
+    renderVerificationCenter();
+  }
+
+  function renderSchoolVerificationCaseEvidence(caseId){
+    const copy = ownerConsoleCopy();
+    const section = node("section", "hub-verification-private-evidence");
+    const heading = node("div", "hub-verification-private-evidence-heading");
+    heading.append(node("h5", "", copy.privateEvidence));
+    const loaded = hubState.verificationEvidenceByCase.get(caseId);
+    const loading = hubState.verificationEvidenceLoading.has(caseId);
+    if(!loaded && !loading){
+      const load = node("button", "btn-ghost", copy.loadEvidence);
+      load.type = "button";
+      load.onclick = () => void loadSchoolVerificationCaseEvidence(caseId);
+      heading.append(load);
+    }
+    section.append(heading, node("p", "hub-verification-private-evidence-note", copy.evidencePrivacyNote));
+    if(loading){
+      const status = node("p", "hub-account-trust-status", copy.evidenceLoading);
+      status.setAttribute("role", "status");
+      section.append(status);
+      return section;
+    }
+    if(!loaded) return section;
+    if(loaded.error){
+      section.append(node("p", "hub-account-trust-status error", loaded.error));
+      return section;
+    }
+    if(!loaded.items.length){
+      section.append(node("p", "hub-verification-private-evidence-empty", copy.evidenceNone));
+      return section;
+    }
+    const list = node("div", "hub-verification-private-evidence-list");
+    loaded.items.forEach(item => {
+      const row = node("article", "hub-verification-private-evidence-file");
+      const detail = node("div");
+      detail.append(
+        node("b", "", item.original_file_name || copy.privateEvidence),
+        node("small", "", [
+          schoolVerificationDocumentLabel(item.document_type, accountTrustCopy()),
+          schoolVerificationFileSize(item.size_bytes),
+          item.mime_type
+        ].filter(Boolean).join(" · "))
+      );
+      const open = node("button", "btn-ghost", copy.openEvidence);
+      open.type = "button";
+      open.setAttribute("aria-label", `${copy.openEvidence}: ${item.original_file_name || copy.privateEvidence}`);
+      open.onclick = () => void openSchoolVerificationEvidence(item, caseId);
+      row.append(detail, open);
+      list.append(row);
+    });
+    section.append(list);
+    return section;
+  }
+
   function renderVerificationCase(record){
     const copy = ownerConsoleCopy();
     const workflowId = hubState.verificationWorkflow;
@@ -3371,6 +4264,9 @@
       details.append(adminDetail(copy, label, value));
     });
     card.append(header, details);
+    if(workflowId === "school_verification"){
+      card.append(renderSchoolVerificationCaseEvidence(caseId));
+    }
     if(record?.reviewer_note || record?.resolution_note || record?.admin_note){
       const previousNote = node("section", "hub-admin-note hub-admin-reviewer-note");
       previousNote.append(
@@ -3385,7 +4281,7 @@
       const noteLabel = node("label", "hub-admin-review-note");
       noteLabel.append(node("span", "", copy.decisionNote));
       const note = node("textarea");
-      note.maxLength = 2000;
+      note.maxLength = workflowId === "school_verification" ? 1000 : 2000;
       note.placeholder = copy.decisionNotePlaceholder;
       note.value = record?.draft_note || "";
       noteLabel.append(note);
@@ -3700,7 +4596,7 @@
     renderVerificationCenter();
     let response;
     const options = workflowId === "school_verification"
-      ? {verification_method:record?.evidence_kind || "manual"}
+      ? {verification_method:record?.evidence_kind === "manual_review" ? "manual" : (record?.evidence_kind || "manual")}
       : {};
     try {
       response = await hubRpc("review_verification_center_case", {
@@ -8393,6 +9289,7 @@
     refreshHeader: renderHubHeader,
     syncAccess,
     syncFinalSchedule,
+    getInstitutionContext,
     requestAction: requestHubAction,
     openProfile: openSchoolmateProfile,
     mediaTools: Object.freeze({normalizeRasterUpload, normalizeRasterToWebP, videoUploadType, validateVideoSignature, wrapMediaUploadError, mediaUploadError}),

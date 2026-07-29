@@ -1056,6 +1056,48 @@ html[data-theme="night"] .member-hub[data-active-view="messages"]
 .hub-form-wide { grid-column: 1 / -1; }
 .hub-form-grid textarea { min-height: 110px; padding: 12px; }
 
+/* Keep the profile page's reading rhythm independent from the compact
+   dashboard-card heading treatment used by the other Student Hub views. */
+.member-hub .hub-view[data-hub-view="profile"] .hub-profile-grid {
+  gap: clamp(24px, 3vw, 40px);
+}
+
+.member-hub .hub-view[data-hub-view="profile"] .hub-card-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.member-hub .hub-view[data-hub-view="profile"] .hub-card-heading > div {
+  min-width: 0;
+}
+
+.member-hub .hub-view[data-hub-view="profile"] .hub-card-heading h2 {
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.member-hub .hub-view[data-hub-view="profile"] .hub-card-heading p {
+  max-width: 64ch;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: left;
+  text-wrap: pretty;
+}
+
+.member-hub .hub-view[data-hub-view="profile"] .hub-form-grid {
+  row-gap: 18px;
+  column-gap: 18px;
+}
+
+.member-hub .hub-view[data-hub-view="profile"] .hub-form-grid label > span,
+.member-hub .hub-view[data-hub-view="profile"] .hub-social-list label > span {
+  margin-bottom: 8px;
+  line-height: 1.45;
+}
+
 .hub-avatar-editor {
   grid-column: 1 / -1;
   display: grid;
@@ -2122,6 +2164,415 @@ body.hub-active .member-hub::after {
   background: rgba(180, 35, 54, .07);
 }
 
+.member-hub .hub-account-deletion {
+  grid-column: 1 / -1;
+  max-width: 72ch;
+  padding-top: clamp(22px, 3vw, 34px);
+  border-top: 1px solid var(--hub-editorial-line, rgba(7, 29, 50, .13));
+}
+
+.member-hub .hub-school-verification {
+  grid-column: 1 / -1;
+  position: relative;
+  padding: clamp(24px, 4vw, 44px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 96% 0%, rgba(103, 205, 255, .25), transparent 32%),
+    linear-gradient(135deg, rgba(242, 249, 255, .94), rgba(255, 252, 245, .88));
+  border: 1px solid rgba(49, 105, 145, .18);
+  border-radius: clamp(30px, 5vw, 56px);
+  box-shadow: 0 24px 70px rgba(26, 71, 105, .1);
+}
+
+.member-hub .hub-school-verification > h3 {
+  max-width: 18ch;
+  font-size: clamp(28px, 4vw, 46px);
+}
+
+.member-hub .hub-student-verification-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: clamp(24px, 3vw, 34px) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member-hub .hub-student-verification-progress li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding-right: 14px;
+  color: var(--muted);
+}
+
+.member-hub .hub-student-verification-progress li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 19px;
+  right: 0;
+  left: 43px;
+  height: 2px;
+  background: rgba(64, 111, 145, .2);
+}
+
+.member-hub .hub-student-verification-step-number {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  color: #516d82;
+  background: #f8fbfe;
+  border: 1px solid rgba(47, 103, 143, .24);
+  border-radius: 50%;
+  font-weight: 850;
+}
+
+.member-hub .hub-student-verification-progress li.complete .hub-student-verification-step-number,
+.member-hub .hub-student-verification-progress li.current .hub-student-verification-step-number {
+  color: #071e36;
+  background: linear-gradient(135deg, #82dafd, #f4c553);
+  border-color: transparent;
+}
+
+.member-hub .hub-student-verification-progress li.complete:not(:last-child)::after {
+  background: linear-gradient(90deg, #72d0f7, #edc45d);
+}
+
+.member-hub .hub-student-verification-progress b {
+  position: relative;
+  z-index: 1;
+  overflow-wrap: anywhere;
+  color: inherit;
+  font-size: 13px;
+}
+
+.member-hub .hub-student-verification-progress li.current b,
+.member-hub .hub-student-verification-progress li.complete b {
+  color: var(--hub-ink);
+}
+
+.member-hub .hub-student-verification-identity {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 0 22px;
+  padding: 18px 0;
+  border-block: 1px solid rgba(49, 105, 145, .15);
+}
+
+.member-hub .hub-student-verification-identity > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 0 18px;
+}
+
+.member-hub .hub-student-verification-identity > div:first-child { padding-left: 0; }
+.member-hub .hub-student-verification-identity > div:last-child { padding-right: 0; }
+.member-hub .hub-student-verification-identity > div + div { border-left: 1px solid rgba(49, 105, 145, .15); }
+
+.member-hub .hub-student-verification-identity span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 820;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.member-hub .hub-student-verification-identity strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--hub-ink);
+  font-size: 14px;
+}
+
+.member-hub .hub-student-verification-form {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.member-hub .hub-student-verification-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.member-hub .hub-student-verification-methods legend {
+  width: 100%;
+  margin-bottom: 12px;
+  color: var(--hub-ink-soft);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.member-hub .hub-student-verification-method {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: flex-start;
+  gap: 12px !important;
+  min-height: 132px;
+  padding: 20px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, .58);
+  border: 1px solid rgba(49, 105, 145, .18);
+  border-radius: 28px;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.member-hub .hub-student-verification-method:hover {
+  transform: translateY(-2px);
+  border-color: rgba(42, 119, 175, .42);
+}
+
+.member-hub .hub-student-verification-method.selected {
+  background: linear-gradient(145deg, rgba(230, 247, 255, .96), rgba(255, 249, 230, .92));
+  border-color: rgba(44, 122, 177, .52);
+  box-shadow: 0 12px 28px rgba(38, 100, 145, .12);
+}
+
+.member-hub .hub-student-verification-method:focus-within {
+  outline: 3px solid rgba(47, 109, 246, .34);
+  outline-offset: 3px;
+}
+
+.member-hub .hub-student-verification-method input {
+  width: 20px !important;
+  height: 20px;
+  flex: 0 0 20px;
+  margin: 2px 0 0;
+  accent-color: #2267d9;
+}
+
+.member-hub .hub-student-verification-method > span {
+  display: grid;
+  gap: 8px;
+}
+
+.member-hub .hub-student-verification-method b {
+  color: var(--hub-ink);
+  font-size: 14px;
+}
+
+.member-hub .hub-student-verification-method small,
+.member-hub .hub-student-verification-file-help,
+.member-hub .hub-student-verification-safety {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.member-hub .hub-student-verification-safety {
+  padding-left: 18px;
+  color: #8a5c00;
+  border-left: 3px solid #e9ba4d;
+}
+
+.member-hub .hub-student-verification-documents {
+  display: grid;
+  grid-template-columns: minmax(180px, .55fr) minmax(200px, .45fr);
+  gap: 12px 16px;
+  align-items: end;
+  padding: 20px;
+  background: rgba(8, 46, 78, .045);
+  border-radius: 30px;
+}
+
+.member-hub .hub-student-verification-documents[hidden],
+.member-hub .hub-student-verification-reference[hidden] {
+  display: none !important;
+}
+
+.member-hub .hub-student-verification-document-type {
+  display: grid;
+  gap: 8px;
+}
+
+.member-hub .hub-student-verification-file-picker {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.member-hub .hub-student-verification-file-picker.disabled,
+.member-hub .hub-student-verification-file-picker:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+  pointer-events: none;
+}
+
+.member-hub .hub-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.member-hub .hub-student-verification-file-help,
+.member-hub .hub-student-verification-documents > h4,
+.member-hub .hub-student-verification-file-list,
+.member-hub .hub-student-verification-privacy,
+.member-hub .hub-student-verification-acknowledgement {
+  grid-column: 1 / -1;
+}
+
+.member-hub .hub-student-verification-documents > h4 {
+  margin: 12px 0 0;
+  color: var(--hub-ink);
+  font-size: 13px;
+}
+
+.member-hub .hub-student-verification-file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.member-hub .hub-student-verification-file {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, .55fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, .72);
+  border-radius: 18px;
+}
+
+.member-hub .hub-student-verification-file > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.member-hub .hub-student-verification-file b {
+  overflow: hidden;
+  color: var(--hub-ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-hub .hub-student-verification-file small,
+.member-hub .hub-student-verification-file-empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.member-hub .hub-student-verification-file-remove {
+  min-height: 42px;
+  padding: 8px 14px;
+}
+
+.member-hub .hub-student-verification-privacy {
+  margin: 8px 0 0;
+  padding: 16px 18px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .52);
+  border-left: 4px solid #6dcdf5;
+  border-radius: 6px 20px 20px 6px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.member-hub .hub-student-verification-acknowledgement {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: flex-start;
+  gap: 10px !important;
+  color: var(--hub-ink);
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.member-hub .hub-student-verification-acknowledgement input {
+  width: 20px !important;
+  height: 20px;
+  flex: 0 0 20px;
+  accent-color: #2267d9;
+}
+
+.member-hub .hub-student-verification-history {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(49, 105, 145, .16);
+}
+
+.member-hub .hub-student-verification-history > h4 {
+  margin: 0 0 14px;
+  color: var(--hub-ink);
+  font-size: 16px;
+}
+
+.member-hub .hub-student-verification-history > ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member-hub .hub-student-verification-history-item {
+  display: grid;
+  gap: 7px;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, .52);
+  border-radius: 22px;
+}
+
+.member-hub .hub-student-verification-history-item > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.member-hub .hub-student-verification-history-item small,
+.member-hub .hub-student-verification-history-empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.member-hub .hub-student-verification-history-item blockquote {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  color: var(--muted);
+  background: rgba(8, 46, 78, .05);
+  border-left: 3px solid #72d0f7;
+  border-radius: 4px 16px 16px 4px;
+  font-size: 12px;
+}
+
+.member-hub .hub-student-verification-status-badge {
+  padding: 5px 9px;
+  color: #33546c;
+  background: rgba(77, 139, 183, .1);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.member-hub .hub-student-verification-status-badge.approved { color: #087a55; background: rgba(8, 122, 85, .1); }
+.member-hub .hub-student-verification-status-badge.rejected { color: #a12538; background: rgba(180, 35, 54, .09); }
+.member-hub .hub-student-verification-status-badge.submitted,
+.member-hub .hub-student-verification-status-badge.under_review { color: #7e5704; background: rgba(233, 186, 77, .18); }
+
 html[data-theme="night"] .member-hub .hub-message-load-older {
   color: #9bdeff;
   background: rgba(114, 205, 251, .1);
@@ -2142,9 +2593,124 @@ html[data-theme="night"] .member-hub .hub-account-trust-status.success { color: 
 html[data-theme="night"] .member-hub .hub-account-trust-status.warning { color: #ffd37b; }
 html[data-theme="night"] .member-hub .hub-account-trust-status.error { color: #ff9fac; }
 
+html[data-theme="night"] .member-hub .hub-school-verification {
+  background:
+    radial-gradient(circle at 96% 0%, rgba(64, 161, 226, .2), transparent 34%),
+    linear-gradient(145deg, rgba(7, 40, 68, .96), rgba(4, 29, 51, .94));
+  border-color: rgba(117, 203, 249, .2);
+  box-shadow: 0 28px 80px rgba(0, 8, 19, .28);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-method,
+html[data-theme="night"] .member-hub .hub-student-verification-history-item,
+html[data-theme="night"] .member-hub .hub-student-verification-file,
+html[data-theme="night"] .member-hub .hub-student-verification-privacy {
+  background: rgba(4, 28, 50, .62);
+  border-color: rgba(117, 203, 249, .2);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-method.selected {
+  background: linear-gradient(145deg, rgba(16, 69, 108, .96), rgba(42, 52, 54, .92));
+  border-color: rgba(117, 203, 249, .52);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-step-number {
+  color: #b9d3e8;
+  background: #092b48;
+  border-color: rgba(117, 203, 249, .24);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-method b,
+html[data-theme="night"] .member-hub .hub-student-verification-identity strong,
+html[data-theme="night"] .member-hub .hub-student-verification-documents > h4,
+html[data-theme="night"] .member-hub .hub-student-verification-file b,
+html[data-theme="night"] .member-hub .hub-student-verification-history > h4,
+html[data-theme="night"] .member-hub .hub-student-verification-history-item b,
+html[data-theme="night"] .member-hub .hub-student-verification-acknowledgement {
+  color: #f4f8fc;
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-progress b,
+html[data-theme="night"] .member-hub .hub-student-verification-identity span,
+html[data-theme="night"] .member-hub .hub-student-verification-methods legend {
+  color: rgba(224, 237, 249, .78);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-documents,
+html[data-theme="night"] .member-hub .hub-student-verification-history-item blockquote {
+  background: rgba(1, 18, 34, .34);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-method small,
+html[data-theme="night"] .member-hub .hub-student-verification-file-help,
+html[data-theme="night"] .member-hub .hub-student-verification-file-empty,
+html[data-theme="night"] .member-hub .hub-student-verification-file small,
+html[data-theme="night"] .member-hub .hub-student-verification-history-item small,
+html[data-theme="night"] .member-hub .hub-student-verification-history-empty,
+html[data-theme="night"] .member-hub .hub-student-verification-history-item blockquote {
+  color: rgba(224, 237, 249, .74);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-safety {
+  color: #ffd37b;
+  border-left-color: #e9ba4d;
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-file-picker,
+html[data-theme="night"] .member-hub .hub-student-verification-file-remove {
+  color: #9bdeff;
+  background: rgba(7, 42, 71, .76);
+  border-color: rgba(117, 203, 249, .28);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-status-badge {
+  color: #c7deef;
+  background: rgba(117, 203, 249, .13);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-status-badge.approved {
+  color: #73e2bc;
+  background: rgba(52, 187, 141, .14);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-status-badge.rejected {
+  color: #ff9fac;
+  background: rgba(255, 117, 136, .13);
+}
+
+html[data-theme="night"] .member-hub .hub-student-verification-status-badge.submitted,
+html[data-theme="night"] .member-hub .hub-student-verification-status-badge.under_review {
+  color: #ffd37b;
+  background: rgba(233, 186, 77, .14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member-hub .hub-student-verification-method {
+    transition: none;
+  }
+
+  .member-hub .hub-student-verification-method:hover {
+    transform: none;
+  }
+}
+
 @media (max-width: 820px) {
   .member-hub .hub-account-trust-controls {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .member-hub .hub-student-verification-methods,
+  .member-hub .hub-student-verification-identity {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .member-hub .hub-student-verification-identity > div {
+    padding: 10px 0;
+  }
+
+  .member-hub .hub-student-verification-identity > div + div {
+    border-top: 1px solid rgba(49, 105, 145, .15);
+    border-left: 0;
   }
 }
 
@@ -2158,6 +2724,40 @@ html[data-theme="night"] .member-hub .hub-account-trust-status.error { color: #f
   }
 
   .member-hub .hub-account-trust-actions > button {
+    width: 100%;
+  }
+
+  .member-hub .hub-school-verification {
+    padding: 22px 18px 26px;
+    border-radius: 30px;
+  }
+
+  .member-hub .hub-student-verification-progress {
+    gap: 4px;
+  }
+
+  .member-hub .hub-student-verification-progress li {
+    display: grid;
+    justify-items: start;
+    gap: 6px;
+  }
+
+  .member-hub .hub-student-verification-progress li:not(:last-child)::after {
+    top: 20px;
+    left: 40px;
+  }
+
+  .member-hub .hub-student-verification-progress b {
+    font-size: 10px;
+  }
+
+  .member-hub .hub-student-verification-documents,
+  .member-hub .hub-student-verification-file {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .member-hub .hub-student-verification-file-remove,
+  .member-hub .hub-student-verification-file-picker {
     width: 100%;
   }
 }
@@ -2180,6 +2780,88 @@ html[data-theme="night"] .member-hub .hub-account-trust-status.error { color: #f
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.member-hub .hub-verification-private-evidence {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 18px;
+  background: rgba(23, 103, 154, .055);
+  border: 1px solid rgba(43, 117, 168, .16);
+  border-radius: 24px;
+}
+
+.member-hub .hub-verification-private-evidence-heading,
+.member-hub .hub-verification-private-evidence-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.member-hub .hub-verification-private-evidence h5 {
+  margin: 0;
+  color: var(--hub-ink);
+  font-size: 14px;
+}
+
+.member-hub .hub-verification-private-evidence-note,
+.member-hub .hub-verification-private-evidence-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.member-hub .hub-verification-private-evidence-list {
+  display: grid;
+  gap: 8px;
+}
+
+.member-hub .hub-verification-private-evidence-file {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, .64);
+  border-radius: 18px;
+}
+
+.member-hub .hub-verification-private-evidence-file > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.member-hub .hub-verification-private-evidence-file b {
+  overflow: hidden;
+  color: var(--hub-ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-hub .hub-verification-private-evidence-file small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+html[data-theme="night"] .member-hub .hub-verification-private-evidence {
+  background: rgba(81, 176, 232, .08);
+  border-color: rgba(117, 203, 249, .18);
+}
+
+html[data-theme="night"] .member-hub .hub-verification-private-evidence h5,
+html[data-theme="night"] .member-hub .hub-verification-private-evidence-file b {
+  color: #f4f8fc;
+}
+
+html[data-theme="night"] .member-hub .hub-verification-private-evidence-file {
+  background: rgba(2, 24, 43, .62);
+}
+
+html[data-theme="night"] .member-hub .hub-verification-private-evidence-note,
+html[data-theme="night"] .member-hub .hub-verification-private-evidence-empty,
+html[data-theme="night"] .member-hub .hub-verification-private-evidence-file small {
+  color: rgba(224, 237, 249, .74);
 }
 
 .member-hub .hub-admin-role-badge.reviewer {
