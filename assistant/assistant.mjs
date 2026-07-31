@@ -1,9 +1,9 @@
 import {
   initializeCourseChrome,
-  loadCourseCatalogue,
+  loadSelectionAssistantCatalogue,
   localeForLanguage,
   searchCourseGroups
-} from "../course-tools/course-tools.mjs?v=20260731-course-selection3";
+} from "../course-tools/course-tools.mjs?v=20260731-course-selection4";
 import {
   ACTIVE_USER_SESSION_KEY,
   TIMETABLE_HANDOFF_SESSION_KEY,
@@ -28,6 +28,13 @@ const COPY = Object.freeze({
     resultsCount: "{count} possible matches",
     noResults: "No possible matches were found. Try a course title, academic area, instructor, semester, or section.",
     loadFailed: "The course catalogue could not be loaded. Please refresh and try again.",
+    institutionSignInRequired: "Sign in to ConCourse before choosing courses for your semester.",
+    institutionRequired: "Choose and verify your institution in ConCourse before using the Course Selection Assistant.",
+    institutionSessionMismatch: "Your institution belongs to a different ConCourse session. Return to ConCourse and sign in again.",
+    institutionVerificationRequired: "Verify your academic email in ConCourse before choosing institution-specific semester courses.",
+    institutionUnsupported: "This institution is not connected to the Course Selection Assistant yet. You can still enter courses and time slots manually in Timetable.",
+    institutionConflict: "Your saved institution details do not agree. Review your ConCourse profile before selecting courses.",
+    institutionCatalogueUnavailable: "Current-term {institution} offerings are not available in this public build. Enter the course and time slots manually in Timetable, or use an authorised institution feed.",
     add: "Add",
     added: "Added",
     remove: "Remove",
@@ -63,6 +70,13 @@ const COPY = Object.freeze({
     resultsCount: "找到 {count} 个可能匹配项",
     noResults: "没有找到可能匹配的课程。请尝试输入课程名称、学术领域、教师、学期或班别。",
     loadFailed: "课程目录暂时无法载入。请刷新页面后重试。",
+    institutionSignInRequired: "请先登录 ConCourse，再选择本学期课程。",
+    institutionRequired: "请先在 ConCourse 选择并验证院校，再使用选课助手。",
+    institutionSessionMismatch: "院校资料属于另一个 ConCourse 登录状态。请返回 ConCourse 重新登录。",
+    institutionVerificationRequired: "请先在 ConCourse 验证学术邮箱，再选择院校本学期课程。",
+    institutionUnsupported: "选课助手暂未连接该院校。你仍可在时间表中手动输入课程和上课时段。",
+    institutionConflict: "已保存的院校资料不一致。请先检查 ConCourse 个人资料。",
+    institutionCatalogueUnavailable: "此公开版本暂未提供 {institution} 当前学期课程。请在时间表中手动输入课程和上课时段，或使用获授权的院校资料来源。",
     add: "加入",
     added: "已加入",
     remove: "移除",
@@ -98,6 +112,13 @@ const COPY = Object.freeze({
     resultsCount: "搵到 {count} 個可能匹配項",
     noResults: "搵唔到可能匹配嘅課程。請試下輸入課程名稱、學術範疇、教師、學期或班別。",
     loadFailed: "課程目錄暫時載入唔到。請重新整理頁面再試。",
+    institutionSignInRequired: "請先登入 ConCourse，再揀今個學期嘅課程。",
+    institutionRequired: "請先喺 ConCourse 選擇並驗證院校，再使用選科助手。",
+    institutionSessionMismatch: "院校資料屬於另一個 ConCourse 登入狀態。請返回 ConCourse 重新登入。",
+    institutionVerificationRequired: "請先喺 ConCourse 驗證學術電郵，再揀院校今個學期嘅課程。",
+    institutionUnsupported: "選科助手暫時未連接呢間院校。你仍然可以喺時間表手動輸入課程同上堂時段。",
+    institutionConflict: "已儲存嘅院校資料唔一致。請先檢查 ConCourse 個人資料。",
+    institutionCatalogueUnavailable: "呢個公開版本暫時未提供 {institution} 當前學期課程。請喺時間表手動輸入課程同上堂時段，或者使用獲授權嘅院校資料來源。",
     add: "加入",
     added: "已加入",
     remove: "移除",
@@ -357,8 +378,49 @@ let chrome = initializeCourseChrome(COPY, () => {
 readSelections();
 
 async function ensureCatalogue() {
-  if (!state.catalogue) state.catalogue = await loadCourseCatalogue();
+  if (!state.catalogue) {
+    state.catalogue = await loadSelectionAssistantCatalogue();
+  }
   return state.catalogue;
+}
+
+function catalogueErrorMessage(error) {
+  const keys = {
+    institution_sign_in_required: "institutionSignInRequired",
+    institution_required: "institutionRequired",
+    institution_session_mismatch: "institutionSessionMismatch",
+    institution_verification_required: "institutionVerificationRequired",
+    institution_unsupported: "institutionUnsupported",
+    institution_conflict: "institutionConflict",
+    institution_catalogue_unavailable: "institutionCatalogueUnavailable"
+  };
+  const key = keys[error?.code] || "loadFailed";
+  const institution =
+    error?.institution?.institutionShortName ||
+    error?.institution?.institutionName ||
+    chrome.t("notListed");
+  return chrome.t(key, { institution });
+}
+
+function renderCatalogueError(error) {
+  const message = catalogueErrorMessage(error);
+  state.results = [];
+  document.body.classList.add("has-course-results");
+  byId("assistantWorkspace").hidden = false;
+  byId("assistantResults").replaceChildren(
+    element("div", "course-empty-state", message)
+  );
+  byId("assistantShortlist").replaceChildren();
+  byId("assistantStatus").textContent = message;
+  updateHandoffControls(0);
+}
+
+function logCatalogueError(context, error) {
+  if (error?.name === "CourseInstitutionError") {
+    console.info(context, error.code);
+    return;
+  }
+  console.error(context, error);
 }
 
 byId("continueToTimetable").addEventListener("click", async () => {
@@ -453,15 +515,8 @@ async function initializeCourseKeyHandoff() {
     });
     focusShortlistGroup(match.group.id);
   } catch (error) {
-    console.error("ConCourse Course Engine handoff failed", error);
-    document.body.classList.add("has-course-results");
-    byId("assistantWorkspace").hidden = false;
-    byId("assistantResults").replaceChildren(
-      element("div", "course-empty-state", chrome.t("loadFailed"))
-    );
-    byId("assistantShortlist").replaceChildren();
-    byId("assistantStatus").textContent = chrome.t("loadFailed");
-    updateHandoffControls(0);
+    logCatalogueError("ConCourse Course Engine handoff unavailable", error);
+    renderCatalogueError(error);
   } finally {
     submit.disabled = false;
   }
@@ -489,16 +544,8 @@ byId("assistantForm").addEventListener("submit", async (event) => {
     byId("assistantResultsTitle").focus({ preventScroll: true });
     byId("assistantWorkspace").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
-    console.error("ConCourse course selection assistant failed", error);
-    state.results = [];
-    document.body.classList.add("has-course-results");
-    byId("assistantWorkspace").hidden = false;
-    byId("assistantResults").replaceChildren(
-      element("div", "course-empty-state", chrome.t("loadFailed"))
-    );
-    byId("assistantShortlist").replaceChildren();
-    byId("assistantStatus").textContent = chrome.t("loadFailed");
-    updateHandoffControls(0);
+    logCatalogueError("ConCourse course selection assistant unavailable", error);
+    renderCatalogueError(error);
   } finally {
     submit.disabled = false;
   }

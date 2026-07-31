@@ -1,3 +1,9 @@
+import {
+  canonicalCatalogueInstitutionId,
+  institutionById,
+  readSignedInInstitutionContext
+} from "./institution-context.mjs";
+
 const BASE_COPY = Object.freeze({
   en: Object.freeze({
     brandTag: "Conquer your course registrations",
@@ -139,15 +145,31 @@ export function adaptCourseKeysCatalogue(catalogue) {
     throw new Error("CourseKeys catalogue response is invalid");
   }
 
-  const institutionStatus = new Map(
+  const institutionMetadata = new Map(
     (Array.isArray(catalogue.institutions) ? catalogue.institutions : [])
-      .map((institution) => [clean(institution?.id), clean(institution?.status)])
+      .map((institution) => {
+        const id = canonicalCatalogueInstitutionId(institution?.id);
+        return id
+          ? [id, {
+            name: clean(institution?.name),
+            shortName: clean(institution?.shortName),
+            status: clean(institution?.status)
+          }]
+          : null;
+      })
+      .filter(Boolean)
   );
   const notice = clean(catalogue.dataAvailability?.notice);
   const capturedAt = clean(catalogue.generatedDate);
 
   return catalogue.courses.map((course) => {
-    const institutionId = clean(course?.institutionId) || "bnbu";
+    const sourceInstitutionId = clean(course?.institutionId);
+    if (!sourceInstitutionId) {
+      throw new Error("CourseKeys catalogue record is missing institutionId");
+    }
+    const institutionId = canonicalCatalogueInstitutionId(sourceInstitutionId);
+    const metadata = institutionMetadata.get(institutionId) || {};
+    const knownInstitution = institutionById(institutionId);
     const sourceCourseId = clean(course?.sourceCourseId);
     const courseKeysKey = sourceCourseId ? `${institutionId}:${sourceCourseId}` : "";
     const sections = unique(
@@ -157,8 +179,16 @@ export function adaptCourseKeysCatalogue(catalogue) {
 
     return {
       institutionId,
-      institutionName: clean(course?.institutionName),
-      institutionShortName: clean(course?.institutionShortName),
+      institutionName:
+        clean(course?.institutionName) ||
+        metadata.name ||
+        knownInstitution?.name ||
+        "",
+      institutionShortName:
+        clean(course?.institutionShortName) ||
+        metadata.shortName ||
+        knownInstitution?.shortName ||
+        "",
       sourceCourseId,
       courseCode: clean(course?.courseCode) || extractCourseCode(course?.title),
       courseKey: courseKeysKey,
@@ -192,7 +222,7 @@ export function adaptCourseKeysCatalogue(catalogue) {
       courseType: clean(course?.courseType),
       remedial: course?.remedial === true,
       sourceLabel: clean(course?.sourceLabel) || "CourseKeys catalogue",
-      sourceStatus: institutionStatus.get(institutionId) || "reference",
+      sourceStatus: metadata.status || "reference",
       sourceMode: "public_reference_catalogue",
       sourceCapturedAt: capturedAt,
       sourceCaveats: notice ? [notice] : []
@@ -612,6 +642,59 @@ export async function loadCourseCatalogue({
     version: 2,
     courses,
     sources,
+    groups: groupCourseRecords(courses)
+  };
+}
+
+export class CourseInstitutionError extends Error {
+  constructor(code, message, institution = null) {
+    super(message);
+    this.name = "CourseInstitutionError";
+    this.code = code;
+    this.institution = institution;
+  }
+}
+
+export async function loadSelectionAssistantCatalogue({
+  storage = globalThis.sessionStorage,
+  ...catalogueOptions
+} = {}) {
+  const institution = readSignedInInstitutionContext(storage);
+  if (institution.status !== "recognized") {
+    const errorCodes = {
+      signed_out: "institution_sign_in_required",
+      missing: "institution_required",
+      invalid: "institution_required",
+      session_mismatch: "institution_session_mismatch",
+      unverified: "institution_verification_required",
+      unsupported: "institution_unsupported",
+      conflict: "institution_conflict"
+    };
+    throw new CourseInstitutionError(
+      errorCodes[institution.status] || "institution_required",
+      "A recognized signed-in institution is required for semester selection",
+      institution
+    );
+  }
+
+  const catalogue = await loadCourseCatalogue(catalogueOptions);
+  const courses = catalogue.courses.filter(
+    (course) =>
+      canonicalCatalogueInstitutionId(course?.institutionId) ===
+      institution.institutionId
+  );
+  if (!courses.length) {
+    throw new CourseInstitutionError(
+      "institution_catalogue_unavailable",
+      `Current-term ${institution.institutionShortName} offerings are not available in this build`,
+      institution
+    );
+  }
+
+  return {
+    ...catalogue,
+    institution,
+    courses,
     groups: groupCourseRecords(courses)
   };
 }

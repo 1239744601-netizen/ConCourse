@@ -5,7 +5,7 @@ import {
   localeForLanguage,
   safeOfficialUrl,
   searchCourseGroupsWithTotal
-} from "../course-tools/course-tools.mjs?v=20260731-course-engine2";
+} from "../course-tools/course-tools.mjs?v=20260731-course-engine3";
 
 const COPY = Object.freeze({
   en: Object.freeze({
@@ -16,6 +16,7 @@ const COPY = Object.freeze({
     loading: "Searching the catalogue…",
     resultsCount: "{count} possible matches",
     limitedResultsCount: "{count} possible matches · showing the first {shown}",
+    institutionResults: "{institution} · {count} result(s)",
     noResults: "No courses matched this search. Try a title, course identifier, faculty, instructor, semester, or section.",
     loadFailed: "No course catalogue source could be loaded. Please refresh and try again.",
     sourceSummary: "{loaded} reference source(s) loaded",
@@ -69,6 +70,7 @@ const COPY = Object.freeze({
     loading: "正在搜索课程目录…",
     resultsCount: "找到 {count} 个可能匹配项",
     limitedResultsCount: "找到 {count} 个可能匹配项 · 显示前 {shown} 个",
+    institutionResults: "{institution} · {count} 个结果",
     noResults: "没有找到匹配课程。请尝试输入课程名称、课程标识、学院、教师、学期或班别。",
     loadFailed: "未能载入任何课程目录来源。请刷新页面后重试。",
     sourceSummary: "已载入 {loaded} 个参考来源",
@@ -122,6 +124,7 @@ const COPY = Object.freeze({
     loading: "正在搜尋課程目錄…",
     resultsCount: "搵到 {count} 個可能匹配項",
     limitedResultsCount: "搵到 {count} 個可能匹配項 · 顯示頭 {shown} 個",
+    institutionResults: "{institution} · {count} 個結果",
     noResults: "搵唔到符合條件嘅課程。請試下輸入課程名稱、課程識別碼、學院、教師、學期或班別。",
     loadFailed: "未能載入任何課程目錄來源。請重新整理頁面再試。",
     sourceSummary: "已載入 {loaded} 個參考來源",
@@ -488,7 +491,33 @@ function renderResults() {
     return;
   }
 
-  for (const group of state.results) list.append(resultCard(group));
+  const institutionGroups = new Map();
+  for (const group of state.results) {
+    const key = group.institutionId || "unknown";
+    if (!institutionGroups.has(key)) institutionGroups.set(key, []);
+    institutionGroups.get(key).push(group);
+  }
+  for (const groups of institutionGroups.values()) {
+    const section = element("section", "course-institution-group");
+    const institution =
+      groups[0].institutionName ||
+      groups[0].institutionShortName ||
+      chrome.t("notListed");
+    section.append(
+      element(
+        "h3",
+        "course-institution-heading",
+        chrome.t("institutionResults", {
+          institution,
+          count: groups.length.toLocaleString(locale)
+        })
+      )
+    );
+    const cards = element("div", "course-institution-cards");
+    for (const group of groups) cards.append(resultCard(group));
+    section.append(cards);
+    list.append(section);
+  }
   list.append(element("p", "course-data-note", chrome.t("dataNote")));
 }
 

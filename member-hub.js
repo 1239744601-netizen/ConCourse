@@ -1264,8 +1264,24 @@
   }
 
   function publishInstitutionContext(){
+    const context = getInstitutionContext();
+    try {
+      const storageKey = "concourse_institution_context_v1";
+      if(currentUser?.id && context.verified){
+        sessionStorage.setItem(storageKey, JSON.stringify({
+          version:1,
+          userId:String(currentUser.id).toLowerCase(),
+          status:context.status,
+          verified:true,
+          schoolName:context.schoolName,
+          schoolKey:context.schoolKey
+        }));
+      } else {
+        sessionStorage.removeItem(storageKey);
+      }
+    } catch(_error){}
     window.dispatchEvent(new CustomEvent("concourse:institution-context", {
-      detail:getInstitutionContext()
+      detail:context
     }));
   }
 

@@ -19,15 +19,32 @@ const read = (relativePath) =>
 
 test("adds Course Engine as the root course-search destination", async () => {
   const index = await read("index.html");
+  const controls = await read("concourse-controls.css");
+  const navigation = index.match(
+    /<nav class="primary-navigation" id="primaryNavigation"[\s\S]*?<\/nav>/,
+  )?.[0];
 
+  assert.ok(navigation);
   assert.match(
-    index,
+    navigation,
     /id="courseSearchNav"[^>]+href="courses\/"[^>]+data-i18n="courseEngineNav"/,
   );
+  assert.doesNotMatch(navigation, /id="primaryNavigation"[^>]*\bhidden\b/);
+  assert.doesNotMatch(navigation, /id="courseSearchNav"[^>]*\bhidden\b/);
+  assert.match(navigation, /id="topTimetableBtn"[^>]*\bhidden\b/);
+  assert.match(navigation, /id="hubOpenBtn"[^>]*\bhidden\b/);
   assert.match(index, /courseEngineNav:"Course Engine"/);
   assert.match(index, /courseEngineNav:"课程引擎"/);
   assert.match(index, /courseEngineNav:"課程引擎"/);
-  assert.match(index, /courseSearchLink\.hidden = !signedIn/);
+  assert.match(index, /navigation\.hidden = false/);
+  assert.match(index, /courseSearchLink\.hidden = false/);
+  assert.match(index, /timetableButton\.hidden = !signedIn/);
+  assert.match(index, /hubButton\.hidden = !signedIn/);
+  assert.match(index, /hubButton\.disabled = !hubAvailable/);
+  assert.doesNotMatch(
+    controls,
+    /body:not\(\.app-active\) \.primary-navigation\s*\{\s*display:\s*none/,
+  );
 });
 
 test("keeps both course tools clean before an explicit search", async () => {

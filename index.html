@@ -1133,6 +1133,7 @@
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     padding: 11px 18px;
     border-radius: 999px;
     background: #0a66cc;
@@ -1143,6 +1144,84 @@
     box-shadow: 0 12px 24px rgba(0,102,204,.2);
   }
   .selection-assistant-launch:hover { background: #0057b8; }
+  .selection-assistant-guide {
+    display: grid;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .selection-assistant-step {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 11px;
+    align-items: start;
+    padding: 11px 12px;
+    border: 1px solid rgba(29,29,31,.08);
+    border-radius: 15px;
+    background: rgba(255,255,255,.68);
+  }
+  .selection-assistant-step[data-state="current"] {
+    border-color: rgba(0,113,227,.28);
+    background: rgba(235,246,255,.94);
+    box-shadow: 0 0 0 2px rgba(0,113,227,.06);
+  }
+  .selection-assistant-step[data-state="complete"] {
+    border-color: rgba(40,154,92,.2);
+    background: rgba(242,251,246,.9);
+  }
+  .selection-assistant-step-marker {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #48484a;
+    background: #ececf0;
+    font-size: 12px;
+    font-weight: 760;
+  }
+  .selection-assistant-step[data-state="current"] .selection-assistant-step-marker {
+    color: #fff;
+    background: #0071e3;
+  }
+  .selection-assistant-step[data-state="complete"] .selection-assistant-step-marker {
+    color: transparent;
+    background: #289a5c;
+    font-size: 0;
+  }
+  .selection-assistant-step[data-state="complete"] .selection-assistant-step-marker::before {
+    content: "✓";
+    color: #fff;
+    font-size: 14px;
+  }
+  .selection-assistant-step b,
+  .selection-assistant-step span { display: block; }
+  .selection-assistant-step b {
+    color: var(--text);
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .selection-assistant-step-copy > span {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+  .selection-assistant-session-note {
+    margin: 12px 0 0;
+    color: var(--muted-2);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .selection-assistant-manual-link {
+    display: inline-flex;
+    margin-top: 10px;
+    color: #0066cc;
+    font-size: 11.5px;
+    font-weight: 680;
+    text-underline-offset: 3px;
+  }
   .selection-handoff-list {
     display: grid;
     gap: 10px;
@@ -1166,6 +1245,10 @@
     color: var(--muted);
     font-size: 12px;
     line-height: 1.45;
+  }
+  .selection-handoff-card .selection-handoff-required {
+    color: #9a5a00;
+    font-weight: 650;
   }
   .selection-handoff-card button {
     min-height: 40px;
@@ -1745,6 +1828,10 @@
     .language-select { width: 84px; padding-left: 8px; padding-right: 22px; font-size: 10.5px; }
     .language-chevron { right: 9px; }
     .private-name-grid { grid-template-columns: 1fr; }
+    .selection-assistant-heading { flex-direction: column; }
+    .selection-handoff-card { grid-template-columns: 1fr; }
+    .selection-assistant-launch,
+    .selection-handoff-card button { width: 100%; }
   }
   @media (max-height: 840px) and (max-width: 1050px) {
     body.app-active #landingScreen {
@@ -1831,9 +1918,9 @@
       <div class="brand-tag" data-i18n="brandTag">Conquer your course registrations</div>
     </div>
   </div>
-  <nav class="primary-navigation" id="primaryNavigation" hidden aria-label="Primary destinations" data-i18n-aria-label="primaryDestinations">
+  <nav class="primary-navigation" id="primaryNavigation" aria-label="Primary destinations" data-i18n-aria-label="primaryDestinations">
     <button type="button" class="primary-navigation-button" id="topTimetableBtn" hidden data-i18n="timetableNav">Timetable</button>
-    <a class="primary-navigation-button" id="courseSearchNav" href="courses/" hidden data-i18n="courseEngineNav">Course Engine</a>
+    <a class="primary-navigation-button" id="courseSearchNav" href="courses/" data-i18n="courseEngineNav">Course Engine</a>
     <button type="button" class="primary-navigation-button" id="hubOpenBtn" hidden data-i18n="studentHub">Student Hub</button>
   </nav>
   <div class="auth-bar" aria-label="Account controls" data-i18n-aria-label="accountControls">
@@ -2052,18 +2139,56 @@
       <p data-i18n="configuratorDescription">Add course options and set your semester priorities. When everything is ready, ConCourse opens your ranked timetable in a dedicated full-screen view.</p>
     </div>
     <nav class="configurator-nav" aria-label="Planner sections">
-      <a href="#courseBuilderPanel"><span>01</span><b data-i18n="courses">Courses</b></a>
+      <a href="#courseSelectionHandoffPanel"><span>01</span><b data-i18n="courses">Courses</b></a>
       <a href="#semesterPanel"><span>02</span><b data-i18n="criteria">Criteria</b></a>
     </nav>
     <section class="selection-assistant-panel" id="courseSelectionHandoffPanel" aria-labelledby="selectionAssistantTitle">
       <div class="selection-assistant-heading">
         <div>
-          <h2 id="selectionAssistantTitle" data-i18n="selectionAssistantTitle">Semester Course Selection Assistant</h2>
-          <p data-i18n="selectionAssistantDescription">Find current-term course choices, build a shortlist, then confirm missing credits and meeting times here before timetable generation.</p>
+          <h2 id="selectionAssistantTitle" data-i18n="selectionAssistantTitle">Choose courses with the Assistant</h2>
+          <p data-i18n="selectionAssistantDescription">Search and compare current-term choices in a focused view, then bring your preferred sections back here to finish the timetable.</p>
         </div>
-        <a class="selection-assistant-launch" href="assistant/" data-i18n="openSelectionAssistant">Choose Courses</a>
+        <a class="selection-assistant-launch" href="assistant/">
+          <span data-i18n="openSelectionAssistant">Open Assistant</span>
+          <span aria-hidden="true">→</span>
+        </a>
       </div>
-      <div class="selection-handoff-list" id="courseSelectionHandoffList"></div>
+      <ol
+        class="selection-assistant-guide"
+        id="selectionAssistantGuide"
+        aria-label="Course selection steps"
+        data-i18n-aria-label="selectionAssistantSteps"
+      >
+        <li class="selection-assistant-step" data-selection-step="search" data-state="current" aria-current="step">
+          <span class="selection-assistant-step-marker" aria-hidden="true">1</span>
+          <span class="selection-assistant-step-copy">
+            <b data-i18n="selectionStepSearchTitle">Search and compare</b>
+            <span data-i18n="selectionStepSearchDescription">Use a course title, code, subject, instructor, or semester to find possible matches.</span>
+          </span>
+        </li>
+        <li class="selection-assistant-step" data-selection-step="shortlist" data-state="upcoming">
+          <span class="selection-assistant-step-marker" aria-hidden="true">2</span>
+          <span class="selection-assistant-step-copy">
+            <b data-i18n="selectionStepShortlistTitle">Choose preferred sections</b>
+            <span data-i18n="selectionStepShortlistDescription">Build a shortlist in the Assistant, then select Continue to Timetable.</span>
+          </span>
+        </li>
+        <li class="selection-assistant-step" data-selection-step="complete" data-state="upcoming">
+          <span class="selection-assistant-step-marker" aria-hidden="true">3</span>
+          <span class="selection-assistant-step-copy">
+            <b data-i18n="selectionStepCompleteTitle">Complete timetable details</b>
+            <span data-i18n="selectionStepCompleteDescription">Returned choices appear below. Confirm any missing credits and meeting times before generating.</span>
+          </span>
+        </li>
+      </ol>
+      <p class="selection-assistant-session-note" data-i18n="selectionSessionNote">Keep the Assistant in this tab. The shortlist is bound to your signed-in account and is removed from the handoff after Timetable receives it.</p>
+      <a class="selection-assistant-manual-link" href="#courseBuilderPanel" data-i18n="selectionManualEntry">Already know the details? Enter a course manually below.</a>
+      <div
+        class="selection-handoff-list"
+        id="courseSelectionHandoffList"
+        aria-label="Returned course choices"
+        data-i18n-aria-label="selectionReturnedChoices"
+      ></div>
       <p class="selection-handoff-status" id="courseSelectionHandoffStatus" role="status" aria-live="polite"></p>
     </section>
     <div class="panel" id="courseBuilderPanel">
@@ -3209,6 +3334,7 @@ let genNote = "";        // banner note from last generation (e.g. free-day trad
 let finalTimetable = null; // explicitly saved final schedule snapshot for the semester
 let appStarted = false;  // authenticated users still choose when to enter the planner
 const ACTIVE_USER_STORAGE_KEY = "concourse_active_user_id_v1";
+const INSTITUTION_CONTEXT_STORAGE_KEY = "concourse_institution_context_v1";
 const SELECTION_HANDOFF_STORAGE_KEY = "concourse_timetable_selection_handoff_v1";
 const COURSE_CONTEXT_DESTINATIONS = Object.freeze({
   timetable: new Set(["add-course"]),
@@ -3326,7 +3452,7 @@ const TRANSLATIONS = {
     configuratorTitle:"选择详细条件。<br>建立课程清单。",
     configuratorDescription:"添加课程选项并设置学期偏好。准备完成后，ConCourse 会在独立全屏页面中展示排名课表。",
     courses:"课程", criteria:"条件", courseBuilder:"课程设置", courseBuilderDescription:"设置每门课程及其可选上课时间。",
-    selectionAssistantTitle:"学期选课助手", selectionAssistantDescription:"查找本学期课程并建立备选清单；在生成课表前，可在此补充并确认学分及缺少的上课时间。", openSelectionAssistant:"选择课程", selectionNeedsDetails:"请为 {course} 补充学分及完整上课时间。", setMeetingTimes:"设置上课时间", selectionReady:"已将 {count} 门课程带入课表流程。", selectionAccountMismatch:"这些备选课程来自另一个账户，未被载入。", selectionInvalid:"备选课程资料无法读取，请返回选课助手重试。", courseContextStaged:"已将 {course} 加入课表草稿。请确认学分并手动填写缺少的上课时间。", courseContextUnavailable:"无法确认该课程。请返回课程引擎重新选择。",
+    selectionAssistantTitle:"使用选课助手挑选课程", selectionAssistantDescription:"在专注页面搜索并比较本学期课程，再将首选班别带回此处完成课表。", openSelectionAssistant:"打开选课助手", selectionAssistantSteps:"选课步骤", selectionStepSearchTitle:"搜索并比较", selectionStepSearchDescription:"使用课程名称、代码、学科、教师或学期查找可能匹配项。", selectionStepShortlistTitle:"选择首选班别", selectionStepShortlistDescription:"在选课助手建立备选清单，然后选择“继续设置时间表”。", selectionStepCompleteTitle:"补全课表资料", selectionStepCompleteDescription:"返回的课程会显示在下方。生成课表前，请确认缺少的学分及上课时间。", selectionSessionNote:"请在当前标签页打开选课助手。备选清单只属于当前登录账户，时间表接收后会从交接资料中移除。", selectionManualEntry:"已经知道课程资料？可在下方手动输入。", selectionReturnedChoices:"已返回的课程选择", selectionStillNeeded:"仍需补充：{details}", selectionMissingCredits:"学分", selectionMissingMeetings:"上课时间", selectionReviewDetails:"补充课程资料", selectionStartHint:"从第 1 步开始；选课助手会把备选课程送回此处。", selectionAllComplete:"选课助手带回的课程已加入清单。可继续设置学期条件。", selectionCompletePrompt:"请为 {course} 补充{details}，然后加入课程清单。", selectionNeedsDetails:"请为 {course} 补充学分及完整上课时间。", setMeetingTimes:"设置上课时间", selectionReady:"已将 {count} 门课程带入课表流程。", selectionAccountMismatch:"这些备选课程来自另一个账户，未被载入。", selectionInvalid:"备选课程资料无法读取，请返回选课助手重试。", courseContextStaged:"已将 {course} 加入课表草稿。请确认学分并手动填写缺少的上课时间。", courseContextUnavailable:"无法确认该课程。请返回课程引擎重新选择。",
     courseName:"课程名称", courseCode:"课程代码", professor:"教师", credits:"学分", mustTake:"必须修读",
     courseNameExample:"例如：算法导论", courseCodeExample:"例如：CS 3410", professorExample:"例如：李教授",
     sessionsPerWeek:"每周上课次数（课程固定结构）", oneSession:"1 次 — 每周一堂课（例如 3 小时）", twoSessions:"2 次 — 每周两堂课（例如 2 小时 + 1 小时）", threeSessions:"每周 3 个时段", fourSessions:"每周 4 个时段", fiveSessions:"每周 5 个时段", sixSessions:"每周 6 个时段",
@@ -3428,7 +3554,7 @@ const TRANSLATIONS = {
     configuratorTitle:"揀好詳細條件。<br>建立選科清單。",
     configuratorDescription:"加入課程選項同設定學期偏好。準備好之後，ConCourse 會喺獨立全畫面顯示排序時間表。",
     courses:"課程", criteria:"條件", courseBuilder:"課程設定", courseBuilderDescription:"設定每科同可選上課時段。",
-    selectionAssistantTitle:"學期選科助手", selectionAssistantDescription:"搜尋今個學期嘅課程並建立備選清單；產生時間表之前，可以喺呢度補充同確認學分及欠缺嘅上堂時間。", openSelectionAssistant:"選擇課程", selectionNeedsDetails:"請為 {course} 補充學分同完整上堂時間。", setMeetingTimes:"設定上堂時間", selectionReady:"已將 {count} 科帶入時間表流程。", selectionAccountMismatch:"呢啲備選課程來自另一個帳戶，所以未有載入。", selectionInvalid:"備選課程資料無法讀取，請返回選科助手再試。", courseContextStaged:"已將 {course} 加入時間表草稿。請確認學分，同埋手動填寫欠缺嘅上堂時間。", courseContextUnavailable:"未能確認呢科。請返回課程引擎重新選擇。",
+    selectionAssistantTitle:"用選科助手揀課程", selectionAssistantDescription:"喺專注頁面搜尋同比較今個學期嘅課程，再將首選班別帶返嚟完成時間表。", openSelectionAssistant:"打開選科助手", selectionAssistantSteps:"選科步驟", selectionStepSearchTitle:"搜尋同比較", selectionStepSearchDescription:"用課程名稱、編號、學科、教師或學期搵可能匹配項。", selectionStepShortlistTitle:"揀首選班別", selectionStepShortlistDescription:"喺選科助手建立備選清單，然後揀「繼續設定時間表」。", selectionStepCompleteTitle:"補齊時間表資料", selectionStepCompleteDescription:"帶返嚟嘅課程會顯示喺下面。產生時間表之前，請確認欠缺嘅學分同上堂時間。", selectionSessionNote:"請喺而家呢個分頁打開選科助手。備選清單只屬於目前登入帳戶，時間表收到之後會由交接資料移除。", selectionManualEntry:"已經知道課程資料？可以喺下面手動輸入。", selectionReturnedChoices:"已帶返嚟嘅課程選擇", selectionStillNeeded:"仲要補充：{details}", selectionMissingCredits:"學分", selectionMissingMeetings:"上堂時間", selectionReviewDetails:"補充課程資料", selectionStartHint:"由第 1 步開始；選科助手會將備選課程送返嚟呢度。", selectionAllComplete:"選科助手帶返嚟嘅課程已經加入清單。可以繼續設定學期條件。", selectionCompletePrompt:"請為 {course} 補充{details}，然後加入選科清單。", selectionNeedsDetails:"請為 {course} 補充學分同完整上堂時間。", setMeetingTimes:"設定上堂時間", selectionReady:"已將 {count} 科帶入時間表流程。", selectionAccountMismatch:"呢啲備選課程來自另一個帳戶，所以未有載入。", selectionInvalid:"備選課程資料無法讀取，請返回選科助手再試。", courseContextStaged:"已將 {course} 加入時間表草稿。請確認學分，同埋手動填寫欠缺嘅上堂時間。", courseContextUnavailable:"未能確認呢科。請返回課程引擎重新選擇。",
     courseName:"課程名稱", courseCode:"課程編號", professor:"教授", credits:"學分", mustTake:"必須修讀",
     courseNameExample:"例如：算法導論", courseCodeExample:"例如：CS 3410", professorExample:"例如：李教授",
     sessionsPerWeek:"每週上堂次數（課程固定結構）", oneSession:"1 次 — 每星期一堂（例如 3 小時）", twoSessions:"2 次 — 每星期兩堂（例如 2 小時 + 1 小時）", threeSessions:"每星期 3 個時段", fourSessions:"每星期 4 個時段", fiveSessions:"每星期 5 個時段", sixSessions:"每星期 6 個時段",
@@ -3973,7 +4099,7 @@ function t(key, variables={}){
     notIncludedTitle:"Not included in this schedule:", exactMixReason:"you asked for exactly {count} courses, and this mix hits {credits} credits", fewestMixReason:"this schedule already hits {credits} credits with just {count} courses",
     otherOptionsMix:"Other ranked options may use a different course mix.", mustTakeLegend:"Must-take", electiveLegend:"Elective",
     addSession:"+ Add session", noCourses:"No courses added. Use Course Builder to begin.",
-    selectionAssistantTitle:"Semester Course Selection Assistant", selectionAssistantDescription:"Find current-term choices, build a shortlist, then confirm missing credits and meeting times here before timetable generation.", openSelectionAssistant:"Choose Courses", selectionNeedsDetails:"Add credits and the complete meeting pattern for {course}.", setMeetingTimes:"Set Meeting Times", selectionReady:"{count} course choices were brought into the Timetable workflow.", selectionAccountMismatch:"These course choices belong to another account and were not loaded.", selectionInvalid:"The course-selection handoff could not be read. Return to the Assistant and try again.", courseContextStaged:"{course} was added to your Timetable draft. Confirm its credits and enter any missing meeting times manually.", courseContextUnavailable:"That course could not be verified. Return to Course Engine and choose it again.",
+    selectionAssistantTitle:"Choose courses with the Assistant", selectionAssistantDescription:"Search and compare current-term choices in a focused view, then bring your preferred sections back here to finish the timetable.", openSelectionAssistant:"Open Assistant", selectionAssistantSteps:"Course selection steps", selectionStepSearchTitle:"Search and compare", selectionStepSearchDescription:"Use a course title, code, subject, instructor, or semester to find possible matches.", selectionStepShortlistTitle:"Choose preferred sections", selectionStepShortlistDescription:"Build a shortlist in the Assistant, then select Continue to Timetable.", selectionStepCompleteTitle:"Complete timetable details", selectionStepCompleteDescription:"Returned choices appear below. Confirm any missing credits and meeting times before generating.", selectionSessionNote:"Keep the Assistant in this tab. The shortlist is bound to your signed-in account and is removed from the handoff after Timetable receives it.", selectionManualEntry:"Already know the details? Enter a course manually below.", selectionReturnedChoices:"Returned course choices", selectionStillNeeded:"Still needed: {details}", selectionMissingCredits:"credits", selectionMissingMeetings:"meeting times", selectionReviewDetails:"Complete Details", selectionStartHint:"Start with step 1; the Assistant will return your shortlist here.", selectionAllComplete:"Your Assistant courses are in the wishlist. Continue with the semester criteria.", selectionCompletePrompt:"Complete {details} for {course}, then add it to the wishlist.", selectionNeedsDetails:"Add credits and the complete meeting pattern for {course}.", setMeetingTimes:"Set Meeting Times", selectionReady:"{count} course choices were brought into the Timetable workflow.", selectionAccountMismatch:"These course choices belong to another account and were not loaded.", selectionInvalid:"The course-selection handoff could not be read. Return to the Assistant and try again.", courseContextStaged:"{course} was added to your Timetable draft. Confirm its credits and enter any missing meeting times manually.", courseContextUnavailable:"That course could not be verified. Return to Course Engine and choose it again.",
     threeSessions:"3 sessions per week", fourSessions:"4 sessions per week", fiveSessions:"5 sessions per week", sixSessions:"6 sessions per week",
     emptySchedule:"Add courses, define your semester criteria, and generate ranked schedules to view your timetable.", sessionLabelOne:"Add the session (day + time)", sessionLabelTwo:"Add both sessions (day + time)", sessionLabelMany:"Add all {count} sessions (day + time)",
     sessionOnce:"This course meets once a week.", sessionTwice:"This course meets twice a week.", sessionMany:"This course meets {count} times a week.", multiSessionHint:"{base} Build one complete time option, save it, then add the professor's other options. ConCourse keeps each option together.",
@@ -4285,7 +4411,7 @@ function syncPrimaryNavigation(){
   const hubActive = appStarted && document.body.classList.contains("hub-active");
   const timetableActive = appStarted && !hubActive;
 
-  if(navigation) navigation.hidden = !signedIn;
+  if(navigation) navigation.hidden = false;
   if(timetableButton){
     timetableButton.hidden = !signedIn;
     timetableButton.disabled = signedIn && !stateReady;
@@ -4301,7 +4427,7 @@ function syncPrimaryNavigation(){
     if(hubActive) hubButton.setAttribute("aria-current", "page");
   }
   if(courseSearchLink){
-    courseSearchLink.hidden = !signedIn;
+    courseSearchLink.hidden = false;
     courseSearchLink.removeAttribute("aria-current");
   }
 }
@@ -5149,9 +5275,13 @@ async function loadUserState(){
   $("saveAccountBtn").textContent = t("loading");
 
   try {
-    const [stateResponse, profileResponse] = await Promise.all([
+    const [stateResponse, profileResponse, membershipResponse] = await Promise.all([
       authClient.from("user_state").select("state").eq("user_id", userId).maybeSingle(),
-      authClient.from("profiles").select("school_name, major_of_study, degree_level, study_year").eq("user_id", userId).maybeSingle()
+      authClient.from("profiles").select("school_name, major_of_study, degree_level, study_year").eq("user_id", userId).maybeSingle(),
+      authClient.from("school_memberships")
+        .select("school_name, school_key, status, verification_method, verified_at")
+        .eq("user_id", userId)
+        .maybeSingle()
     ]);
     const { data, error } = stateResponse;
 
@@ -5173,7 +5303,29 @@ async function loadUserState(){
     renderAccountIdentity();
     applyUserState(data?.state || {}, loadedAcademicProfile);
     loadedUserId = userId;
-    try { sessionStorage.setItem(ACTIVE_USER_STORAGE_KEY, String(userId).toLowerCase()); } catch(_error){}
+    try {
+      sessionStorage.setItem(ACTIVE_USER_STORAGE_KEY, String(userId).toLowerCase());
+      const membership = membershipResponse.error ? null : membershipResponse.data;
+      const verifiedInstitution = Boolean(
+        membership?.status === "verified"
+        && membership?.verification_method === "academic_email"
+        && membership?.verified_at
+        && membership?.school_name
+        && membership?.school_key
+      );
+      if(verifiedInstitution){
+        sessionStorage.setItem(INSTITUTION_CONTEXT_STORAGE_KEY, JSON.stringify({
+          version:1,
+          userId:String(userId).toLowerCase(),
+          status:"verified",
+          verified:true,
+          schoolName:String(membership.school_name).replace(/\s+/g, " ").trim().slice(0, 240),
+          schoolKey:String(membership.school_key).trim().toLowerCase().slice(0, 500)
+        }));
+      } else {
+        sessionStorage.removeItem(INSTITUTION_CONTEXT_STORAGE_KEY);
+      }
+    } catch(_error){}
     renderFinalTimetableStatus();
     $("saveAccountBtn").textContent = t("saveNow");
     if(!data) await saveUserState({silent:true});
@@ -5205,8 +5357,16 @@ function applySession(session){
   currentUser = session?.user || null;
   const signedIn = !!currentUser;
   try {
-    if(signedIn) sessionStorage.setItem(ACTIVE_USER_STORAGE_KEY, String(currentUser.id).toLowerCase());
-    else sessionStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
+    if(signedIn){
+      sessionStorage.setItem(ACTIVE_USER_STORAGE_KEY, String(currentUser.id).toLowerCase());
+      if(previousUserId !== currentUser.id){
+        sessionStorage.removeItem(INSTITUTION_CONTEXT_STORAGE_KEY);
+      }
+    }
+    else {
+      sessionStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
+      sessionStorage.removeItem(INSTITUTION_CONTEXT_STORAGE_KEY);
+    }
   } catch(_error){}
   if(previousUserId !== currentUser?.id){
     clearTimeout(accountSaveTimer);
@@ -5807,6 +5967,7 @@ $("addCourse").addEventListener("click", addCourseFromBuilder);
 
 function renderCourses(){
   const el = $("courseList");
+  renderSelectionAssistantGuide();
   $("wishlistCount").textContent = t(courses.length === 1 ? "wishlistCountOne" : "wishlistCountMany", {count:courses.length});
   if(courses.length === 0){ el.innerHTML = `<div class="empty-note">${escapeHtml(t("noCourses"))}</div>`; return; }
   el.innerHTML = courses.map(c=>`
@@ -5882,6 +6043,52 @@ function addCompleteHandoffCourse(draft){
   return true;
 }
 
+function selectionDraftRequirements(draft){
+  return [
+    draft.creditsKnown ? "" : t("selectionMissingCredits"),
+    draft.sessions.length ? "" : t("selectionMissingMeetings")
+  ].filter(Boolean);
+}
+
+function renderSelectionAssistantGuide(){
+  const pendingCount = selectionHandoffDrafts.length;
+  const completedCount = courses.filter(course =>
+    course?.source?.kind === "course_selection_assistant"
+  ).length;
+  const hasReturnedChoices = pendingCount > 0 || completedCount > 0;
+  const states = hasReturnedChoices
+    ? {
+        search: "complete",
+        shortlist: "complete",
+        complete: pendingCount > 0 ? "current" : "complete"
+      }
+    : {
+        search: "current",
+        shortlist: "upcoming",
+        complete: "upcoming"
+      };
+
+  document.querySelectorAll("[data-selection-step]").forEach(step => {
+    const state = states[step.dataset.selectionStep] || "upcoming";
+    step.dataset.state = state;
+    if(state === "current") step.setAttribute("aria-current", "step");
+    else step.removeAttribute("aria-current");
+  });
+
+  const panel = $("courseSelectionHandoffPanel");
+  if(panel){
+    panel.dataset.selectionState = pendingCount > 0
+      ? "needs-details"
+      : (completedCount > 0 ? "complete" : "start");
+  }
+  const status = $("courseSelectionHandoffStatus");
+  if(status && !status.dataset.preserveMessage){
+    status.textContent = pendingCount > 0
+      ? t("selectionReady", {count:pendingCount})
+      : t(completedCount > 0 ? "selectionAllComplete" : "selectionStartHint");
+  }
+}
+
 function renderSelectionHandoffDrafts(){
   const list = $("courseSelectionHandoffList");
   const status = $("courseSelectionHandoffStatus");
@@ -5894,23 +6101,21 @@ function renderSelectionHandoffDrafts(){
       draft.professor,
       draft.creditsKnown ? `${draft.credits} ${t("creditsShort")}` : ""
     ].filter(Boolean).join(" · ");
+    const missingDetails = selectionDraftRequirements(draft).join(" + ");
     return `
       <article class="selection-handoff-card">
         <div>
           <strong>${escapeHtml(draft.title)}</strong>
-          <span>${escapeHtml(metadata || t("selectionNeedsDetails", {course:draft.title}))}</span>
+          ${metadata ? `<span>${escapeHtml(metadata)}</span>` : ""}
+          <span class="selection-handoff-required">${escapeHtml(t("selectionStillNeeded", {details:missingDetails}))}</span>
         </div>
-        <button type="button" data-selection-draft="${escapeHtml(draft.draftId)}">${escapeHtml(t("setMeetingTimes"))}</button>
+        <button type="button" data-selection-draft="${escapeHtml(draft.draftId)}">${escapeHtml(t("selectionReviewDetails"))}</button>
       </article>`;
   }).join("");
   list.querySelectorAll("[data-selection-draft]").forEach(button => {
     button.onclick = () => beginSelectionDraft(button.dataset.selectionDraft);
   });
-  if(selectionHandoffDrafts.length){
-    status.textContent = t("selectionReady", {count:selectionHandoffDrafts.length});
-  } else if(!status.dataset.preserveMessage) {
-    status.textContent = "";
-  }
+  renderSelectionAssistantGuide();
 }
 
 function beginSelectionDraft(draftId){
@@ -5944,7 +6149,10 @@ function beginSelectionDraft(draftId){
   }, 350);
   const status = $("courseSelectionHandoffStatus");
   status.dataset.preserveMessage = "true";
-  status.textContent = t("selectionNeedsDetails", {course:draft.title});
+  status.textContent = t("selectionCompletePrompt", {
+    course:draft.title,
+    details:selectionDraftRequirements(draft).join(" + ")
+  });
 }
 
 function clearSelectionRouteParameters(){
