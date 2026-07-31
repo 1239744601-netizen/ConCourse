@@ -3,7 +3,7 @@ name: Deploy ConCourse to Cloudflare Pages
 on:
   push:
     branches:
-      - cloudflare-migration
+      - main
 
 permissions:
   contents: read

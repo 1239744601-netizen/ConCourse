@@ -5,6 +5,10 @@ import test from "node:test";
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../concourse-stabilization.css", import.meta.url), "utf8");
 const headers = readFileSync(new URL("../_headers", import.meta.url), "utf8");
+const deploymentWorkflow = readFileSync(
+  new URL("../.github/workflows/cloudflare-pages.yml", import.meta.url),
+  "utf8"
+);
 
 test("the planner search is bounded and never presents an incomplete ranking", () => {
   assert.match(html, /const MAX_SEARCH_NODES = 400000;/);
@@ -74,4 +78,17 @@ test("mutable website assets revalidate instead of remaining stale after deploym
       new RegExp(`${pattern.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}\\s+Cache-Control: public, max-age=0, must-revalidate`, "u")
     );
   }
+});
+
+test("main pushes deploy to the custom domain's existing production branch", () => {
+  const trigger = deploymentWorkflow.slice(
+    deploymentWorkflow.indexOf("on:"),
+    deploymentWorkflow.indexOf("\npermissions:")
+  );
+  assert.match(trigger, /branches:\s*\n\s*- main/u);
+  assert.doesNotMatch(trigger, /cloudflare-migration/u);
+  assert.match(
+    deploymentWorkflow,
+    /pages deploy dist --project-name=concourse --branch=cloudflare-migration/u
+  );
 });

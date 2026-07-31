@@ -2,9 +2,11 @@
 
 ## Production
 
-- URL: `https://concourse-95c.pages.dev`
+- Public URL: `https://concoursehk.com`
+- Pages origin: `https://concourse-95c.pages.dev`
 - Cloudflare Pages project: `concourse`
-- Production branch: `cloudflare-migration`
+- GitHub source branch: `main`
+- Cloudflare production branch label: `cloudflare-migration`
 - Build command: `npm run build:pages`
 - Published directory: `dist`
 
@@ -16,9 +18,16 @@ cutover.
 ## Automatic deployments
 
 `.github/workflows/cloudflare-pages.yml` checks, builds, and deploys every push
-to `cloudflare-migration`. The workflow publishes only the explicit allowlist
-assembled by `scripts/build-pages.mjs`; repository SQL, tests, documentation,
-patches, and Supabase source are not uploaded.
+to `main`. Wrangler publishes that commit to the existing Cloudflare production
+branch label, `cloudflare-migration`, so the custom domain receives the same
+release without moving the domain or recreating the Pages project. The workflow
+publishes only the explicit allowlist assembled by `scripts/build-pages.mjs`;
+repository SQL, tests, documentation, patches, and Supabase source are not
+uploaded.
+
+The legacy Git-integrated Pages project may also mirror `main` at
+`https://concoursehk.pages.dev`, but it is not the canonical custom-domain
+deployment.
 
 GitHub Actions stores these encrypted repository secrets:
 
@@ -32,13 +41,19 @@ been exposed.
 
 ## Updating production
 
-1. Make and test changes on `cloudflare-migration`.
+1. Make and test changes on `main`.
 2. Commit the intended files.
-3. Push `cloudflare-migration` to GitHub.
+3. Push `main` to GitHub.
 4. Confirm the `Deploy ConCourse to Cloudflare Pages` workflow succeeds.
-5. Smoke-test `https://concourse-95c.pages.dev`.
+5. Smoke-test `https://concoursehk.com` and
+   `https://concourse-95c.pages.dev`.
 
 Cloudflare retains earlier immutable deployments for rollback.
+
+The `concoursehk.com` zone must keep Browser Cache TTL set to
+**Respect Existing Headers**. Mutable HTML, JavaScript, module, and stylesheet
+responses then follow the revalidation policy in `_headers` instead of being
+held in visitors' browsers for Cloudflare's four-hour default.
 
 ## Supabase origin configuration
 
