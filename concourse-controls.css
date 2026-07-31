@@ -2456,6 +2456,32 @@ input.market-search::placeholder {
   }
 }
 
+/* The course destinations remain distinct and horizontally reachable without
+   forcing the masthead to wrap or compress their labels. */
+body.app-active #landingScreen .primary-navigation {
+  max-width: min(100%, 880px);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+body.app-active #landingScreen .primary-navigation::-webkit-scrollbar {
+  display: none;
+}
+
+body.app-active #landingScreen .primary-navigation-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  body.app-active #landingScreen .primary-navigation {
+    justify-content: flex-start;
+    gap: 24px;
+    padding-inline: 2px 18px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hub-marketplace-action,
   .hub-marketplace-action::after {

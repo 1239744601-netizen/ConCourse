@@ -215,6 +215,14 @@ html[data-theme="day"] .brand-mark-day {
   align-items: center;
   justify-content: center;
   gap: clamp(18px, 2.4vw, 40px);
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.primary-navigation::-webkit-scrollbar {
+  display: none;
 }
 
 .primary-navigation a {
@@ -1229,7 +1237,8 @@ html[data-theme="day"] .trust-badge.warning {
   .primary-navigation {
     grid-column: 1 / -1;
     grid-row: 2;
-    justify-content: space-around;
+    justify-content: flex-start;
+    padding-right: 16px;
   }
 
   .coursekeys-hero {
