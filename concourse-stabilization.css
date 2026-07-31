@@ -214,19 +214,26 @@ html[lang="en"] :is(
 
 @media (max-width: 1380px) and (min-width: 761px) {
   body.app-active #landingScreen .header-row {
-    grid-template-columns: minmax(210px, auto) minmax(0, 1fr) !important;
-    grid-template-areas:
-      "brand utility"
-      "nav nav";
-    row-gap: 9px !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    grid-template-areas: "brand nav utility";
+    column-gap: clamp(12px, 2vw, 24px) !important;
+    row-gap: 0 !important;
   }
 
   body.app-active #landingScreen .brand {
     grid-area: brand;
   }
 
+  body.app-active #landingScreen .brand-tag {
+    display: none;
+  }
+
   body.app-active #landingScreen .primary-navigation {
     grid-area: nav;
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    justify-self: center;
   }
 
   body.app-active #landingScreen .auth-bar {
@@ -235,7 +242,7 @@ html[lang="en"] :is(
   }
 
   body.app-active #landingScreen .auth-identity {
-    max-width: min(300px, 31vw) !important;
+    max-width: min(220px, 18vw) !important;
   }
 
   body.app-active #landingScreen .auth-academic,
