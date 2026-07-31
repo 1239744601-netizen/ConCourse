@@ -33,6 +33,9 @@ test("Pages build publishes only the explicit frontend artifact", () => {
   for (const required of [
     "index.html",
     "_headers",
+    "favicon.ico",
+    "concourse-favicon-32.png",
+    "concourse-apple-touch-icon.png",
     "concourse-brand-favicon.svg",
     "member-hub.js",
     "data/hkbu-catalogue-current.json",
@@ -51,11 +54,15 @@ test("Pages build publishes only the explicit frontend artifact", () => {
   assert.doesNotMatch(html, /https:\/\/concoursehk\.pages\.dev/u);
   assert.match(
     html,
-    /rel="icon"[^>]+href="\/concourse-brand-favicon\.svg\?v=20260731-double-c1"/u
+    /rel="icon"[^>]+href="\/concourse-favicon-32\.png\?v=20260731-double-c2"/u
   );
   assert.match(
     html,
-    /rel="shortcut icon"[^>]+href="\/concourse-brand-favicon\.svg\?v=20260731-double-c1"/u
+    /rel="shortcut icon"[^>]+href="\/favicon\.ico\?v=20260731-double-c2"/u
+  );
+  assert.match(
+    html,
+    /rel="apple-touch-icon"[^>]+href="\/concourse-apple-touch-icon\.png\?v=20260731-double-c2"/u
   );
 
   const connector = readFileSync(
