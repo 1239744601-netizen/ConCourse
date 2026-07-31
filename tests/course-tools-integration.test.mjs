@@ -47,6 +47,30 @@ test("adds Course Engine as the root course-search destination", async () => {
   );
 });
 
+test("keeps the signed-in masthead compact without exposing an email fallback", async () => {
+  const [index, stabilization] = await Promise.all([
+    read("index.html"),
+    read("concourse-stabilization.css"),
+  ]);
+
+  const accountRenderer = index.match(
+    /function renderAccountIdentity\(\)\{[\s\S]*?\n\}/,
+  )?.[0];
+  const compactHeaderRules = stabilization.match(
+    /@media \(max-width: 1380px\) and \(min-width: 761px\) \{[\s\S]*?\n\}/,
+  )?.[0];
+
+  assert.ok(accountRenderer);
+  assert.match(accountRenderer, /username \? `@\$\{username\}` : ""/);
+  assert.match(accountRenderer, /\$\("authUser"\)\.hidden = !!currentUser && !accountLabel/);
+  assert.doesNotMatch(accountRenderer, /currentUser\.email/);
+
+  assert.ok(compactHeaderRules);
+  assert.match(compactHeaderRules, /grid-template-areas: "brand nav utility"/);
+  assert.match(compactHeaderRules, /row-gap: 0 !important/);
+  assert.doesNotMatch(compactHeaderRules, /"brand utility"\s*"nav nav"/);
+});
+
 test("keeps both course tools clean before an explicit search", async () => {
   const [searchHtml, assistantHtml] = await Promise.all([
     read("courses/index.html"),

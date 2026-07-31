@@ -53,7 +53,9 @@ test("the final stabilization stylesheet owns focus, compact viewport, and heade
   );
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media \(max-width: 1380px\) and \(min-width: 761px\)/);
-  assert.match(css, /grid-template-areas:\s*"brand utility"\s*"nav nav"/);
+  assert.match(css, /grid-template-areas:\s*"brand nav utility"/);
+  assert.match(css, /row-gap:\s*0 !important/);
+  assert.doesNotMatch(css, /"brand utility"\s*"nav nav"/);
   assert.match(css, /@media \(max-width: 760px\)/);
 });
 

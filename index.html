@@ -1902,7 +1902,7 @@
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
 <link rel="stylesheet" href="community-redesign.css?v=20260728-social-comments1" />
 <link rel="stylesheet" href="academic-experiences.css?v=20260728-readable-controls1" />
-<link rel="stylesheet" href="concourse-stabilization.css?v=20260728-verification-center1" />
+<link rel="stylesheet" href="concourse-stabilization.css?v=20260731-compact-header1" />
 </head>
 <body>
 <header id="landingScreen">
@@ -4391,10 +4391,12 @@ function getAcademicIdentity(){
 }
 
 function renderAccountIdentity(){
-  const username = currentUser?.user_metadata?.username;
-  $("authUser").textContent = currentUser
-    ? (username ? `@${username}` : currentUser.email)
+  const username = String(currentUser?.user_metadata?.username || "").trim();
+  const accountLabel = currentUser
+    ? (username ? `@${username}` : "")
     : t("notSignedIn");
+  $("authUser").textContent = accountLabel;
+  $("authUser").hidden = !!currentUser && !accountLabel;
   const academic = getAcademicIdentity().label;
   $("authAcademic").textContent = academic;
   $("authAcademic").hidden = !currentUser || !academic;
