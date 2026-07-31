@@ -5,17 +5,17 @@ import test from "node:test";
 const read = (relativePath) =>
   readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
 
-test("adds CourseKeys to the signed-in ConCourse primary navigation", async () => {
-  const index = await read("index.html");
+test("keeps CourseKeys inside Course Engine instead of duplicating primary navigation", async () => {
+  const [index, courses] = await Promise.all([
+    read("index.html"),
+    read("courses/courses.mjs"),
+  ]);
 
-  assert.match(
-    index,
-    /id="courseKeysNav"[^>]+href="coursekeys\/"[^>]+data-i18n="courseKeysNav"/,
-  );
-  assert.match(index, /courseKeysNav:"CourseKeys"/);
-  assert.match(index, /courseKeysNav:"课程资源库"/);
-  assert.match(index, /courseKeysNav:"課程資源庫"/);
-  assert.match(index, /courseKeysLink\.hidden = !signedIn/);
+  assert.doesNotMatch(index, /id="courseKeysNav"/);
+  assert.match(index, /id="courseSearchNav"[^>]+href="courses\/"[^>]+data-i18n="courseEngineNav"/);
+  assert.match(courses, /function courseKeysPanel\(group\)/);
+  assert.match(courses, /details\.append\([\s\S]*courseKeysPanel\(group\),[\s\S]*actions/);
+  assert.match(courses, /contributionLocked: "Syllabus contribution locked"/);
 });
 
 test("integrates a same-theme, accessible /coursekeys page", async () => {

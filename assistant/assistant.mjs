@@ -3,13 +3,23 @@ import {
   loadCourseCatalogue,
   localeForLanguage,
   searchCourseGroups
-} from "../course-tools/course-tools.mjs";
+} from "../course-tools/course-tools.mjs?v=20260731-course-selection3";
+import {
+  ACTIVE_USER_SESSION_KEY,
+  TIMETABLE_HANDOFF_SESSION_KEY,
+  courseChoicesForGroup,
+  createTimetableHandoff,
+  readActiveUserId,
+  resolveCourseKeySelection,
+  resolveSelectedChoices
+} from "./handoff.mjs?v=20260731-course-selection3";
 
 const SHORTLIST_KEY = "concourse_course_selection_shortlist_v1";
 
 const COPY = Object.freeze({
   en: Object.freeze({
     pageTitle: "Course Selection Assistant",
+    timetable: "Timetable",
     searchLabel: "Tell the assistant what you want to study",
     searchPlaceholder: "What do you want to study this semester?",
     resultsTitle: "Possible Matches",
@@ -26,6 +36,7 @@ const COPY = Object.freeze({
     section: "Section",
     sourceId: "Source ID",
     instructor: "Instructor",
+    meetingTime: "Meeting Time",
     notListed: "Not listed",
     codeReason: "Course identifier match",
     titleReason: "Course title match",
@@ -33,10 +44,17 @@ const COPY = Object.freeze({
     instructorReason: "Instructor match",
     periodReason: "Semester match",
     metadataReason: "Catalogue metadata match",
+    continueToTimetable: "Continue to Timetable",
+    activeSessionRequired: "Your active ConCourse session could not be confirmed. Return to ConCourse, sign in, and try again.",
+    handoffFailed: "Your shortlist could not be sent to Timetable. Please try again.",
+    handoffEmpty: "Choose at least one valid course before continuing.",
+    courseKeyAdded: "{title} is selected and ready to review.",
+    courseKeyNotFound: "That Course Engine selection is no longer available. Search for the course to choose another section.",
     dataNote: "Possible matches use reference catalogue metadata. Confirm eligibility, credits, prerequisites, meeting times, and registration status with your institution before making a final choice."
   }),
   "zh-CN": Object.freeze({
     pageTitle: "选课助手",
+    timetable: "时间表",
     searchLabel: "告诉选课助手你想学习什么",
     searchPlaceholder: "这个学期你想学习什么？",
     resultsTitle: "可能适合的课程",
@@ -53,6 +71,7 @@ const COPY = Object.freeze({
     section: "班别",
     sourceId: "来源编号",
     instructor: "教师",
+    meetingTime: "上课时间",
     notListed: "未列出",
     codeReason: "课程标识匹配",
     titleReason: "课程名称匹配",
@@ -60,10 +79,17 @@ const COPY = Object.freeze({
     instructorReason: "教师匹配",
     periodReason: "学期匹配",
     metadataReason: "课程目录资料匹配",
+    continueToTimetable: "继续设置时间表",
+    activeSessionRequired: "无法确认你当前的 ConCourse 登录状态。请返回 ConCourse 登录后再试。",
+    handoffFailed: "暂时无法把备选课程发送到时间表。请重试。",
+    handoffEmpty: "请先选择至少一门有效课程。",
+    courseKeyAdded: "已选择 {title}，可继续检查。",
+    courseKeyNotFound: "该课程引擎选项已不可用。请搜索课程并选择另一个班别。",
     dataNote: "可能匹配项来自课程目录参考资料。作出最终选择前，请向学校确认修读资格、学分、先修要求、上课时间及注册状态。"
   }),
   "zh-HK": Object.freeze({
     pageTitle: "選科助手",
+    timetable: "時間表",
     searchLabel: "話俾選科助手知你想讀咩",
     searchPlaceholder: "今個學期你想讀咩？",
     resultsTitle: "可能適合嘅課程",
@@ -80,6 +106,7 @@ const COPY = Object.freeze({
     section: "班別",
     sourceId: "來源編號",
     instructor: "教師",
+    meetingTime: "上堂時間",
     notListed: "未列出",
     codeReason: "課程識別碼匹配",
     titleReason: "課程名稱匹配",
@@ -87,6 +114,12 @@ const COPY = Object.freeze({
     instructorReason: "教師匹配",
     periodReason: "學期匹配",
     metadataReason: "課程目錄資料匹配",
+    continueToTimetable: "繼續設定時間表",
+    activeSessionRequired: "未能確認你目前嘅 ConCourse 登入狀態。請返去 ConCourse 登入後再試。",
+    handoffFailed: "暫時未能將備選課程送到時間表。請再試一次。",
+    handoffEmpty: "請先選擇至少一科有效課程。",
+    courseKeyAdded: "已選擇 {title}，可以繼續檢查。",
+    courseKeyNotFound: "嗰個課程引擎選項已經唔可用。請搜尋課程再揀另一個班別。",
     dataNote: "可能匹配項來自課程目錄參考資料。作出最終選擇之前，請向院校確認修讀資格、學分、先修要求、上堂時間同註冊狀態。"
   })
 });
@@ -95,7 +128,8 @@ const state = {
   catalogue: null,
   query: "",
   results: [],
-  selections: new Map()
+  selections: new Map(),
+  handoffNotice: null
 };
 
 const byId = (id) => document.getElementById(id);
@@ -146,15 +180,13 @@ function saveSelections() {
 }
 
 function availableChoices(group) {
-  return group.entries.flatMap((entry) => {
-    const sections = entry.sections.length ? entry.sections : [""];
-    return sections.map((section) => ({
-      id: `${entry.id}::${section}`,
-      section,
-      instructor: entry.instructor,
-      sourceCourseId: entry.sourceCourseId
-    }));
-  });
+  return courseChoicesForGroup(group).map((choice) => ({
+    id: choice.id,
+    section: choice.section,
+    instructor: choice.instructor,
+    dayTime: choice.dayTime,
+    sourceCourseId: choice.entry.sourceCourseId
+  }));
 }
 
 function defaultChoice(group) {
@@ -167,6 +199,7 @@ function toggleSelection(group) {
   } else if (state.selections.size < 20) {
     state.selections.set(group.id, defaultChoice(group));
   }
+  state.handoffNotice = null;
   saveSelections();
   renderWorkspace();
 }
@@ -204,6 +237,8 @@ function recommendationCard(group) {
 
 function shortlistItem(group, selectedChoice) {
   const item = element("div", "assistant-shortlist-item");
+  item.dataset.groupId = group.id;
+  item.tabIndex = -1;
   item.append(
     element("strong", "", group.title),
     element(
@@ -227,6 +262,7 @@ function shortlistItem(group, selectedChoice) {
         : `${chrome.t("sourceId")} ${choice.sourceCourseId || chrome.t("notListed")}`;
       option.textContent = [
         section,
+        choice.dayTime ? `${chrome.t("meetingTime")}: ${choice.dayTime}` : "",
         choice.instructor ? `${chrome.t("instructor")}: ${choice.instructor}` : ""
       ].filter(Boolean).join(" · ");
       select.append(option);
@@ -240,7 +276,9 @@ function shortlistItem(group, selectedChoice) {
     }
     select.addEventListener("change", () => {
       state.selections.set(group.id, select.value);
+      state.handoffNotice = null;
       saveSelections();
+      updateHandoffControls();
     });
     label.append(select);
     item.append(label);
@@ -253,6 +291,22 @@ function shortlistItem(group, selectedChoice) {
   return item;
 }
 
+function updateHandoffControls(renderedCount) {
+  const button = byId("continueToTimetable");
+  const count = Number.isFinite(renderedCount)
+    ? renderedCount
+    : byId("assistantShortlist").querySelectorAll(".assistant-shortlist-item").length;
+  button.disabled = count === 0;
+  byId("assistantHandoffStatus").textContent = state.handoffNotice
+    ? chrome.t(state.handoffNotice.key, state.handoffNotice.values)
+    : "";
+}
+
+function setHandoffNotice(key, values = {}) {
+  state.handoffNotice = { key, values };
+  updateHandoffControls();
+}
+
 function renderShortlist() {
   const shortlist = byId("assistantShortlist");
   shortlist.replaceChildren();
@@ -260,17 +314,24 @@ function renderShortlist() {
     (state.catalogue?.groups || []).map((group) => [group.id, group])
   );
   let rendered = 0;
+  let removedUnavailable = false;
   for (const [groupId, choiceId] of state.selections) {
     const group = groupsById.get(groupId);
-    if (!group) continue;
+    if (!group) {
+      state.selections.delete(groupId);
+      removedUnavailable = true;
+      continue;
+    }
     shortlist.append(shortlistItem(group, choiceId));
     rendered += 1;
   }
+  if (removedUnavailable) saveSelections();
   if (!rendered) {
     shortlist.append(
       element("p", "assistant-shortlist-empty", chrome.t("shortlistEmpty"))
     );
   }
+  updateHandoffControls(rendered);
 }
 
 function renderWorkspace() {
@@ -298,6 +359,112 @@ readSelections();
 async function ensureCatalogue() {
   if (!state.catalogue) state.catalogue = await loadCourseCatalogue();
   return state.catalogue;
+}
+
+byId("continueToTimetable").addEventListener("click", async () => {
+  const button = byId("continueToTimetable");
+  button.disabled = true;
+  state.handoffNotice = null;
+
+  try {
+    const catalogue = await ensureCatalogue();
+    const selections = resolveSelectedChoices(
+      catalogue.groups,
+      state.selections
+    );
+    if (!selections.length) {
+      setHandoffNotice("handoffEmpty");
+      return;
+    }
+
+    const userId = readActiveUserId(sessionStorage);
+    if (!userId) {
+      console.warn(
+        `ConCourse assistant requires sessionStorage.${ACTIVE_USER_SESSION_KEY}`
+      );
+      setHandoffNotice("activeSessionRequired");
+      return;
+    }
+
+    const payload = createTimetableHandoff({ userId, selections });
+    // Timetable treats this key as a one-time mailbox and removes it after validation.
+    sessionStorage.setItem(
+      TIMETABLE_HANDOFF_SESSION_KEY,
+      JSON.stringify(payload)
+    );
+    window.location.assign("../?destination=timetable&selection=1");
+  } catch (error) {
+    console.error("ConCourse course selection handoff failed", error);
+    setHandoffNotice("handoffFailed");
+  }
+});
+
+function requestedCourseKey() {
+  try {
+    return new URL(window.location.href).searchParams.get("courseKey") || "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+function focusShortlistGroup(groupId) {
+  requestAnimationFrame(() => {
+    const item = [...document.querySelectorAll(".assistant-shortlist-item")]
+      .find((candidate) => candidate.dataset.groupId === groupId);
+    const target = item?.querySelector("select") || item;
+    target?.focus({ preventScroll: true });
+  });
+}
+
+async function initializeCourseKeyHandoff() {
+  const courseKey = requestedCourseKey();
+  if (!courseKey) return;
+
+  const submit = byId("assistantSubmit");
+  submit.disabled = true;
+  try {
+    const catalogue = await ensureCatalogue();
+    const match = resolveCourseKeySelection(catalogue.groups, courseKey);
+    document.body.classList.add("has-course-results");
+    byId("assistantWorkspace").hidden = false;
+
+    if (!match) {
+      state.results = [];
+      renderWorkspace();
+      byId("assistantStatus").textContent = chrome.t("courseKeyNotFound");
+      byId("assistantQuery").focus({ preventScroll: true });
+      return;
+    }
+
+    if (
+      !state.selections.has(match.group.id) &&
+      state.selections.size >= 20
+    ) {
+      state.selections.delete(state.selections.keys().next().value);
+    }
+    state.selections.set(match.group.id, match.choiceId);
+    state.results = [{ ...match.group, matchReason: "source" }];
+    state.query = match.group.code || match.group.title;
+    byId("assistantQuery").value = state.query;
+    saveSelections();
+    renderWorkspace();
+    byId("assistantStatus").textContent = chrome.t("courseKeyAdded", {
+      title: match.group.title
+    });
+    focusShortlistGroup(match.group.id);
+  } catch (error) {
+    console.error("ConCourse Course Engine handoff failed", error);
+    document.body.classList.add("has-course-results");
+    byId("assistantWorkspace").hidden = false;
+    byId("assistantResults").replaceChildren(
+      element("div", "course-empty-state", chrome.t("loadFailed"))
+    );
+    byId("assistantShortlist").replaceChildren();
+    byId("assistantStatus").textContent = chrome.t("loadFailed");
+    updateHandoffControls(0);
+  } finally {
+    submit.disabled = false;
+  }
 }
 
 byId("assistantForm").addEventListener("submit", async (event) => {
@@ -331,7 +498,10 @@ byId("assistantForm").addEventListener("submit", async (event) => {
     );
     byId("assistantShortlist").replaceChildren();
     byId("assistantStatus").textContent = chrome.t("loadFailed");
+    updateHandoffControls(0);
   } finally {
     submit.disabled = false;
   }
 });
+
+initializeCourseKeyHandoff();

@@ -11,7 +11,7 @@
     content="Find possible semester courses, compare available catalogue sections and instructors, and save a private shortlist on this device."
   />
   <link rel="icon" href="../concourse-icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-course-tools1" />
+  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-course-tools2" />
   <script>
     try {
       const savedTheme = localStorage.getItem("concourse_theme");
@@ -41,9 +41,13 @@
         aria-label="Primary destinations"
         data-copy-aria="primaryDestinations"
       >
+        <span class="course-navigation-context">
+          <a href="../?destination=timetable" aria-current="location" data-copy="timetable">
+            Timetable
+          </a>
+          <small data-copy="selectionAssistant">Course Selection Assistant</small>
+        </span>
         <a href="../courses/" data-copy="exploreCourses">Explore Courses</a>
-        <a href="./" aria-current="page" data-copy="selectionAssistant">Course Selection Assistant</a>
-        <a href="../coursekeys/" data-copy="courseKeys">CourseKeys</a>
       </nav>
 
       <div class="course-header-controls">
@@ -114,6 +118,23 @@
         <aside class="assistant-shortlist" aria-labelledby="shortlistTitle">
           <h2 id="shortlistTitle" data-copy="shortlistTitle">Your Shortlist</h2>
           <div class="assistant-shortlist-list" id="assistantShortlist"></div>
+          <div class="assistant-shortlist-actions">
+            <button
+              class="course-action course-action-primary"
+              id="continueToTimetable"
+              type="button"
+              disabled
+              data-copy="continueToTimetable"
+            >
+              Continue to Timetable
+            </button>
+            <p
+              class="assistant-handoff-status"
+              id="assistantHandoffStatus"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
         </aside>
         <p class="course-data-note assistant-notice" data-copy="dataNote">
           Possible matches use reference catalogue metadata. Confirm eligibility, credits, prerequisites,
@@ -123,6 +144,6 @@
     </section>
   </main>
 
-  <script type="module" src="assistant.mjs?v=20260731-course-tools1"></script>
+  <script type="module" src="assistant.mjs?v=20260731-course-selection3"></script>
 </body>
 </html>

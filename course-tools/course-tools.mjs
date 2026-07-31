@@ -2,7 +2,8 @@ const BASE_COPY = Object.freeze({
   en: Object.freeze({
     brandTag: "Conquer your course registrations",
     primaryDestinations: "Primary destinations",
-    exploreCourses: "Explore Courses",
+    timetable: "Timetable",
+    exploreCourses: "Course Engine",
     selectionAssistant: "Course Selection Assistant",
     courseKeys: "CourseKeys",
     appearance: "Page appearance",
@@ -16,7 +17,8 @@ const BASE_COPY = Object.freeze({
   "zh-CN": Object.freeze({
     brandTag: "轻松规划课程注册",
     primaryDestinations: "主要功能",
-    exploreCourses: "探索课程",
+    timetable: "课表",
+    exploreCourses: "课程引擎",
     selectionAssistant: "选课助手",
     courseKeys: "课程资源库",
     appearance: "页面外观",
@@ -30,7 +32,8 @@ const BASE_COPY = Object.freeze({
   "zh-HK": Object.freeze({
     brandTag: "輕鬆規劃課程註冊",
     primaryDestinations: "主要功能",
-    exploreCourses: "探索課程",
+    timetable: "時間表",
+    exploreCourses: "課程引擎",
     selectionAssistant: "選科助手",
     courseKeys: "課程資源庫",
     appearance: "頁面外觀",
@@ -47,6 +50,21 @@ export const COURSE_CATALOGUE_URL = new URL(
   "../coursekeys/data/course-catalogue.json",
   import.meta.url
 );
+
+export const HKBU_CATALOGUE_MANIFEST_URL = new URL(
+  "../data/hkbu-catalogue-current.json",
+  import.meta.url
+);
+
+export const COURSEKEYS_READINESS_URL = new URL(
+  "../api/coursekeys/resources",
+  import.meta.url
+);
+
+const OFFICIAL_REFERENCE_HOSTS = Object.freeze({
+  bnbu: Object.freeze(["ispace.uic.edu.cn"]),
+  hkbu: Object.freeze(["arcourseoutline.hkbu.edu.hk"])
+});
 
 export function normalizeSearchText(value) {
   return String(value || "")
@@ -73,6 +91,202 @@ function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function normalizeRules(rules) {
+  return (Array.isArray(rules) ? rules : [])
+    .map((rule) => ({
+      condition: clean(rule?.condition),
+      studyProgramme: clean(rule?.study_programme || rule?.studyProgramme),
+      studyYear: clean(rule?.study_year || rule?.studyYear),
+      basisOfAdmission: clean(rule?.basis_of_admission || rule?.basisOfAdmission)
+    }))
+    .filter((rule) => Object.values(rule).some(Boolean));
+}
+
+export function isLocalCourseReviewLocation(locationLike = globalThis.location) {
+  const hostname = String(locationLike?.hostname || "")
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/^\[|\]$/g, "");
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname.endsWith(".localhost")
+  );
+}
+
+export function safeOfficialUrl(value, institutionId) {
+  try {
+    const url = new URL(String(value || ""));
+    const allowedHosts = OFFICIAL_REFERENCE_HOSTS[clean(institutionId).toLocaleLowerCase()] || [];
+    if (
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      (url.port && url.port !== "443") ||
+      !allowedHosts.includes(url.hostname.toLocaleLowerCase())
+    ) {
+      return "";
+    }
+    return url.href;
+  } catch (_error) {
+    return "";
+  }
+}
+
+export function adaptCourseKeysCatalogue(catalogue) {
+  if (!catalogue || !Array.isArray(catalogue.courses)) {
+    throw new Error("CourseKeys catalogue response is invalid");
+  }
+
+  const institutionStatus = new Map(
+    (Array.isArray(catalogue.institutions) ? catalogue.institutions : [])
+      .map((institution) => [clean(institution?.id), clean(institution?.status)])
+  );
+  const notice = clean(catalogue.dataAvailability?.notice);
+  const capturedAt = clean(catalogue.generatedDate);
+
+  return catalogue.courses.map((course) => {
+    const institutionId = clean(course?.institutionId) || "bnbu";
+    const sourceCourseId = clean(course?.sourceCourseId);
+    const courseKeysKey = sourceCourseId ? `${institutionId}:${sourceCourseId}` : "";
+    const sections = unique(
+      (Array.isArray(course?.sections) ? course.sections : []).map(clean)
+    );
+    const instructor = clean(course?.instructor);
+
+    return {
+      institutionId,
+      institutionName: clean(course?.institutionName),
+      institutionShortName: clean(course?.institutionShortName),
+      sourceCourseId,
+      courseCode: clean(course?.courseCode) || extractCourseCode(course?.title),
+      courseKey: courseKeysKey,
+      courseKeysKey,
+      title: clean(course?.title || course?.displayName),
+      alternateTitles: unique([clean(course?.displayName)]),
+      faculty: clean(course?.faculty),
+      academicPeriod: clean(course?.academicPeriod),
+      academicYear: clean(course?.academicYear),
+      units: clean(course?.units),
+      level: clean(course?.level),
+      unitCode: clean(course?.unitCode),
+      teachingMedium: clean(course?.teachingMedium),
+      description: clean(course?.description),
+      prerequisiteText: clean(course?.prerequisiteText),
+      corequisiteText: clean(course?.corequisiteText),
+      targetStudents: clean(course?.targetStudents),
+      prerequisiteRules: normalizeRules(course?.prerequisiteRules),
+      corequisiteRules: normalizeRules(course?.corequisiteRules),
+      sections,
+      sectionDetails: sections.map((section) => ({
+        section,
+        instructor,
+        dayTime: "",
+        teachingMedium: "",
+        remarks: ""
+      })),
+      instructor,
+      officialUrl: safeOfficialUrl(course?.officialUrl, institutionId),
+      summaryUrl: safeOfficialUrl(course?.summaryUrl, institutionId),
+      courseType: clean(course?.courseType),
+      remedial: course?.remedial === true,
+      sourceLabel: clean(course?.sourceLabel) || "CourseKeys catalogue",
+      sourceStatus: institutionStatus.get(institutionId) || "reference",
+      sourceMode: "public_reference_catalogue",
+      sourceCapturedAt: capturedAt,
+      sourceCaveats: notice ? [notice] : []
+    };
+  });
+}
+
+function validateHkbuSnapshot(catalogue, manifest) {
+  if (
+    !catalogue ||
+    !manifest ||
+    Number(catalogue.schema_version) !== Number(manifest.schema_version) ||
+    clean(catalogue.institution) !== "hkbu" ||
+    clean(manifest.institution) !== "hkbu" ||
+    clean(catalogue.term) !== clean(manifest.term) ||
+    clean(catalogue.captured_at) !== clean(manifest.captured_at) ||
+    clean(catalogue.publication_status) !== "reference_only" ||
+    clean(manifest.publication_status) !== "reference_only" ||
+    clean(catalogue.source_mode) !== "authenticated_developer_snapshot" ||
+    !Array.isArray(catalogue.courses) ||
+    Number(catalogue.counts?.courses) !== Number(manifest.course_count) ||
+    Number(catalogue.counts?.sections) !== Number(manifest.section_count) ||
+    catalogue.courses.length !== Number(manifest.course_count)
+  ) {
+    throw new Error("HKBU local snapshot metadata does not match its manifest");
+  }
+
+  const sectionCount = catalogue.courses.reduce(
+    (count, course) => count + (Array.isArray(course?.sections) ? course.sections.length : 0),
+    0
+  );
+  if (sectionCount !== Number(manifest.section_count)) {
+    throw new Error("HKBU local snapshot section count does not match its manifest");
+  }
+}
+
+export function adaptHkbuCatalogue(catalogue, manifest) {
+  validateHkbuSnapshot(catalogue, manifest);
+
+  return catalogue.courses.map((course) => {
+    const courseCode = clean(course?.course_code).toUpperCase();
+    if (!courseCode || !clean(course?.title)) {
+      throw new Error("HKBU local snapshot contains an invalid course record");
+    }
+
+    const sectionDetails = (Array.isArray(course?.sections) ? course.sections : [])
+      .map((section) => ({
+        section: clean(section?.section),
+        instructor: clean(section?.instructor),
+        dayTime: clean(section?.day_time),
+        teachingMedium: clean(section?.teaching_medium),
+        remarks: clean(section?.remarks)
+      }));
+    const instructors = unique(sectionDetails.map((section) => section.instructor));
+
+    return {
+      institutionId: "hkbu",
+      institutionName: "Hong Kong Baptist University",
+      institutionShortName: "HKBU",
+      sourceCourseId: courseCode,
+      courseCode,
+      courseKey: `hkbu:${courseCode}`,
+      courseKeysKey: "",
+      title: clean(course?.title),
+      alternateTitles: unique([clean(course?.chinese_title)]),
+      faculty: clean(course?.academic_group),
+      academicPeriod: clean(catalogue.term),
+      academicYear: "",
+      units: clean(course?.units),
+      level: clean(course?.level),
+      unitCode: clean(course?.unit_code),
+      teachingMedium: clean(course?.teaching_medium),
+      description: clean(course?.description),
+      prerequisiteText: clean(course?.prerequisite_text),
+      corequisiteText: clean(course?.corequisite_text),
+      targetStudents: clean(course?.target_students),
+      prerequisiteRules: normalizeRules(course?.prerequisite_rules),
+      corequisiteRules: normalizeRules(course?.corequisite_rules),
+      sections: unique(sectionDetails.map((section) => section.section)),
+      sectionDetails,
+      instructor: instructors.join(", "),
+      officialUrl: safeOfficialUrl(course?.outline_url, "hkbu"),
+      summaryUrl: "",
+      courseType: "",
+      remedial: false,
+      sourceLabel: "HKBU authenticated local snapshot",
+      sourceStatus: "reference_only · local review",
+      sourceMode: clean(catalogue.source_mode),
+      sourceCapturedAt: clean(catalogue.captured_at),
+      sourceCaveats: unique((Array.isArray(catalogue.caveats) ? catalogue.caveats : []).map(clean))
+    };
+  });
+}
+
 export function groupCourseRecords(records) {
   const groups = new Map();
   for (const record of Array.isArray(records) ? records : []) {
@@ -80,23 +294,45 @@ export function groupCourseRecords(records) {
     if (!title) continue;
     const institutionId = clean(record.institutionId) || "unknown";
     const academicPeriod = clean(record.academicPeriod);
+    const courseCode = clean(record.courseCode) || extractCourseCode(title);
+    const courseIdentity = courseCode
+      ? `code:${normalizeSearchText(courseCode)}`
+      : `title:${normalizeSearchText(title)}`;
     const key = [
       institutionId,
-      normalizeSearchText(title),
+      courseIdentity,
       normalizeSearchText(academicPeriod)
     ].join("|");
 
     if (!groups.has(key)) {
       groups.set(key, {
         id: key,
+        courseKey: clean(record.courseKey) || courseRecordId(record),
+        courseKeysKey: clean(record.courseKeysKey),
         institutionId,
         institutionName: clean(record.institutionName),
         institutionShortName: clean(record.institutionShortName),
         title,
-        code: extractCourseCode(title),
+        alternateTitles: unique((Array.isArray(record.alternateTitles) ? record.alternateTitles : []).map(clean)),
+        code: courseCode,
         faculty: clean(record.faculty),
         academicPeriod,
+        academicYear: clean(record.academicYear),
+        units: clean(record.units),
+        level: clean(record.level),
+        unitCode: clean(record.unitCode),
+        teachingMedium: clean(record.teachingMedium),
+        description: clean(record.description),
+        prerequisiteText: clean(record.prerequisiteText),
+        corequisiteText: clean(record.corequisiteText),
+        targetStudents: clean(record.targetStudents),
+        prerequisiteRules: Array.isArray(record.prerequisiteRules) ? record.prerequisiteRules : [],
+        corequisiteRules: Array.isArray(record.corequisiteRules) ? record.corequisiteRules : [],
         sourceLabel: clean(record.sourceLabel),
+        sourceStatus: clean(record.sourceStatus),
+        sourceMode: clean(record.sourceMode),
+        sourceCapturedAt: clean(record.sourceCapturedAt),
+        sourceCaveats: unique((Array.isArray(record.sourceCaveats) ? record.sourceCaveats : []).map(clean)),
         entries: []
       });
     }
@@ -104,23 +340,50 @@ export function groupCourseRecords(records) {
     const group = groups.get(key);
     group.entries.push({
       id: courseRecordId(record),
+      courseKey: clean(record.courseKey) || courseRecordId(record),
+      courseKeysKey: clean(record.courseKeysKey),
       sourceCourseId: clean(record.sourceCourseId),
       sections: unique((Array.isArray(record.sections) ? record.sections : []).map(clean)),
+      sectionDetails: (Array.isArray(record.sectionDetails) ? record.sectionDetails : [])
+        .map((section) => ({
+          section: clean(section?.section),
+          instructor: clean(section?.instructor),
+          dayTime: clean(section?.dayTime),
+          teachingMedium: clean(section?.teachingMedium),
+          remarks: clean(section?.remarks)
+        })),
       instructor: clean(record.instructor),
-      officialUrl: clean(record.officialUrl),
-      summaryUrl: clean(record.summaryUrl),
+      officialUrl: safeOfficialUrl(record.officialUrl, institutionId),
+      summaryUrl: safeOfficialUrl(record.summaryUrl, institutionId),
       courseType: clean(record.courseType),
       remedial: record.remedial === true
     });
   }
 
   return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      instructors: unique(group.entries.map((entry) => entry.instructor)),
-      sections: unique(group.entries.flatMap((entry) => entry.sections)),
-      sourceCourseIds: unique(group.entries.map((entry) => entry.sourceCourseId))
-    }))
+    .map((group) => {
+      const sectionInstructors = unique(
+        group.entries.flatMap((entry) =>
+          entry.sectionDetails.map((section) => section.instructor)
+        )
+      );
+
+      return {
+        ...group,
+        courseKeysKey:
+          group.courseKeysKey ||
+          group.entries.find((entry) => entry.courseKeysKey)?.courseKeysKey ||
+          "",
+        // Rich records can contain a convenient comma-joined instructor summary
+        // as well as the individual section instructors. Prefer the section
+        // values so the same names are not rendered twice in course details.
+        instructors: sectionInstructors.length
+          ? sectionInstructors
+          : unique(group.entries.map((entry) => entry.instructor)),
+        sections: unique(group.entries.flatMap((entry) => entry.sections)),
+        sourceCourseIds: unique(group.entries.map((entry) => entry.sourceCourseId))
+      };
+    })
     .sort((left, right) =>
       left.title.localeCompare(right.title) ||
       left.academicPeriod.localeCompare(right.academicPeriod)
@@ -141,8 +404,30 @@ function matchScore(group, query) {
     `${group.institutionName} ${group.institutionShortName}`
   );
   const sections = normalizeSearchText(group.sections.join(" "));
+  const richMetadata = normalizeSearchText([
+    group.alternateTitles?.join(" "),
+    group.description,
+    group.prerequisiteText,
+    group.corequisiteText,
+    group.targetStudents,
+    group.units,
+    group.level,
+    group.unitCode,
+    group.teachingMedium,
+    group.sourceLabel
+  ].join(" "));
   const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
-  const haystack = [title, code.toLowerCase(), sourceIds.join(" "), faculty, instructor, period, institution, sections].join(" ");
+  const haystack = [
+    title,
+    code.toLowerCase(),
+    sourceIds.join(" "),
+    faculty,
+    instructor,
+    period,
+    institution,
+    sections,
+    richMetadata
+  ].join(" ");
   const matchedTokens = tokens.filter((token) => haystack.includes(token));
   if (!matchedTokens.length) return null;
   if (tokens.length > 1 && matchedTokens.length !== tokens.length) return null;
@@ -185,6 +470,10 @@ function matchScore(group, query) {
 
 export function searchCourseGroups(groups, query, limit = 36) {
   const safeLimit = Math.max(1, Math.min(100, Number(limit) || 36));
+  return rankCourseGroups(groups, query).slice(0, safeLimit);
+}
+
+function rankCourseGroups(groups, query) {
   return (Array.isArray(groups) ? groups : [])
     .map((group) => {
       const match = matchScore(group, query);
@@ -195,21 +484,166 @@ export function searchCourseGroups(groups, query, limit = 36) {
       right.matchScore - left.matchScore ||
       right.academicPeriod.localeCompare(left.academicPeriod) ||
       left.title.localeCompare(right.title)
-    )
-    .slice(0, safeLimit);
+    );
 }
 
-export async function loadCourseCatalogue() {
-  const response = await fetch(COURSE_CATALOGUE_URL, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Course catalogue request failed (${response.status})`);
-  const catalogue = await response.json();
-  if (!catalogue || !Array.isArray(catalogue.courses)) {
-    throw new Error("Course catalogue response is invalid");
-  }
+export function searchCourseGroupsWithTotal(groups, query, limit = 36) {
+  const safeLimit = Math.max(1, Math.min(100, Number(limit) || 36));
+  const matches = rankCourseGroups(groups, query);
   return {
-    ...catalogue,
-    groups: groupCourseRecords(catalogue.courses)
+    items: matches.slice(0, safeLimit),
+    total: matches.length
   };
+}
+
+async function requestJson(url, fetchImpl) {
+  const response = await fetchImpl(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Course catalogue request failed (${response.status})`);
+  }
+  return response.json();
+}
+
+function validatedHkbuCatalogueUrl(manifest) {
+  const manifestDirectory = new URL("./", HKBU_CATALOGUE_MANIFEST_URL);
+  const catalogueUrl = new URL(clean(manifest?.catalogue_url), manifestDirectory);
+  const filename = catalogueUrl.pathname.split("/").pop() || "";
+  if (
+    catalogueUrl.origin !== HKBU_CATALOGUE_MANIFEST_URL.origin ||
+    !catalogueUrl.href.startsWith(manifestDirectory.href) ||
+    catalogueUrl.search ||
+    catalogueUrl.hash ||
+    !/^[A-Za-z0-9._-]+\.json$/.test(filename)
+  ) {
+    throw new Error("HKBU local snapshot manifest points outside its review directory");
+  }
+  return catalogueUrl;
+}
+
+async function sha256Hex(text, cryptoLike) {
+  if (!cryptoLike?.subtle || typeof TextEncoder === "undefined") {
+    throw new Error("HKBU local snapshot cannot be authenticated in this browser");
+  }
+  const digest = await cryptoLike.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function loadHkbuLocalSource(fetchImpl, cryptoLike) {
+  const manifest = await requestJson(HKBU_CATALOGUE_MANIFEST_URL, fetchImpl);
+  const catalogueUrl = validatedHkbuCatalogueUrl(manifest);
+  const response = await fetchImpl(catalogueUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`HKBU local snapshot request failed (${response.status})`);
+  }
+  const sourceText = await response.text();
+  const expectedHash = clean(manifest.content_sha256).toLocaleLowerCase();
+  const actualHash = await sha256Hex(sourceText, cryptoLike);
+  if (!/^[a-f0-9]{64}$/.test(expectedHash) || actualHash !== expectedHash) {
+    throw new Error("HKBU local snapshot checksum does not match its manifest");
+  }
+
+  const catalogue = JSON.parse(sourceText);
+  return adaptHkbuCatalogue(catalogue, manifest);
+}
+
+export async function loadCourseCatalogue({
+  locationLike = globalThis.location,
+  fetchImpl = globalThis.fetch,
+  cryptoLike = globalThis.crypto
+} = {}) {
+  if (typeof fetchImpl !== "function") {
+    throw new Error("Course catalogue fetch is unavailable");
+  }
+
+  const courses = [];
+  const sources = [];
+  try {
+    const catalogue = await requestJson(COURSE_CATALOGUE_URL, fetchImpl);
+    const records = adaptCourseKeysCatalogue(catalogue);
+    courses.push(...records);
+    sources.push({
+      id: "coursekeys-public",
+      label: "CourseKeys public reference catalogue",
+      status: "loaded",
+      recordCount: records.length,
+      localOnly: false
+    });
+  } catch (error) {
+    sources.push({
+      id: "coursekeys-public",
+      label: "CourseKeys public reference catalogue",
+      status: "unavailable",
+      recordCount: 0,
+      localOnly: false,
+      error: clean(error?.message)
+    });
+  }
+
+  if (isLocalCourseReviewLocation(locationLike)) {
+    try {
+      const records = await loadHkbuLocalSource(fetchImpl, cryptoLike);
+      courses.push(...records);
+      sources.push({
+        id: "hkbu-local-review",
+        label: "HKBU authenticated local snapshot",
+        status: "loaded",
+        recordCount: records.length,
+        localOnly: true
+      });
+    } catch (error) {
+      sources.push({
+        id: "hkbu-local-review",
+        label: "HKBU authenticated local snapshot",
+        status: "unavailable",
+        recordCount: 0,
+        localOnly: true,
+        error: clean(error?.message)
+      });
+    }
+  }
+
+  if (!courses.length) {
+    throw new Error("No course catalogue source could be loaded");
+  }
+
+  return {
+    version: 2,
+    courses,
+    sources,
+    groups: groupCourseRecords(courses)
+  };
+}
+
+export async function loadCourseKeysReadiness(fetchImpl = globalThis.fetch) {
+  const locked = {
+    reachable: false,
+    resourceStatus: "unavailable",
+    integrationLocked: true,
+    uploads: false,
+    publishing: false,
+    downloads: false,
+    transactions: false,
+    credits: false
+  };
+  if (typeof fetchImpl !== "function") return locked;
+
+  try {
+    const response = await fetchImpl(COURSEKEYS_READINESS_URL, {
+      cache: "no-store",
+      headers: { Accept: "application/json" }
+    });
+    if (!response.ok) return locked;
+    await response.json();
+    return {
+      ...locked,
+      reachable: true,
+      resourceStatus: "read-only reference"
+    };
+  } catch (_error) {
+    return locked;
+  }
 }
 
 function mergeCopy(pageCopy) {

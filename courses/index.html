@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#03101e" />
-  <title>Explore Courses · ConCourse</title>
+  <title>Course Engine · ConCourse</title>
   <meta
     name="description"
-    content="Search ConCourse's source-aware course catalogue by title, course identifier, faculty, instructor, semester, or section."
+    content="Search the ConCourse Course Engine by title, course identifier, faculty, instructor, semester, or section."
   />
   <link rel="icon" href="../concourse-icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-course-tools1" />
+  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-course-engine1" />
   <script>
     try {
       const savedTheme = localStorage.getItem("concourse_theme");
@@ -41,9 +41,8 @@
         aria-label="Primary destinations"
         data-copy-aria="primaryDestinations"
       >
-        <a href="./" aria-current="page" data-copy="exploreCourses">Explore Courses</a>
-        <a href="../assistant/" data-copy="selectionAssistant">Course Selection Assistant</a>
-        <a href="../coursekeys/" data-copy="courseKeys">CourseKeys</a>
+        <a href="../?destination=timetable" data-copy="timetable">Timetable</a>
+        <a href="./" aria-current="page" data-copy="exploreCourses">Course Engine</a>
       </nav>
 
       <div class="course-header-controls">
@@ -77,7 +76,7 @@
 
   <main class="course-main">
     <section class="course-search-stage" aria-labelledby="courseSearchTitle">
-      <h1 id="courseSearchTitle" data-copy="pageTitle">Explore Courses</h1>
+      <h1 id="courseSearchTitle" data-copy="pageTitle">Course Engine</h1>
       <form class="course-search-form" id="courseSearchForm" role="search">
         <label class="visually-hidden" for="courseSearchInput" data-copy="searchLabel">
           Search the course catalogue
@@ -104,13 +103,16 @@
 
     <section class="course-results" id="courseSearchResults" hidden aria-labelledby="courseResultsTitle">
       <header class="course-results-heading">
-        <h2 id="courseResultsTitle" tabindex="-1" data-copy="resultsTitle">Search Results</h2>
+        <div>
+          <h2 id="courseResultsTitle" tabindex="-1" data-copy="resultsTitle">Search Results</h2>
+          <p id="courseSourceStatus"></p>
+        </div>
         <p id="courseSearchStatus" role="status" aria-live="polite"></p>
       </header>
       <div class="course-result-list" id="courseResultList"></div>
     </section>
   </main>
 
-  <script type="module" src="courses.mjs?v=20260731-course-tools1"></script>
+  <script type="module" src="courses.mjs?v=20260731-course-engine2"></script>
 </body>
 </html>
