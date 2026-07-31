@@ -1023,6 +1023,10 @@ html[data-theme="day"] .course-search-control {
 }
 
 @media (max-width: 680px) {
+  .course-brand-copy {
+    display: none;
+  }
+
   .course-language-control {
     width: 44px;
     position: relative;
