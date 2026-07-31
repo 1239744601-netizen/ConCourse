@@ -1,0 +1,13 @@
+{
+  "d1": {
+    "binding": "DB",
+    "database_id": "INJECT_IN_CLOUDFLARE_DO_NOT_COMMIT_A_REAL_ID"
+  },
+  "r2": {
+    "binding": "COURSE_MATERIALS",
+    "bucket_name": "INJECT_IN_CLOUDFLARE_DO_NOT_COMMIT_A_REAL_BUCKET_NAME",
+    "public_access": false,
+    "r2_dev_domain": false,
+    "custom_domains": []
+  }
+}

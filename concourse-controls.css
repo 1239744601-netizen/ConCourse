@@ -2532,6 +2532,9 @@ body.app-active #landingScreen .header-row {
 .primary-navigation-button {
   min-width: 132px;
   min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 18px;
   color: rgba(229, 239, 248, .67);
   background: transparent;
@@ -2541,6 +2544,7 @@ body.app-active #landingScreen .header-row {
   font-size: 12px;
   font-weight: 720;
   letter-spacing: -.01em;
+  text-decoration: none;
 }
 
 .primary-navigation-button:hover:not(:disabled) {
