@@ -11,13 +11,12 @@ Deploy the SQL files before the function:
 1. `supabase-citation-metadata-setup.sql`
 2. `supabase-citation-search-quota.sql`
 
-Configure every production site origin as a comma-separated secret. Localhost,
-Cloudflare `pages.dev`, and GitHub Pages `github.io` preview origins are accepted
-without adding a site-specific origin.
+Configure the exact production site origin as a secret. No hosted preview
+domain is accepted automatically.
 
 ```sh
-supabase secrets set CITATION_ALLOWED_ORIGINS="https://your-domain.example,https://www.your-domain.example"
-supabase secrets set CITATION_CONTACT_URL="https://your-domain.example"
+supabase secrets set CITATION_ALLOWED_ORIGINS="https://concoursehk.com"
+supabase secrets set CITATION_CONTACT_URL="https://concoursehk.com"
 supabase functions deploy fetch-citation-metadata
 ```
 

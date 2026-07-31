@@ -5,8 +5,10 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDirectory = path.join(projectRoot, "dist");
-const defaultPublicOrigin = "https://concourse-95c.pages.dev";
-const primaryConnectorOrigin = "https://concourse-95c.pages.dev";
+const canonicalPublicOrigin = "https://concoursehk.com";
+const primaryConnectorOrigin = "https://concoursehk.com";
+const workerSourcePath = "cloudflare-pages-worker.mjs";
+const workerOutputPath = "_worker.js";
 
 const publicFiles = Object.freeze([
   "index.html",
@@ -259,9 +261,13 @@ async function listOutputFiles(directory, prefix = "") {
 }
 
 async function build() {
-  const publicOrigin = normalizePublicOrigin(
-    process.env.CONCOURSE_PUBLIC_ORIGIN || defaultPublicOrigin
+  const requestedPublicOrigin = normalizePublicOrigin(
+    process.env.CONCOURSE_PUBLIC_ORIGIN || canonicalPublicOrigin
   );
+  if (requestedPublicOrigin !== canonicalPublicOrigin) {
+    throw new Error(`CONCOURSE_PUBLIC_ORIGIN must be ${canonicalPublicOrigin}`);
+  }
+  const publicOrigin = canonicalPublicOrigin;
   let stagingDirectory = await mkdtemp(path.join(projectRoot, ".pages-build-"));
   try {
     for (const relativePath of publicFiles) {
@@ -279,6 +285,12 @@ async function build() {
         await readRequiredFile(sourcePath)
       );
     }
+
+    await writeBuildFile(
+      stagingDirectory,
+      workerOutputPath,
+      await readRequiredFile(workerSourcePath)
+    );
 
     const connectorEntries = [];
     for (const fileName of connectorFiles) {
@@ -305,6 +317,7 @@ async function build() {
     const expectedFiles = [
       ...publicFiles,
       ...publicAliases.map(([, destinationPath]) => destinationPath),
+      workerOutputPath,
       connectorArchivePath
     ].sort();
     const actualFiles = (await listOutputFiles(stagingDirectory)).sort();

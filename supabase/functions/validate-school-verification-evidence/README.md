@@ -38,13 +38,13 @@ return one row or object with:
 
 The completion RPC must be executable only by `service_role`.
 
-Configure every production and preview origin explicitly. Only exact origins
+Configure the production origin explicitly. Only exact origins
 from `VERIFICATION_ALLOWED_ORIGINS` or `SITE_URL` are accepted; local
 development on `localhost`, `127.0.0.1`, or `::1` is the only automatic
 exception. An unrelated `pages.dev` or `github.io` site is not trusted.
 
 ```sh
-supabase secrets set VERIFICATION_ALLOWED_ORIGINS="https://your-domain.example,https://www.your-domain.example"
+supabase secrets set VERIFICATION_ALLOWED_ORIGINS="https://concoursehk.com"
 ```
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided to hosted Supabase

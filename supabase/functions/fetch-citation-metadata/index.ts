@@ -38,10 +38,6 @@ const CONFIGURED_ORIGINS = new Set(
     Deno.env.get("SITE_URL") || "",
   ].map(normalizeOrigin).filter(Boolean),
 );
-const ALLOWED_HOST_SUFFIXES = (Deno.env.get("CITATION_ALLOWED_HOST_SUFFIXES") || ".pages.dev,.github.io")
-  .split(",")
-  .map((value) => value.trim().toLocaleLowerCase())
-  .filter((value) => /^\.[a-z0-9.-]+$/u.test(value));
 const BOT_CONTACT_URL = normalizeOrigin(Deno.env.get("CITATION_CONTACT_URL") || Deno.env.get("SITE_URL") || "");
 const SEARCH_USER_AGENT = `ConCourseCitationBot/1.1${BOT_CONTACT_URL ? ` (+${BOT_CONTACT_URL}/)` : ""}`;
 
@@ -121,10 +117,6 @@ function allowedOrigin(origin: string | null): string | null {
     if (
       ["localhost", "127.0.0.1", "::1"].includes(value.hostname)
       && ["http:", "https:"].includes(value.protocol)
-    ) return value.origin;
-    if (
-      value.protocol === "https:"
-      && ALLOWED_HOST_SUFFIXES.some((suffix) => value.hostname.toLocaleLowerCase().endsWith(suffix))
     ) return value.origin;
   } catch (_error) {
     // Invalid origins are rejected below.

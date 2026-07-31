@@ -401,8 +401,8 @@ test("popup uses session-only storage and user-triggered scripting delivery", ()
   assert.match(popupSource, /mergeSnapshots\(storedPayload, result\.payload\)/u);
   assert.match(popupSource, /chrome\.scripting\.executeScript/u);
   assert.match(popupSource, /concourse:hkbu-portal-snapshot/u);
-  assert.match(popupSource, /https:\/\/concoursehk\.pages\.dev/u);
-  assert.match(popupSource, /https:\/\/concourse-95c\.pages\.dev/u);
+  assert.match(popupSource, /https:\/\/concoursehk\.com/u);
+  assert.doesNotMatch(popupSource, /pages\.dev|github\.io/u);
   assert.match(popupSource, /CONCOURSE_ORIGINS\.has\(probe\.origin\)/u);
   assert.match(popupSource, /new CustomEvent\(eventName/u);
   assert.match(popupSource, /world:"MAIN"/u);
