@@ -33,6 +33,7 @@ const publicFiles = Object.freeze([
   "favicon.ico",
   "concourse-favicon-32.png",
   "concourse-apple-touch-icon.png",
+  "site.webmanifest",
   "concourse-favicon.svg",
   "concourse-brand-favicon.svg",
   "concourse-mark.svg",
@@ -59,6 +60,12 @@ const publicFiles = Object.freeze([
   "concourse-marketplace-og.png",
   "data/hkbu-catalogue-current.json",
   "data/hkbu-2026-27-s1-catalog.json"
+]);
+
+const publicAliases = Object.freeze([
+  ["concourse-favicon-32.png", "favicon-32x32.png"],
+  ["concourse-apple-touch-icon.png", "apple-touch-icon.png"],
+  ["concourse-apple-touch-icon.png", "apple-touch-icon-precomposed.png"]
 ]);
 
 const connectorFiles = Object.freeze([
@@ -251,6 +258,14 @@ async function build() {
       await writeBuildFile(stagingDirectory, relativePath, output);
     }
 
+    for (const [sourcePath, destinationPath] of publicAliases) {
+      await writeBuildFile(
+        stagingDirectory,
+        destinationPath,
+        await readRequiredFile(sourcePath)
+      );
+    }
+
     const connectorEntries = [];
     for (const fileName of connectorFiles) {
       const relativePath = `extensions/hkbu-portal-connector/${fileName}`;
@@ -273,7 +288,11 @@ async function build() {
       createStoredZip(connectorEntries)
     );
 
-    const expectedFiles = [...publicFiles, connectorArchivePath].sort();
+    const expectedFiles = [
+      ...publicFiles,
+      ...publicAliases.map(([, destinationPath]) => destinationPath),
+      connectorArchivePath
+    ].sort();
     const actualFiles = (await listOutputFiles(stagingDirectory)).sort();
     if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) {
       throw new Error("Build output differs from the explicit public allowlist");

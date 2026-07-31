@@ -34,6 +34,10 @@ test("Pages build publishes only the explicit frontend artifact", () => {
     "index.html",
     "_headers",
     "favicon.ico",
+    "favicon-32x32.png",
+    "apple-touch-icon.png",
+    "apple-touch-icon-precomposed.png",
+    "site.webmanifest",
     "concourse-favicon-32.png",
     "concourse-apple-touch-icon.png",
     "concourse-brand-favicon.svg",
@@ -54,15 +58,29 @@ test("Pages build publishes only the explicit frontend artifact", () => {
   assert.doesNotMatch(html, /https:\/\/concoursehk\.pages\.dev/u);
   assert.match(
     html,
-    /rel="icon"[^>]+href="\/concourse-favicon-32\.png\?v=20260731-double-c2"/u
+    /rel="icon"[^>]+href="\/favicon-32x32\.png\?v=20260731-double-c3"/u
   );
   assert.match(
     html,
-    /rel="shortcut icon"[^>]+href="\/favicon\.ico\?v=20260731-double-c2"/u
+    /rel="shortcut icon"[^>]+href="\/favicon\.ico\?v=20260731-double-c3"/u
   );
   assert.match(
     html,
-    /rel="apple-touch-icon"[^>]+href="\/concourse-apple-touch-icon\.png\?v=20260731-double-c2"/u
+    /rel="apple-touch-icon"[^>]+href="\/apple-touch-icon\.png\?v=20260731-double-c3"/u
+  );
+  assert.match(html, /rel="manifest"[^>]+href="\/site\.webmanifest\?v=20260731-double-c3"/u);
+
+  assert.deepEqual(
+    readFileSync(path.join(projectRoot, "dist/favicon-32x32.png")),
+    readFileSync(path.join(projectRoot, "dist/concourse-favicon-32.png"))
+  );
+  assert.deepEqual(
+    readFileSync(path.join(projectRoot, "dist/apple-touch-icon.png")),
+    readFileSync(path.join(projectRoot, "dist/concourse-apple-touch-icon.png"))
+  );
+  assert.deepEqual(
+    readFileSync(path.join(projectRoot, "dist/apple-touch-icon-precomposed.png")),
+    readFileSync(path.join(projectRoot, "dist/concourse-apple-touch-icon.png"))
   );
 
   const connector = readFileSync(

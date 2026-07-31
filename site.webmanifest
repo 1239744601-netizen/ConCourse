@@ -1,0 +1,22 @@
+{
+  "name": "ConCourse",
+  "short_name": "ConCourse",
+  "description": "Plan your semester, meet your campus community, and exchange student resources.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#061A30",
+  "theme_color": "#061526",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
