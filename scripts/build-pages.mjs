@@ -7,12 +7,11 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const distDirectory = path.join(projectRoot, "dist");
 const canonicalPublicOrigin = "https://concoursehk.com";
 const primaryConnectorOrigin = "https://concoursehk.com";
-const workerSourcePath = "cloudflare-pages-worker.mjs";
-const workerOutputPath = "_worker.js";
 
 const publicFiles = Object.freeze([
   "index.html",
   "_headers",
+  "_worker.js",
   "member-hub.css",
   "marketplace.css",
   "hkbu-portal.css",
@@ -286,12 +285,6 @@ async function build() {
       );
     }
 
-    await writeBuildFile(
-      stagingDirectory,
-      workerOutputPath,
-      await readRequiredFile(workerSourcePath)
-    );
-
     const connectorEntries = [];
     for (const fileName of connectorFiles) {
       const relativePath = `extensions/hkbu-portal-connector/${fileName}`;
@@ -317,7 +310,6 @@ async function build() {
     const expectedFiles = [
       ...publicFiles,
       ...publicAliases.map(([, destinationPath]) => destinationPath),
-      workerOutputPath,
       connectorArchivePath
     ].sort();
     const actualFiles = (await listOutputFiles(stagingDirectory)).sort();

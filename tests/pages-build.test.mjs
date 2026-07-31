@@ -4,10 +4,13 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import worker from "../cloudflare-pages-worker.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const canonicalOrigin = "https://concoursehk.com";
+const workerSource = readFileSync(new URL("../_worker.js", import.meta.url), "utf8");
+const worker = (
+  await import(`data:text/javascript;base64,${Buffer.from(workerSource).toString("base64")}`)
+).default;
 
 function listFiles(directory, prefix = "") {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
