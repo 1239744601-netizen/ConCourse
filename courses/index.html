@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#03101e" />
+  <title>Course Engine · ConCourse</title>
+  <meta
+    name="description"
+    content="Search the ConCourse Course Engine by title, course identifier, faculty, instructor, semester, or section."
+  />
+  <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico?v=20260731-double-c3" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png?v=20260731-double-c3" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png?v=20260731-double-c3" />
+  <link rel="manifest" href="../site.webmanifest?v=20260731-double-c3" />
+  <meta name="apple-mobile-web-app-title" content="ConCourse" />
+  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-course-engine2" />
+  <script>
+    try {
+      const savedTheme = localStorage.getItem("concourse_theme");
+      document.documentElement.dataset.theme =
+        savedTheme === "day" || savedTheme === "night" ? savedTheme : "night";
+    } catch (_error) {}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#courseSearchInput">Skip to course search</a>
+
+  <header class="course-site-header">
+    <div class="course-site-header-inner">
+      <a class="course-brand" href="../" aria-label="ConCourse home">
+        <span class="course-brand-mark" aria-hidden="true">
+          <img class="brand-mark-night" src="../concourse-mark.svg" alt="" />
+          <img class="brand-mark-day" src="../concourse-icon.svg" alt="" />
+        </span>
+        <span class="course-brand-copy">
+          <strong>ConCourse</strong>
+          <small data-copy="brandTag">Conquer your courses</small>
+        </span>
+      </a>
+
+      <nav
+        class="course-primary-navigation"
+        aria-label="Primary destinations"
+        data-copy-aria="primaryDestinations"
+      >
+        <a href="../?destination=timetable" data-copy="timetable">Timetable</a>
+        <a href="./" aria-current="page" data-copy="exploreCourses">Course Engine</a>
+      </nav>
+
+      <div class="course-header-controls">
+        <div
+          class="course-theme-control"
+          role="group"
+          aria-label="Page appearance"
+          data-copy-aria="appearance"
+        >
+          <button type="button" data-theme-value="day" aria-pressed="false" data-copy-aria="useDay">
+            <span aria-hidden="true">☼</span>
+            <span class="theme-label" data-copy="day">Day</span>
+          </button>
+          <button type="button" data-theme-value="night" aria-pressed="true" data-copy-aria="useNight">
+            <span aria-hidden="true">◐</span>
+            <span class="theme-label" data-copy="night">Night</span>
+          </button>
+        </div>
+        <label class="course-language-control">
+          <span aria-hidden="true">◎</span>
+          <span class="visually-hidden" data-copy="language">Website language</span>
+          <select id="languageSelect" aria-label="Website language" data-copy-aria="language">
+            <option value="en">English</option>
+            <option value="zh-CN">普通话</option>
+            <option value="zh-HK">廣東話</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="course-main">
+    <section class="course-search-stage" aria-labelledby="courseSearchTitle">
+      <h1 id="courseSearchTitle" data-copy="pageTitle">Course Engine</h1>
+      <form class="course-search-form" id="courseSearchForm" role="search">
+        <label class="visually-hidden" for="courseSearchInput" data-copy="searchLabel">
+          Search the course catalogue
+        </label>
+        <div class="course-search-control">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
+            <path d="m16 16 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+          <input
+            id="courseSearchInput"
+            name="query"
+            type="search"
+            autocomplete="off"
+            enterkeyhint="search"
+            required
+            data-copy-placeholder="searchPlaceholder"
+            placeholder="Search by course, faculty, instructor, semester, or section"
+          />
+          <button id="courseSearchSubmit" type="submit" data-copy="search">Search</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="course-results" id="courseSearchResults" hidden aria-labelledby="courseResultsTitle">
+      <header class="course-results-heading">
+        <div>
+          <h2 id="courseResultsTitle" tabindex="-1" data-copy="resultsTitle">Search Results</h2>
+          <p id="courseSourceStatus"></p>
+        </div>
+        <p id="courseSearchStatus" role="status" aria-live="polite"></p>
+      </header>
+      <div class="course-result-list" id="courseResultList"></div>
+    </section>
+  </main>
+
+  <script type="module" src="courses.mjs?v=20260731-course-engine3"></script>
+</body>
+</html>

@@ -30,7 +30,7 @@
     document.querySelector('meta[name="theme-color"]').content = theme === "day" ? "#dff2ff" : "#061526";
   })();
 </script>
-<script src="navigation-state.js?v=20260731-paint1"></script>
+<script src="navigation-state.js?v=20260731-unified1"></script>
 <script id="concourseNavigationBoot">
   (() => {
     const root = document.documentElement;
@@ -1238,6 +1238,175 @@
     border-radius: 15px;
     background: #fbfbfd;
   }
+  .selection-assistant-panel {
+    margin: 0 0 18px;
+    padding: 24px;
+    border: 1px solid rgba(0,113,227,.16);
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at 92% 0, rgba(91,200,245,.16), transparent 34%),
+      linear-gradient(145deg, rgba(245,250,255,.96), rgba(255,255,255,.96));
+    box-shadow: 0 18px 42px rgba(31,47,78,.08);
+  }
+  .selection-assistant-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .selection-assistant-heading h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 21px;
+    letter-spacing: -.025em;
+  }
+  .selection-assistant-heading p {
+    max-width: 430px;
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .selection-assistant-launch {
+    display: inline-flex;
+    min-height: 44px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border-radius: 999px;
+    background: #0a66cc;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 12px 24px rgba(0,102,204,.2);
+  }
+  .selection-assistant-launch:hover { background: #0057b8; }
+  .selection-assistant-guide {
+    display: grid;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .selection-assistant-step {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 11px;
+    align-items: start;
+    padding: 11px 12px;
+    border: 1px solid rgba(29,29,31,.08);
+    border-radius: 15px;
+    background: rgba(255,255,255,.68);
+  }
+  .selection-assistant-step[data-state="current"] {
+    border-color: rgba(0,113,227,.28);
+    background: rgba(235,246,255,.94);
+    box-shadow: 0 0 0 2px rgba(0,113,227,.06);
+  }
+  .selection-assistant-step[data-state="complete"] {
+    border-color: rgba(40,154,92,.2);
+    background: rgba(242,251,246,.9);
+  }
+  .selection-assistant-step-marker {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #48484a;
+    background: #ececf0;
+    font-size: 12px;
+    font-weight: 760;
+  }
+  .selection-assistant-step[data-state="current"] .selection-assistant-step-marker {
+    color: #fff;
+    background: #0071e3;
+  }
+  .selection-assistant-step[data-state="complete"] .selection-assistant-step-marker {
+    color: transparent;
+    background: #289a5c;
+    font-size: 0;
+  }
+  .selection-assistant-step[data-state="complete"] .selection-assistant-step-marker::before {
+    content: "✓";
+    color: #fff;
+    font-size: 14px;
+  }
+  .selection-assistant-step b,
+  .selection-assistant-step span { display: block; }
+  .selection-assistant-step b {
+    color: var(--text);
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .selection-assistant-step-copy > span {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+  .selection-assistant-session-note {
+    margin: 12px 0 0;
+    color: var(--muted-2);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .selection-assistant-manual-link {
+    display: inline-flex;
+    margin-top: 10px;
+    color: #0066cc;
+    font-size: 11.5px;
+    font-weight: 680;
+    text-underline-offset: 3px;
+  }
+  .selection-handoff-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .selection-handoff-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 17px;
+    border: 1px solid rgba(29,29,31,.1);
+    border-radius: 18px;
+    background: rgba(255,255,255,.82);
+  }
+  .selection-handoff-card strong,
+  .selection-handoff-card span { display: block; }
+  .selection-handoff-card strong { color: var(--text); font-size: 14px; }
+  .selection-handoff-card span {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .selection-handoff-card .selection-handoff-required {
+    color: #9a5a00;
+    font-weight: 650;
+  }
+  .selection-handoff-card button {
+    min-height: 40px;
+    padding: 9px 15px;
+    border: 0;
+    border-radius: 999px;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .selection-handoff-status {
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .selection-handoff-status:empty { display: none; }
   #courseList { max-height: none; overflow: visible; padding: 0; }
   #wishlistPanel .toolbar { margin-top: 16px; }
   #generate {
@@ -1799,6 +1968,10 @@
     .language-select { width: 84px; padding-left: 8px; padding-right: 22px; font-size: 10.5px; }
     .language-chevron { right: 9px; }
     .private-name-grid { grid-template-columns: 1fr; }
+    .selection-assistant-heading { flex-direction: column; }
+    .selection-handoff-card { grid-template-columns: 1fr; }
+    .selection-assistant-launch,
+    .selection-handoff-card button { width: 100%; }
   }
   @media (max-height: 840px) and (max-width: 1050px) {
     body.app-active #landingScreen {
@@ -1862,7 +2035,7 @@
 <link rel="stylesheet" href="marketplace.css?v=20260728-verification-center2" />
 <link rel="stylesheet" href="hkbu-portal.css?v=20260728-foundation1" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260722-authotp1" />
-<link rel="stylesheet" href="concourse-controls.css?v=20260721-market-gallery5" />
+<link rel="stylesheet" href="concourse-controls.css?v=20260731-unified1" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
 <link rel="stylesheet" href="academic-tools.css?v=20260723-motion1" />
 <link rel="stylesheet" href="concourse-theme.css?v=20260723-daycontrast2" />
@@ -1893,9 +2066,10 @@
       <div class="brand-tag" data-i18n="brandTag">Conquer your courses</div>
     </div>
   </div>
-  <nav class="primary-navigation" id="primaryNavigation" hidden aria-label="Primary destinations" data-i18n-aria-label="primaryDestinations">
+  <nav class="primary-navigation" id="primaryNavigation" aria-label="Primary destinations" data-i18n-aria-label="primaryDestinations">
     <button type="button" class="primary-navigation-button" id="topTimetableBtn" hidden data-i18n="timetableNav">Timetable</button>
-    <button type="button" class="primary-navigation-button" id="hubOpenBtn" hidden data-i18n="studentHub">Student hub</button>
+    <a class="primary-navigation-button" id="courseSearchNav" href="courses/" data-i18n="courseEngineNav">Course Engine</a>
+    <button type="button" class="primary-navigation-button" id="hubOpenBtn" hidden data-i18n="studentHub">Student Hub</button>
   </nav>
   <div class="auth-bar" aria-label="Account controls" data-i18n-aria-label="accountControls">
     <div class="auth-identity">
@@ -2113,9 +2287,58 @@
       <p data-i18n="configuratorDescription">Add course options and set your semester priorities. When everything is ready, ConCourse opens your ranked timetable in a dedicated full-screen view.</p>
     </div>
     <nav class="configurator-nav" aria-label="Planner sections">
-      <a href="#courseBuilderPanel"><span>01</span><b data-i18n="courses">Courses</b></a>
+      <a href="#courseSelectionHandoffPanel"><span>01</span><b data-i18n="courses">Courses</b></a>
       <a href="#semesterPanel"><span>02</span><b data-i18n="criteria">Criteria</b></a>
     </nav>
+    <section class="selection-assistant-panel" id="courseSelectionHandoffPanel" aria-labelledby="selectionAssistantTitle">
+      <div class="selection-assistant-heading">
+        <div>
+          <h2 id="selectionAssistantTitle" data-i18n="selectionAssistantTitle">Choose courses with the Assistant</h2>
+          <p data-i18n="selectionAssistantDescription">Search and compare current-term choices in a focused view, then bring your preferred sections back here to finish the timetable.</p>
+        </div>
+        <a class="selection-assistant-launch" href="assistant/">
+          <span data-i18n="openSelectionAssistant">Open Assistant</span>
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+      <ol
+        class="selection-assistant-guide"
+        id="selectionAssistantGuide"
+        aria-label="Course selection steps"
+        data-i18n-aria-label="selectionAssistantSteps"
+      >
+        <li class="selection-assistant-step" data-selection-step="search" data-state="current" aria-current="step">
+          <span class="selection-assistant-step-marker" aria-hidden="true">1</span>
+          <span class="selection-assistant-step-copy">
+            <b data-i18n="selectionStepSearchTitle">Search and compare</b>
+            <span data-i18n="selectionStepSearchDescription">Use a course title, code, subject, instructor, or semester to find possible matches.</span>
+          </span>
+        </li>
+        <li class="selection-assistant-step" data-selection-step="shortlist" data-state="upcoming">
+          <span class="selection-assistant-step-marker" aria-hidden="true">2</span>
+          <span class="selection-assistant-step-copy">
+            <b data-i18n="selectionStepShortlistTitle">Choose preferred sections</b>
+            <span data-i18n="selectionStepShortlistDescription">Build a shortlist in the Assistant, then select Continue to Timetable.</span>
+          </span>
+        </li>
+        <li class="selection-assistant-step" data-selection-step="complete" data-state="upcoming">
+          <span class="selection-assistant-step-marker" aria-hidden="true">3</span>
+          <span class="selection-assistant-step-copy">
+            <b data-i18n="selectionStepCompleteTitle">Complete timetable details</b>
+            <span data-i18n="selectionStepCompleteDescription">Returned choices appear below. Confirm any missing credits and meeting times before generating.</span>
+          </span>
+        </li>
+      </ol>
+      <p class="selection-assistant-session-note" data-i18n="selectionSessionNote">Keep the Assistant in this tab. The shortlist is bound to your signed-in account and is removed from the handoff after Timetable receives it.</p>
+      <a class="selection-assistant-manual-link" href="#courseBuilderPanel" data-i18n="selectionManualEntry">Already know the details? Enter a course manually below.</a>
+      <div
+        class="selection-handoff-list"
+        id="courseSelectionHandoffList"
+        aria-label="Returned course choices"
+        data-i18n-aria-label="selectionReturnedChoices"
+      ></div>
+      <p class="selection-handoff-status" id="courseSelectionHandoffStatus" role="status" aria-live="polite"></p>
+    </section>
     <div class="panel" id="courseBuilderPanel">
       <div class="panel-heading">
         <span class="panel-index">01</span>
@@ -2151,6 +2374,10 @@
       <select id="sessionsPerWeek">
         <option value="1" data-i18n="oneSession">1 session — one class a week (e.g. 3 hours)</option>
         <option value="2" data-i18n="twoSessions">2 sessions — two classes on different days (e.g. 2h + 1h)</option>
+        <option value="3" data-i18n="threeSessions">3 sessions per week</option>
+        <option value="4" data-i18n="fourSessions">4 sessions per week</option>
+        <option value="5" data-i18n="fiveSessions">5 sessions per week</option>
+        <option value="6" data-i18n="sixSessions">6 sessions per week</option>
       </select>
 
       <label class="chk" style="display:flex; align-items:flex-start; gap:8px; margin-top:12px;">
@@ -3254,6 +3481,17 @@ let activeSolution = 0;
 let genNote = "";        // banner note from last generation (e.g. free-day tradeoff)
 let finalTimetable = null; // explicitly saved final schedule snapshot for the semester
 let appStarted = false;  // authenticated users still choose when to enter the planner
+const ACTIVE_USER_STORAGE_KEY = "concourse_active_user_id_v1";
+const INSTITUTION_CONTEXT_STORAGE_KEY = "concourse_institution_context_v1";
+const SELECTION_HANDOFF_STORAGE_KEY = "concourse_timetable_selection_handoff_v1";
+const COURSE_CONTEXT_DESTINATIONS = Object.freeze({
+  timetable: new Set(["add-course"]),
+  community: new Set(["search", "compose"]),
+  marketplace: new Set(["search", "sell"])
+});
+let selectionHandoffDrafts = [];
+let activeSelectionDraftId = null;
+let courseContextRoutePending = false;
 
 // ---------- Helpers ----------
 const $ = id => document.getElementById(id);
@@ -3266,6 +3504,77 @@ function localizedDay(day){
 }
 function slotLabel(s){ return `${s.days.map(localizedDay).join("/")} ${fmt(s.start)}–${fmt(s.end)}`; }
 function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function cleanHandoffText(value, max=220){
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+}
+function handoffMinutes(value){
+  if(Number.isInteger(value) && value >= 0 && value <= 1440) return value;
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value || ""));
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+}
+function normalizeHandoffSessions(value){
+  if(!Array.isArray(value) || !value.length) return [];
+  const sessions = value.slice(0, 6).map(session => {
+    const days = [...new Set((Array.isArray(session?.days) ? session.days : [session?.day])
+      .map(Number)
+      .filter(day => Number.isInteger(day) && day >= 1 && day <= 6))]
+      .sort((left, right) => left - right);
+    const start = handoffMinutes(session?.start);
+    const end = handoffMinutes(session?.end);
+    if(!days.length || start === null || end === null || end <= start) return null;
+    return {
+      days,
+      start,
+      end,
+      venue: cleanHandoffText(session?.venue, 160) || null
+    };
+  });
+  return sessions.every(Boolean) ? sessions : [];
+}
+function normalizeSelectionHandoffItem(item, index){
+  if(!item || typeof item !== "object") return null;
+  const choice = item.choice && typeof item.choice === "object"
+    ? item.choice
+    : (item.selectedChoice && typeof item.selectedChoice === "object" ? item.selectedChoice : item);
+  const title = cleanHandoffText(item.title || item.name || item.courseTitle, 220);
+  if(!title) return null;
+  const code = cleanHandoffText(item.code || item.courseCode, 80).toUpperCase();
+  const courseKey = cleanHandoffText(item.courseKey || item.groupId, 180);
+  const choiceId = cleanHandoffText(choice.id || item.choiceId, 180);
+  const rawCredits = item.credits ?? item.units ?? choice.credits ?? choice.units;
+  const parsedCredits = Number(rawCredits);
+  const creditsKnown = rawCredits !== null && rawCredits !== undefined && rawCredits !== ""
+    && Number.isFinite(parsedCredits) && parsedCredits >= 0 && parsedCredits <= 99;
+  const sessions = normalizeHandoffSessions(
+    choice.sessions || item.sessions || choice.options?.[0]?.sessions || item.options?.[0]?.sessions
+  );
+  const expectedSessions = Math.max(
+    1,
+    Math.min(6, Number(item.sessionsPerWeek || choice.sessionsPerWeek || sessions.length || 1) || 1)
+  );
+  const stablePart = courseKey || choiceId || `${code}:${title}`;
+  return {
+    draftId: `${stablePart}:${index}`.slice(0, 240),
+    title,
+    code,
+    professor: cleanHandoffText(
+      choice.instructor || item.instructor || item.professor || item.prof,
+      180
+    ),
+    credits: creditsKnown ? parsedCredits : null,
+    creditsKnown,
+    section: cleanHandoffText(choice.section || item.section, 60),
+    courseKey,
+    choiceId,
+    institution: cleanHandoffText(
+      item.institutionShortName || item.institutionName || item.institution,
+      180
+    ),
+    academicPeriod: cleanHandoffText(item.academicPeriod || item.term, 120),
+    sessions,
+    expectedSessions
+  };
+}
 
 // ---------- Language ----------
 let currentLanguage = "en";
@@ -3274,7 +3583,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出价仅为非约束性的价格提议。请通过私信商定下一步；ConCourse 不会收取款项。",
     marketplaceMarkSoldConfirm:"仅在已完成线下交付后将商品标记为售出。此操作会关闭商品，但不能作为已付款的证明。",
     marketplaceMarkClaimed:"标记为已领取", marketplaceMarkClaimedConfirm:"仅在免费物品已完成交付后标记为已领取。", marketplaceCloseRequest:"关闭求购", marketplaceCloseRequestConfirm:"仅在你不再需要该物品时关闭这项求购。", marketplaceStatusClaimed:"已领取", marketplaceStatusRequestClosed:"求购已关闭",
-    brandTag:"轻松规划课程", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", language:"语言", appearance:"页面外观", dayMode:"日间", nightMode:"夜间", useDayMode:"使用日间外观", useNightMode:"使用夜间外观", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
+    brandTag:"轻松规划课程", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", courseEngineNav:"课程引擎", exploreCoursesNav:"课程引擎", courseSelectionNav:"选课助手", courseKeysNav:"课程资源库", section:"班别", language:"语言", appearance:"页面外观", dayMode:"日间", nightMode:"夜间", useDayMode:"使用日间外观", useNightMode:"使用夜间外观", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
     heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
     startPlanning:"开始规划",
@@ -3291,9 +3600,10 @@ const TRANSLATIONS = {
     configuratorTitle:"选择详细条件。<br>建立课程清单。",
     configuratorDescription:"添加课程选项并设置学期偏好。准备完成后，ConCourse 会在独立全屏页面中展示排名课表。",
     courses:"课程", criteria:"条件", courseBuilder:"课程设置", courseBuilderDescription:"设置每门课程及其可选上课时间。",
+    selectionAssistantTitle:"使用选课助手挑选课程", selectionAssistantDescription:"在专注页面搜索并比较本学期课程，再将首选班别带回此处完成课表。", openSelectionAssistant:"打开选课助手", selectionAssistantSteps:"选课步骤", selectionStepSearchTitle:"搜索并比较", selectionStepSearchDescription:"使用课程名称、代码、学科、教师或学期查找可能匹配项。", selectionStepShortlistTitle:"选择首选班别", selectionStepShortlistDescription:"在选课助手建立备选清单，然后选择“继续设置时间表”。", selectionStepCompleteTitle:"补全课表资料", selectionStepCompleteDescription:"返回的课程会显示在下方。生成课表前，请确认缺少的学分及上课时间。", selectionSessionNote:"请在当前标签页打开选课助手。备选清单只属于当前登录账户，时间表接收后会从交接资料中移除。", selectionManualEntry:"已经知道课程资料？可在下方手动输入。", selectionReturnedChoices:"已返回的课程选择", selectionStillNeeded:"仍需补充：{details}", selectionMissingCredits:"学分", selectionMissingMeetings:"上课时间", selectionReviewDetails:"补充课程资料", selectionStartHint:"从第 1 步开始；选课助手会把备选课程送回此处。", selectionAllComplete:"选课助手带回的课程已加入清单。可继续设置学期条件。", selectionCompletePrompt:"请为 {course} 补充{details}，然后加入课程清单。", selectionNeedsDetails:"请为 {course} 补充学分及完整上课时间。", setMeetingTimes:"设置上课时间", selectionReady:"已将 {count} 门课程带入课表流程。", selectionAccountMismatch:"这些备选课程来自另一个账户，未被载入。", selectionInvalid:"备选课程资料无法读取，请返回选课助手重试。", courseContextStaged:"已将 {course} 加入课表草稿。请确认学分并手动填写缺少的上课时间。", courseContextUnavailable:"无法确认该课程。请返回课程引擎重新选择。",
     courseName:"课程名称", courseCode:"课程代码", professor:"教师", credits:"学分", mustTake:"必须修读",
     courseNameExample:"例如：算法导论", courseCodeExample:"例如：CS 3410", professorExample:"例如：李教授",
-    sessionsPerWeek:"每周上课次数（课程固定结构）", oneSession:"1 次 — 每周一堂课（例如 3 小时）", twoSessions:"2 次 — 在不同日期上两堂课（例如 2 小时 + 1 小时）",
+    sessionsPerWeek:"每周上课次数（课程固定结构）", oneSession:"1 次 — 每周一堂课（例如 3 小时）", twoSessions:"2 次 — 每周两堂课（例如 2 小时 + 1 小时）", threeSessions:"每周 3 个时段", fourSessions:"每周 4 个时段", fiveSessions:"每周 5 个时段", sixSessions:"每周 6 个时段",
     multipleTimes:"该教师在<b>多个时段</b>开设此课程 — 我会逐一添加。", addSessionTime:"添加上课时段（日期 + 时间）",
     monday:"周一", tuesday:"周二", wednesday:"周三", thursday:"周四", friday:"周五", saturday:"周六", start:"开始", end:"结束",
     addSession:"+ 添加时段", saveTimeOption:"保存时间选项", sessionHint:"添加课程的上课日期和时间。所有时段会作为固定每周安排保存在一起。",
@@ -3333,8 +3643,8 @@ const TRANSLATIONS = {
     authEmailNotAuthorized:"当前邮件服务无法向此邮箱发送验证邮件。网站所有者必须先启用自定义 SMTP，公众邮箱验证才能使用。", authEmailRateLimited:"验证邮件发送次数已达到限制。请稍后再试；重复点击不会更快。", authAlreadyRegistered:"此邮箱可能已有账户。请尝试登录；若尚未验证，请使用“重新发送验证邮件”。",
     authEmailNotConfirmed:"此邮箱尚未验证。请重新发送验证码，并输入最新邮件中的六位数字。", authInvalidLogin:"邮箱或密码不正确。若刚注册，请先完成邮箱验证。", authRateLimited:"登录尝试次数过多。请稍等一段时间后再试。", authLinkExpired:"此验证链接已过期或已经使用。请输入邮箱，然后重新发送验证码。", authLinkInvalid:"无法使用此验证链接。请重新发送验证码，并使用最新邮件。", authEmailProviderDisabled:"邮箱注册暂时未启用。请联系网站所有者。", authSignUpFailed:"暂时无法创建账户。请稍后重试。", authSignInFailed:"暂时无法登录。请稍后重试。",
     saving:"正在保存…", saveFailed:"保存失败", saved:"已保存", unsaved:"未保存", loading:"正在加载…", loadFailed:"加载失败",
-    emptySchedule:"添加课程、设置学期条件并生成排名方案，即可查看课表。", sessionLabelOne:"添加上课时段（日期 + 时间）", sessionLabelTwo:"添加两个上课时段（日期 + 时间）",
-    sessionOnce:"此课程每周上课一次。", sessionTwice:"此课程每周在不同日期上课两次。", multiSessionHint:"{base} 请先建立完整时间选项（共 {count} 个时段），按“保存时间选项”，再添加教师提供的其他选项。ConCourse 每次会保留一个完整选项。",
+    emptySchedule:"添加课程、设置学期条件并生成排名方案，即可查看课表。", sessionLabelOne:"添加上课时段（日期 + 时间）", sessionLabelTwo:"添加两个上课时段（日期 + 时间）", sessionLabelMany:"添加全部 {count} 个上课时段（日期 + 时间）",
+    sessionOnce:"此课程每周上课一次。", sessionTwice:"此课程每周上课两次。", sessionMany:"此课程每周上课 {count} 次。", multiSessionHint:"{base} 请先建立完整时间选项（共 {count} 个时段），按“保存时间选项”，再添加教师提供的其他选项。ConCourse 每次会保留一个完整选项。",
     fixedSessionHint:"{base} 添加全部 {count} 个时段，它们会作为固定课表保存在一起。", wishlistCountOne:"{count} 门课程", wishlistCountMany:"{count} 门课程", remove:"移除", mustTakeBadge:"必须修读", sessionsWeekly:"每周 {count} 次",
     chooseOption:"从 {count} 个选项中选 1 个", optionLabel:"选项 {option}", meetingLabel:"上课", creditsShort:"学分", noValidTimetable:"未找到有效课表。", tooManyTimetables:"有效课表过多，无法准确排名。",
     supabaseRequired:"需要设置 Supabase", configureLogin:"设置登录", connectSupabase:"连接 Supabase 后即可启用登录并开始规划。",
@@ -3375,7 +3685,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出價只係冇約束力嘅價錢建議。請用私訊商議下一步；ConCourse 唔會收取款項。",
     marketplaceMarkSoldConfirm:"只可以喺完成線下交收之後標記做已售出。呢個操作會關閉商品，但唔代表已經付款。",
     marketplaceMarkClaimed:"標記做已領取", marketplaceMarkClaimedConfirm:"只可以喺免費物品完成交收之後標記做已領取。", marketplaceCloseRequest:"關閉求購", marketplaceCloseRequestConfirm:"只可以喺你唔再需要件物品時關閉呢項求購。", marketplaceStatusClaimed:"已領取", marketplaceStatusRequestClosed:"求購已關閉",
-    brandTag:"輕鬆規劃課程", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", language:"語言", appearance:"頁面外觀", dayMode:"日間", nightMode:"夜間", useDayMode:"使用日間外觀", useNightMode:"使用夜間外觀", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
+    brandTag:"輕鬆規劃課程", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", courseEngineNav:"課程引擎", exploreCoursesNav:"課程引擎", courseSelectionNav:"選科助手", courseKeysNav:"課程資源庫", section:"班別", language:"語言", appearance:"頁面外觀", dayMode:"日間", nightMode:"夜間", useDayMode:"使用日間外觀", useNightMode:"使用夜間外觀", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
     heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
     startPlanning:"開始規劃",
@@ -3392,9 +3702,10 @@ const TRANSLATIONS = {
     configuratorTitle:"揀好詳細條件。<br>建立選科清單。",
     configuratorDescription:"加入課程選項同設定學期偏好。準備好之後，ConCourse 會喺獨立全畫面顯示排序時間表。",
     courses:"課程", criteria:"條件", courseBuilder:"課程設定", courseBuilderDescription:"設定每科同可選上課時段。",
+    selectionAssistantTitle:"用選科助手揀課程", selectionAssistantDescription:"喺專注頁面搜尋同比較今個學期嘅課程，再將首選班別帶返嚟完成時間表。", openSelectionAssistant:"打開選科助手", selectionAssistantSteps:"選科步驟", selectionStepSearchTitle:"搜尋同比較", selectionStepSearchDescription:"用課程名稱、編號、學科、教師或學期搵可能匹配項。", selectionStepShortlistTitle:"揀首選班別", selectionStepShortlistDescription:"喺選科助手建立備選清單，然後揀「繼續設定時間表」。", selectionStepCompleteTitle:"補齊時間表資料", selectionStepCompleteDescription:"帶返嚟嘅課程會顯示喺下面。產生時間表之前，請確認欠缺嘅學分同上堂時間。", selectionSessionNote:"請喺而家呢個分頁打開選科助手。備選清單只屬於目前登入帳戶，時間表收到之後會由交接資料移除。", selectionManualEntry:"已經知道課程資料？可以喺下面手動輸入。", selectionReturnedChoices:"已帶返嚟嘅課程選擇", selectionStillNeeded:"仲要補充：{details}", selectionMissingCredits:"學分", selectionMissingMeetings:"上堂時間", selectionReviewDetails:"補充課程資料", selectionStartHint:"由第 1 步開始；選科助手會將備選課程送返嚟呢度。", selectionAllComplete:"選科助手帶返嚟嘅課程已經加入清單。可以繼續設定學期條件。", selectionCompletePrompt:"請為 {course} 補充{details}，然後加入選科清單。", selectionNeedsDetails:"請為 {course} 補充學分同完整上堂時間。", setMeetingTimes:"設定上堂時間", selectionReady:"已將 {count} 科帶入時間表流程。", selectionAccountMismatch:"呢啲備選課程來自另一個帳戶，所以未有載入。", selectionInvalid:"備選課程資料無法讀取，請返回選科助手再試。", courseContextStaged:"已將 {course} 加入時間表草稿。請確認學分，同埋手動填寫欠缺嘅上堂時間。", courseContextUnavailable:"未能確認呢科。請返回課程引擎重新選擇。",
     courseName:"課程名稱", courseCode:"課程編號", professor:"教授", credits:"學分", mustTake:"必須修讀",
     courseNameExample:"例如：算法導論", courseCodeExample:"例如：CS 3410", professorExample:"例如：李教授",
-    sessionsPerWeek:"每週上堂次數（課程固定結構）", oneSession:"1 次 — 每星期一堂（例如 3 小時）", twoSessions:"2 次 — 喺唔同日子上兩堂（例如 2 小時 + 1 小時）",
+    sessionsPerWeek:"每週上堂次數（課程固定結構）", oneSession:"1 次 — 每星期一堂（例如 3 小時）", twoSessions:"2 次 — 每星期兩堂（例如 2 小時 + 1 小時）", threeSessions:"每星期 3 個時段", fourSessions:"每星期 4 個時段", fiveSessions:"每星期 5 個時段", sixSessions:"每星期 6 個時段",
     multipleTimes:"呢位教授喺<b>多個時段</b>開呢科 — 我會逐個加入。", addSessionTime:"加入上堂時段（日子 + 時間）",
     monday:"週一", tuesday:"週二", wednesday:"週三", thursday:"週四", friday:"週五", saturday:"週六", start:"開始", end:"結束",
     addSession:"+ 加入時段", saveTimeOption:"儲存時間選項", sessionHint:"加入呢科上堂嘅日子同時間。所有時段會一齊保留做固定每週安排。",
@@ -3434,8 +3745,8 @@ const TRANSLATIONS = {
     authEmailNotAuthorized:"目前嘅郵件服務無法向呢個電郵發送驗證郵件。網站擁有人要先啟用自訂 SMTP，公眾電郵驗證先可以使用。", authEmailRateLimited:"驗證郵件發送次數已達上限。請稍後再試；重複撳掣唔會加快。", authAlreadyRegistered:"呢個電郵可能已經有帳戶。請嘗試登入；如果仲未驗證，請用「重新發送驗證電郵」。",
     authEmailNotConfirmed:"呢個電郵仲未驗證。請重新發送驗證碼，再輸入最新電郵入面嘅六位數字。", authInvalidLogin:"電郵或密碼唔正確。如果啱啱註冊，請先完成電郵驗證。", authRateLimited:"登入嘗試次數太多。請等一陣先再試。", authLinkExpired:"呢條驗證連結已過期或者用過。請輸入電郵，再重新發送驗證碼。", authLinkInvalid:"呢條驗證連結無法使用。請重新發送驗證碼，並使用最新電郵。", authEmailProviderDisabled:"電郵註冊暫時未啟用，請聯絡網站擁有人。", authSignUpFailed:"暫時未能建立帳戶，請稍後再試。", authSignInFailed:"暫時未能登入，請稍後再試。",
     saving:"正在儲存…", saveFailed:"儲存失敗", saved:"已儲存", unsaved:"未儲存", loading:"正在載入…", loadFailed:"載入失敗",
-    emptySchedule:"加入課程、設定學期條件，再產生排序方案，就可以查看時間表。", sessionLabelOne:"加入上堂時段（日子 + 時間）", sessionLabelTwo:"加入兩個上堂時段（日子 + 時間）",
-    sessionOnce:"呢科每星期上堂一次。", sessionTwice:"呢科每星期喺唔同日子上堂兩次。", multiSessionHint:"{base} 請先建立完整時間選項（共 {count} 個時段），按「儲存時間選項」，再加入教授提供嘅其他選項。ConCourse 每次會保留一個完整選項。",
+    emptySchedule:"加入課程、設定學期條件，再產生排序方案，就可以查看時間表。", sessionLabelOne:"加入上堂時段（日子 + 時間）", sessionLabelTwo:"加入兩個上堂時段（日子 + 時間）", sessionLabelMany:"加入全部 {count} 個上堂時段（日子 + 時間）",
+    sessionOnce:"呢科每星期上堂一次。", sessionTwice:"呢科每星期上堂兩次。", sessionMany:"呢科每星期上堂 {count} 次。", multiSessionHint:"{base} 請先建立完整時間選項（共 {count} 個時段），按「儲存時間選項」，再加入教授提供嘅其他選項。ConCourse 每次會保留一個完整選項。",
     fixedSessionHint:"{base} 加入全部 {count} 個時段，佢哋會一齊保留做固定時間表。", wishlistCountOne:"{count} 科", wishlistCountMany:"{count} 科", remove:"移除", mustTakeBadge:"必須修讀", sessionsWeekly:"每週 {count} 次",
     chooseOption:"由 {count} 個選項揀 1 個", optionLabel:"選項 {option}", meetingLabel:"上堂", creditsShort:"學分", noValidTimetable:"搵唔到有效時間表。", tooManyTimetables:"有效時間表太多，未能準確排序。",
     supabaseRequired:"需要設定 Supabase", configureLogin:"設定登入", connectSupabase:"連接 Supabase 之後就可以登入同開始規劃。",
@@ -3900,7 +4211,7 @@ Object.entries(AUTH_AND_DISPLAY_COPY).forEach(([language, copy]) => {
 
 function t(key, variables={}){
   const english = {
-    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", appearance:"Page appearance", dayMode:"Day", nightMode:"Night", useDayMode:"Use day appearance", useNightMode:"Use night appearance", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
+    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", courseEngineNav:"Course Engine", exploreCoursesNav:"Course Engine", courseSelectionNav:"Select Courses", courseKeysNav:"CourseKeys", section:"Section", appearance:"Page appearance", dayMode:"Day", nightMode:"Night", useDayMode:"Use day appearance", useNightMode:"Use night appearance", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
     hubCommunity:"Campus community", hubMarketplace:"Campus market", hubMessages:"Messages", hubAcademicTools:"Academic tools", hubInsights:"Academic insights", hubProfile:"Profile",
     signInSubtitle:"Sign in to continue to your planning workspace.", signUpSubtitle:"Create your academic profile and planning workspace.", verificationSubtitle:"Enter the code from your email to finish creating your account.",
     signUpNote:"Institution matching confirms that a school exists; it does not verify current enrollment.",
@@ -3935,9 +4246,11 @@ function t(key, variables={}){
     completeWishlistTitle:"Complete wishlist:", completeWishlistMessage:"Every selected course fits this schedule without a time conflict.",
     notIncludedTitle:"Not included in this schedule:", exactMixReason:"you asked for exactly {count} courses, and this mix hits {credits} credits", fewestMixReason:"this schedule already hits {credits} credits with just {count} courses",
     otherOptionsMix:"Other ranked options may use a different course mix.", mustTakeLegend:"Must-take", electiveLegend:"Elective",
-    addSession:"+ Add session", noCourses:"No courses added. Use Course builder to begin.",
-    emptySchedule:"Add courses, define your semester criteria, and generate ranked schedules to view your timetable.", sessionLabelOne:"Add the session (day + time)", sessionLabelTwo:"Add both sessions (day + time)",
-    sessionOnce:"This course meets once a week.", sessionTwice:"This course meets on two different days.", multiSessionHint:"{base} Build one complete time option, save it, then add the professor's other options. ConCourse keeps each option together.",
+    addSession:"+ Add session", noCourses:"No courses added. Use Course Builder to begin.",
+    selectionAssistantTitle:"Choose courses with the Assistant", selectionAssistantDescription:"Search and compare current-term choices in a focused view, then bring your preferred sections back here to finish the timetable.", openSelectionAssistant:"Open Assistant", selectionAssistantSteps:"Course selection steps", selectionStepSearchTitle:"Search and compare", selectionStepSearchDescription:"Use a course title, code, subject, instructor, or semester to find possible matches.", selectionStepShortlistTitle:"Choose preferred sections", selectionStepShortlistDescription:"Build a shortlist in the Assistant, then select Continue to Timetable.", selectionStepCompleteTitle:"Complete timetable details", selectionStepCompleteDescription:"Returned choices appear below. Confirm any missing credits and meeting times before generating.", selectionSessionNote:"Keep the Assistant in this tab. The shortlist is bound to your signed-in account and is removed from the handoff after Timetable receives it.", selectionManualEntry:"Already know the details? Enter a course manually below.", selectionReturnedChoices:"Returned course choices", selectionStillNeeded:"Still needed: {details}", selectionMissingCredits:"credits", selectionMissingMeetings:"meeting times", selectionReviewDetails:"Complete Details", selectionStartHint:"Start with step 1; the Assistant will return your shortlist here.", selectionAllComplete:"Your Assistant courses are in the wishlist. Continue with the semester criteria.", selectionCompletePrompt:"Complete {details} for {course}, then add it to the wishlist.", selectionNeedsDetails:"Add credits and the complete meeting pattern for {course}.", setMeetingTimes:"Set Meeting Times", selectionReady:"{count} course choices were brought into the Timetable workflow.", selectionAccountMismatch:"These course choices belong to another account and were not loaded.", selectionInvalid:"The course-selection handoff could not be read. Return to the Assistant and try again.", courseContextStaged:"{course} was added to your Timetable draft. Confirm its credits and enter any missing meeting times manually.", courseContextUnavailable:"That course could not be verified. Return to Course Engine and choose it again.",
+    threeSessions:"3 sessions per week", fourSessions:"4 sessions per week", fiveSessions:"5 sessions per week", sixSessions:"6 sessions per week",
+    emptySchedule:"Add courses, define your semester criteria, and generate ranked schedules to view your timetable.", sessionLabelOne:"Add the session (day + time)", sessionLabelTwo:"Add both sessions (day + time)", sessionLabelMany:"Add all {count} sessions (day + time)",
+    sessionOnce:"This course meets once a week.", sessionTwice:"This course meets twice a week.", sessionMany:"This course meets {count} times a week.", multiSessionHint:"{base} Build one complete time option, save it, then add the professor's other options. ConCourse keeps each option together.",
     fixedSessionHint:"{base} Add the full weekly meeting pattern; it stays together as the fixed schedule.", wishlistCountOne:"{count} course", wishlistCountMany:"{count} courses", remove:"Remove", mustTakeBadge:"Must take", sessionsWeekly:"{count}× / week",
     chooseOption:"pick 1 of {count} options", optionLabel:"Option {option}", meetingLabel:"Meeting", creditsShort:"cr", noValidTimetable:"No valid timetable found.", tooManyTimetables:"Too many valid timetables to rank accurately.",
     hubGreetingName:"Welcome back, {name}.", hubNoFinalSchedule:"Save a final timetable to enter the student hub.", notProvided:"Not provided", selectConversation:"Select a conversation", membershipPending:"School verification pending", membershipVerified:"Verified Student", membershipAcademicEmailRequired:"Academic email required", membershipRejected:"School verification rejected", membershipRevoked:"School verification revoked",
@@ -4013,6 +4326,7 @@ function applyLanguage(language, {persist=true}={}){
   updateSessionUi();
   renderPending();
   renderSavedOptions();
+  renderSelectionHandoffDrafts();
   renderBreaks();
   renderCourses();
   renderFinalTimetableStatus();
@@ -4158,6 +4472,10 @@ async function restoreConCourseDestination(){
     return false;
   }
   if(navigationState?.hasContentDeepLink(window.location.hash)){
+    restoredNavigationUserId = userId;
+    return false;
+  }
+  if(navigationState?.hasCourseHandoffLocation({search:window.location.search})){
     restoredNavigationUserId = userId;
     return false;
   }
@@ -4340,11 +4658,12 @@ function syncPrimaryNavigation(){
   const navigation = $("primaryNavigation");
   const timetableButton = $("topTimetableBtn");
   const hubButton = $("hubOpenBtn");
+  const courseSearchLink = $("courseSearchNav");
   const hubAvailable = !!(stateReady && finalTimetable?.savedAt);
   const hubActive = appStarted && document.body.classList.contains("hub-active");
   const timetableActive = appStarted && !hubActive;
 
-  if(navigation) navigation.hidden = !signedIn;
+  if(navigation) navigation.hidden = false;
   if(timetableButton){
     timetableButton.hidden = !signedIn;
     timetableButton.disabled = signedIn && !stateReady;
@@ -4358,6 +4677,10 @@ function syncPrimaryNavigation(){
     hubButton.title = hubAvailable ? "" : t("hubNoFinalSchedule");
     hubButton.toggleAttribute("aria-current", hubActive);
     if(hubActive) hubButton.setAttribute("aria-current", "page");
+  }
+  if(courseSearchLink){
+    courseSearchLink.hidden = false;
+    courseSearchLink.removeAttribute("aria-current");
   }
 }
 
@@ -5210,9 +5533,13 @@ async function loadUserState(){
   $("saveAccountBtn").textContent = t("loading");
 
   try {
-    const [stateResponse, profileResponse] = await Promise.all([
+    const [stateResponse, profileResponse, membershipResponse] = await Promise.all([
       authClient.from("user_state").select("state").eq("user_id", userId).maybeSingle(),
-      authClient.from("profiles").select("school_name, major_of_study, degree_level, study_year").eq("user_id", userId).maybeSingle()
+      authClient.from("profiles").select("school_name, major_of_study, degree_level, study_year").eq("user_id", userId).maybeSingle(),
+      authClient.from("school_memberships")
+        .select("school_name, school_key, status, verification_method, verified_at")
+        .eq("user_id", userId)
+        .maybeSingle()
     ]);
     const { data, error } = stateResponse;
 
@@ -5235,10 +5562,35 @@ async function loadUserState(){
     renderAccountIdentity();
     applyUserState(data?.state || {}, loadedAcademicProfile);
     loadedUserId = userId;
+    try {
+      sessionStorage.setItem(ACTIVE_USER_STORAGE_KEY, String(userId).toLowerCase());
+      const membership = membershipResponse.error ? null : membershipResponse.data;
+      const verifiedInstitution = Boolean(
+        membership?.status === "verified"
+        && membership?.verification_method === "academic_email"
+        && membership?.verified_at
+        && membership?.school_name
+        && membership?.school_key
+      );
+      if(verifiedInstitution){
+        sessionStorage.setItem(INSTITUTION_CONTEXT_STORAGE_KEY, JSON.stringify({
+          version:1,
+          userId:String(userId).toLowerCase(),
+          status:"verified",
+          verified:true,
+          schoolName:String(membership.school_name).replace(/\s+/g, " ").trim().slice(0, 240),
+          schoolKey:String(membership.school_key).trim().toLowerCase().slice(0, 500)
+        }));
+      } else {
+        sessionStorage.removeItem(INSTITUTION_CONTEXT_STORAGE_KEY);
+      }
+    } catch(_error){}
     await restoreConCourseDestination();
     renderFinalTimetableStatus();
     $("saveAccountBtn").textContent = t("saveNow");
     if(!data) await saveUserState({silent:true});
+    consumeCourseSelectionHandoff();
+    void consumeCourseContextRoute();
   } catch(error){
     if(currentUser?.id === userId){
       $("saveAccountBtn").textContent = t("loadFailed");
@@ -5265,6 +5617,18 @@ function applySession(session){
   const previousUserId = currentUser?.id || null;
   currentUser = session?.user || null;
   const signedIn = !!currentUser;
+  try {
+    if(signedIn){
+      sessionStorage.setItem(ACTIVE_USER_STORAGE_KEY, String(currentUser.id).toLowerCase());
+      if(previousUserId !== currentUser.id){
+        sessionStorage.removeItem(INSTITUTION_CONTEXT_STORAGE_KEY);
+      }
+    }
+    else {
+      sessionStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
+      sessionStorage.removeItem(INSTITUTION_CONTEXT_STORAGE_KEY);
+    }
+  } catch(_error){}
   if(previousUserId !== currentUser?.id){
     if(previousUserId) clearRememberedConCourseDestination();
     else restoredNavigationUserId = null;
@@ -5716,8 +6080,12 @@ function updateSessionUi(){
   const multi = isMulti(), n = sessionsPerWeek();
   $("optionArea").style.display = multi ? "block" : "none";
   if(!multi){ savedOptions = []; renderSavedOptions(); }
-  $("sessionLabel").textContent = t(n === 1 ? "sessionLabelOne" : "sessionLabelTwo");
-  const base = t(n === 1 ? "sessionOnce" : "sessionTwice");
+  $("sessionLabel").textContent = n === 1
+    ? t("sessionLabelOne")
+    : (n === 2 ? t("sessionLabelTwo") : t("sessionLabelMany", {count:n}));
+  const base = n === 1
+    ? t("sessionOnce")
+    : (n === 2 ? t("sessionTwice") : t("sessionMany", {count:n}));
   $("sessionHint").textContent = t(multi ? "multiSessionHint" : "fixedSessionHint", {base, count:n});
   $("addSlot").textContent = t("addSession");
   if(pendingSlots.length > n){ pendingSlots.length = n; renderPending(); }
@@ -5742,10 +6110,6 @@ $("addSlot").addEventListener("click", () => {
   const start = toMin($("sStart").value), end = toMin($("sEnd").value);
   if(!(end > start)){ alert(t("sessionEndAfterStart")); return; }
   const cand = { days: [...selectedDays].sort(), start, end };
-  if(pendingSlots.some(s => s.days.some(d => cand.days.includes(d)))){
-    alert(t("sessionUniqueDay"));
-    return;
-  }
   for(const s of pendingSlots){ if(slotsOverlap(s, cand)){ alert(t("sessionOverlap")); return; } }
   pendingSlots.push(cand);
   selectedDays.clear();
@@ -5796,27 +6160,32 @@ function renderSavedOptions(){
 }
 
 // ---------- Add course ----------
-$("addCourse").addEventListener("click", () => {
+function addCourseFromBuilder(){
   const name = $("cName").value.trim();
-  if(!name){ alert(t("courseNameRequired")); return; }
+  if(!name){ alert(t("courseNameRequired")); return false; }
   const multi = isMulti(), n = sessionsPerWeek();
 
   // Assemble the whole-schedule options. Each option = a fixed bundle of n sessions.
   if(savedOptions.some(option => option.sessions.length !== n)){
     alert(t("sessionsChanged"));
-    return;
+    return false;
   }
   const options = savedOptions.slice();
   if(pendingSlots.length === n){
     const pendingOption = { sessions: pendingSlots.slice() };
     if(!options.some(option => optionKey(option) === optionKey(pendingOption))) options.push(pendingOption);
   }
-  else if(pendingSlots.length > 0){ alert(t("finishCurrentOption", {count:n})); return; }
+  else if(pendingSlots.length > 0){ alert(t("finishCurrentOption", {count:n})); return false; }
 
-  if(options.length === 0){ alert(t("courseScheduleRequired", {count:n})); return; }
+  if(options.length === 0){ alert(t("courseScheduleRequired", {count:n})); return false; }
   if(!multi && options.length > 1){ options.length = 1; }
 
-  courses.push({
+  const stagedDraft = selectionHandoffDrafts.find(draft => draft.draftId === activeSelectionDraftId);
+  const normalizedCode = $("cCode").value.trim().toUpperCase();
+  const stagedDraftMatches = !!stagedDraft
+    && stagedDraft.title === name
+    && (!stagedDraft.code || stagedDraft.code === normalizedCode);
+  const course = {
     id: uid(),
     name,
     code: $("cCode").value.trim(),
@@ -5826,7 +6195,24 @@ $("addCourse").addEventListener("click", () => {
     sessionsPerWeek: n,
     multiOffer: multi && options.length > 1,
     options                       // each option is a whole fixed schedule; ConCourse picks exactly one
-  });
+  };
+  if(stagedDraftMatches){
+    course.options = options.map(option => ({
+      ...option,
+      section: stagedDraft.section || null,
+      choiceId: stagedDraft.choiceId || null
+    }));
+    course.source = {
+      kind: "course_selection_assistant",
+      course_key: stagedDraft.courseKey || null,
+      choice_id: stagedDraft.choiceId || null,
+      handoff_key: selectionHandoffKey(stagedDraft),
+      section: stagedDraft.section || null,
+      institution: stagedDraft.institution || null,
+      term: stagedDraft.academicPeriod || null
+    };
+  }
+  courses.push(course);
   invalidateSchedules();
   pendingSlots = []; savedOptions = []; selectedDays.clear();
   $("cName").value=""; $("cCode").value=""; $("cProf").value=""; $("cCredits").value="3"; $("cReq").checked=false;
@@ -5835,11 +6221,24 @@ $("addCourse").addEventListener("click", () => {
   // state and must stay visually in sync with selectedFreeDays.
   syncDayChipGroup("dayPicker", selectedDays);
   renderPending(); renderSavedOptions(); renderCourses();
+  if(stagedDraftMatches){
+    selectionHandoffDrafts = selectionHandoffDrafts.filter(draft => draft.draftId !== stagedDraft.draftId);
+    activeSelectionDraftId = null;
+    const status = $("courseSelectionHandoffStatus");
+    status.dataset.preserveMessage = "";
+    status.textContent = "";
+    renderSelectionHandoffDrafts();
+  } else {
+    activeSelectionDraftId = null;
+  }
   queueUserStateSave();
-});
+  return true;
+}
+$("addCourse").addEventListener("click", addCourseFromBuilder);
 
 function renderCourses(){
   const el = $("courseList");
+  renderSelectionAssistantGuide();
   $("wishlistCount").textContent = t(courses.length === 1 ? "wishlistCountOne" : "wishlistCountMany", {count:courses.length});
   if(courses.length === 0){ el.innerHTML = `<div class="empty-note">${escapeHtml(t("noCourses"))}</div>`; return; }
   el.innerHTML = courses.map(c=>`
@@ -5867,6 +6266,407 @@ function renderCourses(){
     renderCourses();
     queueUserStateSave();
   });
+}
+
+function selectionHandoffKey(draft){
+  return [draft.courseKey, draft.choiceId, draft.code, draft.section]
+    .filter(Boolean)
+    .join("|")
+    .slice(0, 360);
+}
+
+function addCompleteHandoffCourse(draft){
+  if(!draft.creditsKnown || !draft.sessions.length) return false;
+  if(draft.sessions.some((session, index) =>
+    draft.sessions.slice(index + 1).some(other => slotsOverlap(session, other))
+  )) return false;
+  const handoffKey = selectionHandoffKey(draft);
+  if(courses.some(course => course?.source?.handoff_key === handoffKey)) return true;
+  courses.push({
+    id: uid(),
+    name: draft.title,
+    code: draft.code,
+    prof: draft.professor,
+    credits: draft.credits,
+    required: false,
+    sessionsPerWeek: draft.sessions.length,
+    multiOffer: false,
+    options: [{
+      sessions: draft.sessions.map(session => ({
+        days: [...session.days],
+        start: session.start,
+        end: session.end,
+        venue: session.venue || null
+      })),
+      section: draft.section || null,
+      choiceId: draft.choiceId || null
+    }],
+    source: {
+      kind: "course_selection_assistant",
+      course_key: draft.courseKey || null,
+      choice_id: draft.choiceId || null,
+      handoff_key: handoffKey,
+      section: draft.section || null,
+      institution: draft.institution || null,
+      term: draft.academicPeriod || null
+    }
+  });
+  return true;
+}
+
+function selectionDraftRequirements(draft){
+  return [
+    draft.creditsKnown ? "" : t("selectionMissingCredits"),
+    draft.sessions.length ? "" : t("selectionMissingMeetings")
+  ].filter(Boolean);
+}
+
+function renderSelectionAssistantGuide(){
+  const pendingCount = selectionHandoffDrafts.length;
+  const completedCount = courses.filter(course =>
+    course?.source?.kind === "course_selection_assistant"
+  ).length;
+  const hasReturnedChoices = pendingCount > 0 || completedCount > 0;
+  const states = hasReturnedChoices
+    ? {
+        search: "complete",
+        shortlist: "complete",
+        complete: pendingCount > 0 ? "current" : "complete"
+      }
+    : {
+        search: "current",
+        shortlist: "upcoming",
+        complete: "upcoming"
+      };
+
+  document.querySelectorAll("[data-selection-step]").forEach(step => {
+    const state = states[step.dataset.selectionStep] || "upcoming";
+    step.dataset.state = state;
+    if(state === "current") step.setAttribute("aria-current", "step");
+    else step.removeAttribute("aria-current");
+  });
+
+  const panel = $("courseSelectionHandoffPanel");
+  if(panel){
+    panel.dataset.selectionState = pendingCount > 0
+      ? "needs-details"
+      : (completedCount > 0 ? "complete" : "start");
+  }
+  const status = $("courseSelectionHandoffStatus");
+  if(status && !status.dataset.preserveMessage){
+    status.textContent = pendingCount > 0
+      ? t("selectionReady", {count:pendingCount})
+      : t(completedCount > 0 ? "selectionAllComplete" : "selectionStartHint");
+  }
+}
+
+function renderSelectionHandoffDrafts(){
+  const list = $("courseSelectionHandoffList");
+  const status = $("courseSelectionHandoffStatus");
+  if(!list || !status) return;
+  list.innerHTML = selectionHandoffDrafts.map(draft => {
+    const metadata = [
+      draft.institution,
+      draft.code,
+      draft.section ? `${t("section") || "Section"} ${draft.section}` : "",
+      draft.professor,
+      draft.creditsKnown ? `${draft.credits} ${t("creditsShort")}` : ""
+    ].filter(Boolean).join(" · ");
+    const missingDetails = selectionDraftRequirements(draft).join(" + ");
+    return `
+      <article class="selection-handoff-card">
+        <div>
+          <strong>${escapeHtml(draft.title)}</strong>
+          ${metadata ? `<span>${escapeHtml(metadata)}</span>` : ""}
+          <span class="selection-handoff-required">${escapeHtml(t("selectionStillNeeded", {details:missingDetails}))}</span>
+        </div>
+        <button type="button" data-selection-draft="${escapeHtml(draft.draftId)}">${escapeHtml(t("selectionReviewDetails"))}</button>
+      </article>`;
+  }).join("");
+  list.querySelectorAll("[data-selection-draft]").forEach(button => {
+    button.onclick = () => beginSelectionDraft(button.dataset.selectionDraft);
+  });
+  renderSelectionAssistantGuide();
+}
+
+function beginSelectionDraft(draftId){
+  const draft = selectionHandoffDrafts.find(item => item.draftId === draftId);
+  if(!draft) return;
+  activeSelectionDraftId = draft.draftId;
+  resetCourseOptions();
+  $("cName").value = draft.title;
+  $("cCode").value = draft.code;
+  $("cProf").value = draft.professor;
+  $("cCredits").value = draft.creditsKnown ? String(draft.credits) : "";
+  $("cReq").checked = false;
+  $("cMulti").checked = false;
+  $("sessionsPerWeek").value = String(
+    Math.max(1, Math.min(6, draft.sessions.length || draft.expectedSessions || 1))
+  );
+  if(draft.sessions.length){
+    pendingSlots = draft.sessions.map(session => ({
+      days: [...session.days],
+      start: session.start,
+      end: session.end,
+      venue: session.venue || null
+    }));
+  }
+  updateSessionUi();
+  renderPending();
+  showPlannerEditor();
+  $("courseBuilderPanel").scrollIntoView({behavior:"smooth", block:"start"});
+  window.setTimeout(() => {
+    (draft.creditsKnown ? $("dayPicker").querySelector(".day-chip") : $("cCredits"))?.focus();
+  }, 350);
+  const status = $("courseSelectionHandoffStatus");
+  status.dataset.preserveMessage = "true";
+  status.textContent = t("selectionCompletePrompt", {
+    course:draft.title,
+    details:selectionDraftRequirements(draft).join(" + ")
+  });
+}
+
+function clearSelectionRouteParameters(){
+  const url = new URL(location.href);
+  if(url.searchParams.get("destination") !== "timetable" && !url.searchParams.has("selection")) return;
+  if(url.searchParams.has("courseKey")) return;
+  url.searchParams.delete("destination");
+  url.searchParams.delete("selection");
+  history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function consumeCourseSelectionHandoff(){
+  if(!currentUser || loadedUserId !== currentUser.id) return;
+  const navigationState = window.ConCourseNavigationState;
+  const navigationLocation = {
+    hash:window.location.hash,
+    search:window.location.search
+  };
+  if(
+    navigationState?.hasAuthCallbackLocation(navigationLocation)
+    || navigationState?.hasContentDeepLink(navigationLocation.hash)
+    || readCourseContextRoute()
+  ) return;
+  let raw = "";
+  try { raw = sessionStorage.getItem(SELECTION_HANDOFF_STORAGE_KEY) || ""; } catch(_error){}
+  const routeParameters = new URLSearchParams(location.search);
+  const explicitRoute = navigationState?.hasCourseHandoffLocation(navigationLocation)
+    && routeParameters.get("destination")?.trim().toLowerCase() === "timetable";
+  if(!raw){
+    if(explicitRoute){
+      showPlannerEditor();
+      clearSelectionRouteParameters();
+    }
+    return;
+  }
+
+  let payload = null;
+  try { payload = JSON.parse(raw); } catch(_error){}
+  const status = $("courseSelectionHandoffStatus");
+  const fail = (messageKey) => {
+    try { sessionStorage.removeItem(SELECTION_HANDOFF_STORAGE_KEY); } catch(_error){}
+    status.dataset.preserveMessage = "true";
+    status.textContent = t(messageKey);
+    renderSelectionHandoffDrafts();
+    if(explicitRoute) showPlannerEditor();
+    clearSelectionRouteParameters();
+  };
+  if(!payload || payload.version !== 1 || payload.kind !== "course-selection" || !Array.isArray(payload.selections)){
+    fail("selectionInvalid");
+    return;
+  }
+  const payloadUserId = cleanHandoffText(payload.userId || payload.issuedForUserId, 80);
+  if(!payloadUserId || payloadUserId.toLowerCase() !== String(currentUser.id).toLowerCase()){
+    fail("selectionAccountMismatch");
+    return;
+  }
+  const normalized = payload.selections
+    .slice(0, 20)
+    .map(normalizeSelectionHandoffItem)
+    .filter(Boolean);
+  if(!normalized.length){
+    fail("selectionInvalid");
+    return;
+  }
+
+  try { sessionStorage.removeItem(SELECTION_HANDOFF_STORAGE_KEY); } catch(_error){}
+  let imported = 0;
+  const stagedKeys = new Set(selectionHandoffDrafts.map(selectionHandoffKey));
+  for(const draft of normalized){
+    if(addCompleteHandoffCourse(draft)){
+      imported += 1;
+      continue;
+    }
+    const key = selectionHandoffKey(draft);
+    if(!stagedKeys.has(key)){
+      selectionHandoffDrafts.push(draft);
+      stagedKeys.add(key);
+    }
+  }
+  if(imported){
+    invalidateSchedules();
+    renderCourses();
+    renderFinalTimetableStatus();
+    queueUserStateSave();
+  }
+  status.dataset.preserveMessage = "true";
+  status.textContent = t("selectionReady", {count:normalized.length});
+  renderSelectionHandoffDrafts();
+  if(explicitRoute || normalized.length){
+    showPlannerEditor();
+    $("courseSelectionHandoffPanel").scrollIntoView({behavior:"smooth", block:"start"});
+  }
+  clearSelectionRouteParameters();
+}
+
+function readCourseContextRoute(){
+  const url = new URL(location.href);
+  if(!window.ConCourseNavigationState?.hasCourseHandoffLocation({search:url.search})) return null;
+  const destination = cleanHandoffText(url.searchParams.get("destination"), 30).toLowerCase();
+  const intent = cleanHandoffText(url.searchParams.get("intent"), 30).toLowerCase();
+  const courseKey = cleanHandoffText(url.searchParams.get("courseKey"), 180);
+  const allowedIntents = COURSE_CONTEXT_DESTINATIONS[destination];
+  if(!allowedIntents || !allowedIntents.has(intent) || !courseKey) return null;
+  return {destination, intent, courseKey};
+}
+
+function clearCourseContextRoute(){
+  const url = new URL(location.href);
+  url.searchParams.delete("destination");
+  url.searchParams.delete("intent");
+  url.searchParams.delete("courseKey");
+  history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+async function resolveCourseContext(courseKey){
+  try {
+    const { loadCourseCatalogue } = await import("./course-tools/course-tools.mjs");
+    const catalogue = await loadCourseCatalogue();
+    const group = catalogue.groups.find(candidate => (
+      candidate.courseKey === courseKey
+      || candidate.courseKeysKey === courseKey
+      || candidate.entries.some(entry => (
+        entry.courseKey === courseKey || entry.courseKeysKey === courseKey
+      ))
+    ));
+    if(!group) return null;
+    return {
+      group,
+      course: {
+        courseKey: group.courseKey,
+        code: cleanHandoffText(group.code, 80).toUpperCase(),
+        title: cleanHandoffText(group.title, 220)
+      }
+    };
+  } catch(error) {
+    console.warn("Course context could not be resolved:", error);
+    return null;
+  }
+}
+
+function stageCourseContextForTimetable(group){
+  const numericUnits = /^\d+(?:\.\d+)?$/.test(String(group.units || "").trim())
+    ? Number(group.units)
+    : null;
+  const draft = normalizeSelectionHandoffItem({
+    courseKey: group.courseKey,
+    courseTitle: group.title,
+    courseCode: group.code,
+    institutionShortName: group.institutionShortName,
+    institutionName: group.institutionName,
+    academicPeriod: group.academicPeriod,
+    instructor: group.instructors?.[0] || group.entries?.[0]?.instructor || "",
+    credits: numericUnits,
+    sessions: []
+  }, selectionHandoffDrafts.length);
+  if(!draft) return false;
+  const key = selectionHandoffKey(draft);
+  if(!selectionHandoffDrafts.some(candidate => selectionHandoffKey(candidate) === key)){
+    selectionHandoffDrafts.push(draft);
+  }
+  renderSelectionHandoffDrafts();
+  showPlannerEditor();
+  const status = $("courseSelectionHandoffStatus");
+  status.dataset.preserveMessage = "true";
+  status.textContent = t("courseContextStaged", {course:draft.title});
+  $("courseSelectionHandoffPanel").scrollIntoView({behavior:"smooth", block:"start"});
+  return true;
+}
+
+async function waitForCourseContextApi(destination){
+  for(let attempt = 0; attempt < 40; attempt += 1){
+    if(destination === "community" && typeof window.ConCourseHub?.openCourseCommunity === "function"){
+      return window.ConCourseHub;
+    }
+    if(destination === "marketplace"
+      && typeof window.ConCourseMarketplace?.openCourseSearch === "function"
+      && typeof window.ConCourseMarketplace?.openCreateForCourse === "function"){
+      return window.ConCourseMarketplace;
+    }
+    await new Promise(resolve => window.setTimeout(resolve, 75));
+  }
+  return null;
+}
+
+async function consumeCourseContextRoute(){
+  const navigationState = window.ConCourseNavigationState;
+  const navigationLocation = {
+    hash:window.location.hash,
+    search:window.location.search
+  };
+  if(
+    navigationState?.hasAuthCallbackLocation(navigationLocation)
+    || navigationState?.hasContentDeepLink(navigationLocation.hash)
+  ) return false;
+  const route = readCourseContextRoute();
+  if(!route || courseContextRoutePending || !currentUser || loadedUserId !== currentUser.id) return false;
+  courseContextRoutePending = true;
+  try {
+    const resolved = await resolveCourseContext(route.courseKey);
+    if(!resolved){
+      showSiteNotice(t("courseContextUnavailable"), {error:true, timeout:9000});
+      clearCourseContextRoute();
+      showPlannerEditor();
+      return false;
+    }
+
+    if(route.destination === "timetable"){
+      const staged = stageCourseContextForTimetable(resolved.group);
+      clearCourseContextRoute();
+      if(!staged){
+        showSiteNotice(t("courseContextUnavailable"), {error:true, timeout:9000});
+        showPlannerEditor();
+      }
+      return staged;
+    }
+
+    const api = await waitForCourseContextApi(route.destination);
+    let opened = false;
+    if(route.destination === "community"){
+      opened = await api?.openCourseCommunity({
+        intent: route.intent,
+        course: resolved.course
+      });
+    } else if(route.destination === "marketplace"){
+      opened = route.intent === "sell"
+        ? await api?.openCreateForCourse({course:resolved.course})
+        : await api?.openCourseSearch({course:resolved.course});
+    }
+    clearCourseContextRoute();
+    if(!opened){
+      showSiteNotice(t("courseContextUnavailable"), {error:true, timeout:9000});
+      showPlannerEditor();
+    }
+    return !!opened;
+  } catch(error) {
+    console.warn("Course context destination could not be opened:", error);
+    showSiteNotice(t("courseContextUnavailable"), {error:true, timeout:9000});
+    clearCourseContextRoute();
+    showPlannerEditor();
+    return false;
+  } finally {
+    courseContextRoutePending = false;
+  }
 }
 
 function normalizeImportedPlannerCourse(value, index){
@@ -6588,9 +7388,9 @@ initializeAccount();
 </script>
 <script src="institution-portal-policy.js?v=20260729-institution1"></script>
 <script src="course-catalog.js?v=20260728-foundation1"></script>
-<script src="member-hub.js?v=20260731-paint1"></script>
+<script src="member-hub.js?v=20260731-unified1"></script>
 <script src="hkbu-portal.js?v=20260728-foundation1"></script>
-<script src="marketplace.js?v=20260728-verification-center2"></script>
+<script src="marketplace.js?v=20260731-unified1"></script>
 <script src="academic-tools.js?v=20260724-seeds2"></script>
 </body>
 </html>

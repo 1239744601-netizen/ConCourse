@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#03101e" />
+  <title>Course Selection Assistant · ConCourse</title>
+  <meta
+    name="description"
+    content="Find possible semester courses, compare available catalogue sections and instructors, and save a private shortlist on this device."
+  />
+  <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico?v=20260731-double-c3" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png?v=20260731-double-c3" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png?v=20260731-double-c3" />
+  <link rel="manifest" href="../site.webmanifest?v=20260731-double-c3" />
+  <meta name="apple-mobile-web-app-title" content="ConCourse" />
+  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-course-tools3" />
+  <script>
+    try {
+      const savedTheme = localStorage.getItem("concourse_theme");
+      document.documentElement.dataset.theme =
+        savedTheme === "day" || savedTheme === "night" ? savedTheme : "night";
+    } catch (_error) {}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#assistantQuery">Skip to course selection search</a>
+
+  <header class="course-site-header">
+    <div class="course-site-header-inner">
+      <a class="course-brand" href="../" aria-label="ConCourse home">
+        <span class="course-brand-mark" aria-hidden="true">
+          <img class="brand-mark-night" src="../concourse-mark.svg" alt="" />
+          <img class="brand-mark-day" src="../concourse-icon.svg" alt="" />
+        </span>
+        <span class="course-brand-copy">
+          <strong>ConCourse</strong>
+          <small data-copy="brandTag">Conquer your courses</small>
+        </span>
+      </a>
+
+      <nav
+        class="course-primary-navigation"
+        aria-label="Primary destinations"
+        data-copy-aria="primaryDestinations"
+      >
+        <span class="course-navigation-context">
+          <a href="../?destination=timetable" aria-current="location" data-copy="timetable">
+            Timetable
+          </a>
+          <small data-copy="selectionAssistant">Course Selection Assistant</small>
+        </span>
+        <a href="../courses/" data-copy="exploreCourses">Explore Courses</a>
+      </nav>
+
+      <div class="course-header-controls">
+        <div
+          class="course-theme-control"
+          role="group"
+          aria-label="Page appearance"
+          data-copy-aria="appearance"
+        >
+          <button type="button" data-theme-value="day" aria-pressed="false" data-copy-aria="useDay">
+            <span aria-hidden="true">☼</span>
+            <span class="theme-label" data-copy="day">Day</span>
+          </button>
+          <button type="button" data-theme-value="night" aria-pressed="true" data-copy-aria="useNight">
+            <span aria-hidden="true">◐</span>
+            <span class="theme-label" data-copy="night">Night</span>
+          </button>
+        </div>
+        <label class="course-language-control">
+          <span aria-hidden="true">◎</span>
+          <span class="visually-hidden" data-copy="language">Website language</span>
+          <select id="languageSelect" aria-label="Website language" data-copy-aria="language">
+            <option value="en">English</option>
+            <option value="zh-CN">普通话</option>
+            <option value="zh-HK">廣東話</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="course-main">
+    <section class="course-search-stage" aria-labelledby="assistantTitle">
+      <h1 id="assistantTitle" data-copy="pageTitle">Course Selection Assistant</h1>
+      <form class="course-search-form" id="assistantForm" role="search">
+        <label class="visually-hidden" for="assistantQuery" data-copy="searchLabel">
+          Tell the assistant what you want to study
+        </label>
+        <div class="course-search-control">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
+            <path d="m16 16 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+          <input
+            id="assistantQuery"
+            name="query"
+            type="search"
+            autocomplete="off"
+            enterkeyhint="search"
+            required
+            data-copy-placeholder="searchPlaceholder"
+            placeholder="What do you want to study this semester?"
+          />
+          <button id="assistantSubmit" type="submit" data-copy="search">Search</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="course-results" id="assistantWorkspace" hidden aria-labelledby="assistantResultsTitle">
+      <header class="course-results-heading">
+        <h2 id="assistantResultsTitle" tabindex="-1" data-copy="resultsTitle">Possible Matches</h2>
+        <p id="assistantStatus" role="status" aria-live="polite"></p>
+      </header>
+      <div class="assistant-workspace">
+        <div>
+          <div class="course-result-card" id="assistantResults"></div>
+        </div>
+        <aside class="assistant-shortlist" aria-labelledby="shortlistTitle">
+          <h2 id="shortlistTitle" data-copy="shortlistTitle">Your Shortlist</h2>
+          <div class="assistant-shortlist-list" id="assistantShortlist"></div>
+          <div class="assistant-shortlist-actions">
+            <button
+              class="course-action course-action-primary"
+              id="continueToTimetable"
+              type="button"
+              disabled
+              data-copy="continueToTimetable"
+            >
+              Continue to Timetable
+            </button>
+            <p
+              class="assistant-handoff-status"
+              id="assistantHandoffStatus"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </div>
+        </aside>
+        <p class="course-data-note assistant-notice" data-copy="dataNote">
+          Possible matches use reference catalogue metadata. Confirm eligibility, credits, prerequisites,
+          meeting times, and registration status with your institution before making a final choice.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="assistant.mjs?v=20260731-course-selection4"></script>
+</body>
+</html>

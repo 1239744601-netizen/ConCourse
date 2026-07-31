@@ -76,6 +76,54 @@ test("the neutral first-paint gate is limited to restorable pages and content de
   assert.equal(navigation.shouldHoldInitialPaint(memoryStorage(), {search:"?code=pkce-code"}), false);
 });
 
+test("valid course handoffs hold first paint and authentication callbacks retain priority", () => {
+  const courseKey = "hkbu:comp-3015::section-a";
+  for(const search of [
+    "?destination=timetable",
+    "?destination=timetable&selection=1",
+    `?destination=timetable&intent=add-course&courseKey=${courseKey}`,
+    `?destination=community&intent=search&courseKey=${courseKey}`,
+    `?destination=community&intent=compose&courseKey=${courseKey}`,
+    `?destination=marketplace&intent=search&courseKey=${courseKey}`,
+    `?destination=marketplace&intent=sell&courseKey=${courseKey}`
+  ]){
+    assert.equal(navigation.hasCourseHandoffLocation({search}), true, search);
+    assert.equal(navigation.shouldHoldInitialPaint(memoryStorage(), {search}), true, search);
+  }
+
+  for(const search of [
+    "?selection=1",
+    "?destination=community",
+    "?destination=timetable&selection=0",
+    "?destination=timetable&intent=add-course",
+    "?destination=community&intent=publish&courseKey=hkbu%3Acomp-3015",
+    "?destination=marketplace&intent=sell&courseKey=",
+    "?destination=timetable&destination=community",
+    `?destination=community&intent=search&intent=compose&courseKey=${courseKey}`,
+    `?destination=community&intent=search&courseKey=${"x".repeat(181)}`
+  ]){
+    assert.equal(navigation.hasCourseHandoffLocation({search}), false, search);
+    assert.equal(navigation.shouldHoldInitialPaint(memoryStorage(), {search}), false, search);
+  }
+
+  const remembered = memoryStorage(navigation.createRoute("user-1", "hub", "messages"));
+  assert.equal(
+    navigation.shouldHoldInitialPaint(remembered, {search:"?destination=community"}),
+    true
+  );
+  assert.equal(
+    navigation.shouldHoldInitialPaint(remembered, {
+      search:`?destination=community&intent=search&courseKey=${courseKey}&code=pkce-code`
+    }),
+    false
+  );
+
+  const boot = runBoot({
+    search:`?destination=marketplace&intent=search&courseKey=${courseKey}`
+  });
+  assert.equal(boot.attributes.has("data-concourse-nav-pending"), true);
+});
+
 test("the head bootstrap holds and releases first paint idempotently", () => {
   const route = navigation.createRoute("user-1", "hub", "profile");
   const boot = runBoot({storage:memoryStorage(route)});
@@ -116,7 +164,7 @@ test("main, malformed, and authentication callback starts never hide the public 
 });
 
 test("the neutral gate is installed before style and never reveals protected surfaces", () => {
-  const navigationScript = html.indexOf('<script src="navigation-state.js?v=20260731-paint1"></script>');
+  const navigationScript = html.indexOf('<script src="navigation-state.js?v=20260731-unified1"></script>');
   const bootstrap = html.indexOf('<script id="concourseNavigationBoot">');
   const firstStyle = html.indexOf("<style>");
   const body = html.indexOf("<body>");

@@ -64,3 +64,12 @@ test("the Cloudflare deployment applies baseline browser security headers", () =
   assert.match(headers, /Permissions-Policy:/);
   assert.match(headers, /Strict-Transport-Security:/);
 });
+
+test("mutable website assets revalidate instead of remaining stale after deployment", () => {
+  for(const pattern of ["/", "/*.html", "/*.js", "/*.mjs", "/*.css"]){
+    assert.match(
+      headers,
+      new RegExp(`${pattern.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}\\s+Cache-Control: public, max-age=0, must-revalidate`, "u")
+    );
+  }
+});

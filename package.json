@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check navigation-state.js && node --check academic-tools.js && node --check member-hub.js && node --check marketplace.js && node --check institution-portal-policy.js && node --check course-catalog.js && node --check hkbu-portal.js && node --check scripts/build-hkbu-catalog.mjs && node --check scripts/build-pages.mjs && node --check extensions/hkbu-portal-connector/parser.js && node --check extensions/hkbu-portal-connector/popup.js && node --test tests/*.test.mjs",
+    "check": "node --check navigation-state.js && node --check academic-tools.js && node --check member-hub.js && node --check marketplace.js && node --check institution-portal-policy.js && node --check course-catalog.js && node --check hkbu-portal.js && node --check course-tools/course-tools.mjs && node --check course-tools/institution-context.mjs && node --check courses/courses.mjs && node --check assistant/assistant.mjs && node --check assistant/handoff.mjs && node --check coursekeys/coursekeys.js && node --check functions/api/coursekeys/resources.js && node --check scripts/build-hkbu-catalog.mjs && node --check scripts/build-pages.mjs && node --check extensions/hkbu-portal-connector/parser.js && node --check extensions/hkbu-portal-connector/popup.js && node --test tests/*.test.mjs",
     "build:hkbu-catalog": "node scripts/build-hkbu-catalog.mjs",
     "build:pages": "node scripts/build-pages.mjs"
   }

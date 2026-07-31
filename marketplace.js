@@ -611,6 +611,21 @@
   else document.addEventListener("DOMContentLoaded", observeMarketplaceMediaRemovals, {once:true});
 
   const byId = id => typeof $ === "function" ? $(id) : document.getElementById(id);
+  const normalizedCourseContext = course => {
+    if(!course || typeof course !== "object") return null;
+    const rawCode = String(course.code || course.course_code || course.courseCode || "")
+      .normalize("NFKC")
+      .toUpperCase()
+      .trim();
+    const code = rawCode.replace(/[\s.-]+/gu, "");
+    if(!/^[A-Z]{2,10}\d{3,5}[A-Z]?$/u.test(code)) return null;
+    const title = String(course.title || course.name || "")
+      .normalize("NFKC")
+      .replace(/\s+/gu, " ")
+      .trim()
+      .slice(0, 180);
+    return Object.freeze({code, title});
+  };
   const canRestoreFocus = target => !!(
     target instanceof HTMLElement
     && target.isConnected
@@ -2588,6 +2603,12 @@
     syncListingModeFields();
   }
 
+  function fillCreationDefaults(defaults){
+    if(!defaults || typeof defaults !== "object") return;
+    const courseCode = String(defaults.course_code || "").trim().slice(0, 80);
+    if(courseCode) byId("marketplaceCourseInput").value = courseCode;
+  }
+
   function syncRightsBasisField({preserve=false}={}){
     const category = byId("marketplaceCategoryInput")?.value;
     const academic = ["notes", "past_papers"].includes(category);
@@ -2606,14 +2627,14 @@
     else if(!pastPaper && !["original", "licensed", "public_domain"].includes(input.value) && !preserve) input.value = "original";
   }
 
-  async function openListingEditor(listing=null, trigger=document.activeElement){
-    if(!state.userId || (state.scope === "global" && !listing)) return;
+  async function openListingEditor(listing=null, trigger=document.activeElement, {creationDefaults=null}={}){
+    if(!state.userId || (state.scope === "global" && !listing)) return false;
     let fullListing = listing;
     if(listing && !listing.description){
       const id = listingId(listing);
       const context = currentContext();
       const {data, error} = await authClient.rpc("get_marketplace_listing", {p_listing_id:id});
-      if(!contextIsCurrent(context) || error) return;
+      if(!contextIsCurrent(context) || error) return false;
       fullListing = listingRecord(data);
     }
     if(!byId("marketplaceDetailModal")?.hidden) closeDetail({restoreFocus:false, clearHash:true});
@@ -2623,6 +2644,7 @@
     byId("marketplaceListingEditorTitle").textContent = tr(fullListing ? "marketplaceEditListing" : "marketplaceNewListing");
     byId("marketplaceListingEditorForm")?.reset();
     fillEditor(fullListing || {});
+    if(!fullListing) fillCreationDefaults(creationDefaults);
     state.editorMedia = normalizeMedia(fullListing?.media).map(descriptor => ({id:String(descriptor.id || crypto.randomUUID()), existing:true, descriptor}));
     renderEditorMedia();
     setEditorStatus(fullListing ? tr("marketplaceEditMediaLocked") : tr("marketplaceRightsStudy"));
@@ -2630,6 +2652,7 @@
     if(byId("marketplaceAddMediaButton")) byId("marketplaceAddMediaButton").disabled = !!fullListing;
     syncEditorDeleteControl();
     openModal(byId("marketplaceListingEditorModal"), byId("marketplaceTitleInput"));
+    return true;
   }
 
   function closeEditor({restoreFocus=true, force=false}={}){
@@ -3285,6 +3308,34 @@
     return true;
   }
 
+  async function openCourseSearch({course}={}){
+    const context = normalizedCourseContext(course);
+    if(!context || typeof hub().show !== "function") return false;
+    const activeView = await hub().show("marketplace");
+    if(activeView !== "marketplace" || !state.userId) return false;
+
+    state.query = context.code;
+    state.category = "all";
+    if(byId("marketplaceSearch")) byId("marketplaceSearch").value = context.code;
+    if(byId("marketplaceCategory")) byId("marketplaceCategory").value = "all";
+    await setMode("discover");
+    byId("marketplaceSearch")?.focus({preventScroll:true});
+    return true;
+  }
+
+  async function openCreateForCourse({course}={}){
+    const context = normalizedCourseContext(course);
+    if(!context || typeof hub().show !== "function") return false;
+    const activeView = await hub().show("marketplace");
+    if(activeView !== "marketplace" || !state.userId) return false;
+    if(state.scope !== "campus") await setScope("campus");
+    return openListingEditor(
+      null,
+      byId("marketplaceSellButton"),
+      {creationDefaults:{course_code:context.code}}
+    );
+  }
+
   function refreshLanguage(){
     syncScopeUi();
     syncGlobalVisibilityCopy();
@@ -3430,7 +3481,9 @@
     clearCommunityListing,
     renderLinkedListing,
     shareListing,
-    openListing
+    openListing,
+    openCourseSearch,
+    openCreateForCourse
   };
 
   bindEvents();

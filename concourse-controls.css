@@ -2456,6 +2456,32 @@ input.market-search::placeholder {
   }
 }
 
+/* The course destinations remain distinct and horizontally reachable without
+   forcing the masthead to wrap or compress their labels. */
+body.app-active #landingScreen .primary-navigation {
+  max-width: min(100%, 880px);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+body.app-active #landingScreen .primary-navigation::-webkit-scrollbar {
+  display: none;
+}
+
+body.app-active #landingScreen .primary-navigation-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  body.app-active #landingScreen .primary-navigation {
+    justify-content: flex-start;
+    gap: 24px;
+    padding-inline: 2px 18px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hub-marketplace-action,
   .hub-marketplace-action::after {
@@ -2492,14 +2518,10 @@ input.market-search::placeholder {
   --cc-island-shadow: 0 22px 64px rgba(2, 13, 25, .17);
 }
 
-/* Only Timetable and Student Hub are primary destinations. Account and
-   language remain quiet utilities on the right. */
+/* Course Engine is public. Timetable and Student Hub remain gated account
+   destinations, while account and language stay quiet utilities on the right. */
 
 .primary-navigation[hidden] {
-  display: none !important;
-}
-
-body:not(.app-active) .primary-navigation {
   display: none !important;
 }
 
@@ -2532,6 +2554,9 @@ body.app-active #landingScreen .header-row {
 .primary-navigation-button {
   min-width: 132px;
   min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 18px;
   color: rgba(229, 239, 248, .67);
   background: transparent;
@@ -2541,6 +2566,7 @@ body.app-active #landingScreen .header-row {
   font-size: 12px;
   font-weight: 720;
   letter-spacing: -.01em;
+  text-decoration: none;
 }
 
 .primary-navigation-button:hover:not(:disabled) {
@@ -2958,23 +2984,28 @@ body.app-active #landingScreen .language-control {
     --cc-card-radius: 20px;
   }
 
+  body:not(.app-active) #landingScreen .header-row,
   body.app-active #landingScreen .header-row {
+    display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 8px 10px;
     padding: 6px 0;
     border-radius: 0;
   }
 
+  body:not(.app-active) #landingScreen .brand,
   body.app-active #landingScreen .brand {
     grid-column: 1;
     grid-row: 1;
   }
 
+  body:not(.app-active) #landingScreen .auth-bar,
   body.app-active #landingScreen .auth-bar {
     grid-column: 2;
     grid-row: 1;
   }
 
+  body:not(.app-active) #landingScreen .primary-navigation,
   body.app-active #landingScreen .primary-navigation {
     width: 100%;
     grid-column: 1 / -1;

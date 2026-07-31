@@ -77,15 +77,15 @@ test("generated timetable routes regenerate results instead of falling back to t
 
 test("visible destinations persist and restore after account hydration", () => {
   assert.match(html, /<script src="navigation-state\.js\?v=[^"]+"><\/script>/u);
-  assert.match(html, /<script src="member-hub\.js\?v=20260731-paint1"><\/script>/u);
+  assert.match(html, /<script src="member-hub\.js\?v=20260731-unified1"><\/script>/u);
   assert.match(html, /function enterPlanner\(\)\{[\s\S]*?rememberConCourseDestination\("planner"\)/u);
   assert.match(html, /function leavePlanner\(\)\{[\s\S]*?rememberConCourseDestination\("main"\)/u);
   assert.match(html, /function showSchedulePage\(\)\{[\s\S]*?rememberConCourseDestination\("timetable"\)/u);
   assert.match(html, /function showPlannerEditor\(\)\{[\s\S]*?rememberConCourseDestination\("planner"\)/u);
-  assert.match(
-    html,
-    /loadedUserId = userId;\s*await restoreConCourseDestination\(\);\s*renderFinalTimetableStatus\(\);/u
-  );
+  const hydrated = html.indexOf("loadedUserId = userId;");
+  const institutionContext = html.indexOf("sessionStorage.setItem(INSTITUTION_CONTEXT_STORAGE_KEY", hydrated);
+  const restored = html.indexOf("await restoreConCourseDestination();", hydrated);
+  assert.ok(hydrated >= 0 && institutionContext > hydrated && restored > institutionContext);
   assert.match(
     html,
     /action === "regenerate"\)\{\s*generate\(\);\s*if\(\$\("schedulePage"\)\.hidden\) showPlannerEditor\(\);/u
@@ -95,6 +95,22 @@ test("visible destinations persist and restore after account hydration", () => {
     /const restoredView = await window\.ConCourseHub\.restoreView\(route\.hubView\);\s*if\(!restoredView\)\{\s*if\(currentUser\?\.id === userId\) restoredNavigationUserId = null;/u
   );
   assert.match(html, /if\(previousUserId\) clearRememberedConCourseDestination\(\);/u);
+});
+
+test("authoritative course handoffs defer remembered-route restoration", () => {
+  const restoreStart = html.indexOf("async function restoreConCourseDestination(){");
+  const restoreEnd = html.indexOf("\nwindow.rememberConCourseDestination", restoreStart);
+  const source = html.slice(restoreStart, restoreEnd);
+  const contentRoute = source.indexOf("hasContentDeepLink");
+  const courseHandoff = source.indexOf("hasCourseHandoffLocation");
+  const missingRememberedRoute = source.indexOf("if(!route)");
+
+  assert.ok(contentRoute >= 0 && courseHandoff > contentRoute);
+  assert.ok(courseHandoff < missingRememberedRoute);
+  assert.match(
+    source,
+    /hasCourseHandoffLocation\(\{search:window\.location\.search\}\)\)\{\s*restoredNavigationUserId = userId;\s*return false;/u
+  );
 });
 
 test("Hub persistence records the validated visible view and guards owner restoration", () => {

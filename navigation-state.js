@@ -23,6 +23,11 @@
     "i"
   );
   const AUTH_CALLBACK_HASH_RE = /(?:^#|&)(?:access_token|refresh_token|error|error_code|type)=/i;
+  const COURSE_HANDOFF_INTENTS = Object.freeze({
+    timetable:new Set(["add-course"]),
+    community:new Set(["search", "compose"]),
+    marketplace:new Set(["search", "sell"])
+  });
 
   function normalizedUserId(value){
     const userId = String(value || "").trim();
@@ -113,9 +118,41 @@
     return /(?:^|&)(?:auth_action|code|error|error_code|error_description|error_message)=/i.test(params);
   }
 
+  function hasCourseHandoffLocation({search=""}={}){
+    let params;
+    try {
+      params = new URLSearchParams(String(search || "").replace(/^\?/, ""));
+    } catch(_error){
+      return false;
+    }
+
+    const destinationValues = params.getAll("destination");
+    const intentValues = params.getAll("intent");
+    const courseKeyValues = params.getAll("courseKey");
+    const selectionValues = params.getAll("selection");
+    if(
+      destinationValues.length !== 1
+      || intentValues.length > 1
+      || courseKeyValues.length > 1
+      || selectionValues.length > 1
+    ) return false;
+
+    const destination = String(destinationValues[0] || "").trim().toLowerCase();
+    const intent = String(intentValues[0] || "").trim().toLowerCase();
+    const courseKey = String(courseKeyValues[0] || "").trim();
+    const selection = String(selectionValues[0] || "").trim();
+
+    if(destination === "timetable" && !intent && !courseKey){
+      return !selection || selection === "1";
+    }
+    if(selection || !courseKey || courseKey.length > 180) return false;
+    return !!COURSE_HANDOFF_INTENTS[destination]?.has(intent);
+  }
+
   function shouldHoldInitialPaint(storage, location={}){
     if(hasAuthCallbackLocation(location)) return false;
     if(hasContentDeepLink(location.hash)) return true;
+    if(hasCourseHandoffLocation(location)) return true;
     const route = readRouteHint(storage);
     return !!route && route.screen !== "main";
   }
@@ -144,6 +181,7 @@
     hasAuthoritativeHash,
     hasContentDeepLink,
     hasAuthCallbackLocation,
+    hasCourseHandoffLocation,
     shouldHoldInitialPaint,
     timetableRestoreAction
   });

@@ -6,6 +6,21 @@
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.mjs
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
+
 /favicon.ico
   Cache-Control: public, max-age=0, must-revalidate
 
@@ -20,3 +35,8 @@
 
 /site.webmanifest
   Cache-Control: public, max-age=0, must-revalidate
+
+/api/coursekeys/*
+  Cache-Control: private, no-store
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY

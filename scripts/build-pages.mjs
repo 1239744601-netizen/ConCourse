@@ -58,6 +58,20 @@ const publicFiles = Object.freeze([
   "concourse-market-study-bundle.jpg",
   "concourse-market-dorm-set.jpg",
   "concourse-marketplace-og.png",
+  "assistant/index.html",
+  "assistant/assistant.mjs",
+  "assistant/handoff.mjs",
+  "course-tools/course-tools.css",
+  "course-tools/course-tools.mjs",
+  "course-tools/institution-context.mjs",
+  "coursekeys/index.html",
+  "coursekeys/coursekeys.css",
+  "coursekeys/coursekeys.js",
+  "coursekeys/og-coursekeys.png",
+  "coursekeys/data/course-catalogue.json",
+  "coursekeys/data/course-material-seed.json",
+  "courses/index.html",
+  "courses/courses.mjs",
   "data/hkbu-catalogue-current.json",
   "data/hkbu-2026-27-s1-catalog.json"
 ]);
@@ -298,7 +312,7 @@ async function build() {
       throw new Error("Build output differs from the explicit public allowlist");
     }
     const forbidden = actualFiles.filter(file =>
-      /\.(?:sql|md|mjs|patch)$/iu.test(file)
+      /\.(?:sql|md|patch)$/iu.test(file)
       || file.startsWith("tests/")
       || file.startsWith("supabase/")
     );

@@ -671,6 +671,22 @@
     return element;
   };
 
+  const normalizedCourseContext = course => {
+    if(!course || typeof course !== "object") return null;
+    const rawCode = String(course.code || course.course_code || course.courseCode || "")
+      .normalize("NFKC")
+      .toUpperCase()
+      .trim();
+    const code = rawCode.replace(/[\s.-]+/gu, "");
+    if(!/^[A-Z]{2,10}\d{3,5}[A-Z]?$/u.test(code)) return null;
+    const title = String(course.title || course.name || "")
+      .normalize("NFKC")
+      .replace(/\s+/gu, " ")
+      .trim()
+      .slice(0, 180);
+    return Object.freeze({code, title});
+  };
+
   const setStatus = (id, message="", kind="") => {
     const targetId = id === "communityComposerStatus" && hubState.feedScope === "cross"
       ? "communityFeedStatus"
@@ -785,7 +801,6 @@
   const hubAccessAllowed = () => !!(
     currentUser
     && loadedUserId === currentUser.id
-    && finalTimetable?.savedAt
   );
   const requestContext = () => ({generation:hubState.generation, userId:currentUser?.id || null});
   const contextIsCurrent = context => !!(
@@ -1257,8 +1272,24 @@
   }
 
   function publishInstitutionContext(){
+    const context = getInstitutionContext();
+    try {
+      const storageKey = "concourse_institution_context_v1";
+      if(currentUser?.id && context.verified){
+        sessionStorage.setItem(storageKey, JSON.stringify({
+          version:1,
+          userId:String(currentUser.id).toLowerCase(),
+          status:context.status,
+          verified:true,
+          schoolName:context.schoolName,
+          schoolKey:context.schoolKey
+        }));
+      } else {
+        sessionStorage.removeItem(storageKey);
+      }
+    } catch(_error){}
     window.dispatchEvent(new CustomEvent("concourse:institution-context", {
-      detail:getInstitutionContext()
+      detail:context
     }));
   }
 
@@ -1376,11 +1407,11 @@
     window.openTimetableDestination?.();
   }
 
-  function showHub(view="community"){
+  async function showHub(view="community"){
     if(!hubAccessAllowed()){
       if(currentUser) window.openTimetableDestination?.();
       else openAuthModal();
-      return;
+      return false;
     }
     appStarted = true;
     $("appWrap").hidden = true;
@@ -1390,10 +1421,11 @@
     document.body.classList.remove("schedule-active");
     scheduleHubStickyGeometry();
     window.syncPrimaryNavigation?.();
-    switchView(view);
+    const activeView = await switchView(view);
     const wasInitialRestore = document.documentElement.hasAttribute("data-concourse-nav-pending");
     window.releaseConCourseInitialPaint?.();
     if(!wasInitialRestore) window.scrollTo({top:0, behavior:"smooth"});
+    return activeView;
   }
 
   async function switchView(view){
@@ -1457,6 +1489,51 @@
         loadSupportRequests()
       ]);
     }
+    return view;
+  }
+
+  function communityComposerHasDraft(){
+    const pollHasDraft = [
+      $("communityPollQuestion")?.value,
+      ...[...document.querySelectorAll("#communityPollOptions [data-poll-option]")].map(input => input.value)
+    ].some(value => String(value || "").trim());
+    return !!(
+      $("communityPostBody")?.value.trim()
+      || $("communityPostTags")?.value.trim()
+      || $("communityCrossCampus")?.checked
+      || hubState.composerMedia.length
+      || pollHasDraft
+      || window.ConCourseMarketplace?.selectedCommunityListingId?.()
+    );
+  }
+
+  async function openCourseCommunity({intent="search", course}={}){
+    if(!["search", "compose"].includes(intent)) return false;
+    const context = normalizedCourseContext(course);
+    if(!context) return false;
+    const activeView = await showHub("community");
+    if(activeView !== "community") return false;
+
+    if(intent === "search"){
+      hubState.feedTopic = "all";
+      hubState.feedQuery = context.code;
+      if($("communitySearch")) $("communitySearch").value = context.code;
+      syncCommunityTopicControls();
+      renderCommunityFeed(hubState.feed);
+      $("communitySearch")?.focus({preventScroll:true});
+      return true;
+    }
+
+    if(hubState.feedScope !== "school") selectCommunityScope("school");
+    const body = $("communityPostBody");
+    const tags = $("communityPostTags");
+    if(body && tags && !communityComposerHasDraft()){
+      body.value = `${context.code}${context.title ? ` · ${context.title}` : ""}\n\n`;
+      tags.value = context.code;
+      updateCommunityPostCounter();
+    }
+    body?.focus({preventScroll:true});
+    return true;
   }
 
   function messageViewIsActive(){
@@ -10034,13 +10111,13 @@
     show: showHub,
     hide: hideHub,
     switchView,
+    openCourseCommunity,
     restoreView: async view => {
       if(!hubAccessAllowed()) return false;
       if(view === "owner-console") await loadAdminContext();
       if(!hubAccessAllowed()) return false;
       if(view === "owner-console" && hubState.adminContextUserId !== currentUser.id) return false;
-      showHub(view);
-      return hubState.activeView;
+      return await showHub(view);
     },
     startConversationWithUsername,
     openConversationById,
