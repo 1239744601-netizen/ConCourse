@@ -698,6 +698,120 @@
   };
 
   const locale = () => currentLanguage === "zh-CN" ? "zh-CN" : currentLanguage === "zh-HK" ? "zh-HK" : "en-GB";
+  const HUB_CONCISE_COPY = Object.freeze({
+    en: Object.freeze({
+      communityTitle:"Community",
+      communityIntro:"Ask, share, and connect on campus.",
+      communityGlobalTitle:"Worldwide community",
+      communityGlobalIntro:"Explore posts from verified students worldwide.",
+      marketplaceTitle:"Marketplace",
+      marketplaceIntro:"Find useful items from verified students.",
+      marketplaceGlobalTitle:"Worldwide marketplace",
+      marketplaceGlobalIntro:"Browse listings shared across campuses.",
+      messagesTitle:"Messages",
+      messagesIntro:"Private conversations with verified schoolmates.",
+      overviewTitle:"Academic insights",
+      overviewIntro:"Review your schedule and course trends.",
+      academicToolsTitle:"Citation studio",
+      academicToolsIntro:"Create references and build a bibliography.",
+      profileTitle:"Profile",
+      profileIntro:"Manage your identity and privacy.",
+      communityComposerEyebrow:"",
+      communityComposerTitle:"Create a post",
+      communityComposerFormats:"",
+      pollSurvey:"Poll",
+      pollSurveyHint:"Add one question and up to six choices.",
+      shareAcrossCampuses:"Share with verified students worldwide",
+      communityMediaDropHint:"Up to 4 photos or videos",
+      savedPostsPrivate:"Private",
+      privateConversations:"Private",
+      searchCommunity:"Search community",
+      searchAcrossCampuses:"Search worldwide posts",
+      acrossCampusFeed:"Worldwide feed"
+    }),
+    "zh-CN": Object.freeze({
+      communityTitle:"校园社区",
+      communityIntro:"校内提问、分享与交流。",
+      communityGlobalTitle:"全球社区",
+      communityGlobalIntro:"浏览全球已验证学生的公开帖子。",
+      marketplaceTitle:"校园市集",
+      marketplaceIntro:"发现已验证学生发布的实用物品。",
+      marketplaceGlobalTitle:"全球市集",
+      marketplaceGlobalIntro:"浏览跨校园公开的商品。",
+      messagesTitle:"私信",
+      messagesIntro:"与已验证同学私下交流。",
+      overviewTitle:"学业概览",
+      overviewIntro:"查看课表与匿名课程趋势。",
+      academicToolsTitle:"参考文献",
+      academicToolsIntro:"生成引用并整理参考书目。",
+      profileTitle:"个人资料",
+      profileIntro:"管理身份与隐私。",
+      communityComposerEyebrow:"",
+      communityComposerTitle:"发布帖子",
+      communityComposerFormats:"",
+      pollSurvey:"投票",
+      pollSurveyHint:"填写一个问题，最多六个选项。",
+      shareAcrossCampuses:"向全球已验证学生公开",
+      communityMediaDropHint:"最多 4 张照片或视频",
+      savedPostsPrivate:"仅自己可见",
+      privateConversations:"私密",
+      searchCommunity:"搜索社区",
+      searchAcrossCampuses:"搜索全球帖子",
+      acrossCampusFeed:"全球动态"
+    }),
+    "zh-HK": Object.freeze({
+      communityTitle:"校園社區",
+      communityIntro:"校內提問、分享同交流。",
+      communityGlobalTitle:"全球社區",
+      communityGlobalIntro:"瀏覽全球已驗證學生公開嘅帖文。",
+      marketplaceTitle:"校園市集",
+      marketplaceIntro:"搵已驗證學生發佈嘅實用物品。",
+      marketplaceGlobalTitle:"全球市集",
+      marketplaceGlobalIntro:"瀏覽跨校園公開嘅商品。",
+      messagesTitle:"私訊",
+      messagesIntro:"同已驗證同學私下交流。",
+      overviewTitle:"學業概覽",
+      overviewIntro:"查看課表同匿名課程趨勢。",
+      academicToolsTitle:"參考文獻",
+      academicToolsIntro:"建立引用並整理參考書目。",
+      profileTitle:"個人資料",
+      profileIntro:"管理身份同私隱。",
+      communityComposerEyebrow:"",
+      communityComposerTitle:"發佈帖文",
+      communityComposerFormats:"",
+      pollSurvey:"投票",
+      pollSurveyHint:"填寫一個問題，最多六個選項。",
+      shareAcrossCampuses:"向全球已驗證學生公開",
+      communityMediaDropHint:"最多 4 張相片或影片",
+      savedPostsPrivate:"只限自己",
+      privateConversations:"私人",
+      searchCommunity:"搜尋社區",
+      searchAcrossCampuses:"搜尋全球帖文",
+      acrossCampusFeed:"全球動態"
+    })
+  });
+  const conciseHubLanguage = () => currentLanguage === "zh-CN" || currentLanguage === "zh-HK"
+    ? currentLanguage
+    : "en";
+  const conciseHubText = key => HUB_CONCISE_COPY[conciseHubLanguage()]?.[key] ?? t(key);
+  const applyConciseHubLabels = () => {
+    const copy = HUB_CONCISE_COPY[conciseHubLanguage()] || HUB_CONCISE_COPY.en;
+    [
+      "communityComposerEyebrow",
+      "communityComposerTitle",
+      "communityComposerFormats",
+      "pollSurvey",
+      "pollSurveyHint",
+      "shareAcrossCampuses",
+      "communityMediaDropHint",
+      "savedPostsPrivate",
+      "privateConversations"
+    ].forEach(key => {
+      document.querySelectorAll(`#memberHub [data-i18n="${key}"]`).forEach(element => {
+        element.textContent = copy[key];
+      });
+    });
+  };
   const formatDate = value => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? String(value || "") : date.toLocaleString(locale(), {dateStyle:"medium", timeStyle:"short"});
@@ -1240,6 +1354,18 @@
     $("hubPageKicker").textContent = t(`${prefix}Kicker`);
     $("hubGreeting").textContent = t(headingKey);
     $("hubPageIntroduction").textContent = t(`${prefix}Intro`);
+    const copy = HUB_CONCISE_COPY[conciseHubLanguage()] || HUB_CONCISE_COPY.en;
+    const conciseKey = view === "community"
+      ? (worldwideCommunity ? "communityGlobal" : "community")
+      : view === "marketplace"
+        ? (worldwideMarketplace ? "marketplaceGlobal" : "marketplace")
+        : view === "academic-tools"
+          ? "academicTools"
+          : view;
+    $("hubPageKicker").textContent = "";
+    $("hubGreeting").textContent = copy[`${conciseKey}Title`] || $("hubGreeting").textContent;
+    $("hubPageIntroduction").textContent = copy[`${conciseKey}Intro`] || $("hubPageIntroduction").textContent;
+    applyConciseHubLabels();
     const marketplaceActions = $("hubMarketplaceActions");
     if(marketplaceActions) marketplaceActions.hidden = view !== "marketplace";
     scheduleHubStickyGeometry();
@@ -7454,8 +7580,8 @@
     });
     if($("memberHub")) $("memberHub").dataset.communityScope = hubState.feedScope;
     if($("communityComposer")) $("communityComposer").hidden = crossCampus;
-    if($("communityFeedTitle")) $("communityFeedTitle").textContent = t(crossCampus ? "acrossCampusFeed" : "campusFeed");
-    if($("communitySearch")) $("communitySearch").placeholder = t(crossCampus ? "searchAcrossCampuses" : "searchCommunity");
+    if($("communityFeedTitle")) $("communityFeedTitle").textContent = conciseHubText(crossCampus ? "acrossCampusFeed" : "campusFeed");
+    if($("communitySearch")) $("communitySearch").placeholder = conciseHubText(crossCampus ? "searchAcrossCampuses" : "searchCommunity");
     if(hubState.activeView === "community") renderHubHeader();
     if(!crossCampus) setStatus("communityFeedStatus", "");
   }
@@ -10150,6 +10276,8 @@
       if($("hubAccountTrustControls")) renderAccountTrustControls();
       window.ConCourseMarketplace?.refreshLanguage();
       window.ConCourseAcademicTools?.refreshLanguage?.();
+      renderHubHeader();
+      applyConciseHubLabels();
     }
   };
 

@@ -24,7 +24,7 @@
     marketplaceVerificationRequired:"A verified university membership is required to use the campus marketplace.",
     marketplaceLoading:"Loading your campus marketplace…",
     marketplaceEmpty:"No listings match these filters yet.",
-    marketplaceEmptyHint:"Try another search—or add the first useful item for your campus.",
+    marketplaceEmptyHint:"Try another search or filter.",
     marketplaceExampleShow:"Preview an example",
     marketplaceExampleLabel:"Example listing · preview only",
     marketplaceExampleTitle:"ECON 2005 revision notes bundle",
@@ -37,12 +37,12 @@
     marketplaceExampleSave:"Save",
     marketplaceExampleSaved:"Saved",
     marketplaceExampleClose:"Close",
-    marketplaceExampleDetails:"This client-only preview demonstrates how a listing can be inspected and saved. It is not published, stored, or included in marketplace results.",
+    marketplaceExampleDetails:"Preview only—not published or saved.",
     marketplaceExampleImageAlt:"A study desk with handwritten notes, books, a calculator, headphones, and a water bottle.",
-    marketplaceSavedEmptyHint:"Save useful listings and they will stay together here.",
-    marketplaceOwnEmptyHint:"Turn something you no longer need into another student's next find.",
-    marketplaceOrderEmptyHint:"When you make or receive an order, its progress will appear here.",
-    marketplaceGlobalEmptyHint:"Try another university, category, or search.",
+    marketplaceSavedEmptyHint:"Saved listings appear here.",
+    marketplaceOwnEmptyHint:"Your listings appear here.",
+    marketplaceOrderEmptyHint:"Orders appear here.",
+    marketplaceGlobalEmptyHint:"Try another campus or filter.",
     marketplaceResults:"{count} listings",
     marketplaceSavedResults:"{count} saved listings",
     marketplaceMineResults:"{count} of your listings",
@@ -93,6 +93,8 @@
     marketplaceOfferFailed:"The offer could not be sent.",
     marketplaceCheckoutComingSoon:"Protected checkout coming soon",
     marketplaceCheckoutWarning:"Protected checkout and payment holding are not activated. ConCourse does not currently collect, hold, or transfer money. Database order status is only a coordination record—not proof of payment or escrow.",
+    marketplaceCampusBoundary:"Listings, offers, and messages are active. Payments are not.",
+    marketplaceOrderSummary:"ConCourse does not process payment.",
     marketplaceOrder:"Order",
     marketplaceOrderRoleBuyer:"Buying",
     marketplaceOrderRoleSeller:"Selling",
@@ -149,6 +151,7 @@
     marketplaceNoOffers:"No offers yet.",
     marketplaceOffer:"{price} offer",
     marketplaceOfferDisclaimer:"Offers are non-binding price proposals. Use Messages to agree on next steps; ConCourse does not collect payment.",
+    marketplaceOfferSummary:"Offers are non-binding. ConCourse does not process payment.",
     marketplaceMessageBuyer:"Message buyer",
     marketplaceDelivery:"Delivery",
     marketplaceCondition:"Condition",
@@ -181,9 +184,9 @@
     marketplaceGlobalSavedResults:"{count} saved global listings",
     marketplaceGlobalSearchPlaceholder:"Search universities, notes, textbooks, furniture…",
     marketplaceVerifiedUniversity:"Verified university",
-    marketplaceGlobalDiscoveryBoundary:"Browse, save, share, and report opt-in listings from other universities. You can message sellers who allow it; cross-campus offers and payments are not enabled yet.",
+    marketplaceGlobalDiscoveryBoundary:"Browse and message across campuses. Cross-campus offers and payments are off.",
     marketplaceGlobalOptIn:"Share this listing with verified students worldwide",
-    marketplaceGlobalOptInHint:"Your username, university, listing details, and listing media become visible across the verified campus network. Personal profile details stay private.",
+    marketplaceGlobalOptInHint:"Your username, university, listing, and media become visible worldwide. Other profile details stay private.",
     marketplaceGlobalVisibilityFailed:"The listing was saved for your campus, but global sharing could not be updated. Try editing it again after running the latest Supabase SQL.",
     marketplaceSavedGlobally:"Listing saved and shared with verified students worldwide.",
     marketplaceSavedCampusOnly:"Listing saved for your campus only.",
@@ -232,9 +235,12 @@
       marketplaceGlobalSavedResults:"已收藏 {count} 件全球商品",
       marketplaceGlobalSearchPlaceholder:"搜索大学、笔记、课本、家具…",
       marketplaceVerifiedUniversity:"已验证大学",
-      marketplaceGlobalDiscoveryBoundary:"可浏览、收藏、分享及举报其他大学主动公开的商品；如卖家允许，也可发送私信。跨校出价及付款暂未开放。",
+      marketplaceGlobalDiscoveryBoundary:"可浏览及私信联系其他校园。跨校出价与付款暂未开放。",
       marketplaceGlobalOptIn:"向全球已验证学生公开这件商品",
-      marketplaceGlobalOptInHint:"你的用户名、大学、商品资料和媒体将向已验证校园网络公开；个人档案资料仍保持私密。",
+      marketplaceGlobalOptInHint:"你的用户名、大学、商品和媒体将向全球公开；其他个人资料保持私密。",
+      marketplaceCampusBoundary:"商品、出价和私信已开放，付款尚未开放。",
+      marketplaceOrderSummary:"ConCourse 不处理付款。",
+      marketplaceOfferSummary:"出价不具约束力；ConCourse 不处理付款。",
       marketplaceGlobalVisibilityFailed:"商品已保存至本校市集，但未能更新全球公开设置。请运行最新 Supabase SQL 后再次编辑。",
       marketplaceSavedGlobally:"商品已保存，并向全球已验证学生公开。",
       marketplaceSavedCampusOnly:"商品仅保存至本校市集。",
@@ -269,7 +275,7 @@
       marketplaceMessageOpenFailed:"未能打开私信。请进入“私信”，并输入卖家的准确用户名。",
       marketplaceFeedDegraded:"实时市集商品暂时无法加载。重新连接期间，仍可浏览下方校园示例。",
       marketplaceRetry:"重试",
-      marketplaceEmptyHint:"尝试其他关键词或筛选条件，也可以成为第一个发布校园好物的人。",
+      marketplaceEmptyHint:"尝试其他搜索词或筛选条件。",
       marketplaceExampleShow:"预览示例",
       marketplaceExampleLabel:"示例商品 · 仅供预览",
       marketplaceExampleTitle:"ECON 2005 复习笔记套装",
@@ -282,12 +288,12 @@
       marketplaceExampleSave:"收藏",
       marketplaceExampleSaved:"已收藏",
       marketplaceExampleClose:"关闭",
-      marketplaceExampleDetails:"此示例仅在当前页面演示查看和收藏商品的效果，不会发布、保存，也不会计入市集结果。",
+      marketplaceExampleDetails:"仅供预览，不会发布或保存。",
       marketplaceExampleImageAlt:"书桌上放有手写笔记、书籍、计算器、耳机和水瓶。",
-      marketplaceSavedEmptyHint:"收藏感兴趣的商品后，它们会集中显示在这里。",
-      marketplaceOwnEmptyHint:"把不再需要的物品发布出来，让它成为另一位学生的新发现。",
-      marketplaceOrderEmptyHint:"当你创建或收到订单后，交易进度会显示在这里。",
-      marketplaceGlobalEmptyHint:"尝试其他大学、分类或搜索关键词。"
+      marketplaceSavedEmptyHint:"已收藏商品会显示在这里。",
+      marketplaceOwnEmptyHint:"你的商品会显示在这里。",
+      marketplaceOrderEmptyHint:"订单会显示在这里。",
+      marketplaceGlobalEmptyHint:"尝试其他校园或筛选条件。"
     }),
     "zh-HK": Object.freeze({
       marketplaceReach:"市集範圍",
@@ -301,9 +307,12 @@
       marketplaceGlobalSavedResults:"已收藏 {count} 件全球商品",
       marketplaceGlobalSearchPlaceholder:"搜尋大學、筆記、教科書、傢俬…",
       marketplaceVerifiedUniversity:"已驗證大學",
-      marketplaceGlobalDiscoveryBoundary:"可以瀏覽、收藏、分享同舉報其他大學主動公開嘅商品；如果賣家允許，亦可以傳送私訊。跨校出價同付款暫未開放。",
+      marketplaceGlobalDiscoveryBoundary:"可以瀏覽同私訊聯絡其他校園。跨校出價同付款暫未開放。",
       marketplaceGlobalOptIn:"向全球已驗證學生公開呢件商品",
-      marketplaceGlobalOptInHint:"你嘅用戶名、大學、商品資料同媒體會向已驗證校園網絡公開；個人檔案資料仍然保密。",
+      marketplaceGlobalOptInHint:"你嘅用戶名、大學、商品同媒體會向全球公開；其他個人資料保持私密。",
+      marketplaceCampusBoundary:"商品、出價同私訊已開放，付款尚未開放。",
+      marketplaceOrderSummary:"ConCourse 唔會處理付款。",
+      marketplaceOfferSummary:"出價冇約束力；ConCourse 唔會處理付款。",
       marketplaceGlobalVisibilityFailed:"商品已儲存到本校市集，但未能更新全球公開設定。請執行最新 Supabase SQL 後再編輯。",
       marketplaceSavedGlobally:"商品已儲存，並向全球已驗證學生公開。",
       marketplaceSavedCampusOnly:"商品只儲存到本校市集。",
@@ -338,7 +347,7 @@
       marketplaceMessageOpenFailed:"未能開啟私訊。請進入「私訊」，再輸入賣家嘅準確用戶名。",
       marketplaceFeedDegraded:"即時市集商品暫時未能載入。重新連線期間，仍可瀏覽下面嘅校園示例。",
       marketplaceRetry:"重試",
-      marketplaceEmptyHint:"試下其他關鍵字或篩選條件，亦可以成為第一個發佈校園好物嘅人。",
+      marketplaceEmptyHint:"試下其他搜尋字詞或篩選條件。",
       marketplaceExampleShow:"預覽示例",
       marketplaceExampleLabel:"示例商品 · 只供預覽",
       marketplaceExampleTitle:"ECON 2005 溫習筆記套裝",
@@ -351,12 +360,12 @@
       marketplaceExampleSave:"收藏",
       marketplaceExampleSaved:"已收藏",
       marketplaceExampleClose:"關閉",
-      marketplaceExampleDetails:"呢個示例只會喺目前頁面示範查看同收藏商品，唔會發佈、儲存，亦唔會計入市集結果。",
+      marketplaceExampleDetails:"只供預覽，唔會發佈或儲存。",
       marketplaceExampleImageAlt:"書桌上放有手寫筆記、書籍、計算機、耳機同水樽。",
-      marketplaceSavedEmptyHint:"收藏感興趣嘅商品之後，佢哋會集中顯示喺呢度。",
-      marketplaceOwnEmptyHint:"將唔再需要嘅物品發佈出嚟，等佢成為另一位學生嘅新發現。",
-      marketplaceOrderEmptyHint:"當你建立或者收到訂單之後，交易進度會顯示喺呢度。",
-      marketplaceGlobalEmptyHint:"試下其他大學、分類或者搜尋關鍵字。"
+      marketplaceSavedEmptyHint:"已收藏商品會顯示喺呢度。",
+      marketplaceOwnEmptyHint:"你嘅商品會顯示喺呢度。",
+      marketplaceOrderEmptyHint:"訂單會顯示喺呢度。",
+      marketplaceGlobalEmptyHint:"試下其他校園或篩選條件。"
     })
   });
 
@@ -793,7 +802,7 @@
       const title = trust.querySelector("b");
       const detail = trust.querySelector("span");
       if(title) title.textContent = tr(global ? "marketplaceGlobalScope" : "marketplaceCampusOnly");
-      if(detail) detail.textContent = tr(global ? "marketplaceGlobalDiscoveryBoundary" : "marketplacePaymentBoundary");
+      if(detail) detail.textContent = tr(global ? "marketplaceGlobalDiscoveryBoundary" : "marketplaceCampusBoundary");
     }
     if(typeof hub().refreshHeader === "function") hub().refreshHeader();
   }
@@ -1824,7 +1833,7 @@
     if(!Array.isArray(offers) || (!offers.length && !isOwnListing(listing))) return null;
     const section = element("section", "marketplace-detail-section");
     section.append(element("h3", "", tr("marketplaceOffers")));
-    section.append(element("p", "marketplace-muted", tr("marketplaceOfferDisclaimer")));
+    section.append(element("p", "marketplace-muted", tr("marketplaceOfferSummary")));
     if(!offers.length) section.append(element("p", "marketplace-muted", tr("marketplaceNoOffers")));
     offers.forEach(offer => {
       const row = element("div", "marketplace-offer-row");
@@ -2341,7 +2350,7 @@
     if(state.busyListings.has(id)) return;
     const context = currentContext();
     const currency = String(listing.currency || "HKD").toUpperCase();
-    const rawAmount = await ask({title:tr("marketplaceMakeOffer"), message:`${tr("marketplaceOfferAmount")}\n\n${tr("marketplaceOfferDisclaimer")}`, input:true, inputMode:["JPY", "KRW"].includes(currency) ? "numeric" : "decimal", maxLength:16, placeholder:["JPY", "KRW"].includes(currency) ? "0" : "0.00", requiredMessage:tr("marketplacePollInvalid"), confirmLabel:tr("marketplaceMakeOffer")});
+    const rawAmount = await ask({title:tr("marketplaceMakeOffer"), message:`${tr("marketplaceOfferAmount")}\n\n${tr("marketplaceOfferSummary")}`, input:true, inputMode:["JPY", "KRW"].includes(currency) ? "numeric" : "decimal", maxLength:16, placeholder:["JPY", "KRW"].includes(currency) ? "0" : "0.00", requiredMessage:tr("marketplacePollInvalid"), confirmLabel:tr("marketplaceMakeOffer")});
     if(rawAmount === null || rawAmount === false || !contextIsCurrent(context)) return;
     const amountText = String(rawAmount).trim();
     const validAmount = ["JPY", "KRW"].includes(currency)
@@ -2854,7 +2863,7 @@
     top.append(element("span", "marketplace-order-role", order.role === "seller" || order.seller_id === state.userId ? tr("marketplaceOrderRoleSeller") : tr("marketplaceOrderRoleBuyer")));
     top.append(element("span", `marketplace-status-chip status-${String(order.status || "")}`, orderStatusLabel(order.status)));
     card.append(top, element("h3", "", String(listing.title || order.listing_title || tr("marketplaceOrder"))), element("strong", "marketplace-card-price", formatMoney(order.amount_minor ?? listing.price_minor, order.currency ?? listing.currency)));
-    card.append(element("p", "marketplace-checkout-mini", tr("marketplaceCheckoutWarning")));
+    card.append(element("p", "marketplace-checkout-mini", tr("marketplaceOrderSummary")));
     const open = element("button", "marketplace-card-action", tr("marketplaceViewOrder"));
     open.type = "button";
     open.addEventListener("click", () => void openOrder(id, open));

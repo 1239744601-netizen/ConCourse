@@ -1757,3 +1757,76 @@ html[data-theme="night"] .member-hub[data-active-view="community"] .hub-comment-
     width: 100%;
   }
 }
+
+/* Compact copy and spacing. The composer keeps its functional and safety
+   labels while removing duplicate captions around the same controls. */
+.member-hub[data-active-view="community"] .hub-compose-card {
+  margin-top: clamp(18px, 2.4vw, 28px);
+  padding: clamp(20px, 2.5vw, 30px) !important;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-heading {
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-heading :is(
+  .hub-compose-eyebrow,
+  p
+):empty {
+  display: none !important;
+  margin: 0 !important;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-heading:has(> p:empty) {
+  justify-content: flex-start;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-shell {
+  gap: 12px;
+}
+
+.member-hub[data-active-view="community"] .hub-compose-card #communityPostBody {
+  min-height: 104px;
+}
+
+.member-hub[data-active-view="community"] .hub-feed-toolbar {
+  margin-top: clamp(26px, 3.5vw, 42px);
+}
+
+.member-hub[data-active-view="community"] :is(
+  .hub-post-body,
+  .hub-comment-copy,
+  .hub-poll-builder-heading small,
+  .hub-cross-campus-toggle span
+) {
+  overflow-wrap: anywhere;
+  text-align: start;
+  text-wrap: pretty;
+}
+
+html[lang^="zh"] .member-hub[data-active-view="community"] :is(
+  .hub-compose-heading,
+  .hub-post-body,
+  .hub-comment-copy,
+  .hub-poll-builder-heading,
+  .hub-cross-campus-toggle
+) {
+  letter-spacing: normal;
+  line-break: strict;
+  word-break: normal;
+}
+
+@media (max-width: 560px) {
+  .member-hub[data-active-view="community"] .hub-compose-card {
+    padding: 18px 16px 20px !important;
+  }
+
+  .member-hub[data-active-view="community"] .hub-compose-heading {
+    align-items: flex-start;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+  }
+}

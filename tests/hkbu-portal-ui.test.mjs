@@ -68,18 +68,18 @@ test("personal imports are optional, consent-gated, and separate from catalogue 
   assert.match(portalJs, /Verify your institution to see semester courses/);
   assert.match(portalJs, /\{school\} semester course catalogue/);
   assert.match(portalJs, /Student status verified for \{school\}/);
-  assert.match(portalJs, /semester catalogue source is not configured for this institution yet/);
+  assert.match(portalJs, /No semester catalogue is available for \{school\} yet/);
   assert.match(
     portalJs,
     /The shared semester catalogue works without access to your personal student portal/
   );
-  assert.match(portalJs, /No personal academic snapshot has been imported/);
+  assert.match(portalJs, /No personal snapshot imported\. You can still browse the catalogue/);
   assert.match(portalJs, /Open student portal \(optional\)/);
   assert.match(portalJs, /Remove imported academic data/);
   assert.match(portalJs, /User-imported · not independently verified/);
   assert.match(
     portalJs,
-    /never asks for your institution password, multifactor-authentication response, recovery code, or portal cookies/
+    /never asks for institution passwords, MFA codes, recovery codes, or portal cookies/
   );
   assert.doesNotMatch(
     portalJs,
@@ -179,7 +179,7 @@ test("the shared semester catalogue loads and renders without a personal snapsho
     /state\.snapshot/,
     "shared catalogue rendering must not require a personal snapshot"
   );
-  assert.match(portalJs, /Reference snapshot only\. Confirm live availability, eligibility, quota, and registration/);
+  assert.match(portalJs, /Reference only\. Confirm availability, eligibility, quota, and registration/);
 });
 
 test("removing or mismatching a personal snapshot preserves the shared catalogue", () => {

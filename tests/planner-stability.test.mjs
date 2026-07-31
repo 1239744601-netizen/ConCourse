@@ -63,6 +63,34 @@ test("the final stabilization stylesheet owns focus, compact viewport, and heade
   assert.match(css, /@media \(max-width: 760px\)/);
 });
 
+test("the final visual layer keeps copy aligned and gives each appearance explicit contrast", () => {
+  assert.match(css, /--clarity-text:\s*#f7fbff/);
+  assert.match(css, /html\[data-theme="day"\]\s*\{[\s\S]*?--clarity-text:\s*#061526/);
+  assert.match(
+    css,
+    /html\[data-theme="night"\] body\.app-active:not\(\.schedule-active\):not\(\.hub-active\)[\s\S]*?linear-gradient\(155deg,\s*#061526/
+  );
+  assert.match(
+    css,
+    /html\[data-theme="night"\] body\.hub-active\s*\{[\s\S]*?linear-gradient\(155deg,\s*#061526/
+  );
+  assert.match(
+    css,
+    /html\[data-theme="night"\] body\.schedule-active #schedulePage #timetablePanel\s*\{[\s\S]*?rgba\(9,\s*39,\s*67,\s*\.99\)/
+  );
+  assert.match(
+    css,
+    /html\[data-theme="night"\] \.auth-card\s*\{[\s\S]*?linear-gradient\(145deg,\s*rgba\(9,\s*39,\s*66,\s*\.99\)/
+  );
+  assert.match(css, /\.auth-card \.field-status\.matched\s*\{[\s\S]*?#73e2bc/);
+  assert.match(css, /\.auth-card \.field-status\.error\s*\{[\s\S]*?#ff9fac/);
+  assert.match(css, /\.auth-card :is\(input, select, textarea\):user-invalid\s*\{[\s\S]*?#ff9fac/);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.member-hub \.hub-card-heading p\s*\{\s*margin:\s*6px 0 0/);
+  assert.match(css, /text-wrap:\s*pretty/);
+  assert.match(css, /text-align:\s*start/);
+  assert.doesNotMatch(css, /text-transform:\s*capitalize/);
+});
+
 test("the Cloudflare deployment applies baseline browser security headers", () => {
   assert.match(headers, /X-Content-Type-Options: nosniff/);
   assert.match(headers, /X-Frame-Options: DENY/);

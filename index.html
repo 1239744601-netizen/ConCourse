@@ -2032,18 +2032,18 @@
     .event { box-shadow: none !important; }
   }
 </style>
-<link rel="stylesheet" href="member-hub.css?v=20260729-academic-email1" />
-<link rel="stylesheet" href="marketplace.css?v=20260728-verification-center2" />
+<link rel="stylesheet" href="member-hub.css?v=20260731-clean1" />
+<link rel="stylesheet" href="marketplace.css?v=20260731-clean1" />
 <link rel="stylesheet" href="hkbu-portal.css?v=20260728-foundation1" />
 <link rel="stylesheet" href="concourse-navy.css?v=20260722-authotp1" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260731-unified1" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
-<link rel="stylesheet" href="academic-tools.css?v=20260723-motion1" />
+<link rel="stylesheet" href="academic-tools.css?v=20260731-clean1" />
 <link rel="stylesheet" href="concourse-theme.css?v=20260723-daycontrast2" />
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
-<link rel="stylesheet" href="community-redesign.css?v=20260728-social-comments1" />
+<link rel="stylesheet" href="community-redesign.css?v=20260731-clean1" />
 <link rel="stylesheet" href="academic-experiences.css?v=20260728-readable-controls1" />
-<link rel="stylesheet" href="concourse-stabilization.css?v=20260731-compact-header1" />
+<link rel="stylesheet" href="concourse-stabilization.css?v=20260731-clean-contrast1" />
 </head>
 <body>
 <div id="concourseInitialPaint" hidden role="status" aria-live="polite" aria-busy="true">
@@ -2069,7 +2069,7 @@
   </div>
   <nav class="primary-navigation" id="primaryNavigation" aria-label="Primary destinations" data-i18n-aria-label="primaryDestinations">
     <button type="button" class="primary-navigation-button" id="topTimetableBtn" hidden data-i18n="timetableNav">Timetable</button>
-    <a class="primary-navigation-button" id="courseSearchNav" href="courses/" data-i18n="courseEngineNav">Course Engine</a>
+    <a class="primary-navigation-button" id="courseSearchNav" href="courses/" data-i18n="courseEngineNav">Courses</a>
     <button type="button" class="primary-navigation-button" id="hubOpenBtn" hidden data-i18n="studentHub">Student Hub</button>
   </nav>
   <div class="auth-bar" aria-label="Account controls" data-i18n-aria-label="accountControls">
@@ -2112,7 +2112,7 @@
   <div class="hero-stage">
   <div class="hero-copy">
     <h1 data-i18n-html="heroTitle">Build your best<span>semester</span></h1>
-    <p data-i18n="heroDescription">Add every course you want. ConCourse explores every conflict-free combination, reaches your credit goal, and ranks the schedules that fit your life.</p>
+    <p data-i18n="heroDescription">Build a conflict-free timetable that meets your credit goals.</p>
     <div class="landing-actions">
       <button class="btn-accent start-app-btn" id="startAppBtn" hidden><span data-i18n="startPlanning">Start planning</span> <span aria-hidden="true">→</span></button>
       <div class="start-hint" id="startHint">Sign in to unlock your course planner.</div>
@@ -2139,7 +2139,7 @@
     <div class="auth-card-head">
       <div>
         <h2 id="authTitle" data-i18n="accountTitle">Your ConCourse account</h2>
-        <p id="authSubtitle">Sign in to continue to your planning workspace.</p>
+        <p id="authSubtitle">Sign in to continue.</p>
       </div>
       <button type="button" class="btn-ghost auth-close" id="authCloseBtn" aria-label="Close sign-in dialog" data-i18n-aria-label="closeSignInDialog">×</button>
     </div>
@@ -2149,7 +2149,7 @@
     </div>
     <label for="authEmail" id="authEmailLabel" data-i18n="email">Email</label>
     <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required aria-describedby="authEmailHelp" />
-    <p class="auth-field-help" id="authEmailHelp" data-i18n="emailHelp">Use an address you can open now. You must verify it before entering ConCourse.</p>
+    <p class="auth-field-help" id="authEmailHelp" data-i18n="emailHelp">Use an email you can access now; verification is required.</p>
     <div id="authPasswordField">
       <label for="authPassword" data-i18n="password">Password</label>
       <div class="auth-password-control">
@@ -2255,7 +2255,7 @@
       </div>
       <label for="authVerificationCode" data-i18n="verificationCode">Verification code</label>
       <input class="auth-verification-code" id="authVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{8}" placeholder="00000000" data-i18n-placeholder="verificationCodePlaceholder" aria-describedby="authVerificationHelp" />
-      <p class="auth-verification-help" id="authVerificationHelp" data-i18n="verificationCodeHelp">Enter the eight-digit code from the newest ConCourse email. You can paste it here.</p>
+      <p class="auth-verification-help" id="authVerificationHelp" data-i18n="verificationCodeHelp">Enter or paste the eight-digit code from your newest ConCourse email.</p>
       <button type="button" class="auth-change-email" id="authChangeEmailBtn" data-i18n="useDifferentEmail">Use a different email</button>
     </div>
     <div class="auth-reset-panel" id="authResetPanel" hidden>
@@ -2276,7 +2276,7 @@
       <span data-i18n="verificationEmailMissing">Still waiting for a verification email?</span>
       <button type="button" class="auth-resend" id="authResendBtn" data-i18n="resendVerification">Resend verification email</button>
     </div>
-    <p class="auth-note" id="authNote">Your schedules are encrypted in transit and isolated by account-level database policies.</p>
+    <p class="auth-note" id="authNote">Schedules are encrypted in transit and protected by account-level access controls.</p>
   </section>
 </div>
 
@@ -2284,8 +2284,8 @@
   <!-- Scrolling configuration column -->
   <div class="configurator-column">
     <div class="configurator-intro">
-      <h1 data-i18n-html="configuratorTitle">Choose the details.<br>Build your shortlist.</h1>
-      <p data-i18n="configuratorDescription">Add course options and set your semester priorities. When everything is ready, ConCourse opens your ranked timetable in a dedicated full-screen view.</p>
+      <h1 data-i18n-html="configuratorTitle">Choose courses.<br>Set your priorities.</h1>
+      <p data-i18n="configuratorDescription">Add courses, set priorities, and generate ranked timetables.</p>
     </div>
     <nav class="configurator-nav" aria-label="Planner sections">
       <a href="#courseSelectionHandoffPanel"><span>01</span><b data-i18n="courses">Courses</b></a>
@@ -2295,7 +2295,7 @@
       <div class="selection-assistant-heading">
         <div>
           <h2 id="selectionAssistantTitle" data-i18n="selectionAssistantTitle">Choose courses with the Assistant</h2>
-          <p data-i18n="selectionAssistantDescription">Search and compare current-term choices in a focused view, then bring your preferred sections back here to finish the timetable.</p>
+          <p data-i18n="selectionAssistantDescription">Compare current courses, then send selected sections to your timetable.</p>
         </div>
         <a class="selection-assistant-launch" href="assistant/">
           <span data-i18n="openSelectionAssistant">Open Assistant</span>
@@ -2312,26 +2312,26 @@
           <span class="selection-assistant-step-marker" aria-hidden="true">1</span>
           <span class="selection-assistant-step-copy">
             <b data-i18n="selectionStepSearchTitle">Search and compare</b>
-            <span data-i18n="selectionStepSearchDescription">Use a course title, code, subject, instructor, or semester to find possible matches.</span>
+            <span data-i18n="selectionStepSearchDescription">Search by title, code, subject, instructor, or semester.</span>
           </span>
         </li>
         <li class="selection-assistant-step" data-selection-step="shortlist" data-state="upcoming">
           <span class="selection-assistant-step-marker" aria-hidden="true">2</span>
           <span class="selection-assistant-step-copy">
             <b data-i18n="selectionStepShortlistTitle">Choose preferred sections</b>
-            <span data-i18n="selectionStepShortlistDescription">Build a shortlist in the Assistant, then select Continue to Timetable.</span>
+            <span data-i18n="selectionStepShortlistDescription">Shortlist sections, then select Add to Timetable.</span>
           </span>
         </li>
         <li class="selection-assistant-step" data-selection-step="complete" data-state="upcoming">
           <span class="selection-assistant-step-marker" aria-hidden="true">3</span>
           <span class="selection-assistant-step-copy">
             <b data-i18n="selectionStepCompleteTitle">Complete timetable details</b>
-            <span data-i18n="selectionStepCompleteDescription">Returned choices appear below. Confirm any missing credits and meeting times before generating.</span>
+            <span data-i18n="selectionStepCompleteDescription">Confirm missing credits and meeting times.</span>
           </span>
         </li>
       </ol>
-      <p class="selection-assistant-session-note" data-i18n="selectionSessionNote">Keep the Assistant in this tab. The shortlist is bound to your signed-in account and is removed from the handoff after Timetable receives it.</p>
-      <a class="selection-assistant-manual-link" href="#courseBuilderPanel" data-i18n="selectionManualEntry">Already know the details? Enter a course manually below.</a>
+      <p class="selection-assistant-session-note" data-i18n="selectionSessionNote">Use this tab. Your shortlist is tied to your account and removed after import.</p>
+      <a class="selection-assistant-manual-link" href="#courseBuilderPanel" data-i18n="selectionManualEntry">Or enter a course manually.</a>
       <div
         class="selection-handoff-list"
         id="courseSelectionHandoffList"
@@ -2343,7 +2343,7 @@
     <div class="panel" id="courseBuilderPanel">
       <div class="panel-heading">
         <span class="panel-index">01</span>
-        <div><h2 data-i18n="courseBuilder">Course builder</h2><p data-i18n="courseBuilderDescription">Define each course and its available meeting pattern.</p></div>
+        <div><h2 data-i18n="courseBuilder">Course builder</h2><p data-i18n="courseBuilderDescription">Add courses and meeting times.</p></div>
       </div>
       <label data-i18n="courseName">Course name</label>
       <input id="cName" placeholder="e.g. Introduction to Algorithms" data-i18n-placeholder="courseNameExample" />
@@ -2371,10 +2371,10 @@
       </div>
 
       <div class="divider"></div>
-      <label data-i18n="sessionsPerWeek">Sessions per week (fixed structure of the course)</label>
+      <label data-i18n="sessionsPerWeek">Sessions per week</label>
       <select id="sessionsPerWeek">
-        <option value="1" data-i18n="oneSession">1 session — one class a week (e.g. 3 hours)</option>
-        <option value="2" data-i18n="twoSessions">2 sessions — two classes on different days (e.g. 2h + 1h)</option>
+        <option value="1" data-i18n="oneSession">1 session per week</option>
+        <option value="2" data-i18n="twoSessions">2 sessions per week</option>
         <option value="3" data-i18n="threeSessions">3 sessions per week</option>
         <option value="4" data-i18n="fourSessions">4 sessions per week</option>
         <option value="5" data-i18n="fiveSessions">5 sessions per week</option>
@@ -2383,10 +2383,10 @@
 
       <label class="chk" style="display:flex; align-items:flex-start; gap:8px; margin-top:12px;">
         <input type="checkbox" id="cMulti" style="width:auto; margin-top:3px;" />
-        <span data-i18n-html="multipleTimes">This professor offers the course at <b>more than one time</b> — I'll add each option.</span>
+        <span data-i18n-html="multipleTimes"><b>More than one time option</b> — add each option.</span>
       </label>
 
-      <label id="sessionLabel" style="margin-top:12px" data-i18n="addSessionTime">Add the session (day + time)</label>
+      <label id="sessionLabel" style="margin-top:12px" data-i18n="addSessionTime">Add session time</label>
       <div class="days" id="dayPicker" role="group" aria-labelledby="sessionLabel">
         <button type="button" class="day-chip" data-d="1" aria-pressed="false" data-i18n="monday">Mon</button>
         <button type="button" class="day-chip" data-d="2" aria-pressed="false" data-i18n="tuesday">Tue</button>
@@ -2417,7 +2417,7 @@
         <div class="slot-list" id="savedOptions"></div>
       </div>
 
-      <div class="hint" id="sessionHint" data-i18n="sessionHint">Add the day and time this course meets. All sessions are kept together as its fixed weekly schedule.</div>
+      <div class="hint" id="sessionHint" data-i18n="sessionHint">Add the complete weekly meeting pattern.</div>
 
       <div class="divider"></div>
       <button class="btn-primary" id="addCourse" style="width:100%" data-i18n="addCourse">Add course to wishlist</button>
@@ -2426,10 +2426,10 @@
     <div class="panel prefs" id="semesterPanel">
       <div class="panel-heading">
         <span class="panel-index">02</span>
-        <div><h2 data-i18n="semesterCriteria">Semester criteria</h2><p data-i18n="semesterCriteriaDescription">Set your credit target, course count, and availability.</p></div>
+        <div><h2 data-i18n="semesterCriteria">Semester criteria</h2><p data-i18n="semesterCriteriaDescription">Set credits, course count, and availability.</p></div>
       </div>
 
-      <label><span data-i18n="requiredCredits">Required credits this semester</span> <span style="color:var(--danger)">*</span> <span data-i18n="mandatory">(mandatory)</span></label>
+      <label><span data-i18n="requiredCredits">Required credits</span> <span style="color:var(--danger)">*</span> <span data-i18n="mandatory">(required)</span></label>
       <div class="row">
         <div>
           <input id="minCredits" type="number" min="0" step="1" placeholder="e.g. 15 — required" data-i18n-placeholder="minimumCredits" />
@@ -2443,7 +2443,7 @@
         <legend data-i18n="courseCount">How many courses do you want?</legend>
         <label class="choice sel">
           <input type="radio" name="countMode" value="fewest" checked />
-          <span class="c-txt" data-i18n-html="fewestCourses"><b>Fewest courses to reach my credits</b> — hit the required credits with as few courses as possible.</span>
+          <span class="c-txt" data-i18n-html="fewestCourses"><b>Fewest courses to meet my credit target</b></span>
         </label>
         <div class="choice choice-exact">
           <label class="choice-hit-area" for="exactCountMode" aria-hidden="true"></label>
@@ -2456,9 +2456,9 @@
         </div>
       </fieldset>
 
-      <label id="freeDayLabel" data-i18n="freeWeekdays">Free weekdays (a day off, besides the weekend)</label>
+      <label id="freeDayLabel" data-i18n="freeWeekdays">Preferred free weekdays</label>
       <select id="freeCount">
-        <option value="0" data-i18n="noFreeDayPreference">None — no preference</option>
+        <option value="0" data-i18n="noFreeDayPreference">No preference</option>
         <option value="1" data-i18n="oneFreeWeekday">At least 1 free weekday</option>
         <option value="2" data-i18n="twoFreeWeekdays">At least 2 free weekdays</option>
       </select>
@@ -2472,11 +2472,11 @@
 
       <div class="divider"></div>
       <h2 class="subsection-title" data-i18n="schedulePreferences">Schedule preferences</h2>
-      <label class="chk"><input type="checkbox" id="pCompact" checked /> <span data-i18n="compactClasses">Prefer compact classes (keep each day's classes close together, less waiting on campus)</span></label>
+      <label class="chk"><input type="checkbox" id="pCompact" checked /> <span data-i18n="compactClasses">Prefer compact classes</span></label>
       <label class="chk"><input type="checkbox" id="pFewDays" checked /> <span data-i18n="fewerDays">Prefer fewer days on campus</span></label>
       <label class="chk"><input type="checkbox" id="pNoEarly" /> <span data-i18n="avoidBefore">Avoid classes before</span> <input id="earlyTime" type="time" value="09:00" style="width:auto; display:inline-block; padding:4px 6px" /></label>
       <label class="chk"><input type="checkbox" id="pNoLate" /> <span data-i18n="avoidAfter">Avoid classes after</span> <input id="lateTime" type="time" value="17:00" style="width:auto; display:inline-block; padding:4px 6px" /></label>
-      <label style="margin-top:12px" data-i18n="dailyBreaks">Daily breaks to keep free (optional)</label>
+      <label style="margin-top:12px" data-i18n="dailyBreaks">Free time blocks (optional)</label>
       <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:center;">
         <input id="breakStart" type="time" value="12:00" />
         <input id="breakEnd" type="time" value="13:00" />
@@ -2520,14 +2520,14 @@
               </select>
             </label>
           </div>
-          <p class="wishlist-profile-note" data-i18n="academicProfileNote">Saved with your account and attached to your final semester timetable.</p>
+          <p class="wishlist-profile-note" data-i18n="academicProfileNote">Saved to your account and final timetable.</p>
         </div>
         <h2 data-i18n="courseWishlist">Course wishlist</h2>
-        <p data-i18n="wishlistDescription">Everything you add appears here. Review your choices before generating the final timetable.</p>
+        <p data-i18n="wishlistDescription">Review courses before generating your timetable.</p>
       </div>
       <div class="wishlist-count" id="wishlistCount">0 courses</div>
     </div>
-    <div id="courseList"><div class="empty-note" data-i18n="noCourses">No courses added. Use Course builder to begin.</div></div>
+    <div id="courseList"><div class="empty-note" data-i18n="noCourses">No courses yet. Add one in Course builder.</div></div>
     <div class="toolbar wishlist-toolbar">
       <button class="btn-ghost" id="loadSample" data-i18n="loadSample">Load sample data</button>
       <button class="btn-ghost" id="clearAll" data-i18n="clearAll">Clear all</button>
@@ -2541,13 +2541,13 @@
     <button class="btn-ghost schedule-back" id="editSelections"><span aria-hidden="true">←</span> <span data-i18n="editSelections">Edit selections</span></button>
     <div>
       <h1 data-i18n="weeklyTimetable">Weekly timetable</h1>
-      <p data-i18n="timetableDescription">Compare ranked options, review the tradeoffs, and save the schedule that works for you.</p>
+      <p data-i18n="timetableDescription">Compare options and save one.</p>
     </div>
   </div>
   <div class="panel" id="timetablePanel">
     <div class="grid-head">
       <div class="panel-heading timetable-heading">
-        <div><h2 data-i18n="bestSchedule">Best conflict-free schedule</h2><p data-i18n="bestScheduleDescription">Your highest-ranked option is shown at full scale.</p></div>
+        <div><h2 data-i18n="bestSchedule">Best conflict-free schedule</h2><p data-i18n="bestScheduleDescription">Highest-ranked option.</p></div>
       </div>
       <div id="scoreArea"></div>
     </div>
@@ -2556,7 +2556,7 @@
     <div class="final-timetable-bar">
       <div class="final-timetable-copy">
         <b data-i18n="finalTimetableTitle">Final semester timetable</b>
-        <span id="finalTimetableStatus" data-i18n="finalTimetableNotSaved">No final timetable has been saved yet.</span>
+        <span id="finalTimetableStatus" data-i18n="finalTimetableNotSaved">Not saved yet.</span>
       </div>
       <div class="final-timetable-actions">
         <button type="button" class="btn-ghost" id="enterMemberHub" hidden data-i18n="enterStudentHub">Enter student hub</button>
@@ -2572,7 +2572,7 @@
       <span id="colorLegend" class="cm-legend"></span>
     </div>
     <div id="calArea">
-      <div class="empty-note" data-i18n="emptySchedule">Add courses, define your semester criteria, and generate ranked schedules to view your timetable.</div>
+      <div class="empty-note" data-i18n="emptySchedule">Add courses, then generate a timetable.</div>
     </div>
   </div>
 </section>
@@ -2737,7 +2737,7 @@
                   <input type="radio" name="citationEntryMode" value="manual" />
                   <span>
                     <b data-academic-i18n="citationManualMode">Enter manually</b>
-                    <small data-academic-i18n="citationManualModeHint">Type every source detail yourself.</small>
+                    <small data-academic-i18n="citationManualModeHint">Enter the source details.</small>
                   </span>
                 </label>
               </div>
@@ -2750,7 +2750,7 @@
                   </div>
                 </div>
                 <p class="citation-lookup-status" id="citationLookupStatus" role="status" aria-live="polite" aria-atomic="true"></p>
-                <p class="citation-lookup-note" id="citationLookupNote" data-academic-i18n="citationLookupNote">A pasted URL is checked directly. Keyword searches use Crossref’s free public scholarly metadata. Selecting a result lets ConCourse verify it before importing. Review every field.</p>
+                <p class="citation-lookup-note" id="citationLookupNote" data-academic-i18n="citationLookupNote">Keyword search uses Crossref. Review imported fields.</p>
                 <section class="citation-search-results" id="citationSearchResults" role="region" aria-labelledby="citationSearchResultsTitle" aria-busy="false" hidden>
                   <header class="citation-search-results-head">
                     <h3 id="citationSearchResultsTitle" data-academic-i18n="citationSearchResultsTitle">Search results</h3>
@@ -2910,16 +2910,16 @@
         </section>
 
         <section class="citation-style-compass" aria-labelledby="citationStyleCompassTitle">
-          <h2 id="citationStyleCompassTitle" data-academic-i18n="styleCompassTitle">Choose a style by discipline</h2>
+          <h2 id="citationStyleCompassTitle" data-academic-i18n="styleCompassTitle">Style guide</h2>
           <div class="citation-style-guide">
-            <article><b>APA 7</b><p data-academic-i18n="styleApaUse">Psychology, education, social sciences and many business courses.</p></article>
-            <article><b>MLA 9</b><p data-academic-i18n="styleMlaUse">Literature, languages, arts and other humanities subjects.</p></article>
-            <article><b>Chicago 17</b><p data-academic-i18n="styleChicagoUse">History and publishing; this tool generates a Chicago 17 bibliography entry and short note.</p></article>
-            <article><b>Harvard</b><p data-academic-i18n="styleHarvardUse">Common across universities and disciplines; local Harvard rules can differ.</p></article>
-            <article><b>IEEE</b><p data-academic-i18n="styleIeeeUse">Engineering, computer science, electronics and technical research.</p></article>
+            <article><b>APA 7</b><p data-academic-i18n="styleApaUse">Social sciences, education, and business.</p></article>
+            <article><b>MLA 9</b><p data-academic-i18n="styleMlaUse">Literature, languages, and the arts.</p></article>
+            <article><b>Chicago 17</b><p data-academic-i18n="styleChicagoUse">History and publishing.</p></article>
+            <article><b>Harvard</b><p data-academic-i18n="styleHarvardUse">Used across disciplines; local rules vary.</p></article>
+            <article><b>IEEE</b><p data-academic-i18n="styleIeeeUse">Engineering and computing.</p></article>
           </div>
-          <p class="citation-disclaimer" data-academic-i18n="citationDisclaimer">Generated references are a best-effort starting point. Always check your course, journal, or institution guide before submitting.</p>
-          <p class="citation-formatting-note" data-academic-i18n="citationFormattingNote">Capitalisation rules can depend on language and proper nouns; the generator preserves the title you enter.</p>
+          <p class="citation-disclaimer" data-academic-i18n="citationDisclaimer">Check every citation against your course or publication guide.</p>
+          <p class="citation-formatting-note" data-academic-i18n="citationFormattingNote"></p>
         </section>
       </section>
 
@@ -3099,7 +3099,7 @@
       </section>
 
       <section class="hub-view" data-hub-view="messages" hidden>
-        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="privateConversations">Private conversations</p><h2 data-i18n="campusMessages">Messages</h2></div><p data-i18n="messagesDescription">Message university peers by username, or connect worldwide through a shared market listing. Blocking and reporting controls protect both participants.</p></div>
+        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="privateConversations">Private</p><h2 data-i18n="campusMessages">Messages</h2></div><p data-i18n="messagesDescription">Message verified schoolmates or sellers. Blocking and reporting stay available.</p></div>
         <article class="hub-card hub-chat-card">
           <div class="hub-message-discovery">
             <div class="hub-chat-start">
@@ -3245,10 +3245,10 @@
       </section>
 
       <section class="hub-view" id="hubProfileView" data-hub-view="profile" aria-labelledby="hubProfileHeading" hidden>
-        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="identityAndTrust">Identity and trust</p><h2 id="hubProfileHeading" tabindex="-1" data-i18n="completeYourProfile">Complete your profile</h2></div><p data-i18n="profileDescription">Add optional details that help schoolmates recognize you. You control visibility and whether people may message you.</p></div>
+        <div class="hub-section-heading"><div><p class="hub-kicker" data-i18n="identityAndTrust">Identity and trust</p><h2 id="hubProfileHeading" tabindex="-1" data-i18n="completeYourProfile">Complete your profile</h2></div><p data-i18n="profileDescription">Choose what schoolmates can see and whether they can message you.</p></div>
         <div class="hub-profile-grid">
           <article class="hub-card">
-            <div class="hub-card-heading"><div><h2 data-i18n="personalDetails">Personal details</h2></div><p data-i18n="privateContactNote">Phone and WhatsApp details remain private in this release.</p></div>
+            <div class="hub-card-heading"><div><h2 data-i18n="personalDetails">Personal details</h2></div><p data-i18n="privateContactNote">Phone and WhatsApp stay private.</p></div>
             <div class="hub-avatar-editor">
               <button type="button" class="hub-avatar-preview" id="chooseProfileAvatar" aria-label="Choose a profile photo" data-i18n-aria-label="chooseProfilePhoto">
                 <span id="profileAvatarInitials" aria-hidden="true">CC</span>
@@ -3256,7 +3256,7 @@
                 <span class="hub-avatar-preview-overlay" data-i18n="replacePhoto">Replace</span>
               </button>
               <input id="profileAvatarInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/bmp,image/heic,image/heif,.jpg,.jpeg,.jfif,.png,.webp,.gif,.avif,.bmp,.heic,.heif,.heics,.heifs" hidden />
-              <div class="hub-avatar-editor-copy"><b data-i18n="profilePhoto">Profile photo</b><small data-i18n="profilePhotoHint">JPG, PNG, WebP, GIF, AVIF, BMP, and HEIC/HEIF are accepted. ConCourse removes metadata and stores a private, browser-compatible copy; SVG is blocked.</small><div class="hub-avatar-actions"><button type="button" class="btn-ghost" id="removeProfileAvatar" data-i18n="removePhoto">Remove photo</button></div></div>
+              <div class="hub-avatar-editor-copy"><b data-i18n="profilePhoto">Profile photo</b><small data-i18n="profilePhotoHint">JPG, PNG, WebP, GIF, AVIF, BMP, or HEIC/HEIF. Metadata is removed and the copy stays private; SVG is blocked.</small><div class="hub-avatar-actions"><button type="button" class="btn-ghost" id="removeProfileAvatar" data-i18n="removePhoto">Remove photo</button></div></div>
               <p class="hub-inline-status" id="avatarUploadStatus"></p>
             </div>
             <div class="hub-form-grid">
@@ -3267,7 +3267,7 @@
             </div>
           </article>
           <article class="hub-card">
-            <div class="hub-card-heading"><div><h2 data-i18n="socialConnections">Social connections</h2></div><p data-i18n="socialVerificationNote">Add authenticated account connections. Pasted profile links remain self-reported.</p></div>
+            <div class="hub-card-heading"><div><h2 data-i18n="socialConnections">Social connections</h2></div><p data-i18n="socialVerificationNote">Connected accounts are authenticated; pasted links are self-reported.</p></div>
             <div class="hub-connections-shell">
               <div class="hub-connection-tabs" role="tablist" aria-label="Connection types" data-i18n-aria-label="connectionTypes">
                 <button type="button" class="hub-connection-tab active" id="verifiedConnectionsTab" role="tab" aria-selected="true" aria-controls="verifiedConnectionsPanel" data-connection-tab="verified" data-i18n="verifiedAccounts">Verified accounts</button>
@@ -3304,7 +3304,7 @@
                 <p class="hub-inline-status" id="socialConnectionStatus" role="status" aria-live="polite"></p>
               </section>
               <section class="hub-connection-panel" id="profileLinksPanel" role="tabpanel" aria-labelledby="profileLinksTab" hidden>
-                <p class="hub-provider-disclosure" data-i18n="profileLinksDisclosure">These contacts are provided by you and are not verified by ConCourse. Phone and WhatsApp remain private.</p>
+                <p class="hub-provider-disclosure" data-i18n="profileLinksDisclosure">Pasted contacts are unverified; phone and WhatsApp stay private.</p>
                 <div class="hub-social-list">
                   <label><span>Instagram</span><input id="profileInstagram" type="url" placeholder="https://instagram.com/..." /><small data-i18n="verificationPending">Self-reported · no provider connection</small></label>
                   <label><span>WhatsApp</span><input id="profileWhatsapp" type="url" placeholder="https://wa.me/..." /><small data-i18n="verificationPending">Self-reported · no provider connection</small></label>
@@ -3584,7 +3584,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出价仅为非约束性的价格提议。请通过私信商定下一步；ConCourse 不会收取款项。",
     marketplaceMarkSoldConfirm:"仅在已完成线下交付后将商品标记为售出。此操作会关闭商品，但不能作为已付款的证明。",
     marketplaceMarkClaimed:"标记为已领取", marketplaceMarkClaimedConfirm:"仅在免费物品已完成交付后标记为已领取。", marketplaceCloseRequest:"关闭求购", marketplaceCloseRequestConfirm:"仅在你不再需要该物品时关闭这项求购。", marketplaceStatusClaimed:"已领取", marketplaceStatusRequestClosed:"求购已关闭",
-    brandTag:"轻松规划课程", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", courseEngineNav:"课程引擎", exploreCoursesNav:"课程引擎", courseSelectionNav:"选课助手", courseKeysNav:"课程资源库", section:"班别", language:"语言", appearance:"页面外观", dayMode:"日间", nightMode:"夜间", useDayMode:"使用日间外观", useNightMode:"使用夜间外观", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
+    brandTag:"轻松规划课程", returnWelcome:"返回欢迎页面", primaryDestinations:"主要功能", timetableNav:"课表", courseEngineNav:"课程", exploreCoursesNav:"课程", courseSelectionNav:"选课助手", courseKeysNav:"课程资源库", section:"班别", language:"语言", appearance:"页面外观", dayMode:"日间", nightMode:"夜间", useDayMode:"使用日间外观", useNightMode:"使用夜间外观", signIn:"登录", saveNow:"立即保存", signOut:"退出登录",
     heroTitle:"打造你最理想的<span>学期</span>",
     heroDescription:"添加所有心仪课程。ConCourse 会探索无冲突组合、满足学分目标，并按你的生活方式排序课表。",
     startPlanning:"开始规划",
@@ -3601,7 +3601,7 @@ const TRANSLATIONS = {
     configuratorTitle:"选择详细条件。<br>建立课程清单。",
     configuratorDescription:"添加课程选项并设置学期偏好。准备完成后，ConCourse 会在独立全屏页面中展示排名课表。",
     courses:"课程", criteria:"条件", courseBuilder:"课程设置", courseBuilderDescription:"设置每门课程及其可选上课时间。",
-    selectionAssistantTitle:"使用选课助手挑选课程", selectionAssistantDescription:"在专注页面搜索并比较本学期课程，再将首选班别带回此处完成课表。", openSelectionAssistant:"打开选课助手", selectionAssistantSteps:"选课步骤", selectionStepSearchTitle:"搜索并比较", selectionStepSearchDescription:"使用课程名称、代码、学科、教师或学期查找可能匹配项。", selectionStepShortlistTitle:"选择首选班别", selectionStepShortlistDescription:"在选课助手建立备选清单，然后选择“继续设置时间表”。", selectionStepCompleteTitle:"补全课表资料", selectionStepCompleteDescription:"返回的课程会显示在下方。生成课表前，请确认缺少的学分及上课时间。", selectionSessionNote:"请在当前标签页打开选课助手。备选清单只属于当前登录账户，时间表接收后会从交接资料中移除。", selectionManualEntry:"已经知道课程资料？可在下方手动输入。", selectionReturnedChoices:"已返回的课程选择", selectionStillNeeded:"仍需补充：{details}", selectionMissingCredits:"学分", selectionMissingMeetings:"上课时间", selectionReviewDetails:"补充课程资料", selectionStartHint:"从第 1 步开始；选课助手会把备选课程送回此处。", selectionAllComplete:"选课助手带回的课程已加入清单。可继续设置学期条件。", selectionCompletePrompt:"请为 {course} 补充{details}，然后加入课程清单。", selectionNeedsDetails:"请为 {course} 补充学分及完整上课时间。", setMeetingTimes:"设置上课时间", selectionReady:"已将 {count} 门课程带入课表流程。", selectionAccountMismatch:"这些备选课程来自另一个账户，未被载入。", selectionInvalid:"备选课程资料无法读取，请返回选课助手重试。", courseContextStaged:"已将 {course} 加入课表草稿。请确认学分并手动填写缺少的上课时间。", courseContextUnavailable:"无法确认该课程。请返回课程引擎重新选择。",
+    selectionAssistantTitle:"使用选课助手挑选课程", selectionAssistantDescription:"在专注页面搜索并比较本学期课程，再将首选班别带回此处完成课表。", openSelectionAssistant:"打开选课助手", selectionAssistantSteps:"选课步骤", selectionStepSearchTitle:"搜索并比较", selectionStepSearchDescription:"使用课程名称、代码、学科、教师或学期查找可能匹配项。", selectionStepShortlistTitle:"选择首选班别", selectionStepShortlistDescription:"在选课助手建立备选清单，然后选择“加入课表”。", selectionStepCompleteTitle:"补全课表资料", selectionStepCompleteDescription:"返回的课程会显示在下方。生成课表前，请确认缺少的学分及上课时间。", selectionSessionNote:"请在当前标签页打开选课助手。备选清单只属于当前登录账户，课表接收后会从交接资料中移除。", selectionManualEntry:"已经知道课程资料？可在下方手动输入。", selectionReturnedChoices:"已返回的课程选择", selectionStillNeeded:"仍需补充：{details}", selectionMissingCredits:"学分", selectionMissingMeetings:"上课时间", selectionReviewDetails:"补充课程资料", selectionStartHint:"从第 1 步开始；选课助手会把备选课程送回此处。", selectionAllComplete:"选课助手带回的课程已加入清单。可继续设置学期条件。", selectionCompletePrompt:"请为 {course} 补充{details}，然后加入课程清单。", selectionNeedsDetails:"请为 {course} 补充学分及完整上课时间。", setMeetingTimes:"设置上课时间", selectionReady:"已将 {count} 门课程带入课表流程。", selectionAccountMismatch:"这些备选课程来自另一个账户，未被载入。", selectionInvalid:"备选课程资料无法读取，请返回选课助手重试。", courseContextStaged:"已将 {course} 加入课表草稿。请确认学分并手动填写缺少的上课时间。", courseContextUnavailable:"无法确认该课程。请返回课程页面重新选择。",
     courseName:"课程名称", courseCode:"课程代码", professor:"教师", credits:"学分", mustTake:"必须修读",
     courseNameExample:"例如：算法导论", courseCodeExample:"例如：CS 3410", professorExample:"例如：李教授",
     sessionsPerWeek:"每周上课次数（课程固定结构）", oneSession:"1 次 — 每周一堂课（例如 3 小时）", twoSessions:"2 次 — 每周两堂课（例如 2 小时 + 1 小时）", threeSessions:"每周 3 个时段", fourSessions:"每周 4 个时段", fiveSessions:"每周 5 个时段", sixSessions:"每周 6 个时段",
@@ -3686,7 +3686,7 @@ const TRANSLATIONS = {
     marketplaceOfferDisclaimer:"出價只係冇約束力嘅價錢建議。請用私訊商議下一步；ConCourse 唔會收取款項。",
     marketplaceMarkSoldConfirm:"只可以喺完成線下交收之後標記做已售出。呢個操作會關閉商品，但唔代表已經付款。",
     marketplaceMarkClaimed:"標記做已領取", marketplaceMarkClaimedConfirm:"只可以喺免費物品完成交收之後標記做已領取。", marketplaceCloseRequest:"關閉求購", marketplaceCloseRequestConfirm:"只可以喺你唔再需要件物品時關閉呢項求購。", marketplaceStatusClaimed:"已領取", marketplaceStatusRequestClosed:"求購已關閉",
-    brandTag:"輕鬆規劃課程", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", courseEngineNav:"課程引擎", exploreCoursesNav:"課程引擎", courseSelectionNav:"選科助手", courseKeysNav:"課程資源庫", section:"班別", language:"語言", appearance:"頁面外觀", dayMode:"日間", nightMode:"夜間", useDayMode:"使用日間外觀", useNightMode:"使用夜間外觀", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
+    brandTag:"輕鬆規劃課程", returnWelcome:"返回歡迎頁面", primaryDestinations:"主要功能", timetableNav:"時間表", courseEngineNav:"課程", exploreCoursesNav:"課程", courseSelectionNav:"選科助手", courseKeysNav:"課程資源庫", section:"班別", language:"語言", appearance:"頁面外觀", dayMode:"日間", nightMode:"夜間", useDayMode:"使用日間外觀", useNightMode:"使用夜間外觀", signIn:"登入", saveNow:"立即儲存", signOut:"登出",
     heroTitle:"砌出你最理想嘅<span>學期</span>",
     heroDescription:"加晒你想讀嘅科。ConCourse 會搵出冇撞時間嘅組合、達到學分目標，再按你嘅生活需要排列時間表。",
     startPlanning:"開始規劃",
@@ -3703,7 +3703,7 @@ const TRANSLATIONS = {
     configuratorTitle:"揀好詳細條件。<br>建立選科清單。",
     configuratorDescription:"加入課程選項同設定學期偏好。準備好之後，ConCourse 會喺獨立全畫面顯示排序時間表。",
     courses:"課程", criteria:"條件", courseBuilder:"課程設定", courseBuilderDescription:"設定每科同可選上課時段。",
-    selectionAssistantTitle:"用選科助手揀課程", selectionAssistantDescription:"喺專注頁面搜尋同比較今個學期嘅課程，再將首選班別帶返嚟完成時間表。", openSelectionAssistant:"打開選科助手", selectionAssistantSteps:"選科步驟", selectionStepSearchTitle:"搜尋同比較", selectionStepSearchDescription:"用課程名稱、編號、學科、教師或學期搵可能匹配項。", selectionStepShortlistTitle:"揀首選班別", selectionStepShortlistDescription:"喺選科助手建立備選清單，然後揀「繼續設定時間表」。", selectionStepCompleteTitle:"補齊時間表資料", selectionStepCompleteDescription:"帶返嚟嘅課程會顯示喺下面。產生時間表之前，請確認欠缺嘅學分同上堂時間。", selectionSessionNote:"請喺而家呢個分頁打開選科助手。備選清單只屬於目前登入帳戶，時間表收到之後會由交接資料移除。", selectionManualEntry:"已經知道課程資料？可以喺下面手動輸入。", selectionReturnedChoices:"已帶返嚟嘅課程選擇", selectionStillNeeded:"仲要補充：{details}", selectionMissingCredits:"學分", selectionMissingMeetings:"上堂時間", selectionReviewDetails:"補充課程資料", selectionStartHint:"由第 1 步開始；選科助手會將備選課程送返嚟呢度。", selectionAllComplete:"選科助手帶返嚟嘅課程已經加入清單。可以繼續設定學期條件。", selectionCompletePrompt:"請為 {course} 補充{details}，然後加入選科清單。", selectionNeedsDetails:"請為 {course} 補充學分同完整上堂時間。", setMeetingTimes:"設定上堂時間", selectionReady:"已將 {count} 科帶入時間表流程。", selectionAccountMismatch:"呢啲備選課程來自另一個帳戶，所以未有載入。", selectionInvalid:"備選課程資料無法讀取，請返回選科助手再試。", courseContextStaged:"已將 {course} 加入時間表草稿。請確認學分，同埋手動填寫欠缺嘅上堂時間。", courseContextUnavailable:"未能確認呢科。請返回課程引擎重新選擇。",
+    selectionAssistantTitle:"用選科助手揀課程", selectionAssistantDescription:"喺專注頁面搜尋同比較今個學期嘅課程，再將首選班別帶返嚟完成時間表。", openSelectionAssistant:"打開選科助手", selectionAssistantSteps:"選科步驟", selectionStepSearchTitle:"搜尋同比較", selectionStepSearchDescription:"用課程名稱、編號、學科、教師或學期搵可能匹配項。", selectionStepShortlistTitle:"揀首選班別", selectionStepShortlistDescription:"喺選科助手建立備選清單，然後揀「加入時間表」。", selectionStepCompleteTitle:"補齊時間表資料", selectionStepCompleteDescription:"帶返嚟嘅課程會顯示喺下面。產生時間表之前，請確認欠缺嘅學分同上堂時間。", selectionSessionNote:"請喺而家呢個分頁打開選科助手。備選清單只屬於目前登入帳戶，時間表收到之後會由交接資料移除。", selectionManualEntry:"已經知道課程資料？可以喺下面手動輸入。", selectionReturnedChoices:"已帶返嚟嘅課程選擇", selectionStillNeeded:"仲要補充：{details}", selectionMissingCredits:"學分", selectionMissingMeetings:"上堂時間", selectionReviewDetails:"補充課程資料", selectionStartHint:"由第 1 步開始；選科助手會將備選課程送返嚟呢度。", selectionAllComplete:"選科助手帶返嚟嘅課程已經加入清單。可以繼續設定學期條件。", selectionCompletePrompt:"請為 {course} 補充{details}，然後加入選科清單。", selectionNeedsDetails:"請為 {course} 補充學分同完整上堂時間。", setMeetingTimes:"設定上堂時間", selectionReady:"已將 {count} 科帶入時間表流程。", selectionAccountMismatch:"呢啲備選課程來自另一個帳戶，所以未有載入。", selectionInvalid:"備選課程資料無法讀取，請返回選科助手再試。", courseContextStaged:"已將 {course} 加入時間表草稿。請確認學分，同埋手動填寫欠缺嘅上堂時間。", courseContextUnavailable:"未能確認呢科。請返回課程頁面重新選擇。",
     courseName:"課程名稱", courseCode:"課程編號", professor:"教授", credits:"學分", mustTake:"必須修讀",
     courseNameExample:"例如：算法導論", courseCodeExample:"例如：CS 3410", professorExample:"例如：李教授",
     sessionsPerWeek:"每週上堂次數（課程固定結構）", oneSession:"1 次 — 每星期一堂（例如 3 小時）", twoSessions:"2 次 — 每星期兩堂（例如 2 小時 + 1 小時）", threeSessions:"每星期 3 個時段", fourSessions:"每星期 4 個時段", fiveSessions:"每星期 5 個時段", sixSessions:"每星期 6 個時段",
@@ -4210,9 +4210,147 @@ Object.entries(AUTH_AND_DISPLAY_COPY).forEach(([language, copy]) => {
   TRANSLATIONS[language] = Object.assign(TRANSLATIONS[language] || {}, copy);
 });
 
+const COMPACT_INTERFACE_COPY = Object.freeze({
+  en:Object.freeze({
+    signIn:"Sign in", signOut:"Sign out", createAccount:"Create account", saveNow:"Save now",
+    accountTitle:"Your ConCourse account", startPlanning:"Start planning",
+    courseBuilder:"Course builder", semesterCriteria:"Semester criteria", schedulePreferences:"Schedule preferences",
+    academicProfile:"Academic profile", courseWishlist:"Course wishlist", weeklyTimetable:"Weekly timetable",
+    bestSchedule:"Best conflict-free schedule", finalTimetableTitle:"Final semester timetable",
+    saveFinalTimetable:"Save as final timetable", enterStudentHub:"Enter student hub",
+    personalDetails:"Personal details", socialConnections:"Social connections",
+    privacyAndSafety:"Privacy and safety", identityAndTrust:"Identity and trust",
+    completeYourProfile:"Complete your profile", authenticatedConnections:"Authenticated connections",
+    selfReportedProfiles:"Self-reported profiles", confirmPassword:"Confirm password",
+    privacySummary:"Privacy summary", forgotPassword:"Forgot password?", sendResetLink:"Send reset link",
+    resetPasswordTitle:"Reset your password", newPassword:"New password", updatePassword:"Update password",
+    accountControls:"Account controls", accountAction:"Account action", websiteLanguage:"Website language",
+    closeSignInDialog:"Close sign-in dialog", dismissNotification:"Dismiss notification",
+    heroDescription:"Build a conflict-free timetable that meets your credit goals.",
+    signInSubtitle:"Sign in to continue.",
+    signUpSubtitle:"Create your account and academic profile.",
+    verificationSubtitle:"Enter the code from your email.",
+    emailHelp:"Use an email you can access now; verification is required.",
+    signInNote:"Schedules are encrypted in transit and protected by account-level access controls.",
+    verificationCodeHelp:"Enter or paste the eight-digit code from your newest ConCourse email.",
+    academicProfileNote:"Saved to your account and final timetable.",
+    finalTimetableNotSaved:"Not saved yet.",
+    configuratorTitle:"Choose courses.<br>Set your priorities.",
+    configuratorDescription:"Add courses, set priorities, and generate ranked timetables.",
+    selectionAssistantDescription:"Compare current courses, then send selected sections to your timetable.",
+    selectionStepSearchDescription:"Search by title, code, subject, instructor, or semester.",
+    selectionStepShortlistDescription:"Shortlist sections, then select Add to Timetable.",
+    selectionStepCompleteDescription:"Confirm missing credits and meeting times.",
+    selectionSessionNote:"Use this tab. Your shortlist is tied to your account and removed after import.",
+    selectionManualEntry:"Or enter a course manually.",
+    courseBuilderDescription:"Add courses and meeting times.",
+    sessionsPerWeek:"Sessions per week", oneSession:"1 session per week", twoSessions:"2 sessions per week",
+    multipleTimes:"<b>More than one time option</b> — add each option.",
+    addSessionTime:"Add session time", sessionHint:"Add the complete weekly meeting pattern.",
+    semesterCriteriaDescription:"Set credits, course count, and availability.",
+    requiredCredits:"Required credits", mandatory:"(required)",
+    fewestCourses:"<b>Fewest courses to meet my credit target</b>",
+    freeWeekdays:"Preferred free weekdays", noFreeDayPreference:"No preference",
+    compactClasses:"Prefer compact classes", dailyBreaks:"Free time blocks (optional)",
+    wishlistDescription:"Review courses before generating your timetable.",
+    noCourses:"No courses yet. Add one in Course builder.",
+    timetableDescription:"Compare options and save one.",
+    bestScheduleDescription:"Highest-ranked option.",
+    emptySchedule:"Add courses, then generate a timetable.",
+    profileDescription:"Choose what schoolmates can see and whether they can message you.",
+    privateContactNote:"Phone and WhatsApp stay private.",
+    profilePhotoHint:"JPG, PNG, WebP, GIF, AVIF, BMP, or HEIC/HEIF. Metadata is removed and the copy stays private; SVG is blocked.",
+    socialVerificationNote:"Connected accounts are authenticated; pasted links are self-reported.",
+    profileLinksDisclosure:"Pasted contacts are unverified; phone and WhatsApp stay private.",
+    messagesDescription:"Message verified schoolmates or sellers. Blocking and reporting stay available."
+  }),
+  "zh-CN":Object.freeze({
+    heroDescription:"建立符合学分目标、没有时间冲突的课表。",
+    signInSubtitle:"登录以继续。",
+    signUpSubtitle:"创建账户和学术资料。",
+    verificationSubtitle:"输入邮件中的验证码。",
+    emailHelp:"请使用现在可以查收的邮箱；必须完成验证。",
+    signInNote:"课表在传输过程中加密，并受账户级访问控制保护。",
+    verificationCodeHelp:"输入或粘贴最新 ConCourse 邮件中的八位验证码。",
+    academicProfileNote:"保存到你的账户和最终课表。",
+    finalTimetableNotSaved:"尚未保存。",
+    configuratorTitle:"选择课程。<br>设置优先条件。",
+    configuratorDescription:"添加课程、设置优先条件并生成排名课表。",
+    selectionAssistantDescription:"比较本学期课程，再将所选班别加入课表。",
+    selectionStepSearchDescription:"按名称、代码、学科、教师或学期搜索。",
+    selectionStepShortlistDescription:"选择班别，再点击“加入课表”。",
+    selectionStepCompleteDescription:"确认缺少的学分和上课时间。",
+    selectionSessionNote:"请使用当前标签页。清单与账户绑定，导入后会移除。",
+    selectionManualEntry:"或手动输入课程。",
+    courseBuilderDescription:"添加课程和上课时间。",
+    sessionsPerWeek:"每周课次", oneSession:"每周 1 次", twoSessions:"每周 2 次",
+    multipleTimes:"<b>多个时段选项</b>：请逐一添加。",
+    addSessionTime:"添加上课时间", sessionHint:"添加完整的每周上课安排。",
+    semesterCriteriaDescription:"设置学分、课程数量和可上课时间。",
+    requiredCredits:"所需学分", mandatory:"（必填）",
+    fewestCourses:"<b>用最少课程达到学分目标</b>",
+    freeWeekdays:"希望保留的无课平日", noFreeDayPreference:"不限制",
+    compactClasses:"优先紧凑排课", dailyBreaks:"保留空闲时段（选填）",
+    wishlistDescription:"生成课表前请检查课程。",
+    noCourses:"尚未添加课程。请在课程设置中添加。",
+    timetableDescription:"比较方案并保存一个。",
+    bestScheduleDescription:"排名最高的方案。",
+    emptySchedule:"添加课程，然后生成课表。",
+    profileDescription:"选择同学可查看的内容，以及是否允许私信。",
+    privateContactNote:"电话和 WhatsApp 保持私密。",
+    profilePhotoHint:"支持 JPG、PNG、WebP、GIF、AVIF、BMP 或 HEIC/HEIF。系统会移除元数据并保持副本私密；SVG 会被拦截。",
+    socialVerificationNote:"已连接账户经过平台授权；粘贴的链接由用户自行提供。",
+    profileLinksDisclosure:"粘贴的联系方式未经验证；电话和 WhatsApp 保持私密。",
+    messagesDescription:"私信联系已验证同学或卖家；可随时拉黑或举报。"
+  }),
+  "zh-HK":Object.freeze({
+    heroDescription:"建立符合學分目標、沒有時間衝突的時間表。",
+    signInSubtitle:"登入以繼續。",
+    signUpSubtitle:"建立帳戶和學術資料。",
+    verificationSubtitle:"輸入電郵中的驗證碼。",
+    emailHelp:"請使用現時可以查收的電郵；必須完成驗證。",
+    signInNote:"時間表在傳輸期間會加密，並受帳戶層級存取控制保護。",
+    verificationCodeHelp:"輸入或貼上最新 ConCourse 電郵中的八位驗證碼。",
+    academicProfileNote:"儲存到你的帳戶和最終時間表。",
+    finalTimetableNotSaved:"尚未儲存。",
+    configuratorTitle:"選擇課程。<br>設定優先條件。",
+    configuratorDescription:"加入課程、設定優先條件並產生已排名的時間表。",
+    selectionAssistantDescription:"比較本學期課程，再將所選班別加入時間表。",
+    selectionStepSearchDescription:"按名稱、編號、學科、導師或學期搜尋。",
+    selectionStepShortlistDescription:"選擇班別，再按「加入時間表」。",
+    selectionStepCompleteDescription:"確認欠缺的學分和上課時間。",
+    selectionSessionNote:"請使用目前的分頁。清單與帳戶綁定，匯入後會移除。",
+    selectionManualEntry:"或手動輸入課程。",
+    courseBuilderDescription:"加入課程和上課時間。",
+    sessionsPerWeek:"每星期課次", oneSession:"每星期 1 次", twoSessions:"每星期 2 次",
+    multipleTimes:"<b>多個時段選項</b>：請逐一加入。",
+    addSessionTime:"加入上課時間", sessionHint:"加入完整的每星期上課安排。",
+    semesterCriteriaDescription:"設定學分、科目數量和可上課時間。",
+    requiredCredits:"所需學分", mandatory:"（必填）",
+    fewestCourses:"<b>用最少科目達到學分目標</b>",
+    freeWeekdays:"希望保留的無課平日", noFreeDayPreference:"不限制",
+    compactClasses:"優先安排緊湊時間表", dailyBreaks:"保留空閒時段（選填）",
+    wishlistDescription:"產生時間表前請檢查課程。",
+    noCourses:"尚未加入課程。請在課程設定中加入。",
+    timetableDescription:"比較方案並儲存一個。",
+    bestScheduleDescription:"排名最高的方案。",
+    emptySchedule:"加入課程，然後產生時間表。",
+    profileDescription:"選擇同學可查看的內容，以及是否允許他們傳送訊息。",
+    privateContactNote:"電話和 WhatsApp 保持私密。",
+    profilePhotoHint:"支援 JPG、PNG、WebP、GIF、AVIF、BMP 或 HEIC/HEIF。系統會移除中繼資料並保持副本私密；SVG 會被封鎖。",
+    socialVerificationNote:"已連接帳戶經過平台授權；貼上的連結由用戶自行提供。",
+    profileLinksDisclosure:"貼上的聯絡方式未經驗證；電話和 WhatsApp 保持私密。",
+    messagesDescription:"私訊聯絡已驗證同學或賣家；可以隨時封鎖或舉報。"
+  })
+});
+
+Object.entries(COMPACT_INTERFACE_COPY).forEach(([language, copy]) => {
+  TRANSLATIONS[language] = Object.assign(TRANSLATIONS[language] || {}, copy);
+});
+
 function t(key, variables={}){
   const english = {
-    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", courseEngineNav:"Course Engine", exploreCoursesNav:"Course Engine", courseSelectionNav:"Select Courses", courseKeysNav:"CourseKeys", section:"Section", appearance:"Page appearance", dayMode:"Day", nightMode:"Night", useDayMode:"Use day appearance", useNightMode:"Use night appearance", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
+    signIn:"Sign in", createAccount:"Create account", saveNow:"Save now", primaryDestinations:"Primary destinations", timetableNav:"Timetable", courseEngineNav:"Courses", exploreCoursesNav:"Courses", courseSelectionNav:"Select Courses", courseKeysNav:"CourseKeys", section:"Section", appearance:"Page appearance", dayMode:"Day", nightMode:"Night", useDayMode:"Use day appearance", useNightMode:"Use night appearance", notSignedIn:"Not signed in", signInUnlock:"Sign in to unlock your course planner.", returnWelcome:"Return to the welcome screen",
     hubCommunity:"Campus community", hubMarketplace:"Campus market", hubMessages:"Messages", hubAcademicTools:"Academic tools", hubInsights:"Academic insights", hubProfile:"Profile",
     signInSubtitle:"Sign in to continue to your planning workspace.", signUpSubtitle:"Create your academic profile and planning workspace.", verificationSubtitle:"Enter the code from your email to finish creating your account.",
     signUpNote:"Institution matching confirms that a school exists; it does not verify current enrollment.",
@@ -4248,7 +4386,7 @@ function t(key, variables={}){
     notIncludedTitle:"Not included in this schedule:", exactMixReason:"you asked for exactly {count} courses, and this mix hits {credits} credits", fewestMixReason:"this schedule already hits {credits} credits with just {count} courses",
     otherOptionsMix:"Other ranked options may use a different course mix.", mustTakeLegend:"Must-take", electiveLegend:"Elective",
     addSession:"+ Add session", noCourses:"No courses added. Use Course Builder to begin.",
-    selectionAssistantTitle:"Choose courses with the Assistant", selectionAssistantDescription:"Search and compare current-term choices in a focused view, then bring your preferred sections back here to finish the timetable.", openSelectionAssistant:"Open Assistant", selectionAssistantSteps:"Course selection steps", selectionStepSearchTitle:"Search and compare", selectionStepSearchDescription:"Use a course title, code, subject, instructor, or semester to find possible matches.", selectionStepShortlistTitle:"Choose preferred sections", selectionStepShortlistDescription:"Build a shortlist in the Assistant, then select Continue to Timetable.", selectionStepCompleteTitle:"Complete timetable details", selectionStepCompleteDescription:"Returned choices appear below. Confirm any missing credits and meeting times before generating.", selectionSessionNote:"Keep the Assistant in this tab. The shortlist is bound to your signed-in account and is removed from the handoff after Timetable receives it.", selectionManualEntry:"Already know the details? Enter a course manually below.", selectionReturnedChoices:"Returned course choices", selectionStillNeeded:"Still needed: {details}", selectionMissingCredits:"credits", selectionMissingMeetings:"meeting times", selectionReviewDetails:"Complete Details", selectionStartHint:"Start with step 1; the Assistant will return your shortlist here.", selectionAllComplete:"Your Assistant courses are in the wishlist. Continue with the semester criteria.", selectionCompletePrompt:"Complete {details} for {course}, then add it to the wishlist.", selectionNeedsDetails:"Add credits and the complete meeting pattern for {course}.", setMeetingTimes:"Set Meeting Times", selectionReady:"{count} course choices were brought into the Timetable workflow.", selectionAccountMismatch:"These course choices belong to another account and were not loaded.", selectionInvalid:"The course-selection handoff could not be read. Return to the Assistant and try again.", courseContextStaged:"{course} was added to your Timetable draft. Confirm its credits and enter any missing meeting times manually.", courseContextUnavailable:"That course could not be verified. Return to Course Engine and choose it again.",
+    selectionAssistantTitle:"Choose courses with the Assistant", selectionAssistantDescription:"Search and compare current-term choices in a focused view, then bring your preferred sections back here to finish the timetable.", openSelectionAssistant:"Open Assistant", selectionAssistantSteps:"Course selection steps", selectionStepSearchTitle:"Search and compare", selectionStepSearchDescription:"Use a course title, code, subject, instructor, or semester to find possible matches.", selectionStepShortlistTitle:"Choose preferred sections", selectionStepShortlistDescription:"Build a shortlist in the Assistant, then select Add to Timetable.", selectionStepCompleteTitle:"Complete timetable details", selectionStepCompleteDescription:"Returned choices appear below. Confirm any missing credits and meeting times before generating.", selectionSessionNote:"Keep the Assistant in this tab. The shortlist is bound to your signed-in account and is removed from the handoff after Timetable receives it.", selectionManualEntry:"Already know the details? Enter a course manually below.", selectionReturnedChoices:"Returned course choices", selectionStillNeeded:"Still needed: {details}", selectionMissingCredits:"credits", selectionMissingMeetings:"meeting times", selectionReviewDetails:"Complete Details", selectionStartHint:"Start with step 1; the Assistant will return your shortlist here.", selectionAllComplete:"Your Assistant courses are in the wishlist. Continue with the semester criteria.", selectionCompletePrompt:"Complete {details} for {course}, then add it to the wishlist.", selectionNeedsDetails:"Add credits and the complete meeting pattern for {course}.", setMeetingTimes:"Set Meeting Times", selectionReady:"{count} course choices were brought into the Timetable workflow.", selectionAccountMismatch:"These course choices belong to another account and were not loaded.", selectionInvalid:"The course-selection handoff could not be read. Return to the Assistant and try again.", courseContextStaged:"{course} was added to your Timetable draft. Confirm its credits and enter any missing meeting times manually.", courseContextUnavailable:"That course could not be verified. Return to Courses and choose it again.",
     threeSessions:"3 sessions per week", fourSessions:"4 sessions per week", fiveSessions:"5 sessions per week", sixSessions:"6 sessions per week",
     emptySchedule:"Add courses, define your semester criteria, and generate ranked schedules to view your timetable.", sessionLabelOne:"Add the session (day + time)", sessionLabelTwo:"Add both sessions (day + time)", sessionLabelMany:"Add all {count} sessions (day + time)",
     sessionOnce:"This course meets once a week.", sessionTwice:"This course meets twice a week.", sessionMany:"This course meets {count} times a week.", multiSessionHint:"{base} Build one complete time option, save it, then add the professor's other options. ConCourse keeps each option together.",
@@ -6543,7 +6681,7 @@ function clearCourseContextRoute(){
 
 async function resolveCourseContext(courseKey){
   try {
-    const { loadCourseCatalogue } = await import("./course-tools/course-tools.mjs");
+    const { loadCourseCatalogue } = await import("./course-tools/course-tools.mjs?v=20260731-clean1");
     const catalogue = await loadCourseCatalogue();
     const group = catalogue.groups.find(candidate => (
       candidate.courseKey === courseKey
@@ -7391,9 +7529,9 @@ initializeAccount();
 </script>
 <script src="institution-portal-policy.js?v=20260729-institution1"></script>
 <script src="course-catalog.js?v=20260728-foundation1"></script>
-<script src="member-hub.js?v=20260731-unified1"></script>
-<script src="hkbu-portal.js?v=20260728-foundation1"></script>
-<script src="marketplace.js?v=20260731-unified1"></script>
-<script src="academic-tools.js?v=20260724-seeds2"></script>
+<script src="member-hub.js?v=20260731-clean1"></script>
+<script src="hkbu-portal.js?v=20260731-clean1"></script>
+<script src="marketplace.js?v=20260731-clean1"></script>
+<script src="academic-tools.js?v=20260731-clean1"></script>
 </body>
 </html>

@@ -196,22 +196,6 @@
   outline-offset: 3px;
 }
 
-html[lang="en"] :is(
-  h1,
-  h2,
-  h3,
-  .panel-heading h2,
-  .wishlist-header h2,
-  .schedule-page-header h1,
-  .hub-page-header h1,
-  .hub-section-heading h2,
-  .marketplace-section-heading h2,
-  .citation-panel h2,
-  .citation-panel h3
-) {
-  text-transform: capitalize;
-}
-
 @media (max-width: 1380px) and (min-width: 761px) {
   body.app-active #landingScreen .header-row {
     grid-template-columns: auto minmax(0, 1fr) auto !important;
@@ -295,4 +279,632 @@ html[lang="en"] :is(
   display: block !important;
   object-position: 54% 48%;
   animation: atlas-art-breathe 14s ease-in-out infinite alternate;
+}
+
+/* Clean copy rhythm and explicit appearance contrast ----------------------
+   This file is the final cascade layer. Keep the theme contract here so
+   historical page skins cannot reintroduce dark text on Night surfaces or
+   pale text on Day surfaces. */
+
+:root,
+html[data-theme="night"] {
+  --clarity-text: #f7fbff;
+  --clarity-text-soft: #c9d9e6;
+  --clarity-muted: #a9bfd0;
+  --clarity-line: rgba(166, 207, 235, .22);
+  --clarity-surface: #071e34;
+  --clarity-surface-soft: #0c2d4c;
+}
+
+html[data-theme="day"] {
+  --clarity-text: #061526;
+  --clarity-text-soft: #29445e;
+  --clarity-muted: #49657d;
+  --clarity-line: rgba(6, 21, 38, .18);
+  --clarity-surface: #f8fcff;
+  --clarity-surface-soft: #eaf4fb;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+}
+
+:where(
+  .hero-copy,
+  .configurator-intro,
+  .panel-heading,
+  .selection-assistant-heading,
+  .wishlist-header,
+  .schedule-page-header,
+  .hub-page-header,
+  .hub-section-heading,
+  .hub-card-heading,
+  .market-results-heading,
+  .marketplace-section-heading,
+  .citation-panel-heading
+) {
+  min-width: 0;
+  text-align: start;
+}
+
+:where(
+  .panel-heading,
+  .selection-assistant-heading,
+  .wishlist-header,
+  .schedule-page-header,
+  .hub-page-header,
+  .hub-section-heading,
+  .hub-card-heading,
+  .market-results-heading,
+  .marketplace-section-heading,
+  .citation-panel-heading
+) {
+  align-items: flex-start;
+}
+
+:where(
+  .hero-copy,
+  .configurator-intro,
+  .panel-heading,
+  .selection-assistant-heading,
+  .wishlist-header,
+  .schedule-page-header,
+  .hub-page-header,
+  .hub-section-heading,
+  .hub-card-heading,
+  .market-results-heading,
+  .marketplace-section-heading,
+  .citation-panel-heading
+) :is(h1, h2, h3, h4) {
+  margin-block: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+:where(
+  .hero-copy > p,
+  .configurator-intro > p,
+  .panel-heading p,
+  .selection-assistant-heading p,
+  .selection-assistant-step-copy > span,
+  .selection-assistant-session-note,
+  .wishlist-header p,
+  .wishlist-profile-note,
+  .schedule-page-header p,
+  .hub-page-header p,
+  .hub-section-heading > p,
+  .hub-card-heading p,
+  .market-results-heading p,
+  .marketplace-section-heading p,
+  .citation-panel-heading p,
+  .citation-lookup-note,
+  .citation-formatting-note,
+  .auth-note,
+  .auth-field-help,
+  .auth-privacy-details,
+  .private-name-note,
+  .start-hint,
+  .hint,
+  .empty-note
+) {
+  max-width: 62ch;
+  margin-block-end: 0;
+  overflow-wrap: anywhere;
+  text-align: start;
+  text-wrap: pretty;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+:where(
+  .panel-heading,
+  .selection-assistant-heading,
+  .hub-section-heading,
+  .hub-card-heading,
+  .market-results-heading,
+  .marketplace-section-heading,
+  .citation-panel-heading
+) p {
+  margin-block-start: 6px;
+}
+
+:where(
+  label,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  .choice,
+  .slot-item,
+  .course-card
+) {
+  font-family: inherit;
+}
+
+:where(
+  .choice,
+  .slot-item,
+  .course-card,
+  .selection-assistant-step,
+  .hub-navigation,
+  .market-mode-tabs
+) {
+  min-width: 0;
+}
+
+/* Day always reads in dark ink on light workspace surfaces. */
+html[data-theme="day"] :is(
+  .configurator-intro,
+  .configurator-column .panel,
+  #wishlistPanel,
+  .schedule-page-header,
+  #schedulePage #timetablePanel,
+  .selection-assistant-panel,
+  .auth-card
+) {
+  color: var(--clarity-text);
+}
+
+html[data-theme="day"] :is(
+  .configurator-intro,
+  .configurator-column .panel,
+  #wishlistPanel,
+  .schedule-page-header,
+  #schedulePage #timetablePanel,
+  .selection-assistant-panel,
+  .auth-card
+) :is(h1, h2, h3, h4, label) {
+  color: var(--clarity-text) !important;
+}
+
+html[data-theme="day"] :is(
+  .configurator-intro > p,
+  .panel-heading p,
+  .selection-assistant-heading p,
+  .selection-assistant-step-copy > span,
+  .selection-assistant-session-note,
+  .wishlist-header p,
+  .wishlist-profile-note,
+  .schedule-page-header p,
+  .auth-note,
+  .auth-field-help,
+  .auth-privacy-details,
+  .private-name-note,
+  .hint,
+  .empty-note
+) {
+  color: var(--clarity-muted) !important;
+}
+
+/* Night planner: dark work surfaces with consistently light copy. */
+html[data-theme="night"] {
+  color-scheme: dark;
+  --text: var(--clarity-text);
+  --ink: var(--clarity-text);
+  --ink-soft: var(--clarity-text-soft);
+  --muted: var(--clarity-muted);
+  --muted-2: #8faabe;
+  --panel: rgba(7, 30, 52, .97);
+  --panel-2: rgba(12, 45, 76, .94);
+  --border: var(--clarity-line);
+  --line-light: var(--clarity-line);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active),
+html[data-theme="night"] body.schedule-active,
+html[data-theme="night"] body.hub-active {
+  color: var(--clarity-text);
+  background:
+    radial-gradient(circle at 86% 4%, rgba(71, 124, 255, .16), transparent 34rem),
+    radial-gradient(circle at 8% 84%, rgba(110, 201, 245, .08), transparent 32rem),
+    linear-gradient(155deg, #061526, #092744 58%, #051321);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
+  color: var(--clarity-text);
+  background: linear-gradient(90deg, rgba(7, 30, 52, .98), rgba(12, 45, 76, .98));
+  border-bottom-color: var(--clarity-line);
+  box-shadow: 0 18px 36px -28px rgba(0, 0, 0, .86);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a {
+  color: var(--clarity-muted);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a:is(:hover, :focus-visible) {
+  color: var(--clarity-text);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) #courseBuilderPanel,
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) #semesterPanel {
+  color: var(--clarity-text);
+  background:
+    radial-gradient(ellipse 118% 104% at 48% 46%,
+      rgba(14, 55, 89, .97) 0 52%,
+      rgba(7, 31, 54, .96) 74%,
+      rgba(4, 22, 39, .28) 92%,
+      transparent 100%);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) :is(
+  .configurator-intro,
+  .configurator-column .panel,
+  .selection-assistant-panel,
+  #wishlistPanel
+) :is(h1, h2, h3, h4, label, .c-txt, .c-txt b, .course-title) {
+  color: var(--clarity-text) !important;
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) :is(
+  .configurator-intro > p,
+  .panel-heading p,
+  .selection-assistant-heading p,
+  .selection-assistant-step-copy > span,
+  .selection-assistant-session-note,
+  .wishlist-header p,
+  .wishlist-profile label,
+  .wishlist-profile-note,
+  .course-meta,
+  .sec-line,
+  .hint,
+  .empty-note
+) {
+  color: var(--clarity-muted) !important;
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) :is(
+  .configurator-column input,
+  .configurator-column select,
+  .configurator-column textarea,
+  #wishlistPanel select
+) {
+  color: var(--clarity-text) !important;
+  color-scheme: dark;
+  background-color: rgba(5, 27, 48, .94) !important;
+  border-color: var(--clarity-line) !important;
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) :is(
+  .configurator-column input,
+  .configurator-column textarea
+)::placeholder {
+  color: var(--clarity-muted) !important;
+  opacity: 1;
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) :is(
+  .configurator-column .choice,
+  .configurator-column .prefs label.chk,
+  .selection-assistant-step
+) {
+  color: var(--clarity-text-soft);
+  background: rgba(255, 255, 255, .025);
+  border-color: var(--clarity-line);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) :is(
+  .configurator-column .choice:hover,
+  .configurator-column .choice.sel,
+  .configurator-column .prefs label.chk:hover,
+  .configurator-column .prefs label.chk:has(input:checked),
+  .selection-assistant-step[data-state="current"]
+) {
+  color: var(--clarity-text);
+  background: rgba(110, 201, 245, .09);
+  border-color: rgba(139, 216, 255, .34);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel {
+  background:
+    radial-gradient(circle at 92% 0, rgba(91, 200, 245, .11), transparent 34%),
+    linear-gradient(145deg, rgba(9, 39, 66, .98), rgba(5, 26, 46, .97));
+  border-color: var(--clarity-line);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .2);
+}
+
+html[data-theme="night"] #wishlistPanel .wishlist-count {
+  color: var(--clarity-text-soft);
+  background: rgba(255, 255, 255, .06);
+  border-color: var(--clarity-line);
+}
+
+/* Night timetable: the calendar remains structured without reverting to a
+   white sheet or dark labels. */
+html[data-theme="night"] body.schedule-active .schedule-page-header h1,
+html[data-theme="night"] body.schedule-active #schedulePage #timetablePanel :is(
+  .panel-heading h2,
+  .stat b,
+  .cm-opt,
+  .cm-legend .lg,
+  .hint
+) {
+  color: var(--clarity-text) !important;
+}
+
+html[data-theme="night"] body.schedule-active :is(
+  .schedule-page-header > div > p:last-child,
+  #schedulePage #timetablePanel .panel-heading p,
+  #schedulePage #timetablePanel .stat,
+  #schedulePage #timetablePanel .color-bar .cm-label,
+  #schedulePage #timetablePanel .calendar-days,
+  #schedulePage #timetablePanel .empty-note
+) {
+  color: var(--clarity-muted) !important;
+}
+
+html[data-theme="night"] body.schedule-active #schedulePage #timetablePanel {
+  color: var(--clarity-text);
+  background:
+    linear-gradient(90deg,
+      transparent 0,
+      rgba(7, 30, 52, .9) 3%,
+      rgba(9, 39, 67, .99) 9% 91%,
+      rgba(7, 30, 52, .88) 97%,
+      transparent 100%);
+}
+
+html[data-theme="night"] body.schedule-active #schedulePage :is(
+  .stat-row,
+  .stat,
+  .alt-list,
+  .color-bar,
+  .cm-opt
+) {
+  border-color: var(--clarity-line);
+}
+
+html[data-theme="night"] body.schedule-active #schedulePage :is(
+  .stat,
+  .alt-btn,
+  .color-bar,
+  .cm-opt
+) {
+  background-color: transparent;
+}
+
+html[data-theme="night"] body.schedule-active #schedulePage .alt-btn {
+  color: var(--clarity-muted);
+}
+
+html[data-theme="night"] body.schedule-active #schedulePage .alt-btn:is(
+  :hover,
+  .active,
+  [aria-pressed="true"]
+) {
+  color: var(--clarity-text);
+}
+
+html[data-theme="night"] body.schedule-active #schedulePage .calendar-days {
+  background: linear-gradient(#092743 72%, rgba(9, 39, 67, 0));
+}
+
+html[data-theme="night"] body.schedule-active #schedulePage #calArea > .empty-note,
+html[data-theme="night"] body.schedule-active #timetablePanel #calArea > .empty-note {
+  color: var(--clarity-muted);
+  border-color: var(--clarity-line);
+  background:
+    linear-gradient(rgba(8, 34, 58, .9), rgba(8, 34, 58, .9)),
+    repeating-linear-gradient(90deg, transparent 0 18%, rgba(139, 216, 255, .08) 18% calc(18% + 1px)),
+    repeating-linear-gradient(0deg, transparent 0 64px, rgba(139, 216, 255, .08) 64px 65px);
+}
+
+/* Authentication follows the selected appearance instead of staying light in
+   both modes. */
+html[data-theme="night"] .auth-card {
+  color: var(--clarity-text);
+  background:
+    radial-gradient(circle at 96% 0%, rgba(139, 216, 255, .12), transparent 18rem),
+    linear-gradient(145deg, rgba(9, 39, 66, .99), rgba(5, 25, 44, .99));
+  border-color: rgba(139, 216, 255, .22);
+}
+
+html[data-theme="night"] .auth-card :is(
+  h1,
+  h2,
+  h3,
+  label,
+  .private-name-title b,
+  .auth-verification-heading b
+) {
+  color: var(--clarity-text) !important;
+}
+
+html[data-theme="night"] .auth-card :is(
+  .auth-note,
+  .auth-field-help,
+  .auth-privacy-details,
+  .private-name-note,
+  .auth-resend-row,
+  .auth-verification-heading div > span
+) {
+  color: var(--clarity-muted) !important;
+}
+
+html[data-theme="night"] .auth-card :is(input, select, textarea) {
+  color: var(--clarity-text) !important;
+  color-scheme: dark;
+  background: rgba(4, 24, 43, .9) !important;
+  border-color: var(--clarity-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+
+html[data-theme="night"] .auth-card :is(input, select, textarea):user-invalid {
+  border-color: #ff9fac !important;
+}
+
+html[data-theme="night"] .auth-card .field-status.matched {
+  color: #73e2bc !important;
+}
+
+html[data-theme="night"] .auth-card .field-status.error {
+  color: #ff9fac !important;
+}
+
+html[data-theme="night"] .auth-card :is(input, textarea)::placeholder {
+  color: var(--clarity-muted) !important;
+  opacity: 1;
+}
+
+html[data-theme="night"] :is(
+  .auth-mode-switch,
+  .private-name-block,
+  .auth-verification-panel,
+  .auth-consent
+) {
+  color: var(--clarity-text-soft);
+  background: rgba(255, 255, 255, .045);
+  border-color: var(--clarity-line);
+}
+
+html[data-theme="night"] .auth-mode-btn {
+  color: var(--clarity-muted);
+}
+
+html[data-theme="night"] .auth-mode-btn.active {
+  color: #061526;
+  background: #8bd8ff;
+}
+
+html[data-theme="night"] :is(
+  .auth-password-toggle,
+  .auth-privacy-details summary,
+  .auth-resend,
+  .auth-change-email
+) {
+  color: #9bdeff;
+}
+
+html[data-theme="night"] .auth-password-toggle {
+  background: rgba(139, 216, 255, .1);
+}
+
+html[data-theme="night"] .auth-password-toggle:hover {
+  color: #061526;
+  background: #8bd8ff;
+}
+
+html[data-theme="night"] .school-results {
+  color: var(--clarity-text);
+  background: #0a2946;
+  border-color: var(--clarity-line);
+}
+
+html[data-theme="night"] .school-result {
+  color: var(--clarity-text);
+}
+
+html[data-theme="night"] .school-result:is(:hover, .active) {
+  background: rgba(139, 216, 255, .1);
+}
+
+.hkbu-portal-heading,
+.hkbu-portal-status-row,
+.hkbu-portal-candidate-heading {
+  min-width: 0;
+  align-items: flex-start;
+  text-align: start;
+}
+
+.hkbu-portal-heading :is(h2, h3),
+.hkbu-portal-candidate-heading h3 {
+  margin-block: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+:where(
+  .hkbu-portal-description,
+  .hkbu-portal-note,
+  .hkbu-portal-meta,
+  .hkbu-portal-empty,
+  .hkbu-catalogue-caveats,
+  .hkbu-portal-inline-status
+) {
+  max-width: 62ch;
+  overflow-wrap: anywhere;
+  text-align: start;
+  text-wrap: pretty;
+  line-height: 1.5;
+}
+
+html[data-theme="day"] :is(
+  .hkbu-portal-card,
+  .hkbu-portal-planner-panel
+) {
+  color: var(--clarity-text);
+}
+
+html[data-theme="day"] :is(
+  .hkbu-portal-description,
+  .hkbu-portal-note,
+  .hkbu-portal-meta,
+  .hkbu-portal-empty,
+  .hkbu-catalogue-caveats,
+  .hkbu-portal-inline-status
+) {
+  color: var(--clarity-muted);
+}
+
+html[data-theme="night"] :is(
+  .hkbu-portal-card,
+  .hkbu-portal-planner-panel
+) {
+  color: var(--clarity-text);
+}
+
+html[data-theme="night"] :is(
+  .hkbu-portal-card,
+  .hkbu-portal-planner-panel
+) :is(h2, h3, label, b) {
+  color: var(--clarity-text);
+}
+
+html[data-theme="night"] :is(
+  .hkbu-portal-description,
+  .hkbu-portal-note,
+  .hkbu-portal-meta,
+  .hkbu-portal-empty,
+  .hkbu-catalogue-caveats,
+  .hkbu-portal-inline-status,
+  .hkbu-catalogue-course small,
+  .hkbu-portal-candidate span
+) {
+  color: var(--clarity-muted);
+}
+
+@media (max-width: 760px) {
+  :where(
+    .selection-assistant-heading,
+    .wishlist-header,
+    .schedule-page-header,
+    .hub-page-header,
+    .hub-section-heading,
+    .market-results-heading,
+    .marketplace-section-heading
+  ) {
+    gap: 12px;
+  }
+
+  :where(
+    .hero-copy > p,
+    .configurator-intro > p,
+    .panel-heading p,
+    .selection-assistant-heading p,
+    .wishlist-header p,
+    .schedule-page-header p,
+    .hub-page-header p,
+    .hub-section-heading > p
+  ) {
+    max-width: 100%;
+  }
+
+  .member-hub .hub-card-heading p {
+    margin: 6px 0 0;
+  }
 }

@@ -3804,3 +3804,45 @@ html[data-theme="night"] .member-hub .hub-support-history-heading {
     min-height: 52px;
   }
 }
+
+/* Concise Hub rhythm: empty helper copy should not reserve space, and
+   headings align from the same reading edge in every language. */
+.member-hub .hub-page-header-copy {
+  min-width: 0;
+  text-align: start;
+}
+
+.member-hub .hub-page-header :is(.hub-kicker, p):empty {
+  display: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+}
+
+.member-hub :is(.hub-inline-status, .hub-account-trust-status):empty {
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.member-hub .hub-card-heading {
+  align-items: flex-start;
+  text-align: start;
+}
+
+.member-hub .hub-card-heading p {
+  max-width: 44ch;
+  text-align: start;
+  text-wrap: pretty;
+}
+
+html[lang^="zh"] .member-hub :is(
+  .hub-page-header-copy,
+  .hub-card-heading,
+  .hub-section-heading,
+  .hub-account-trust-description
+) {
+  letter-spacing: normal;
+  line-break: strict;
+  word-break: normal;
+}
