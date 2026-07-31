@@ -62,7 +62,8 @@ window.addEventListener("concourse:hkbu-portal-snapshot", (event) => {
 - Data is held only in `chrome.storage.session`, not local or synced storage.
 - Sending requires a second click on a ConCourse origin explicitly allowlisted
   in `popup.js`; its title and description must also identify it as ConCourse.
-  The Pages build permits and packages only `https://concoursehk.com`.
+  The Pages build injects exactly one reviewed ConCourse origin: production for
+  a production build or the dedicated beta hostname for a beta build.
   Delivery uses the `concourse:hkbu-portal-snapshot` `CustomEvent`; no
   ConCourse host permission is requested.
 - The helper never automates MFA, replays a university session, registers a

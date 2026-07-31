@@ -1,20 +1,20 @@
-name: Deploy ConCourse to Cloudflare Pages
+name: Deploy ConCourse beta to Cloudflare Pages
 
 on:
   push:
     branches:
-      - main
+      - beta
 
 permissions:
   contents: read
 
 concurrency:
-  group: cloudflare-pages-concourse-production
+  group: cloudflare-pages-concourse-beta
   cancel-in-progress: true
 
 jobs:
   deploy:
-    name: Check, build, and deploy
+    name: Check, build, and deploy beta
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -32,15 +32,15 @@ jobs:
       - name: Run quality checks
         run: npm run check
 
-      - name: Build the public Pages artifact
+      - name: Build the beta Pages artifact
         run: npm run build:pages
         env:
-          CONCOURSE_DEPLOYMENT_ORIGIN: https://concoursehk.com
+          CONCOURSE_DEPLOYMENT_ORIGIN: https://beta.concoursehk.com
 
-      - name: Deploy the allowlisted artifact
+      - name: Deploy the beta artifact
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.114.0"
-          command: pages deploy dist --project-name=concourse --branch=cloudflare-migration
+          command: pages deploy dist --project-name=concourse --branch=beta

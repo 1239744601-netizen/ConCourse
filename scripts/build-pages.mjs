@@ -6,7 +6,13 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDirectory = path.join(projectRoot, "dist");
 const canonicalPublicOrigin = "https://concoursehk.com";
+const betaPublicOrigin = "https://beta.concoursehk.com";
 const primaryConnectorOrigin = "https://concoursehk.com";
+const workerOriginToken = "__CONCOURSE_DEPLOYMENT_ORIGIN__";
+const allowedDeploymentOrigins = new Set([
+  canonicalPublicOrigin,
+  betaPublicOrigin
+]);
 
 const publicFiles = Object.freeze([
   "index.html",
@@ -94,12 +100,15 @@ const connectorFiles = Object.freeze([
 
 const connectorArchivePath = "downloads/concourse-hkbu-portal-connector.zip";
 
-function normalizePublicOrigin(value) {
+function normalizeDeploymentOrigin(value) {
+  if (!value) {
+    throw new Error("CONCOURSE_DEPLOYMENT_ORIGIN must be set");
+  }
   let parsed;
   try {
     parsed = new URL(String(value || ""));
   } catch {
-    throw new Error("CONCOURSE_PUBLIC_ORIGIN must be an absolute HTTPS origin");
+    throw new Error("CONCOURSE_DEPLOYMENT_ORIGIN must be an absolute HTTPS origin");
   }
   if (
     parsed.protocol !== "https:"
@@ -109,7 +118,7 @@ function normalizePublicOrigin(value) {
     || parsed.search
     || parsed.hash
   ) {
-    throw new Error("CONCOURSE_PUBLIC_ORIGIN must contain only an HTTPS scheme and hostname");
+    throw new Error("CONCOURSE_DEPLOYMENT_ORIGIN must contain only an HTTPS scheme and hostname");
   }
   return parsed.origin;
 }
@@ -153,6 +162,18 @@ function renderIndex(source, publicOrigin) {
     `${publicOrigin}/concourse-marketplace-og.png`
   );
   return output;
+}
+
+function renderWorker(source, deploymentOrigin) {
+  const segments = source.split(workerOriginToken);
+  if (segments.length !== 2) {
+    throw new Error("Pages worker must contain exactly one deployment-origin token");
+  }
+  const rendered = segments.join(deploymentOrigin);
+  if (rendered.includes(workerOriginToken)) {
+    throw new Error("Pages worker deployment-origin injection failed");
+  }
+  return rendered;
 }
 
 function crc32(buffer) {
@@ -260,20 +281,28 @@ async function listOutputFiles(directory, prefix = "") {
 }
 
 async function build() {
-  const requestedPublicOrigin = normalizePublicOrigin(
-    process.env.CONCOURSE_PUBLIC_ORIGIN || canonicalPublicOrigin
+  const deploymentOrigin = normalizeDeploymentOrigin(
+    process.env.CONCOURSE_DEPLOYMENT_ORIGIN
   );
-  if (requestedPublicOrigin !== canonicalPublicOrigin) {
-    throw new Error(`CONCOURSE_PUBLIC_ORIGIN must be ${canonicalPublicOrigin}`);
+  if (!allowedDeploymentOrigins.has(deploymentOrigin)) {
+    throw new Error(
+      `CONCOURSE_DEPLOYMENT_ORIGIN must be ${canonicalPublicOrigin} or ${betaPublicOrigin}`
+    );
   }
   const publicOrigin = canonicalPublicOrigin;
   let stagingDirectory = await mkdtemp(path.join(projectRoot, ".pages-build-"));
   try {
     for (const relativePath of publicFiles) {
       const source = await readRequiredFile(relativePath);
-      const output = relativePath === "index.html"
-        ? Buffer.from(renderIndex(source.toString("utf8"), publicOrigin), "utf8")
-        : source;
+      let output = source;
+      if (relativePath === "index.html") {
+        output = Buffer.from(renderIndex(source.toString("utf8"), publicOrigin), "utf8");
+      } else if (relativePath === "_worker.js") {
+        output = Buffer.from(
+          renderWorker(source.toString("utf8"), deploymentOrigin),
+          "utf8"
+        );
+      }
       await writeBuildFile(stagingDirectory, relativePath, output);
     }
 
@@ -290,8 +319,15 @@ async function build() {
       const relativePath = `extensions/hkbu-portal-connector/${fileName}`;
       let source = await readRequiredFile(relativePath);
       if (fileName === "popup.js") {
-        const rendered = source.toString("utf8").replaceAll(primaryConnectorOrigin, publicOrigin);
-        if (!rendered.includes(publicOrigin)) {
+        const rendered = source.toString("utf8").replaceAll(
+          primaryConnectorOrigin,
+          deploymentOrigin
+        );
+        const connectorOriginIsIsolated = [...allowedDeploymentOrigins].every(
+          allowedOrigin =>
+            rendered.includes(allowedOrigin) === (allowedOrigin === deploymentOrigin)
+        );
+        if (!connectorOriginIsIsolated) {
           throw new Error("Connector origin injection failed");
         }
         source = Buffer.from(rendered, "utf8");
@@ -333,7 +369,7 @@ async function build() {
       actualFiles.map(async file => (await lstat(path.join(distDirectory, file))).size)
     )).reduce((sum, size) => sum + size, 0);
     console.log(
-      `Built ${actualFiles.length} allowlisted files (${totalBytes} bytes) for ${publicOrigin}`
+      `Built ${actualFiles.length} allowlisted files (${totalBytes} bytes) for ${deploymentOrigin}`
     );
   } finally {
     if (stagingDirectory) {

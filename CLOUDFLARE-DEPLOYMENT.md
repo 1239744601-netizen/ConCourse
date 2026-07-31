@@ -9,11 +9,22 @@
 - Build command: `npm run build:pages`
 - Published directory: `dist`
 
+## Beta
+
+- Review URL: `https://beta.concoursehk.com`
+- GitHub source branch: `beta`
+- Cloudflare preview branch label: `beta`
+- Build command: `npm run build:pages`
+- Published directory: `dist`
+
 The Pages project uses Direct Upload because Cloudflare does not allow one
 GitHub repository to use Pages Git integration across different Cloudflare
-accounts. `concoursehk.com` is the only public application origin. Cloudflare
-redirects the project's `pages.dev` hostname and deployment previews to the
-canonical domain.
+accounts. The application is served only from the production and beta hostnames.
+Provider-generated `pages.dev` hostnames are retired and cannot serve the
+application. The beta response is uncacheable and carries a search-engine
+`noindex` policy. Its canonical and social metadata intentionally point to the
+production origin so search engines and shared previews never treat beta as a
+second official site.
 
 ## Automatic deployments
 
@@ -25,6 +36,22 @@ publishes only the explicit allowlist assembled by `scripts/build-pages.mjs`;
 repository SQL, tests, documentation, patches, and Supabase source are not
 uploaded.
 
+`.github/workflows/cloudflare-pages-beta.yml` applies the same checks to every
+push to `beta`, builds an artifact bound only to `beta.concoursehk.com`, and
+publishes it to the Pages `beta` preview branch. The custom beta hostname is a
+proxied CNAME to `beta.concourse-95c.pages.dev`, as required for a Pages custom
+branch alias. Provider-generated branch and hash URLs are covered by the
+account redirect; the origin-bound Worker also returns `410 Gone` if one
+reaches it directly.
+
+Keep the Preview environment secret `CONCOURSE_BETA_ACCESS_TOKEN` encrypted in
+Cloudflare. The beta Worker refuses to serve any application or API response
+without the exact owner credential and fails closed when the secret is absent.
+Beta currently uses the production Supabase configuration, so it is a
+controlled release-review surface rather than a data-isolated staging
+environment. A wider beta requires a separate staging Supabase project and
+Cloudflare Access before access is expanded.
+
 GitHub Actions stores these encrypted repository secrets:
 
 - `CLOUDFLARE_ACCOUNT_ID`
@@ -35,15 +62,22 @@ The Cloudflare account-owned token is named
 and replace that token if repository access changes or the credential may have
 been exposed.
 
-## Updating production
+## Updating beta and production
 
-1. Make and test changes on `main`.
-2. Commit the intended files.
-3. Push `main` to GitHub.
-4. Confirm the `Deploy ConCourse to Cloudflare Pages` workflow succeeds.
-5. Smoke-test `https://concoursehk.com`.
+1. Merge reviewed feature work into `beta`.
+2. Confirm the beta workflow succeeds.
+3. Test the release at `https://beta.concoursehk.com`.
+4. Open and merge a `beta` to `main` pull request.
+5. Confirm the production workflow succeeds.
+6. Smoke-test `https://concoursehk.com`.
 
-Cloudflare retains earlier immutable deployments for rollback.
+Cloudflare retains earlier immutable deployments for rollback. On the current
+Pages project, the account redirect prevents those generated hostnames from
+serving a second public copy.
+
+Pages Runtime must use **Fail closed**. The domain allowlist is enforced by the
+Pages Function, so static assets must not be served if the Function allowance
+is exhausted.
 
 The `concoursehk.com` zone must keep Browser Cache TTL set to
 **Respect Existing Headers**. Mutable HTML, JavaScript, module, and stylesheet
