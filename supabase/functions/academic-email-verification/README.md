@@ -39,7 +39,7 @@ Supabase JWT, SMTP, or provider secret.
 ```sh
 supabase secrets set \
   ACADEMIC_EMAIL_OTP_PEPPER="GENERATE-A-LONG-RANDOM-SECRET" \
-  VERIFICATION_ALLOWED_ORIGINS="https://concourse-95c.pages.dev,https://concoursehk.pages.dev,https://1239744601-netizen.github.io" \
+  VERIFICATION_ALLOWED_ORIGINS="https://concoursehk.com" \
   ACADEMIC_EMAIL_PROVIDER="resend" \
   ACADEMIC_EMAIL_FROM_ADDRESS="verification@notify.your-domain.example" \
   ACADEMIC_EMAIL_FROM_NAME="ConCourse" \

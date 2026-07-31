@@ -5,12 +5,13 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDirectory = path.join(projectRoot, "dist");
-const defaultPublicOrigin = "https://concourse-95c.pages.dev";
-const primaryConnectorOrigin = "https://concourse-95c.pages.dev";
+const canonicalPublicOrigin = "https://concoursehk.com";
+const primaryConnectorOrigin = "https://concoursehk.com";
 
 const publicFiles = Object.freeze([
   "index.html",
   "_headers",
+  "_worker.js",
   "member-hub.css",
   "marketplace.css",
   "hkbu-portal.css",
@@ -259,9 +260,13 @@ async function listOutputFiles(directory, prefix = "") {
 }
 
 async function build() {
-  const publicOrigin = normalizePublicOrigin(
-    process.env.CONCOURSE_PUBLIC_ORIGIN || defaultPublicOrigin
+  const requestedPublicOrigin = normalizePublicOrigin(
+    process.env.CONCOURSE_PUBLIC_ORIGIN || canonicalPublicOrigin
   );
+  if (requestedPublicOrigin !== canonicalPublicOrigin) {
+    throw new Error(`CONCOURSE_PUBLIC_ORIGIN must be ${canonicalPublicOrigin}`);
+  }
+  const publicOrigin = canonicalPublicOrigin;
   let stagingDirectory = await mkdtemp(path.join(projectRoot, ".pages-build-"));
   try {
     for (const relativePath of publicFiles) {

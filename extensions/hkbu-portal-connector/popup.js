@@ -4,8 +4,7 @@
   const STORAGE_KEY = "hkbuPortalConnector.schemaV1";
   const EVENT_NAME = "concourse:hkbu-portal-snapshot";
   const CONCOURSE_ORIGINS = new Set([
-    "https://concoursehk.pages.dev",
-    "https://concourse-95c.pages.dev"
+    "https://concoursehk.com"
   ]);
   const SUPPORTED_HOSTS = new Set([
     "buniport.hkbu.edu.hk",

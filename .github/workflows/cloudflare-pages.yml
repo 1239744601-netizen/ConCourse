@@ -35,7 +35,7 @@ jobs:
       - name: Build the public Pages artifact
         run: npm run build:pages
         env:
-          CONCOURSE_PUBLIC_ORIGIN: https://concourse-95c.pages.dev
+          CONCOURSE_PUBLIC_ORIGIN: https://concoursehk.com
 
       - name: Deploy the allowlisted artifact
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0

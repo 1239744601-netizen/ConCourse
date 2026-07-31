@@ -188,6 +188,11 @@ test("zero-cost source search uses Crossref without a paid API secret", () => {
   assert.doesNotMatch(source, /Brave Search/u);
 });
 
+test("citation lookup allows configured origins exactly, without hosted-domain suffixes", () => {
+  assert.match(edgeSource, /CONFIGURED_ORIGINS\.has\(value\.origin\)/u);
+  assert.doesNotMatch(edgeSource, /CITATION_ALLOWED_HOST_SUFFIXES|pages\.dev|github\.io/u);
+});
+
 test("exact-result messaging follows the backend flag and Crossref is attributed", () => {
   assert.match(source, /data\?\.exactMatchOnly === true/u);
   assert.match(source, /includes\("crossref"\) \? tr\("citationSearchAttribution"\)/u);
