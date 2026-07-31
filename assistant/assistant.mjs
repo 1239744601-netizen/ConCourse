@@ -21,7 +21,7 @@ const COPY = Object.freeze({
     pageTitle: "Course Assistant",
     timetable: "Timetable",
     searchLabel: "Search courses or describe your interests",
-    searchPlaceholder: "Search courses or describe your interests",
+    searchPlaceholder: "Search courses or topics",
     resultsTitle: "Matches",
     shortlistTitle: "Shortlist",
     loading: "Searching…",

@@ -12,6 +12,7 @@
   --focus: #8bd8ff;
   --blue: #3978ff;
   --gold: #f4bf47;
+  --gold-text: #ffd66f;
   --paper: #fbfaf6;
   --paper-blue: #eaf6ff;
   --line: rgba(139, 216, 255, .18);
@@ -39,6 +40,7 @@ html[data-theme="day"] {
   --ink: #07172b;
   --ink-soft: #4b6378;
   --accent-text: #155eb8;
+  --gold-text: #765000;
   --focus: #155eb8;
   --danger: #a01933;
   --success: #116a4a;
@@ -295,7 +297,8 @@ html[data-theme="day"] .brand-mark-day {
 }
 
 .theme-control button {
-  min-height: 34px;
+  min-width: 44px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -319,7 +322,7 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
 }
 
 .language-control {
-  min-height: 40px;
+  min-height: 44px;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -342,7 +345,13 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
 }
 
 .language-control select option {
+  color: var(--ink);
+  background: #071c31;
+}
+
+html[data-theme="day"] .language-control select option {
   color: #07172b;
+  background: #f7fbff;
 }
 
 .coursekeys-global-notice {
@@ -372,17 +381,17 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
 .coursekeys-global-notice p {
   flex: 1;
   margin: 0;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.45;
 }
 
 .coursekeys-global-notice button {
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 8px;
   color: var(--accent-text);
   background: transparent;
   border: 0;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -397,10 +406,14 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
 .eyebrow {
   margin: 0;
   color: var(--accent-text);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 850;
-  letter-spacing: .16em;
+  letter-spacing: .13em;
   text-transform: uppercase;
+}
+
+.coursekeys-hero .eyebrow {
+  color: #9ee2ff;
 }
 
 .coursekeys-hero {
@@ -465,8 +478,9 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
   color: #fff;
   font-size: clamp(44px, 5vw, 72px);
   font-weight: 780;
-  letter-spacing: -.065em;
-  line-height: .94;
+  letter-spacing: -.04em;
+  line-height: 1;
+  word-spacing: .08em;
 }
 
 .hero-copy > p:not(.eyebrow) {
@@ -491,7 +505,7 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
   padding: 0 19px;
   border: 1px solid transparent;
   border-radius: 15px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 820;
   text-decoration: none;
   transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
@@ -561,8 +575,8 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
 }
 
 .wallet-heading span:not(.wallet-mark) {
-  color: rgba(231, 246, 255, .65);
-  font-size: 9px;
+  color: rgba(238, 248, 255, .82);
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .11em;
   text-transform: uppercase;
@@ -595,24 +609,24 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
 }
 
 .wallet-balance-grid span {
-  color: rgba(231, 246, 255, .65);
-  font-size: 9px;
+  color: rgba(238, 248, 255, .82);
+  font-size: 12px;
 }
 
 .coursekeys-wallet p {
   margin: 0;
-  color: rgba(231, 246, 255, .67);
-  font-size: 10px;
+  color: rgba(238, 248, 255, .82);
+  font-size: 13px;
   line-height: 1.6;
 }
 
 .coursekeys-wallet > button {
-  min-height: 43px;
-  color: rgba(255, 255, 255, .58);
+  min-height: 44px;
+  color: rgba(255, 255, 255, .78);
   background: rgba(255, 255, 255, .045);
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 13px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -632,7 +646,9 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
   margin: 7px 0 0;
   color: var(--ink);
   font-size: clamp(20px, 2.4vw, 30px);
-  letter-spacing: -.045em;
+  letter-spacing: -.025em;
+  line-height: 1.08;
+  word-spacing: .06em;
 }
 
 .readiness-strip ul {
@@ -671,15 +687,13 @@ html[data-theme="day"] .readiness-strip li {
 
 .readiness-strip b {
   color: var(--ink);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .readiness-strip small {
-  overflow: hidden;
   color: var(--ink-soft);
-  font-size: 8px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .inventory-overview {
@@ -700,8 +714,9 @@ html[data-theme="day"] .readiness-strip li {
   margin: 7px 0 9px;
   color: var(--ink);
   font-size: clamp(28px, 3.4vw, 46px);
-  letter-spacing: -.06em;
-  line-height: 1;
+  letter-spacing: -.035em;
+  line-height: 1.08;
+  word-spacing: .08em;
 }
 
 .inventory-overview > div:first-child > p:last-child,
@@ -709,7 +724,7 @@ html[data-theme="day"] .readiness-strip li {
   max-width: 690px;
   margin: 0;
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -739,7 +754,7 @@ html[data-theme="day"] .readiness-strip li {
 
 .inventory-stat-grid span {
   color: var(--ink-soft);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 760;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -784,7 +799,7 @@ html[data-theme="day"] .readiness-strip li {
   color: var(--ink-soft);
   background: transparent;
   border: 0;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -821,7 +836,7 @@ html[data-theme="day"] .readiness-strip li {
   display: grid;
   gap: 8px;
   color: var(--ink-soft);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 760;
 }
 
@@ -833,7 +848,7 @@ html[data-theme="day"] .readiness-strip li {
   background: rgba(2, 17, 30, .3);
   border: 1px solid var(--line);
   border-radius: 15px;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 html[data-theme="day"] .filter-panel :is(input, select) {
@@ -841,7 +856,13 @@ html[data-theme="day"] .filter-panel :is(input, select) {
 }
 
 .filter-panel select option {
+  color: var(--ink);
+  background: #071c31;
+}
+
+html[data-theme="day"] .filter-panel select option {
   color: #07172b;
+  background: #f7fbff;
 }
 
 .catalogue-summary {
@@ -851,7 +872,7 @@ html[data-theme="day"] .filter-panel :is(input, select) {
   padding: 10px clamp(20px, 3.5vw, 42px);
   color: var(--ink-soft);
   border-bottom: 1px solid var(--line);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .catalogue-summary #resultCount {
@@ -914,7 +935,7 @@ html[data-theme="day"] .filter-panel :is(input, select) {
   background: rgba(139, 216, 255, .055);
   border: 1px solid var(--line);
   border-radius: 999px;
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 740;
 }
 
@@ -929,7 +950,7 @@ html[data-theme="day"] .filter-panel :is(input, select) {
   max-width: 780px;
   margin: 0 0 12px;
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -965,7 +986,7 @@ html[data-theme="day"] .trust-badge.warning {
   background: rgba(139, 216, 255, .06);
   border: 1px solid var(--line);
   border-radius: 14px;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -1004,7 +1025,7 @@ html[data-theme="day"] .trust-badge.warning {
   max-width: 570px;
   margin: 0;
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -1063,8 +1084,8 @@ html[data-theme="day"] .trust-badge.warning {
 .safety-grid article > span {
   display: block;
   margin-bottom: 22px;
-  color: var(--gold);
-  font-size: 10px;
+  color: var(--gold-text);
+  font-size: 11px;
   font-weight: 850;
 }
 
@@ -1078,7 +1099,7 @@ html[data-theme="day"] .trust-badge.warning {
 .safety-grid p {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -1092,7 +1113,7 @@ html[data-theme="day"] .trust-badge.warning {
   margin: 0 auto;
   color: var(--ink-soft);
   border-top: 1px solid var(--line);
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .readiness-dialog {
@@ -1165,7 +1186,7 @@ html[data-theme="day"] .trust-badge.warning {
   padding: 13px 2px;
   color: var(--ink);
   border-bottom: 1px solid var(--line);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .readiness-checklist li:last-child {
@@ -1178,7 +1199,7 @@ html[data-theme="day"] .trust-badge.warning {
 
 .readiness-checklist b {
   color: var(--danger);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -1283,8 +1304,18 @@ html[data-theme="day"] .trust-badge.warning {
   }
 
   .language-control {
-    width: 42px;
+    width: 44px;
     overflow: hidden;
+  }
+
+  .primary-navigation {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    column-gap: 18px;
+    row-gap: 0;
+    padding-inline: 8px;
+    overflow: visible;
   }
 
   .language-control select {
@@ -1385,6 +1416,18 @@ html[data-theme="day"] .trust-badge.warning {
     justify-content: center;
     padding: 22px 0;
   }
+}
+
+html[lang^="zh"] :is(
+  .hero-copy h1,
+  .readiness-strip h2,
+  .inventory-overview h2,
+  .library-header h2,
+  .readiness-dialog h2
+) {
+  letter-spacing: 0;
+  line-height: 1.12;
+  word-spacing: normal;
 }
 
 @media (prefers-reduced-motion: reduce) {

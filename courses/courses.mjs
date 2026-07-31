@@ -11,7 +11,7 @@ const COPY = Object.freeze({
   en: Object.freeze({
     pageTitle: "Courses",
     searchLabel: "Search the course catalogue",
-    searchPlaceholder: "Course, faculty, instructor, term, or section",
+    searchPlaceholder: "Course, code, or instructor",
     resultsTitle: "Results",
     loading: "Searching…",
     resultsCount: "{count} matches",

@@ -908,3 +908,195 @@ html[data-theme="night"] :is(
     margin: 6px 0 0;
   }
 }
+
+/* Measured page edges, readable utility states, and surface-aware controls.
+   Functional copy stays legible; decorative metadata remains subordinate. */
+
+#landingScreen .primary-navigation-button {
+  color: rgba(241, 247, 252, .9);
+}
+
+html[data-theme="night"] #landingScreen :is(.auth-user, .start-hint) {
+  color: var(--clarity-text-soft);
+}
+
+body:not(.app-active) #landingScreen .hero-art {
+  width: 100%;
+  margin-inline: 0;
+  overflow: hidden;
+  border-radius: clamp(24px, 3vw, 40px);
+}
+
+.auth-close {
+  width: 42px !important;
+  height: 42px !important;
+  color: var(--clarity-text) !important;
+  border: 1px solid var(--clarity-line) !important;
+  background: rgba(139, 216, 255, .1) !important;
+  font-size: 20px !important;
+}
+
+.auth-card {
+  max-width: 100% !important;
+  flex-shrink: 1;
+}
+
+html[data-theme="day"] .auth-close {
+  color: var(--clarity-text) !important;
+  background: rgba(23, 77, 191, .07) !important;
+}
+
+html[data-theme="night"] .auth-card :is(
+  .auth-note,
+  .auth-field-help,
+  .auth-privacy-details,
+  .private-name-note,
+  .auth-resend-row,
+  .auth-verification-heading div > span
+) {
+  color: var(--clarity-text-soft) !important;
+}
+
+.auth-card :is(.auth-note, .auth-field-help, .auth-privacy-details) {
+  font-size: 12px !important;
+}
+
+.auth-password-toggle {
+  min-height: 40px;
+  font-size: 12px;
+}
+
+html[data-theme="night"] .auth-submit:disabled {
+  color: #d9e7f2 !important;
+  background: #17466a !important;
+  border-color: rgba(139, 216, 255, .24) !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="night"] .auth-submit:not(:disabled) {
+  color: #061526 !important;
+  background: #8bd8ff !important;
+  border-color: #8bd8ff !important;
+}
+
+html[data-theme="night"] .auth-submit:not(:disabled):hover {
+  color: #061526 !important;
+  background: #bdeaff !important;
+  border-color: #bdeaff !important;
+}
+
+html[data-theme="night"]
+  body.app-active:not(.schedule-active):not(.hub-active)
+  .configurator-column .day-chip:not(.on):not([aria-pressed="true"]) {
+  color: var(--clarity-text-soft);
+  border-color: var(--clarity-line);
+  background: rgba(139, 216, 255, .035);
+}
+
+html[data-theme="night"]
+  body.app-active:not(.schedule-active):not(.hub-active)
+  .configurator-column .day-chip:not(.on):not([aria-pressed="true"]):hover {
+  color: var(--clarity-text);
+  border-color: rgba(139, 216, 255, .38);
+  background: rgba(139, 216, 255, .1);
+}
+
+html[data-theme="night"]
+  body.app-active:not(.schedule-active):not(.hub-active)
+  .slot-item {
+  color: var(--clarity-text);
+  border-color: var(--clarity-line);
+  background: var(--clarity-surface-soft);
+}
+
+html[data-theme="night"] .selection-assistant-manual-link {
+  color: #9bdeff;
+}
+
+html[data-theme="night"] .selection-handoff-card {
+  color: var(--clarity-text);
+  border-color: var(--clarity-line);
+  background: var(--clarity-surface-soft);
+}
+
+html[data-theme="night"] .selection-handoff-card strong {
+  color: var(--clarity-text);
+}
+
+html[data-theme="night"] .selection-handoff-card span {
+  color: var(--clarity-text-soft);
+}
+
+html[data-theme="night"] .selection-handoff-card .selection-handoff-required {
+  color: #ffd27a;
+}
+
+html[data-theme="night"] .selection-handoff-card button {
+  color: #061526;
+  background: #8bd8ff;
+}
+
+@media (min-width: 1121px) {
+  body.app-active:not(.schedule-active):not(.hub-active) .wrap {
+    padding-inline: 0 !important;
+  }
+}
+
+.auth-modal,
+.marketplace-modal,
+.hub-profile-modal {
+  padding-left: max(18px, calc(env(safe-area-inset-left) + 8px)) !important;
+  padding-right: max(18px, calc(env(safe-area-inset-right) + 8px)) !important;
+}
+
+@media (max-width: 760px) {
+  body:not(.app-active) #landingScreen,
+  body.app-active #landingScreen {
+    padding-left:
+      max(var(--atlas-gutter, 20px), calc(env(safe-area-inset-left) + 8px)) !important;
+    padding-right:
+      max(var(--atlas-gutter, 20px), calc(env(safe-area-inset-right) + 8px)) !important;
+  }
+
+  .member-hub {
+    --hub-page-gutter: 20px;
+  }
+
+  .member-hub .hub-sidebar,
+  .member-hub .hub-page-header-copy,
+  .member-hub[data-active-view="marketplace"] .hub-page-header-copy,
+  .member-hub .hub-view {
+    padding-left:
+      max(var(--hub-page-gutter), calc(env(safe-area-inset-left) + 8px)) !important;
+    padding-right:
+      max(var(--hub-page-gutter), calc(env(safe-area-inset-right) + 8px)) !important;
+  }
+
+  .schedule-page-header {
+    padding-inline: 0 !important;
+  }
+}
+
+@media (min-width: 1081px) {
+  .member-hub[data-active-view="academic-tools"] .citation-preview {
+    max-height:
+      calc(
+        100dvh
+        - var(--app-bar-offset, 76px)
+        - var(--hub-destination-rail-height)
+        - max(16px, env(safe-area-inset-bottom))
+      ) !important;
+  }
+}
+
+@media (min-width: 1181px) {
+  .member-hub[data-active-view="community"] .hub-community-rail {
+    max-height:
+      calc(
+        100dvh
+        - var(--app-bar-offset, 76px)
+        - var(--hub-destination-rail-height)
+        - max(16px, env(safe-area-inset-bottom))
+      ) !important;
+  }
+}

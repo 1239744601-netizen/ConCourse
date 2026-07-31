@@ -1407,7 +1407,10 @@
     font-size: 12px;
     line-height: 1.5;
   }
-  .selection-handoff-status:empty { display: none; }
+  .selection-handoff-status:empty {
+    min-height: 0;
+    margin-top: 0;
+  }
   #courseList { max-height: none; overflow: visible; padding: 0; }
   #wishlistPanel .toolbar { margin-top: 16px; }
   #generate {
@@ -1957,7 +1960,7 @@
     .wishlist-profile-controls { grid-template-columns: 1fr; }
     #wishlistPanel #courseList > .empty-note { min-height: 260px; padding: 30px; }
     .schedule-page { padding: 28px 12px 70px; }
-    .schedule-page-header { padding: 0 6px; }
+    .schedule-page-header { padding-inline: 0; }
     .schedule-page-header h1 { font-size: 46px; }
     #schedulePage #timetablePanel { min-height: 720px; padding: 20px 14px; border-radius: 28px; }
     #schedulePage #timetablePanel .grid-head { align-items: flex-start; flex-direction: column; }
@@ -2038,12 +2041,12 @@
 <link rel="stylesheet" href="concourse-navy.css?v=20260722-authotp1" />
 <link rel="stylesheet" href="concourse-controls.css?v=20260731-unified1" />
 <link rel="stylesheet" href="marketplace-stage.css?v=20260721-market-gallery5" />
-<link rel="stylesheet" href="academic-tools.css?v=20260731-clean1" />
+<link rel="stylesheet" href="academic-tools.css?v=20260731-visual1" />
 <link rel="stylesheet" href="concourse-theme.css?v=20260723-daycontrast2" />
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
 <link rel="stylesheet" href="community-redesign.css?v=20260731-clean1" />
 <link rel="stylesheet" href="academic-experiences.css?v=20260728-readable-controls1" />
-<link rel="stylesheet" href="concourse-stabilization.css?v=20260731-clean-contrast1" />
+<link rel="stylesheet" href="concourse-stabilization.css?v=20260731-visual1" />
 </head>
 <body>
 <div id="concourseInitialPaint" hidden role="status" aria-live="polite" aria-busy="true">

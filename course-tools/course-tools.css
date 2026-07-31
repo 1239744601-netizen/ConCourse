@@ -12,6 +12,7 @@
   --focus: #8bd8ff;
   --blue: #3978ff;
   --gold: #f4bf47;
+  --locked-text: #ffd66f;
   --line: rgba(139, 216, 255, .2);
   --surface: rgba(7, 29, 51, .9);
   --surface-soft: rgba(10, 41, 71, .68);
@@ -36,6 +37,7 @@ html[data-theme="day"] {
   --ink: #07172b;
   --ink-soft: #4d657b;
   --accent-text: #155eb8;
+  --locked-text: #765000;
   --focus: #155eb8;
   --line: rgba(17, 82, 126, .18);
   --surface: rgba(247, 252, 255, .94);
@@ -275,7 +277,7 @@ html[data-theme="day"] .course-brand-mark .brand-mark-day {
 
 .course-navigation-context small {
   color: var(--accent-text);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: .06em;
   line-height: 1.2;
@@ -300,8 +302,8 @@ html[data-theme="day"] .course-brand-mark .brand-mark-day {
 }
 
 .course-theme-control button {
-  min-width: 38px;
-  min-height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0 11px;
   border: 0;
   border-radius: 999px;
@@ -315,7 +317,7 @@ html[data-theme="day"] .course-brand-mark .brand-mark-day {
 }
 
 .course-language-control {
-  min-height: 42px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -332,7 +334,13 @@ html[data-theme="day"] .course-brand-mark .brand-mark-day {
 }
 
 .course-language-control option {
+  color: var(--ink);
+  background: var(--surface-strong, #071c31);
+}
+
+html[data-theme="day"] .course-language-control option {
   color: #07172b;
+  background: #f7fbff;
 }
 
 .course-main {
@@ -525,7 +533,7 @@ html[data-theme="day"] .course-search-control {
 
 .course-result-kicker {
   color: var(--accent-text);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -586,7 +594,7 @@ html[data-theme="day"] .course-search-control {
   display: block;
   margin-bottom: 7px;
   color: var(--ink-soft);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -721,14 +729,14 @@ html[data-theme="day"] .course-search-control {
   min-height: 26px;
   padding: 0 10px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 820;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
 
 .course-status-locked {
-  color: color-mix(in srgb, var(--gold) 86%, var(--ink));
+  color: var(--locked-text);
   background: color-mix(in srgb, var(--gold) 14%, transparent);
 }
 
@@ -840,7 +848,7 @@ html[data-theme="day"] .course-search-control {
 
 .assistant-recommendation .recommendation-reason {
   color: var(--accent-text);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -927,7 +935,7 @@ html[data-theme="day"] .course-search-control {
   display: grid;
   gap: 6px;
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 760;
 }
 
@@ -1015,8 +1023,20 @@ html[data-theme="day"] .course-search-control {
 }
 
 @media (max-width: 680px) {
-  .course-theme-control {
-    display: none;
+  .course-language-control {
+    width: 44px;
+    position: relative;
+    justify-content: center;
+    overflow: hidden;
+    padding-inline: 0;
+  }
+
+  .course-language-control select {
+    width: 100%;
+    position: absolute;
+    inset: 0;
+    max-width: none;
+    opacity: 0;
   }
 
   .course-main {
@@ -1089,6 +1109,11 @@ html[data-theme="day"] .course-search-control {
   .assistant-add-button {
     width: 100%;
   }
+}
+
+html[lang^="zh"] .course-search-stage h1 {
+  letter-spacing: 0;
+  line-height: 1.1;
 }
 
 @media (prefers-reduced-motion: reduce) {
