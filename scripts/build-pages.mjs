@@ -25,6 +25,7 @@ const publicFiles = Object.freeze([
   "concourse-stabilization.css",
   "institution-portal-policy.js",
   "course-catalog.js",
+  "navigation-state.js",
   "member-hub.js",
   "hkbu-portal.js",
   "marketplace.js",

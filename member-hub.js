@@ -87,6 +87,7 @@
     adminRole: "",
     adminCapabilities: new Set(),
     adminContextLoading: false,
+    adminContextRequest: null,
     adminQueue: [],
     adminQueueStatus: "submitted",
     adminQueueLoading: false,
@@ -873,6 +874,7 @@
     hubState.adminRole = "";
     hubState.adminCapabilities = new Set();
     hubState.adminContextLoading = false;
+    hubState.adminContextRequest = null;
     hubState.adminQueue = [];
     hubState.adminQueueStatus = "submitted";
     hubState.adminQueueLoading = false;
@@ -1399,6 +1401,7 @@
     if(view !== "community") closeSchoolmateProfile({restoreFocus:false});
     hubState.activeView = view;
     $("memberHub").dataset.activeView = view;
+    if(!$("memberHub").hidden) window.rememberConCourseDestination?.("hub", view);
     renderHubHeader();
     document.querySelectorAll("[data-hub-view]").forEach(element => { element.hidden = element.dataset.hubView !== view; });
     document.querySelectorAll("[data-hub-target]").forEach(button => {
@@ -4178,52 +4181,91 @@
       hubState.adminRole = "";
       hubState.adminCapabilities = new Set();
       hubState.adminContextLoading = false;
+      hubState.adminContextRequest = null;
       renderAdminAccess();
       return null;
     }
     if(!force && hubState.adminContextUserId === currentUser.id) return hubState.adminRole;
-    if(hubState.adminContextLoading) return null;
+    if(hubState.adminContextRequest) return hubState.adminContextRequest;
     const context = requestContext();
     hubState.adminContextLoading = true;
     renderAdminAccess();
-    let response;
-    try { response = await hubRpc("get_my_concourse_admin_context"); }
-    catch(error){ response = {data:null, error}; }
-    if(!contextIsCurrent(context)) return null;
-    hubState.adminContextLoading = false;
-    hubState.adminContextUserId = context.userId;
-    const payload = response.error ? null : (parseJsonValue(response.data, response.data) || {});
-    const role = String(payload?.role || payload?.admin_role || "").trim().toLocaleLowerCase();
-    // Keep the original role assignment readable for older installations,
-    // then extend access through the capability set returned by the new RPC.
-    hubState.adminRole = payload?.is_admin === false || !["owner", "reviewer"].includes(role) ? "" : role;
-    hubState.adminCapabilities = normalizeAdminCapabilities(payload || {}, role);
-    if(
-      payload?.is_admin !== false
-      && (hubState.adminCapabilities.size || ["owner", "reviewer", "privacy"].includes(role))
-    ){
-      hubState.adminRole = role || "reviewer";
-    }
-    if(!hubState.adminRole){
-      hubState.adminQueue = [];
-      hubState.adminQueueError = "";
-      hubState.adminQueueNotice = "";
-      hubState.verificationCounts = {};
-      hubState.verificationCases = [];
-      hubState.verificationTeam = [];
-      if(hubState.activeView === "owner-console") void switchView("community");
-    } else {
-      const current = VERIFICATION_WORKFLOWS.find(workflow => workflow.id === hubState.verificationWorkflow);
-      if(!current || !hasAdminCapability(current.scope)){
-        hubState.verificationWorkflow = (
-          VERIFICATION_WORKFLOWS.find(workflow => hasAdminCapability(workflow.scope))?.id
-          || (hasAdminCapability("team.manage") ? "admin_team" : "school_verification")
-        );
+    const request = (async () => {
+      let response;
+      try { response = await hubRpc("get_my_concourse_admin_context"); }
+      catch(error){ response = {data:null, error}; }
+      if(!contextIsCurrent(context)) return null;
+      if(response.error){
+        hubState.adminContextUserId = null;
+        hubState.adminRole = "";
+        hubState.adminCapabilities = new Set();
+        hubState.adminQueue = [];
+        hubState.adminQueueError = "";
+        hubState.adminQueueNotice = "";
+        hubState.ownerSummary = null;
+        hubState.ownerSummaryError = "";
+        hubState.verificationCounts = {};
+        hubState.verificationCountsError = "";
+        hubState.verificationCases = [];
+        hubState.verificationCaseOffset = 0;
+        hubState.verificationCaseHasMore = false;
+        hubState.verificationTeam = [];
+        hubState.verificationTeamError = "";
+        hubState.verificationEvidenceByCase = new Map();
+        hubState.verificationEvidenceLoading = new Set();
+        hubState.adminReviewBusy.clear();
+        hubState.verificationTeamBusy.clear();
+        renderAdminAccess();
+        renderVerificationCenter();
+        if(hubState.activeView === "owner-console" && !$("memberHub").hidden){
+          void switchView("community");
+        }
+        return null;
+      }
+      hubState.adminContextUserId = context.userId;
+      const payload = parseJsonValue(response.data, response.data) || {};
+      const role = String(payload?.role || payload?.admin_role || "").trim().toLocaleLowerCase();
+      // Keep the original role assignment readable for older installations,
+      // then extend access through the capability set returned by the new RPC.
+      hubState.adminRole = payload?.is_admin === false || !["owner", "reviewer"].includes(role) ? "" : role;
+      hubState.adminCapabilities = normalizeAdminCapabilities(payload || {}, role);
+      if(
+        payload?.is_admin !== false
+        && (hubState.adminCapabilities.size || ["owner", "reviewer", "privacy"].includes(role))
+      ){
+        hubState.adminRole = role || "reviewer";
+      }
+      if(!hubState.adminRole){
+        hubState.adminQueue = [];
+        hubState.adminQueueError = "";
+        hubState.adminQueueNotice = "";
+        hubState.verificationCounts = {};
+        hubState.verificationCases = [];
+        hubState.verificationTeam = [];
+        if(hubState.activeView === "owner-console") void switchView("community");
+      } else {
+        const current = VERIFICATION_WORKFLOWS.find(workflow => workflow.id === hubState.verificationWorkflow);
+        if(!current || !hasAdminCapability(current.scope)){
+          hubState.verificationWorkflow = (
+            VERIFICATION_WORKFLOWS.find(workflow => hasAdminCapability(workflow.scope))?.id
+            || (hasAdminCapability("team.manage") ? "admin_team" : "school_verification")
+          );
+        }
+      }
+      renderAdminAccess();
+      renderVerificationCenter();
+      window.setTimeout(() => { void window.restoreConCourseDestination?.(); }, 0);
+      return hubState.adminRole;
+    })();
+    hubState.adminContextRequest = request;
+    try {
+      return await request;
+    } finally {
+      if(hubState.adminContextRequest === request){
+        hubState.adminContextRequest = null;
+        hubState.adminContextLoading = false;
       }
     }
-    renderAdminAccess();
-    renderVerificationCenter();
-    return hubState.adminRole;
   }
 
   function adminDetail(copy, label, value){
@@ -9984,6 +10026,14 @@
     show: showHub,
     hide: hideHub,
     switchView,
+    restoreView: async view => {
+      if(!hubAccessAllowed()) return false;
+      if(view === "owner-console") await loadAdminContext();
+      if(!hubAccessAllowed()) return false;
+      if(view === "owner-console" && hubState.adminContextUserId !== currentUser.id) return false;
+      showHub(view);
+      return hubState.activeView;
+    },
     startConversationWithUsername,
     openConversationById,
     refreshHeader: renderHubHeader,
@@ -10022,4 +10072,5 @@
   switchConnectionTab("verified");
   observeHubStickyGeometry();
   syncAccess();
+  void window.restoreConCourseDestination?.();
 })();

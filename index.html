@@ -3092,6 +3092,7 @@
   crossorigin="anonymous"
   referrerpolicy="no-referrer"
 ></script>
+<script src="navigation-state.js?v=20260731-refresh1"></script>
 <script>
 "use strict";
 const DAYS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -3959,11 +3960,91 @@ let usernameCheckTimer = null;
 let usernameAvailable = null;
 let usernameCheckSequence = 0;
 let usernameCheckedValue = "";
+let restoredNavigationUserId = null;
 const privacyNoticeRecordings = new Map();
 const schoolSearchCache = new Map();
 const ROR_DIRECTORY_URL = "https://api.ror.org/v2/organizations";
 const HIPO_DIRECTORY_URL = "https://universities.hipolabs.com/search";
 const DIRECTORY_TIMEOUT_MS = 5500;
+
+function navigationStorage(){
+  try { return window.sessionStorage; }
+  catch(_error){ return null; }
+}
+
+function rememberConCourseDestination(screen, hubView=""){
+  const route = window.ConCourseNavigationState?.writeRoute(
+    navigationStorage(),
+    currentUser?.id,
+    screen,
+    hubView
+  );
+  if(route) restoredNavigationUserId = route.userId;
+  return route;
+}
+
+function clearRememberedConCourseDestination(){
+  window.ConCourseNavigationState?.clearRoute(navigationStorage());
+  restoredNavigationUserId = null;
+}
+
+async function restoreConCourseDestination(){
+  const userId = currentUser?.id || "";
+  if(
+    !userId
+    || loadedUserId !== userId
+    || restoredNavigationUserId === userId
+    || authRecoverySessionReady
+  ) return false;
+
+  const navigationState = window.ConCourseNavigationState;
+  const route = navigationState?.readRoute(navigationStorage(), userId);
+  if(!route || navigationState.hasAuthoritativeHash(window.location.hash)){
+    restoredNavigationUserId = userId;
+    return false;
+  }
+  if(route.screen === "hub" && !window.ConCourseHub?.restoreView) return false;
+
+  restoredNavigationUserId = userId;
+  if(route.screen === "main"){
+    leavePlanner();
+    return true;
+  }
+  if(route.screen === "planner"){
+    showPlannerEditor();
+    return true;
+  }
+  if(route.screen === "timetable"){
+    const action = navigationState.timetableRestoreAction({
+      hasFinalTimetable:!!finalTimetable?.savedAt,
+      hasGeneratedSolutions:!!(solutions.length && solutions[activeSolution]),
+      hasPlannerCourses:courses.length > 0
+    });
+    if(action === "open"){
+      openTimetableDestination();
+    } else if(action === "regenerate"){
+      generate();
+      if($("schedulePage").hidden) showPlannerEditor();
+    } else {
+      showPlannerEditor();
+    }
+    return true;
+  }
+  if(!finalTimetable?.savedAt){
+    showPlannerEditor();
+    return true;
+  }
+
+  const restoredView = await window.ConCourseHub.restoreView(route.hubView);
+  if(!restoredView){
+    if(currentUser?.id === userId) restoredNavigationUserId = null;
+    return false;
+  }
+  return true;
+}
+
+window.rememberConCourseDestination = rememberConCourseDestination;
+window.restoreConCourseDestination = restoreConCourseDestination;
 
 function showSiteNotice(message, {error=false, timeout=7000}={}){
   const notice = $("siteNotice");
@@ -4734,6 +4815,7 @@ function handleSchoolInput(){
 
 function enterPlanner(){
   if(!currentUser){ openAuthModal(); return; }
+  rememberConCourseDestination("planner");
   appStarted = true;
   updateBrandHomeState();
   document.body.classList.add("app-active");
@@ -4746,6 +4828,7 @@ function enterPlanner(){
 }
 
 function leavePlanner(){
+  rememberConCourseDestination("main");
   appStarted = false;
   updateBrandHomeState();
   document.body.classList.remove("app-active", "schedule-active", "hub-active");
@@ -4773,6 +4856,7 @@ function updateBrandHomeState(){
 }
 
 function showSchedulePage(){
+  rememberConCourseDestination("timetable");
   appStarted = true;
   updateBrandHomeState();
   document.body.classList.add("app-active");
@@ -4787,6 +4871,7 @@ function showSchedulePage(){
 }
 
 function showPlannerEditor(){
+  rememberConCourseDestination("planner");
   appStarted = true;
   updateBrandHomeState();
   document.body.classList.add("app-active");
@@ -4982,6 +5067,7 @@ async function loadUserState(){
     renderAccountIdentity();
     applyUserState(data?.state || {}, loadedAcademicProfile);
     loadedUserId = userId;
+    await restoreConCourseDestination();
     renderFinalTimetableStatus();
     $("saveAccountBtn").textContent = t("saveNow");
     if(!data) await saveUserState({silent:true});
@@ -5011,6 +5097,8 @@ function applySession(session){
   currentUser = session?.user || null;
   const signedIn = !!currentUser;
   if(previousUserId !== currentUser?.id){
+    if(previousUserId) clearRememberedConCourseDestination();
+    else restoredNavigationUserId = null;
     clearTimeout(accountSaveTimer);
     accountSaveTimer = null;
     appStarted = false;
@@ -6323,7 +6411,7 @@ initializeAccount();
 </script>
 <script src="institution-portal-policy.js?v=20260729-institution1"></script>
 <script src="course-catalog.js?v=20260728-foundation1"></script>
-<script src="member-hub.js?v=20260729-academic-email1"></script>
+<script src="member-hub.js?v=20260731-refresh1"></script>
 <script src="hkbu-portal.js?v=20260728-foundation1"></script>
 <script src="marketplace.js?v=20260728-verification-center2"></script>
 <script src="academic-tools.js?v=20260724-seeds2"></script>
