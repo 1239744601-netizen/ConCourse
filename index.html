@@ -30,6 +30,34 @@
     document.querySelector('meta[name="theme-color"]').content = theme === "day" ? "#dff2ff" : "#061526";
   })();
 </script>
+<script src="navigation-state.js?v=20260731-paint1"></script>
+<script id="concourseNavigationBoot">
+  (() => {
+    const root = document.documentElement;
+    let releaseTimer = 0;
+    const releaseInitialPaint = () => {
+      const activeTimer = releaseTimer;
+      releaseTimer = 0;
+      if(activeTimer) window.clearTimeout(activeTimer);
+      root.removeAttribute("data-concourse-nav-pending");
+      root.removeAttribute("aria-busy");
+    };
+    window.releaseConCourseInitialPaint = releaseInitialPaint;
+
+    let shouldHold = false;
+    try {
+      shouldHold = window.ConCourseNavigationState?.shouldHoldInitialPaint(
+        window.sessionStorage,
+        {hash:window.location.hash, search:window.location.search}
+      ) === true;
+    } catch(_error){}
+    if(!shouldHold) return;
+
+    root.setAttribute("data-concourse-nav-pending", "");
+    root.setAttribute("aria-busy", "true");
+    releaseTimer = window.setTimeout(releaseInitialPaint, 10000);
+  })();
+</script>
 <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=20260731-double-c3" />
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=20260731-double-c3" />
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260731-double-c3" />
@@ -37,6 +65,114 @@
 <meta name="apple-mobile-web-app-title" content="ConCourse" />
 <link rel="preload" as="image" type="image/webp" href="concourse-course-odyssey.webp" fetchpriority="high" />
 <style>
+  #concourseInitialPaint { display: none; }
+  html[data-concourse-nav-pending] body {
+    overflow: hidden !important;
+    background: #061526 !important;
+  }
+  html[data-theme="day"][data-concourse-nav-pending] body {
+    background: #e8f3f9 !important;
+  }
+  html[data-concourse-nav-pending] body > :not(#concourseInitialPaint) {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  html[data-concourse-nav-pending] #concourseInitialPaint {
+    position: fixed;
+    z-index: 2147483000;
+    inset: 0;
+    display: grid !important;
+    visibility: visible !important;
+    place-items: center;
+    padding: 28px;
+    color: #f7fbff;
+    background:
+      radial-gradient(circle at 50% 34%, rgba(105, 210, 241, .16), transparent 22rem),
+      linear-gradient(145deg, #03101f, #061a30 58%, #08213b);
+  }
+  html[data-theme="day"][data-concourse-nav-pending] #concourseInitialPaint {
+    color: #061a30;
+    background:
+      radial-gradient(circle at 50% 34%, rgba(43, 166, 209, .18), transparent 22rem),
+      linear-gradient(145deg, #f7fcff, #e7f3f9 58%, #d9edf6);
+  }
+  .concourse-initial-paint-card {
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    width: min(88vw, 340px);
+    text-align: center;
+  }
+  .concourse-initial-paint-mark {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    border: 1px solid rgba(105, 210, 241, .28);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, .06);
+    box-shadow: 0 24px 72px rgba(0, 0, 0, .22);
+  }
+  .concourse-initial-paint-mark::before,
+  .concourse-initial-paint-mark::after {
+    content: "";
+    position: absolute;
+    left: 17px;
+    width: 42px;
+    height: 24px;
+    border: 8px solid currentColor;
+    border-radius: 18px;
+  }
+  .concourse-initial-paint-mark::before {
+    top: 14px;
+    border-right-color: transparent;
+    color: #69d2f1;
+    transform: rotate(-5deg);
+  }
+  .concourse-initial-paint-mark::after {
+    bottom: 13px;
+    border-left-color: transparent;
+    color: #faf8f2;
+  }
+  html[data-theme="day"] .concourse-initial-paint-mark::after { color: #061a30; }
+  .concourse-initial-paint-brand {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.45px;
+  }
+  .concourse-initial-paint-status {
+    margin: 0;
+    color: rgba(231, 242, 251, .72);
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: .04em;
+  }
+  html[data-theme="day"] .concourse-initial-paint-status { color: rgba(6, 26, 48, .66); }
+  .concourse-initial-paint-progress {
+    width: 112px;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(105, 210, 241, .16);
+  }
+  .concourse-initial-paint-progress::after {
+    content: "";
+    display: block;
+    width: 46%;
+    height: 100%;
+    border-radius: inherit;
+    background: #69d2f1;
+    animation: concourse-initial-paint-progress 1.1s ease-in-out infinite alternate;
+  }
+  @keyframes concourse-initial-paint-progress {
+    from { transform: translateX(-15%); }
+    to { transform: translateX(132%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .concourse-initial-paint-progress::after {
+      width: 100%;
+      animation: none;
+    }
+  }
   :root {
     --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
     --bg: #f4f6fb;
@@ -1736,6 +1872,14 @@
 <link rel="stylesheet" href="concourse-stabilization.css?v=20260728-verification-center1" />
 </head>
 <body>
+<div id="concourseInitialPaint" hidden role="status" aria-live="polite" aria-busy="true">
+  <div class="concourse-initial-paint-card">
+    <span class="concourse-initial-paint-mark" aria-hidden="true"></span>
+    <strong class="concourse-initial-paint-brand">ConCourse</strong>
+    <p class="concourse-initial-paint-status">Restoring your page…</p>
+    <span class="concourse-initial-paint-progress" aria-hidden="true"></span>
+  </div>
+</div>
 <header id="landingScreen">
   <span class="landing-cinema" aria-hidden="true"></span>
   <div class="header-row">
@@ -3094,7 +3238,6 @@
   crossorigin="anonymous"
   referrerpolicy="no-referrer"
 ></script>
-<script src="navigation-state.js?v=20260731-refresh1"></script>
 <script>
 "use strict";
 const DAYS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -3974,6 +4117,12 @@ function navigationStorage(){
   catch(_error){ return null; }
 }
 
+function finishConCourseInitialPaint(){
+  const wasPending = document.documentElement.hasAttribute("data-concourse-nav-pending");
+  window.releaseConCourseInitialPaint?.();
+  return wasPending;
+}
+
 function rememberConCourseDestination(screen, hubView=""){
   const route = window.ConCourseNavigationState?.writeRoute(
     navigationStorage(),
@@ -3992,17 +4141,30 @@ function clearRememberedConCourseDestination(){
 
 async function restoreConCourseDestination(){
   const userId = currentUser?.id || "";
-  if(
-    !userId
-    || loadedUserId !== userId
-    || restoredNavigationUserId === userId
-    || authRecoverySessionReady
-  ) return false;
+  if(!userId || loadedUserId !== userId || restoredNavigationUserId === userId) return false;
+  if(authRecoverySessionReady){
+    finishConCourseInitialPaint();
+    return false;
+  }
 
   const navigationState = window.ConCourseNavigationState;
   const route = navigationState?.readRoute(navigationStorage(), userId);
-  if(!route || navigationState.hasAuthoritativeHash(window.location.hash)){
+  if(navigationState?.hasAuthCallbackLocation({
+    hash:window.location.hash,
+    search:window.location.search
+  })){
     restoredNavigationUserId = userId;
+    finishConCourseInitialPaint();
+    return false;
+  }
+  if(navigationState?.hasContentDeepLink(window.location.hash)){
+    restoredNavigationUserId = userId;
+    return false;
+  }
+  if(!route){
+    clearRememberedConCourseDestination();
+    restoredNavigationUserId = userId;
+    leavePlanner();
     return false;
   }
   if(route.screen === "hub" && !window.ConCourseHub?.restoreView) return false;
@@ -4042,6 +4204,7 @@ async function restoreConCourseDestination(){
     if(currentUser?.id === userId) restoredNavigationUserId = null;
     return false;
   }
+  finishConCourseInitialPaint();
   return true;
 }
 
@@ -4313,6 +4476,7 @@ function showAuthCallbackError(error){
   $("authModal").hidden = false;
   setFriendlyAuthError(error, "authLinkInvalid");
   clearAuthCallbackError();
+  finishConCourseInitialPaint();
   setTimeout(() => $("authEmail").focus(), 0);
 }
 
@@ -4826,11 +4990,12 @@ function enterPlanner(){
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
   syncPrimaryNavigation();
-  window.scrollTo({top:0, behavior:"smooth"});
+  if(!finishConCourseInitialPaint()) window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function leavePlanner(){
-  rememberConCourseDestination("main");
+  if(currentUser) rememberConCourseDestination("main");
+  else clearRememberedConCourseDestination();
   appStarted = false;
   updateBrandHomeState();
   document.body.classList.remove("app-active", "schedule-active", "hub-active");
@@ -4838,7 +5003,7 @@ function leavePlanner(){
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
   syncPrimaryNavigation();
-  window.scrollTo({top:0, behavior:"smooth"});
+  if(!finishConCourseInitialPaint()) window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function updateBrandHomeState(){
@@ -4869,7 +5034,7 @@ function showSchedulePage(){
   document.body.classList.add("schedule-active");
   document.body.classList.remove("hub-active");
   syncPrimaryNavigation();
-  window.scrollTo({top:0, behavior:"smooth"});
+  if(!finishConCourseInitialPaint()) window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function showPlannerEditor(){
@@ -4882,7 +5047,7 @@ function showPlannerEditor(){
   if($("memberHub")) $("memberHub").hidden = true;
   $("appWrap").hidden = false;
   syncPrimaryNavigation();
-  window.scrollTo({top:0, behavior:"smooth"});
+  if(!finishConCourseInitialPaint()) window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function openTimetableDestination(){
@@ -5056,6 +5221,7 @@ async function loadUserState(){
       $("saveAccountBtn").textContent = t("loadFailed");
       showSiteNotice(t("stateLoadFailed"), {error:true, timeout:9000});
       console.error("Could not load ConCourse state:", error);
+      finishConCourseInitialPaint();
       return;
     }
     if(profileResponse.error){
@@ -5079,6 +5245,7 @@ async function loadUserState(){
       showSiteNotice(t("stateLoadFailed"), {error:true, timeout:9000});
     }
     console.error("Could not load ConCourse state:", error);
+    finishConCourseInitialPaint();
   } finally {
     if(loadingUserId === userId) loadingUserId = null;
   }
@@ -5386,6 +5553,7 @@ function initializeAccount(){
     $("startHint").textContent = t("connectSupabase");
     $("appWrap").hidden = true;
     console.warn("Add the Supabase URL and publishable key near the top of the ConCourse script.");
+    finishConCourseInitialPaint();
     return;
   }
 
@@ -5434,10 +5602,16 @@ function initializeAccount(){
       applySession(data.session);
       $("authModal").hidden = false;
       setAuthMode("recovery");
+      finishConCourseInitialPaint();
     } else {
       applySession(data?.session || null);
       if(callbackError) showAuthCallbackError(callbackError);
     }
+  }).catch(error => {
+    console.error("Could not restore the ConCourse session:", error);
+    showSiteNotice(t("authRequestFailed"), {error:true});
+    applySession(null);
+    finishConCourseInitialPaint();
   });
   authClient.auth.onAuthStateChange((event, session) => {
     // Return from Supabase's auth callback before starting profile/state reads.
@@ -5448,6 +5622,7 @@ function initializeAccount(){
       if(event === "PASSWORD_RECOVERY"){
         $("authModal").hidden = false;
         setAuthMode("recovery");
+        finishConCourseInitialPaint();
       }
     }, 0);
   });
@@ -6413,7 +6588,7 @@ initializeAccount();
 </script>
 <script src="institution-portal-policy.js?v=20260729-institution1"></script>
 <script src="course-catalog.js?v=20260728-foundation1"></script>
-<script src="member-hub.js?v=20260731-refresh1"></script>
+<script src="member-hub.js?v=20260731-paint1"></script>
 <script src="hkbu-portal.js?v=20260728-foundation1"></script>
 <script src="marketplace.js?v=20260728-verification-center2"></script>
 <script src="academic-tools.js?v=20260724-seeds2"></script>

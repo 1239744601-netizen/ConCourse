@@ -1391,7 +1391,9 @@
     scheduleHubStickyGeometry();
     window.syncPrimaryNavigation?.();
     switchView(view);
-    window.scrollTo({top:0, behavior:"smooth"});
+    const wasInitialRestore = document.documentElement.hasAttribute("data-concourse-nav-pending");
+    window.releaseConCourseInitialPaint?.();
+    if(!wasInitialRestore) window.scrollTo({top:0, behavior:"smooth"});
   }
 
   async function switchView(view){
@@ -9738,6 +9740,12 @@
         hubState.feedScope = postHash[1] ? "cross" : "school";
         hubState.feedTopic = "all";
         showHub("community");
+        return;
+      }
+    } else {
+      const postHash = String(window.location.hash || "").match(/^#(?:cross-)?post-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      if(postHash && currentUser && loadedUserId === currentUser.id){
+        window.openTimetableDestination?.();
         return;
       }
     }

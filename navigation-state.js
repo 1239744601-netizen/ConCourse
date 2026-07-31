@@ -65,6 +65,18 @@
     }
   }
 
+  function readRouteHint(storage){
+    try {
+      const raw = storage?.getItem?.(STORAGE_KEY);
+      if(!raw) return null;
+      const value = JSON.parse(raw);
+      const userId = normalizedUserId(value?.userId);
+      return userId ? normalizeRoute(value, userId) : null;
+    } catch(_error){
+      return null;
+    }
+  }
+
   function writeRoute(storage, userId, screen, hubView=""){
     const route = createRoute(userId, screen, hubView);
     if(!route || typeof storage?.setItem !== "function") return null;
@@ -91,6 +103,23 @@
     return CONTENT_DEEP_LINK_RE.test(value) || AUTH_CALLBACK_HASH_RE.test(value);
   }
 
+  function hasContentDeepLink(hash){
+    return CONTENT_DEEP_LINK_RE.test(String(hash || ""));
+  }
+
+  function hasAuthCallbackLocation({hash="", search=""}={}){
+    if(AUTH_CALLBACK_HASH_RE.test(String(hash || ""))) return true;
+    const params = String(search || "").replace(/^\?/, "");
+    return /(?:^|&)(?:auth_action|code|error|error_code|error_description|error_message)=/i.test(params);
+  }
+
+  function shouldHoldInitialPaint(storage, location={}){
+    if(hasAuthCallbackLocation(location)) return false;
+    if(hasContentDeepLink(location.hash)) return true;
+    const route = readRouteHint(storage);
+    return !!route && route.screen !== "main";
+  }
+
   function timetableRestoreAction({
     hasFinalTimetable=false,
     hasGeneratedSolutions=false,
@@ -109,9 +138,13 @@
     createRoute,
     normalizeRoute,
     readRoute,
+    readRouteHint,
     writeRoute,
     clearRoute,
     hasAuthoritativeHash,
+    hasContentDeepLink,
+    hasAuthCallbackLocation,
+    shouldHoldInitialPaint,
     timetableRestoreAction
   });
 });
