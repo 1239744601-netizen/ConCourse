@@ -77,7 +77,7 @@ test("generated timetable routes regenerate results instead of falling back to t
 
 test("visible destinations persist and restore after account hydration", () => {
   assert.match(html, /<script src="navigation-state\.js\?v=[^"]+"><\/script>/u);
-  assert.match(html, /<script src="member-hub\.js\?v=20260731-unified1"><\/script>/u);
+  assert.match(html, /<script src="member-hub\.js\?v=20260731-clean1"><\/script>/u);
   assert.match(html, /function enterPlanner\(\)\{[\s\S]*?rememberConCourseDestination\("planner"\)/u);
   assert.match(html, /function leavePlanner\(\)\{[\s\S]*?rememberConCourseDestination\("main"\)/u);
   assert.match(html, /function showSchedulePage\(\)\{[\s\S]*?rememberConCourseDestination\("timetable"\)/u);

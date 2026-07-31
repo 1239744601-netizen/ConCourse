@@ -8,6 +8,8 @@
   --ink-soft: #a9bfd2;
   --paper: #fbfaf6;
   --sky: #8bd8ff;
+  --accent-text: #8bd8ff;
+  --focus: #8bd8ff;
   --blue: #3978ff;
   --gold: #f4bf47;
   --line: rgba(139, 216, 255, .2);
@@ -23,9 +25,18 @@
     Helvetica, Arial, sans-serif;
 }
 
+html[data-theme="night"] {
+  --ink: #f7fbff;
+  --ink-soft: #b6cadc;
+  --accent-text: #8bd8ff;
+  color-scheme: dark;
+}
+
 html[data-theme="day"] {
   --ink: #07172b;
-  --ink-soft: #587088;
+  --ink-soft: #4d657b;
+  --accent-text: #155eb8;
+  --focus: #155eb8;
   --line: rgba(17, 82, 126, .18);
   --surface: rgba(247, 252, 255, .94);
   --surface-soft: rgba(229, 244, 255, .78);
@@ -82,7 +93,7 @@ select {
 }
 
 :focus-visible {
-  outline: 3px solid var(--sky);
+  outline: 3px solid var(--focus);
   outline-offset: 4px;
 }
 
@@ -134,7 +145,7 @@ html[data-theme="day"] .course-site-header {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
 }
 
 .course-brand {
@@ -202,7 +213,7 @@ html[data-theme="day"] .course-brand-mark .brand-mark-day {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(16px, 2.2vw, 34px);
+  gap: clamp(14px, 2vw, 28px);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -263,7 +274,7 @@ html[data-theme="day"] .course-brand-mark .brand-mark-day {
 }
 
 .course-navigation-context small {
-  color: var(--sky);
+  color: var(--accent-text);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: .06em;
@@ -327,22 +338,22 @@ html[data-theme="day"] .course-brand-mark .brand-mark-day {
 .course-main {
   width: min(100%, var(--content));
   margin: 0 auto;
-  padding: 0 var(--gutter) 90px;
+  padding: 0 var(--gutter) 64px;
 }
 
 .course-search-stage {
-  min-height: calc(100svh - 79px);
+  min-height: clamp(430px, calc(100svh - 79px), 680px);
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: clamp(28px, 4vw, 44px);
-  padding: 76px 0 110px;
+  gap: clamp(22px, 3vw, 32px);
+  padding: 56px 0 72px;
   transition: min-height .32s ease, padding .32s ease;
 }
 
 body.has-course-results .course-search-stage {
   min-height: 0;
-  padding: clamp(68px, 9vw, 118px) 0 52px;
+  padding: clamp(48px, 7vw, 82px) 0 40px;
 }
 
 .course-search-stage h1 {
@@ -382,7 +393,7 @@ html[data-theme="day"] .course-search-control {
 .course-search-control svg {
   width: 22px;
   height: 22px;
-  color: var(--sky);
+  color: var(--accent-text);
 }
 
 .course-search-control input {
@@ -432,11 +443,11 @@ html[data-theme="day"] .course-search-control {
 
 .course-results-heading {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 22px;
-  padding-bottom: 18px;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -463,17 +474,17 @@ html[data-theme="day"] .course-search-control {
 
 .course-result-list {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .course-institution-group,
 .course-institution-cards {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .course-institution-group + .course-institution-group {
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .course-institution-heading {
@@ -487,18 +498,18 @@ html[data-theme="day"] .course-search-control {
 .course-result-card {
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 26px;
+  border-radius: 22px;
   background: var(--surface);
   box-shadow: 0 16px 46px rgba(0, 8, 17, .12);
 }
 
 .course-result-card summary {
-  min-height: 116px;
+  min-height: 100px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
-  padding: 24px 28px;
+  gap: 16px;
+  padding: 20px 24px;
   list-style: none;
 }
 
@@ -509,11 +520,11 @@ html[data-theme="day"] .course-search-control {
 .course-result-summary {
   min-width: 0;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .course-result-kicker {
-  color: var(--sky);
+  color: var(--accent-text);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -540,7 +551,7 @@ html[data-theme="day"] .course-search-control {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 50%;
-  color: var(--sky);
+  color: var(--accent-text);
   transition: transform .2s ease;
 }
 
@@ -550,14 +561,14 @@ html[data-theme="day"] .course-search-control {
 
 .course-result-details {
   display: grid;
-  gap: 22px;
-  padding: 0 28px 28px;
+  gap: 16px;
+  padding: 0 24px 24px;
 }
 
 .course-detail-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .course-detail-grid-rich {
@@ -566,8 +577,8 @@ html[data-theme="day"] .course-search-control {
 
 .course-detail-item {
   min-width: 0;
-  padding: 17px 18px;
-  border-radius: 18px;
+  padding: 15px 16px;
+  border-radius: 16px;
   background: var(--surface-soft);
 }
 
@@ -590,12 +601,12 @@ html[data-theme="day"] .course-search-control {
 
 .course-section-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .course-sections {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .course-sections > h4,
@@ -631,12 +642,12 @@ html[data-theme="day"] .course-search-control {
 .course-text-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .course-text-detail {
   min-width: 0;
-  padding: 20px;
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: 20px;
   background: color-mix(in srgb, var(--surface-soft) 74%, transparent);
@@ -653,8 +664,8 @@ html[data-theme="day"] .course-search-control {
 .course-source-panel,
 .coursekeys-readiness {
   display: grid;
-  gap: 14px;
-  padding: 20px;
+  gap: 12px;
+  padding: 18px;
   border: 1px solid var(--line);
   border-radius: 22px;
   background: var(--surface-soft);
@@ -724,7 +735,7 @@ html[data-theme="day"] .course-search-control {
 .coursekeys-readiness-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .coursekeys-lock-note {
@@ -735,7 +746,7 @@ html[data-theme="day"] .course-search-control {
 .course-result-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .course-action {
@@ -773,11 +784,11 @@ html[data-theme="day"] .course-search-control {
 
 .course-data-note,
 .course-empty-state {
-  padding: 24px 26px;
-  border-radius: 22px;
+  padding: 18px 20px;
+  border-radius: 18px;
   color: var(--ink-soft);
   background: var(--surface-soft);
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 .course-empty-state {
@@ -787,7 +798,7 @@ html[data-theme="day"] .course-search-control {
 .assistant-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(300px, .75fr);
-  gap: 28px;
+  gap: 20px;
   align-items: start;
 }
 
@@ -795,8 +806,8 @@ html[data-theme="day"] .course-search-control {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 18px;
-  padding: 23px 26px;
+  gap: 16px;
+  padding: 18px 20px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -811,7 +822,7 @@ html[data-theme="day"] .course-search-control {
 .assistant-recommendation-copy {
   min-width: 0;
   display: grid;
-  gap: 7px;
+  gap: 5px;
 }
 
 .assistant-recommendation h3 {
@@ -828,7 +839,7 @@ html[data-theme="day"] .course-search-control {
 }
 
 .assistant-recommendation .recommendation-reason {
-  color: var(--sky);
+  color: var(--accent-text);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: .08em;
@@ -855,28 +866,28 @@ html[data-theme="day"] .course-search-control {
 .assistant-shortlist {
   position: sticky;
   top: 22px;
-  padding: 26px;
+  padding: 22px;
   border: 1px solid var(--line);
-  border-radius: 30px;
+  border-radius: 24px;
   background: var(--surface);
   box-shadow: var(--shadow);
 }
 
 .assistant-shortlist h2 {
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   font-size: 25px;
   letter-spacing: -.035em;
 }
 
 .assistant-shortlist-list {
   display: grid;
-  gap: 13px;
+  gap: 10px;
 }
 
 .assistant-shortlist-actions {
   display: grid;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .assistant-shortlist-actions .course-action {
@@ -899,8 +910,8 @@ html[data-theme="day"] .course-search-control {
 
 .assistant-shortlist-item {
   display: grid;
-  gap: 10px;
-  padding: 16px 0;
+  gap: 8px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -934,7 +945,7 @@ html[data-theme="day"] .course-search-control {
   width: max-content;
   padding: 0;
   border: 0;
-  color: var(--sky);
+  color: var(--accent-text);
   background: transparent;
   font-weight: 760;
 }
@@ -991,7 +1002,7 @@ html[data-theme="day"] .course-search-control {
   }
 
   .course-search-stage {
-    min-height: calc(100svh - 125px);
+    min-height: clamp(400px, calc(100svh - 125px), 600px);
   }
 
   .assistant-workspace {
@@ -1015,7 +1026,7 @@ html[data-theme="day"] .course-search-control {
 
   .course-search-stage,
   body.has-course-results .course-search-stage {
-    padding-top: 62px;
+    padding-top: 48px;
   }
 
   .course-search-stage h1 {

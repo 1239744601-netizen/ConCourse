@@ -17,7 +17,7 @@ import {
 const read = (relativePath) =>
   readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
 
-test("adds Course Engine as the root course-search destination", async () => {
+test("adds Courses as the root course-search destination", async () => {
   const index = await read("index.html");
   const controls = await read("concourse-controls.css");
   const navigation = index.match(
@@ -33,9 +33,9 @@ test("adds Course Engine as the root course-search destination", async () => {
   assert.doesNotMatch(navigation, /id="courseSearchNav"[^>]*\bhidden\b/);
   assert.match(navigation, /id="topTimetableBtn"[^>]*\bhidden\b/);
   assert.match(navigation, /id="hubOpenBtn"[^>]*\bhidden\b/);
-  assert.match(index, /courseEngineNav:"Course Engine"/);
-  assert.match(index, /courseEngineNav:"课程引擎"/);
-  assert.match(index, /courseEngineNav:"課程引擎"/);
+  assert.match(index, /courseEngineNav:"Courses"/);
+  assert.match(index, /courseEngineNav:"课程"/);
+  assert.match(index, /courseEngineNav:"課程"/);
   assert.match(index, /navigation\.hidden = false/);
   assert.match(index, /courseSearchLink\.hidden = false/);
   assert.match(index, /timetableButton\.hidden = !signedIn/);
@@ -86,7 +86,7 @@ test("keeps both course tools clean before an explicit search", async () => {
 
   assert.ok(searchStage);
   assert.ok(assistantStage);
-  assert.match(searchStage, /<h1[^>]+>Course Engine<\/h1>/);
+  assert.match(searchStage, /<h1[^>]+>Courses<\/h1>/);
   assert.match(searchStage, /<form[^>]+id="courseSearchForm"[^>]+role="search"/);
   assert.doesNotMatch(searchStage, /<p\b|<article\b|statistics|filters/i);
   assert.match(searchHtml, /id="courseSearchResults" hidden/);
@@ -94,7 +94,7 @@ test("keeps both course tools clean before an explicit search", async () => {
   assert.doesNotMatch(searchHtml, /href="\.\.\/assistant\/"/);
   assert.doesNotMatch(searchHtml, /href="\.\.\/coursekeys\/"/);
 
-  assert.match(assistantStage, /<h1[^>]+>Course Selection Assistant<\/h1>/);
+  assert.match(assistantStage, /<h1[^>]+>Course Assistant<\/h1>/);
   assert.match(assistantStage, /<form[^>]+id="assistantForm"[^>]+role="search"/);
   assert.doesNotMatch(assistantStage, /<p\b|<article\b|statistics|filters/i);
   assert.match(assistantHtml, /id="assistantWorkspace" hidden/);
@@ -363,7 +363,7 @@ test("renders explicit handoffs and a fail-closed syllabus contribution control"
     read("courses/courses.mjs")
   ]);
 
-  assert.match(html, /<title>Course Engine · ConCourse<\/title>/);
+  assert.match(html, /<title>Courses · ConCourse<\/title>/);
   assert.match(script, /destination === "timetable" \? "add-course" : "search"/);
   assert.match(script, /"timetable",\s*group/);
   assert.match(script, /"community",\s*group/);

@@ -15,7 +15,7 @@ test("keeps CourseKeys inside Course Engine instead of duplicating primary navig
   assert.match(index, /id="courseSearchNav"[^>]+href="courses\/"[^>]+data-i18n="courseEngineNav"/);
   assert.match(courses, /function courseKeysPanel\(group\)/);
   assert.match(courses, /details\.append\([\s\S]*courseKeysPanel\(group\),[\s\S]*actions/);
-  assert.match(courses, /contributionLocked: "Syllabus contribution locked"/);
+  assert.match(courses, /contributionLocked: "Contributions locked"/);
 });
 
 test("integrates a same-theme, accessible /coursekeys page", async () => {

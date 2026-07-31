@@ -8,12 +8,12 @@
   <title>CourseKeys · ConCourse</title>
   <meta
     name="description"
-    content="CourseKeys is ConCourse's quarantine-first, course-linked resource library."
+    content="Browse course workspaces. Files and contributions remain safety-locked."
   />
   <meta property="og:title" content="CourseKeys · ConCourse" />
   <meta
     property="og:description"
-    content="A course-linked library designed around verification, private quarantine, scanning, moderation, and accountable access."
+    content="Course workspaces with private storage and safety-gated access."
   />
   <meta property="og:image" content="og-coursekeys.png" />
   <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico?v=20260731-double-c3" />
@@ -21,7 +21,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png?v=20260731-double-c3" />
   <link rel="manifest" href="../site.webmanifest?v=20260731-double-c3" />
   <meta name="apple-mobile-web-app-title" content="ConCourse" />
-  <link rel="stylesheet" href="coursekeys.css?v=20260729-integrated1" />
+  <link rel="stylesheet" href="coursekeys.css?v=20260731-clean1" />
   <script>
     try {
       const savedTheme = localStorage.getItem("concourse_theme");
@@ -49,8 +49,8 @@
       <nav class="primary-navigation" aria-label="Primary destinations" data-copy-aria="primaryDestinations">
         <a href="../" data-copy="timetable">Timetable</a>
         <a href="../" data-copy="studentHub">Student Hub</a>
-        <a href="../courses/" data-copy="exploreCourses">Explore Courses</a>
-        <a href="../assistant/" data-copy="selectionAssistant">Course Selection Assistant</a>
+        <a href="../courses/" data-copy="exploreCourses">Courses</a>
+        <a href="../assistant/" data-copy="selectionAssistant">Assistant</a>
         <a class="active" href="./" aria-current="page">CourseKeys</a>
       </nav>
 
@@ -81,24 +81,24 @@
   <div class="coursekeys-global-notice" role="status">
     <span aria-hidden="true">i</span>
     <p data-copy="globalNotice">
-      Safety-gated integration · uploads, public files, downloads, exchanges, and CourseKeys transactions are unavailable.
+      Locked: uploads, public files, downloads, and transactions are unavailable.
     </p>
-    <button type="button" id="openReadiness" data-copy="readiness">View Readiness</button>
+    <button type="button" id="openReadiness" data-copy="readiness">Safety Status</button>
   </div>
 
   <main class="coursekeys-main">
     <section class="coursekeys-hero" aria-labelledby="coursekeysTitle">
       <div class="hero-copy">
-        <p class="eyebrow" data-copy="heroEyebrow">ConCourse contribution library</p>
-        <h1 id="coursekeysTitle" data-copy="heroTitle">Your course drive.<br />Built on trust.</h1>
+        <p class="eyebrow" data-copy="heroEyebrow">Course Library</p>
+        <h1 id="coursekeysTitle" data-copy="heroTitle">Course resources. Built on trust.</h1>
         <p data-copy="heroDescription">
-          Find course workspaces today. Resource access will open only after identity verification,
-          safety scanning, moderation, quotas, deletion controls, and ledger enforcement are complete.
+          Browse course workspaces. Files stay locked until verification, scanning, moderation,
+          quotas, deletion, and ledger controls are ready.
         </p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#coursekeysLibrary" data-copy="browseCourses">Browse Course Workspaces</a>
+          <a class="button button-primary" href="#coursekeysLibrary" data-copy="browseCourses">Browse Courses</a>
           <button class="button button-ghost" type="button" id="explainContribution" data-copy="contributionLocked">
-            Contribution Workflow Locked
+            Contributions Locked
           </button>
         </div>
       </div>
@@ -122,7 +122,7 @@
           </div>
         </div>
         <p data-copy="walletExplanation">
-          No credits can be issued, purchased, transferred, or spent. This balance is intentionally fixed at zero.
+          Credits are disabled. The balance stays at zero.
         </p>
         <button type="button" disabled data-copy="transactionsDisabled">Transactions Disabled</button>
       </aside>
@@ -131,11 +131,11 @@
     <section class="readiness-strip" aria-labelledby="readinessTitle">
       <div>
         <p class="eyebrow" data-copy="safetyBoundary">Safety Boundary</p>
-        <h2 id="readinessTitle" data-copy="readinessTitle">The library is visible. File access is not.</h2>
+        <h2 id="readinessTitle" data-copy="readinessTitle">Browse courses. Files stay locked.</h2>
       </div>
       <ul>
-        <li><span aria-hidden="true">✓</span><b>D1</b><small data-copy="d1Metadata">Metadata Model Retained</small></li>
-        <li><span aria-hidden="true">✓</span><b>R2</b><small data-copy="r2Private">Private Quarantine Retained</small></li>
+        <li><span aria-hidden="true">✓</span><b>D1</b><small data-copy="d1Metadata">Metadata Ready</small></li>
+        <li><span aria-hidden="true">✓</span><b>R2</b><small data-copy="r2Private">Private Storage</small></li>
         <li class="locked"><span aria-hidden="true">×</span><b data-copy="downloads">Downloads</b><small data-copy="notEnabled">Not Enabled</small></li>
         <li class="locked"><span aria-hidden="true">×</span><b data-copy="transactions">Transactions</b><small data-copy="notEnabled">Not Enabled</small></li>
       </ul>
@@ -143,11 +143,11 @@
 
     <section class="inventory-overview" aria-labelledby="inventoryTitle">
       <div>
-        <p class="eyebrow" data-copy="privateArchiveAudit">Private Archive Audit</p>
-        <h2 id="inventoryTitle" data-copy="inventoryTitle">A real library model, without unsafe publishing.</h2>
+        <p class="eyebrow" data-copy="privateArchiveAudit">Private Archive</p>
+        <h2 id="inventoryTitle" data-copy="inventoryTitle">Metadata only. No public files.</h2>
         <p data-copy="inventoryDescription">
-          ConCourse retained aggregate inventory totals and source-aware course metadata only.
-          No original file, filename, local path, personal record, lecture deck, or textbook is deployed here.
+          Only totals and course metadata are shown. No files, filenames, paths, personal records,
+          slides, or textbooks are published.
         </p>
       </div>
       <div class="inventory-stat-grid" aria-label="Inventory coverage" data-copy-aria="inventoryCoverage">
@@ -161,10 +161,10 @@
     <section class="coursekeys-library" id="coursekeysLibrary" aria-labelledby="libraryTitle">
       <header class="library-header">
         <div>
-          <p class="eyebrow" data-copy="courseLinkedStorage">Course-Linked Storage</p>
+          <p class="eyebrow" data-copy="courseLinkedStorage">Course Storage</p>
           <h2 id="libraryTitle">CourseKeys</h2>
           <p id="librarySubtitle" data-copy="chooseCoursePrompt">
-            Search the source-aware catalogue and open a course workspace.
+            Find a course workspace.
           </p>
         </div>
         <button class="button button-primary" type="button" id="uploadButton" disabled data-copy="uploadsDisabled">
@@ -206,7 +206,7 @@
 
       <div class="catalogue-summary" aria-live="polite">
         <span id="resultCount" data-copy="loadingCatalogue">Loading Catalogue…</span>
-        <span data-copy="catalogueNotice">Catalogue presence does not confirm registration eligibility.</span>
+        <span data-copy="catalogueNotice">A listing does not confirm eligibility.</span>
       </div>
 
       <div class="resource-list" id="resourceList" aria-live="polite" aria-busy="true">
@@ -220,56 +220,56 @@
       <article>
         <span>01</span>
         <strong data-copy="identityTitle">Verified Identity</strong>
-        <p data-copy="identityCopy">A server-verified Supabase identity and current institution proof are required before any contribution path can open.</p>
+        <p data-copy="identityCopy">Server-verified identity and current institution proof are required.</p>
       </article>
       <article>
         <span>02</span>
         <strong data-copy="quarantineTitle">Private Quarantine</strong>
-        <p data-copy="quarantineCopy">R2 remains private. No route reads object bytes, creates a public URL, or returns a storage key.</p>
+        <p data-copy="quarantineCopy">R2 stays private. No file bytes, public URLs, or storage keys are exposed.</p>
       </article>
       <article>
         <span>03</span>
         <strong data-copy="reviewTitle">Scan and Moderation</strong>
-        <p data-copy="reviewCopy">Publication remains impossible until immutable checksums, safety scans, rights review, and moderator audit are enforced.</p>
+        <p data-copy="reviewCopy">Publishing requires checksums, scans, rights review, and moderation.</p>
       </article>
       <article>
         <span>04</span>
         <strong data-copy="ledgerTitle">Enforced Ledger</strong>
-        <p data-copy="ledgerCopy">No CourseKeys can move until balanced, atomic, idempotent ledger posting and reversal rules are complete.</p>
+        <p data-copy="ledgerCopy">Credits stay locked until atomic, balanced, idempotent ledger rules are ready.</p>
       </article>
     </section>
   </main>
 
   <footer class="site-footer">
     <span>ConCourse · CourseKeys</span>
-    <span data-copy="footerBoundary">D1 metadata · private R2 quarantine · public downloads and transactions disabled</span>
+    <span data-copy="footerBoundary">Metadata only · private storage · downloads and transactions off</span>
   </footer>
 
   <dialog class="readiness-dialog" id="readinessDialog" aria-labelledby="readinessDialogTitle">
     <form method="dialog">
       <header>
         <div>
-          <p class="eyebrow" data-copy="launchControl">Launch Control</p>
-          <h2 id="readinessDialogTitle" data-copy="readinessDialogTitle">CourseKeys remains fail closed.</h2>
+          <p class="eyebrow" data-copy="launchControl">Safety Status</p>
+          <h2 id="readinessDialogTitle" data-copy="readinessDialogTitle">CourseKeys stays fail closed.</h2>
         </div>
         <button class="dialog-close" value="close" aria-label="Close" data-copy-aria="close">×</button>
       </header>
       <p data-copy="readinessDialogCopy">
-        The course catalogue is available for exploration. Contributions, publication, file access,
-        and credit activity will remain locked until every required safeguard is implemented and tested.
+        Browsing is available. Contributions, publishing, files, and credits stay locked until all
+        safeguards pass.
       </p>
       <ul class="readiness-checklist">
-        <li><span>○</span><span data-copy="secureAuth">Server-Side Supabase Authentication</span><b data-copy="required">Required</b></li>
-        <li><span>○</span><span data-copy="verificationEnforcement">Current Verification Enforcement</span><b data-copy="required">Required</b></li>
-        <li><span>○</span><span data-copy="quotasEnforcement">Atomic Quotas and Rate Limits</span><b data-copy="required">Required</b></li>
-        <li><span>○</span><span data-copy="scanEnforcement">Scanning and Moderation Audit</span><b data-copy="required">Required</b></li>
-        <li><span>○</span><span data-copy="deletionEnforcement">Deletion, Retention, and Orphan Cleanup</span><b data-copy="required">Required</b></li>
-        <li><span>○</span><span data-copy="ledgerEnforcement">Balanced Ledger Enforcement</span><b data-copy="required">Required</b></li>
+        <li><span>○</span><span data-copy="secureAuth">Server Authentication</span><b data-copy="required">Required</b></li>
+        <li><span>○</span><span data-copy="verificationEnforcement">Institution Verification</span><b data-copy="required">Required</b></li>
+        <li><span>○</span><span data-copy="quotasEnforcement">Quotas and Rate Limits</span><b data-copy="required">Required</b></li>
+        <li><span>○</span><span data-copy="scanEnforcement">Scanning and Moderation</span><b data-copy="required">Required</b></li>
+        <li><span>○</span><span data-copy="deletionEnforcement">Deletion and Retention</span><b data-copy="required">Required</b></li>
+        <li><span>○</span><span data-copy="ledgerEnforcement">Balanced Ledger</span><b data-copy="required">Required</b></li>
       </ul>
       <button class="button button-primary" value="close" data-copy="understood">Understood</button>
     </form>
   </dialog>
 
-  <script src="coursekeys.js?v=20260729-integrated1" defer></script>
+  <script src="coursekeys.js?v=20260731-clean1" defer></script>
 </body>
 </html>

@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#03101e" />
-  <title>Course Selection Assistant · ConCourse</title>
+  <title>Course Assistant · ConCourse</title>
   <meta
     name="description"
-    content="Find possible semester courses, compare available catalogue sections and instructors, and save a private shortlist on this device."
+    content="Search courses, compare sections, and build a shortlist."
   />
   <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico?v=20260731-double-c3" />
   <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png?v=20260731-double-c3" />
   <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png?v=20260731-double-c3" />
   <link rel="manifest" href="../site.webmanifest?v=20260731-double-c3" />
   <meta name="apple-mobile-web-app-title" content="ConCourse" />
-  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-course-tools3" />
+  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-clean1" />
   <script>
     try {
       const savedTheme = localStorage.getItem("concourse_theme");
@@ -49,9 +49,9 @@
           <a href="../?destination=timetable" aria-current="location" data-copy="timetable">
             Timetable
           </a>
-          <small data-copy="selectionAssistant">Course Selection Assistant</small>
+          <small data-copy="selectionAssistant">Assistant</small>
         </span>
-        <a href="../courses/" data-copy="exploreCourses">Explore Courses</a>
+        <a href="../courses/" data-copy="exploreCourses">Courses</a>
       </nav>
 
       <div class="course-header-controls">
@@ -85,10 +85,10 @@
 
   <main class="course-main">
     <section class="course-search-stage" aria-labelledby="assistantTitle">
-      <h1 id="assistantTitle" data-copy="pageTitle">Course Selection Assistant</h1>
+      <h1 id="assistantTitle" data-copy="pageTitle">Course Assistant</h1>
       <form class="course-search-form" id="assistantForm" role="search">
         <label class="visually-hidden" for="assistantQuery" data-copy="searchLabel">
-          Tell the assistant what you want to study
+          Search courses or describe your interests
         </label>
         <div class="course-search-control">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -103,7 +103,7 @@
             enterkeyhint="search"
             required
             data-copy-placeholder="searchPlaceholder"
-            placeholder="What do you want to study this semester?"
+            placeholder="Search courses or describe your interests"
           />
           <button id="assistantSubmit" type="submit" data-copy="search">Search</button>
         </div>
@@ -112,7 +112,7 @@
 
     <section class="course-results" id="assistantWorkspace" hidden aria-labelledby="assistantResultsTitle">
       <header class="course-results-heading">
-        <h2 id="assistantResultsTitle" tabindex="-1" data-copy="resultsTitle">Possible Matches</h2>
+        <h2 id="assistantResultsTitle" tabindex="-1" data-copy="resultsTitle">Matches</h2>
         <p id="assistantStatus" role="status" aria-live="polite"></p>
       </header>
       <div class="assistant-workspace">
@@ -120,7 +120,7 @@
           <div class="course-result-card" id="assistantResults"></div>
         </div>
         <aside class="assistant-shortlist" aria-labelledby="shortlistTitle">
-          <h2 id="shortlistTitle" data-copy="shortlistTitle">Your Shortlist</h2>
+          <h2 id="shortlistTitle" data-copy="shortlistTitle">Shortlist</h2>
           <div class="assistant-shortlist-list" id="assistantShortlist"></div>
           <div class="assistant-shortlist-actions">
             <button
@@ -130,7 +130,7 @@
               disabled
               data-copy="continueToTimetable"
             >
-              Continue to Timetable
+              Add to Timetable
             </button>
             <p
               class="assistant-handoff-status"
@@ -141,13 +141,13 @@
           </div>
         </aside>
         <p class="course-data-note assistant-notice" data-copy="dataNote">
-          Possible matches use reference catalogue metadata. Confirm eligibility, credits, prerequisites,
-          meeting times, and registration status with your institution before making a final choice.
+          Reference data only. Confirm eligibility, credits, prerequisites, times, and availability
+          with your institution.
         </p>
       </div>
     </section>
   </main>
 
-  <script type="module" src="assistant.mjs?v=20260731-course-selection4"></script>
+  <script type="module" src="assistant.mjs?v=20260731-clean1"></script>
 </body>
 </html>

@@ -210,6 +210,8 @@ test("Chinese copy distinguishes saving from bookmarking and uses academic termi
   assert.equal((memberHubJs.match(/t\("postSaved"\)/g) || []).length, 3);
   assert.match(academicToolsJs, /toolsWorkspaceTitle:"参考文献工作室"/);
   assert.match(academicToolsJs, /toolsWorkspaceTitle:"參考文獻工作室"/);
-  assert.match(academicToolsJs, /citationCopy:"复制参考文献"/);
-  assert.match(academicToolsJs, /citationCopy:"複製參考文獻"/);
+  assert.match(academicToolsJs, /citationCopy:"复制"/);
+  assert.match(academicToolsJs, /citationAdd:"保存到参考书目"/);
+  assert.match(academicToolsJs, /citationCopy:"複製"/);
+  assert.match(academicToolsJs, /citationAdd:"儲存到參考書目"/);
 });

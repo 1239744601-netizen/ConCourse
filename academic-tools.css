@@ -1545,6 +1545,98 @@ html:lang(zh-HK) .academic-localized-copy > [lang="zh-HK"] {
   }
 }
 
+/* Compact academic rhythm. One clear disclaimer remains; empty optional copy
+   and status rows no longer create blank bands. */
+.member-hub[data-active-view="academic-tools"] .citation-studio {
+  gap: clamp(28px, 4vw, 48px);
+}
+
+.member-hub[data-active-view="academic-tools"] .citation-section {
+  padding-block: 24px 28px;
+}
+
+.member-hub[data-active-view="academic-tools"] .citation-library {
+  margin-top: clamp(44px, 6vw, 72px);
+}
+
+.member-hub[data-active-view="academic-tools"] .citation-style-compass {
+  margin-top: clamp(40px, 5vw, 64px);
+}
+
+.member-hub[data-active-view="academic-tools"] .citation-library-head {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.member-hub[data-active-view="academic-tools"] :is(
+  .citation-library-head p,
+  .citation-style-guide p,
+  .citation-lookup-note,
+  .citation-mode-choice small
+) {
+  overflow-wrap: anywhere;
+  text-align: start;
+  text-wrap: pretty;
+}
+
+.member-hub[data-active-view="academic-tools"] :is(
+  .citation-formatting-note,
+  .citation-edit-controls small
+):empty {
+  display: none;
+  min-height: 0;
+  margin: 0;
+}
+
+.member-hub[data-active-view="academic-tools"] :is(
+  .citation-engine-state,
+  .citation-lookup-status
+):empty {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+html[data-theme="night"] .member-hub[data-active-view="academic-tools"] :is(
+  .citation-library-head h2,
+  .citation-style-compass > h2,
+  .citation-section legend,
+  .citation-section-title
+) {
+  color: var(--clarity-text, #f7fbff);
+}
+
+html[data-theme="night"] .member-hub[data-active-view="academic-tools"] :is(
+  .citation-library-head p,
+  .citation-style-guide p,
+  .citation-disclaimer,
+  .citation-lookup-note,
+  .citation-mode-choice small
+) {
+  color: var(--clarity-muted, #a9bfd0);
+}
+
+html[data-theme="day"] .member-hub[data-active-view="academic-tools"] :is(
+  .citation-library-head h2,
+  .citation-style-compass > h2,
+  .citation-section legend,
+  .citation-section-title
+) {
+  color: var(--clarity-text, #061526);
+}
+
+html[lang^="zh"] .member-hub[data-active-view="academic-tools"] :is(
+  .citation-section,
+  .citation-preview,
+  .citation-library,
+  .citation-style-compass
+) {
+  letter-spacing: normal;
+  line-break: strict;
+  word-break: normal;
+}
+
 @media (min-width: 1081px) {
   .citation-preview {
     top: calc(var(--app-bar-offset, 0px) + 24px);

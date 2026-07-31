@@ -8,6 +8,8 @@
   --ink: #f7fbff;
   --ink-soft: #afc3d6;
   --sky: #8bd8ff;
+  --accent-text: #8bd8ff;
+  --focus: #8bd8ff;
   --blue: #3978ff;
   --gold: #f4bf47;
   --paper: #fbfaf6;
@@ -26,9 +28,20 @@
     Helvetica, Arial, sans-serif;
 }
 
+html[data-theme="night"] {
+  --ink: #f7fbff;
+  --ink-soft: #b8cbdd;
+  --accent-text: #8bd8ff;
+  color-scheme: dark;
+}
+
 html[data-theme="day"] {
   --ink: #07172b;
-  --ink-soft: #557087;
+  --ink-soft: #4b6378;
+  --accent-text: #155eb8;
+  --focus: #155eb8;
+  --danger: #a01933;
+  --success: #116a4a;
   --line: rgba(15, 78, 122, .16);
   --surface: rgba(244, 250, 255, .76);
   --surface-strong: #eef8ff;
@@ -94,7 +107,7 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid var(--sky);
+  outline: 3px solid var(--focus);
   outline-offset: 4px;
 }
 
@@ -148,7 +161,7 @@ html[data-theme="day"] .site-header {
   display: grid;
   grid-template-columns: minmax(210px, 1fr) auto minmax(210px, 1fr);
   align-items: center;
-  gap: 22px;
+  gap: 18px;
   margin: 0 auto;
 }
 
@@ -214,7 +227,7 @@ html[data-theme="day"] .brand-mark-day {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(18px, 2.4vw, 40px);
+  gap: clamp(14px, 2vw, 30px);
   min-width: 0;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
@@ -231,15 +244,11 @@ html[data-theme="day"] .brand-mark-day {
   display: inline-flex;
   align-items: center;
   padding: 0 2px;
-  color: rgba(229, 239, 248, .63);
+  color: var(--ink-soft);
   font-size: 12px;
   font-weight: 750;
   text-decoration: none;
   white-space: nowrap;
-}
-
-html[data-theme="day"] .primary-navigation a {
-  color: #5f7489;
 }
 
 .primary-navigation a::after {
@@ -340,8 +349,8 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
   min-height: 48px;
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 9px max(var(--gutter), calc((100vw - var(--content)) / 2));
+  gap: 10px;
+  padding: 8px max(var(--gutter), calc((100vw - var(--content)) / 2));
   color: var(--ink-soft);
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   border-bottom: 1px solid var(--line);
@@ -370,47 +379,39 @@ html[data-theme="day"] .theme-control button[aria-pressed="true"] {
 .coursekeys-global-notice button {
   min-height: 34px;
   padding: 0 8px;
-  color: var(--sky);
+  color: var(--accent-text);
   background: transparent;
   border: 0;
   font-size: 10px;
   font-weight: 800;
 }
 
-html[data-theme="day"] .coursekeys-global-notice button {
-  color: #1c5bd1;
-}
-
 .coursekeys-main {
   width: min(var(--content), calc(100% - (2 * var(--gutter))));
   display: grid;
-  gap: 22px;
+  gap: 16px;
   margin: 0 auto;
-  padding: 30px 0 72px;
+  padding: 24px 0 56px;
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--sky);
+  color: var(--accent-text);
   font-size: 10px;
   font-weight: 850;
   letter-spacing: .16em;
   text-transform: uppercase;
 }
 
-html[data-theme="day"] .eyebrow {
-  color: #1460b9;
-}
-
 .coursekeys-hero {
-  min-height: 445px;
+  min-height: 370px;
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(310px, .65fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, .55fr);
   align-items: stretch;
-  gap: 28px;
+  gap: 22px;
   overflow: hidden;
-  padding: clamp(32px, 4.5vw, 66px);
+  padding: clamp(30px, 4vw, 50px);
   color: #fff;
   background:
     radial-gradient(circle at 83% 12%, rgba(65, 187, 255, .22), transparent 29%),
@@ -460,9 +461,9 @@ html[data-theme="day"] .eyebrow {
 
 .hero-copy h1 {
   max-width: 750px;
-  margin: 12px 0 20px;
+  margin: 10px 0 16px;
   color: #fff;
-  font-size: clamp(48px, 5.6vw, 82px);
+  font-size: clamp(44px, 5vw, 72px);
   font-weight: 780;
   letter-spacing: -.065em;
   line-height: .94;
@@ -470,10 +471,10 @@ html[data-theme="day"] .eyebrow {
 
 .hero-copy > p:not(.eyebrow) {
   max-width: 680px;
-  margin: 0 0 30px;
+  margin: 0 0 22px;
   color: rgba(234, 246, 255, .77);
   font-size: clamp(15px, 1.3vw, 18px);
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 .hero-actions {
@@ -521,13 +522,13 @@ html[data-theme="day"] .eyebrow {
 
 .coursekeys-wallet {
   z-index: 1;
-  min-height: 320px;
+  min-height: 270px;
   align-self: center;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 20px;
-  padding: 26px;
+  gap: 14px;
+  padding: 22px;
   background: linear-gradient(155deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .035));
   border: 1px solid rgba(213, 240, 255, .23);
   border-radius: 27px;
@@ -619,8 +620,8 @@ html[data-theme="day"] .eyebrow {
   display: grid;
   grid-template-columns: minmax(250px, .7fr) minmax(0, 1.3fr);
   align-items: center;
-  gap: 28px;
-  padding: 24px 28px;
+  gap: 22px;
+  padding: 20px 22px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 26px;
@@ -648,7 +649,7 @@ html[data-theme="day"] .eyebrow {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 3px 8px;
-  padding: 14px;
+  padding: 12px;
   background: rgba(139, 216, 255, .06);
   border-radius: 16px;
 }
@@ -685,8 +686,8 @@ html[data-theme="day"] .readiness-strip li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(420px, .9fr);
   align-items: center;
-  gap: 42px;
-  padding: clamp(30px, 4vw, 56px);
+  gap: 28px;
+  padding: clamp(28px, 3.5vw, 42px);
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--surface-strong) 88%, transparent), var(--surface));
   border: 1px solid var(--line);
@@ -696,9 +697,9 @@ html[data-theme="day"] .readiness-strip li {
 
 .inventory-overview h2,
 .library-header h2 {
-  margin: 9px 0 12px;
+  margin: 7px 0 9px;
   color: var(--ink);
-  font-size: clamp(30px, 3.8vw, 54px);
+  font-size: clamp(28px, 3.4vw, 46px);
   letter-spacing: -.06em;
   line-height: 1;
 }
@@ -709,7 +710,7 @@ html[data-theme="day"] .readiness-strip li {
   margin: 0;
   color: var(--ink-soft);
   font-size: 12px;
-  line-height: 1.7;
+  line-height: 1.55;
 }
 
 .inventory-stat-grid {
@@ -719,12 +720,12 @@ html[data-theme="day"] .readiness-strip li {
 }
 
 .inventory-stat-grid > div {
-  min-height: 116px;
+  min-height: 96px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 7px;
-  padding: 19px;
+  padding: 16px;
   background: rgba(139, 216, 255, .055);
   border: 1px solid var(--line);
   border-radius: 19px;
@@ -756,8 +757,8 @@ html[data-theme="day"] .readiness-strip li {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 28px;
-  padding: clamp(30px, 4vw, 54px);
+  gap: 20px;
+  padding: clamp(26px, 3.5vw, 42px);
   border-bottom: 1px solid var(--line);
 }
 
@@ -769,8 +770,8 @@ html[data-theme="day"] .readiness-strip li {
 
 .library-tabs {
   display: flex;
-  gap: 9px;
-  padding: 14px clamp(20px, 4vw, 54px) 0;
+  gap: 6px;
+  padding: 10px clamp(20px, 3.5vw, 42px) 0;
   overflow-x: auto;
   scrollbar-width: thin;
 }
@@ -812,7 +813,7 @@ html[data-theme="day"] .readiness-strip li {
   display: grid;
   grid-template-columns: minmax(260px, 1.6fr) repeat(2, minmax(190px, .7fr));
   gap: 10px;
-  padding: 20px clamp(20px, 4vw, 54px);
+  padding: 16px clamp(20px, 3.5vw, 42px);
   border-bottom: 1px solid var(--line);
 }
 
@@ -847,7 +848,7 @@ html[data-theme="day"] .filter-panel :is(input, select) {
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  padding: 12px clamp(20px, 4vw, 54px);
+  padding: 10px clamp(20px, 3.5vw, 42px);
   color: var(--ink-soft);
   border-bottom: 1px solid var(--line);
   font-size: 9px;
@@ -859,20 +860,20 @@ html[data-theme="day"] .filter-panel :is(input, select) {
 }
 
 .resource-list {
-  min-height: 260px;
+  min-height: 220px;
   display: grid;
   align-content: start;
   gap: 12px;
-  padding: clamp(20px, 3.5vw, 46px) clamp(20px, 4vw, 54px) clamp(28px, 4vw, 56px);
+  padding: clamp(20px, 3vw, 34px) clamp(20px, 3.5vw, 42px) clamp(24px, 3.5vw, 42px);
 }
 
 .course-workspace-card {
-  min-height: 210px;
+  min-height: 180px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) minmax(180px, auto);
   align-items: center;
-  gap: 24px;
-  padding: clamp(22px, 3vw, 36px);
+  gap: 20px;
+  padding: clamp(20px, 2.5vw, 30px);
   background:
     radial-gradient(circle at 92% 20%, rgba(139, 216, 255, .11), transparent 28%),
     rgba(139, 216, 255, .045);
@@ -926,10 +927,10 @@ html[data-theme="day"] .filter-panel :is(input, select) {
 
 .resource-card-copy > p {
   max-width: 780px;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   color: var(--ink-soft);
   font-size: 11px;
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 .resource-card-metadata {
@@ -970,12 +971,12 @@ html[data-theme="day"] .trust-badge.warning {
 
 .empty-state,
 .error-state {
-  min-height: 230px;
+  min-height: 190px;
   display: grid;
   place-items: center;
   align-content: center;
   gap: 9px;
-  padding: 30px;
+  padding: 24px;
   text-align: center;
 }
 
@@ -1004,11 +1005,11 @@ html[data-theme="day"] .trust-badge.warning {
   margin: 0;
   color: var(--ink-soft);
   font-size: 11px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .loading-state {
-  min-height: 230px;
+  min-height: 190px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1033,14 +1034,14 @@ html[data-theme="day"] .trust-badge.warning {
 .safety-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .safety-grid article {
-  min-height: 220px;
+  min-height: 176px;
   position: relative;
   overflow: hidden;
-  padding: 24px;
+  padding: 20px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 26px;
@@ -1061,7 +1062,7 @@ html[data-theme="day"] .trust-badge.warning {
 
 .safety-grid article > span {
   display: block;
-  margin-bottom: 36px;
+  margin-bottom: 22px;
   color: var(--gold);
   font-size: 10px;
   font-weight: 850;
@@ -1078,7 +1079,7 @@ html[data-theme="day"] .trust-badge.warning {
   margin: 0;
   color: var(--ink-soft);
   font-size: 10px;
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 .site-footer {
@@ -1112,8 +1113,8 @@ html[data-theme="day"] .trust-badge.warning {
 
 .readiness-dialog form {
   display: grid;
-  gap: 22px;
-  padding: 30px;
+  gap: 18px;
+  padding: 26px;
 }
 
 .readiness-dialog header {
@@ -1144,7 +1145,7 @@ html[data-theme="day"] .trust-badge.warning {
   margin: 0;
   color: var(--ink-soft);
   font-size: 12px;
-  line-height: 1.7;
+  line-height: 1.55;
 }
 
 .readiness-checklist {
