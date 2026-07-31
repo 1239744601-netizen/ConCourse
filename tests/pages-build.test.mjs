@@ -33,6 +33,7 @@ test("Pages build publishes only the explicit frontend artifact", () => {
   for (const required of [
     "index.html",
     "_headers",
+    "concourse-brand-favicon.svg",
     "member-hub.js",
     "data/hkbu-catalogue-current.json",
     "data/hkbu-2026-27-s1-catalog.json",
@@ -48,6 +49,14 @@ test("Pages build publishes only the explicit frontend artifact", () => {
   const html = readFileSync(path.join(projectRoot, "dist/index.html"), "utf8");
   assert.match(html, new RegExp(`${previewOrigin}/`, "u"));
   assert.doesNotMatch(html, /https:\/\/concoursehk\.pages\.dev/u);
+  assert.match(
+    html,
+    /rel="icon"[^>]+href="\/concourse-brand-favicon\.svg\?v=20260731-double-c1"/u
+  );
+  assert.match(
+    html,
+    /rel="shortcut icon"[^>]+href="\/concourse-brand-favicon\.svg\?v=20260731-double-c1"/u
+  );
 
   const connector = readFileSync(
     path.join(projectRoot, "dist/downloads/concourse-hkbu-portal-connector.zip")

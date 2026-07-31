@@ -30,6 +30,7 @@ const publicFiles = Object.freeze([
   "marketplace.js",
   "academic-tools.js",
   "concourse-favicon.svg",
+  "concourse-brand-favicon.svg",
   "concourse-mark.svg",
   "concourse-icon.svg",
   "concourse-course-odyssey.webp",
