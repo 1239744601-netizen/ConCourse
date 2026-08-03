@@ -154,15 +154,18 @@ test("keeps the Course community aquarium bounded, interactive, and efficient", 
   assert.match(html, /data-course-aquarium-viewport[^>]+aria-hidden="true"/);
   assert.match(html, /data-course-aquarium-canvas[^>]+width="1"[^>]+height="1"/);
   assert.match(html, /<button[^>]+data-course-community-action[^>]+data-copy="communityAction"[^>]+hidden/);
-  assert.match(html, /course-ambient\.css\?v=20260803-reef1/);
-  assert.match(html, /course-ambient\.mjs\?v=20260803-reef1/);
+  assert.match(html, /course-ambient\.css\?v=20260803-cinematic2/);
+  assert.match(html, /course-ambient\.mjs\?v=20260803-cinematic2/);
   assert.ok(html.indexOf("courses.mjs") < html.indexOf("course-ambient.mjs"));
   assert.ok(html.indexOf("</form>") < html.indexOf("data-course-aquarium"));
 
   assert.match(styles, /body\.course-ambient-page/);
-  assert.match(styles, /\.course-aquarium-viewport[\s\S]*?aspect-ratio: 3\.15 \/ 1/);
-  assert.match(styles, /course-aquarium-night-1280\.avif/);
-  assert.match(styles, /course-aquarium-day-1280\.avif/);
+  assert.match(styles, /body\.course-ambient-page \.course-search-stage \{[\s\S]*?width: 100vw;[\s\S]*?min-height: calc\(100svh - 79px\)/);
+  assert.match(styles, /\.course-aquarium \{[\s\S]*?height: 100%;[\s\S]*?position: absolute;[\s\S]*?inset: 0;/);
+  assert.match(styles, /\.course-aquarium-viewport \{[\s\S]*?height: 100%;[\s\S]*?min-height: 100%;[\s\S]*?border-radius: 0;/);
+  assert.match(styles, /course-aquarium-night-cinematic-v2\.avif/);
+  assert.match(styles, /course-aquarium-day-cinematic-v2\.avif/);
+  assert.doesNotMatch(styles, /course-aquarium-(?:day|night)-1280/);
   assert.match(styles, /\.course-aquarium-canvas[\s\S]*?touch-action: auto/);
   assert.match(styles, /\.course-aquarium-canvas\.is-community-hovered[\s\S]*?cursor: pointer/);
   assert.match(styles, /\.course-community-action:focus-visible/);
@@ -173,21 +176,24 @@ test("keeps the Course community aquarium bounded, interactive, and efficient", 
   assert.doesNotMatch(styles, /course-atlas-/);
 
   assert.match(ambientSource, /canvas\.getContext\("2d"/);
+  assert.match(ambientSource, /from "\.\/course-aquarium-model\.mjs"/);
+  assert.match(ambientSource, /createAquariumModel\(\{/);
+  assert.match(ambientSource, /setAquariumAspectRatio\(model, state\.width \/ Math\.max\(1, state\.height\)\)/);
+  assert.match(ambientSource, /advanceAquariumModel\(model, elapsedSeconds\)/);
+  assert.match(ambientSource, /aquariumRenderOrder\(model\)/);
+  assert.match(ambientSource, /startleAquariumAt\(model,/);
   assert.match(ambientSource, /Math\.min\(devicePixelRatio \|\| 1, dprLimit, pixelBudgetDpr\)/);
+  assert.match(ambientSource, /const dprLimit = state\.width < 760 \? 1 : 1\.35/);
+  assert.match(ambientSource, /Math\.sqrt\(2_100_000 \/ Math\.max\(1, state\.width \* state\.height\)\)/);
   assert.match(ambientSource, /const compactAquarium = matchMedia\("\(max-width: 760px\)"\)/);
-  assert.match(ambientSource, /return compactAquarium\.matches \? mobileFormation\.length : desktopFormation\.length/);
-  assert.match(ambientSource, /mode: "school"/);
-  assert.match(ambientSource, /member\.mode = "flee"/);
-  assert.match(ambientSource, /member\.mode = "returning"/);
   assert.match(ambientSource, /crab\.mode = "scuttling"/);
   assert.match(ambientSource, /coral\.bloomStarted = timestamp/);
-  assert.match(ambientSource, /for \(let index = fish\.length - 1; index >= 0; index -= 1\)/);
   assert.match(ambientSource, /for \(let index = crabs\.length - 1; index >= 0; index -= 1\)/);
   assert.match(ambientSource, /for \(let index = corals\.length - 1; index >= 0; index -= 1\)/);
-  assert.match(ambientSource, /const minimumRadius = expandedTarget \? 22 : 14/);
+  assert.match(ambientSource, /const minimumRadius = expandedTarget \? 24 : 15/);
   assert.match(ambientSource, /canvas\.addEventListener\("pointerup"/);
   assert.match(ambientSource, /hint\.addEventListener\("click"/);
-  assert.match(ambientSource, /const actorCount = fish\.length \+ crabs\.length \+ corals\.length/);
+  assert.match(ambientSource, /const actorCount = model\.fish\.length \+ crabs\.length \+ corals\.length/);
   assert.match(ambientSource, /state\.actionActor = \(ordinal \+ 1\) % actorCount/);
   const pointerUpHandler = ambientSource.match(/canvas\.addEventListener\("pointerup"[\s\S]*?\}, \{ passive: true \}\);/)?.[0];
   assert.ok(pointerUpHandler);
@@ -197,16 +203,17 @@ test("keeps the Course community aquarium bounded, interactive, and efficient", 
   assert.match(ambientSource, /document\.hidden/);
   assert.match(ambientSource, /navigator\.connection\?\.saveData/);
   assert.match(ambientSource, /body\.classList\.contains\("has-course-results"\)/);
-  assert.match(ambientSource, /if \(reducedMotion\.matches\) \{\s+state\.selectedActor = actor;\s+settleCommunity\(\);\s+drawStatic\(\);/);
-  assert.match(ambientSource, /const highlighted = \(state\.hoveredActor === index && finePointer\.matches\) \|\| state\.selectedActor === index/);
+  assert.match(ambientSource, /if \(reducedMotion\.matches\) \{\s+state\.selectedActor = actor;\s+drawStatic\(\);/);
+  assert.match(ambientSource, /const highlighted = \(state\.hoveredActor === actor && finePointer\.matches\) \|\| state\.selectedActor === actor/);
   assert.match(ambientSource, /form\.addEventListener\("submit", \(\) => \{\s+if \(saveData \|\| reducedMotion\.matches \|\| forcedColors\.matches\) return;/);
-  assert.match(ambientSource, /function handleForcedColors\(\)[\s\S]*?stopAnimation\(\);\s+settleCommunity\(\);\s+hint\.hidden = true;\s+drawStatic\(\);/);
-  assert.match(ambientSource, /startMotion\(4_800\)/);
-  assert.match(ambientSource, /new URL\("\.\/assets\/course-fish-sprites\.webp\?v=20260803-reef1", import\.meta\.url\)/);
-  assert.match(ambientSource, /new URL\("\.\/assets\/course-reef-sprites\.webp\?v=20260803-reef1", import\.meta\.url\)/);
+  assert.match(ambientSource, /function handleForcedColors\(\)[\s\S]*?stopAnimation\(\);\s+hint\.hidden = true;/);
+  assert.match(ambientSource, /if \(elapsedMilliseconds < 32\)/);
+  assert.match(ambientSource, /Math\.min\(\.1, Math\.max\(\.001, elapsedMilliseconds \/ 1000\)\)/);
+  assert.match(ambientSource, /new URL\("\.\/assets\/course-fish-sprites\.webp\?v=20260803-cinematic2", import\.meta\.url\)/);
+  assert.match(ambientSource, /new URL\("\.\/assets\/course-reef-sprites\.webp\?v=20260803-cinematic2", import\.meta\.url\)/);
   assert.match(ambientSource, /window\.addEventListener\("pageshow"[\s\S]+event\.persisted/);
   assert.match(ambientSource, /state\.generation \+= 1;\s+state\.loadingSprite = false;\s+if \(!event\.persisted\)/);
-  assert.match(ambientSource, /function refreshEffects\(\)[\s\S]*?settleCommunity\(\);[\s\S]*?drawStatic\(\);/);
+  assert.match(ambientSource, /function refreshEffects\(\)[\s\S]*?if \(motionAllowed\(\)\) ensureAnimation\(\);\s+else stopAnimation\(\);/);
   assert.doesNotMatch(ambientSource, /preventDefault\(|pointer capture|setPointerCapture/i);
 
   assert.match(searchSource, /reduceMotion \? "auto" : "smooth"/);
@@ -218,13 +225,14 @@ test("keeps the Course community aquarium bounded, interactive, and efficient", 
   assert.match(searchSource, /communityAction: "認識這個社群"/);
 
   const assets = [
-    "course-aquarium-night-1280.avif",
-    "course-aquarium-night-1280.jpg",
-    "course-aquarium-day-1280.avif",
-    "course-aquarium-day-1280.jpg",
+    "course-aquarium-night-cinematic-v2.avif",
+    "course-aquarium-night-cinematic-v2.jpg",
+    "course-aquarium-day-cinematic-v2.avif",
+    "course-aquarium-day-cinematic-v2.jpg",
     "course-fish-sprites.webp",
     "course-reef-sprites.webp",
   ];
+  assert.match(buildScript, /courses\/course-aquarium-model\.mjs/);
   let totalBytes = 0;
   for (const asset of assets) {
     assert.match(buildScript, new RegExp(`courses/assets/${asset.replaceAll(".", "\\.")}`));
@@ -232,7 +240,7 @@ test("keeps the Course community aquarium bounded, interactive, and efficient", 
     if (asset.endsWith("sprites.webp")) assert.ok(size < 100_000, `${asset} is ${size} bytes`);
     totalBytes += size;
   }
-  assert.ok(totalBytes < 900_000, `optimized aquarium assets are ${totalBytes} bytes`);
+  assert.ok(totalBytes < 1_200_000, `optimized aquarium assets are ${totalBytes} bytes`);
 });
 
 test("writes validated root routes for standalone course navigation", () => {

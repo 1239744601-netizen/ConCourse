@@ -9,6 +9,21 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const productionOrigin = "https://concoursehk.com";
 const betaOrigin = "https://beta.concoursehk.com";
 const workerToken = "__CONCOURSE_DEPLOYMENT_ORIGIN__";
+const aquariumArtifacts = Object.freeze([
+  "courses/course-ambient.css",
+  "courses/course-ambient.mjs",
+  "courses/course-aquarium-model.mjs",
+  "courses/assets/course-aquarium-night-1280.avif",
+  "courses/assets/course-aquarium-night-1280.jpg",
+  "courses/assets/course-aquarium-day-1280.avif",
+  "courses/assets/course-aquarium-day-1280.jpg",
+  "courses/assets/course-aquarium-night-cinematic-v2.avif",
+  "courses/assets/course-aquarium-night-cinematic-v2.jpg",
+  "courses/assets/course-aquarium-day-cinematic-v2.avif",
+  "courses/assets/course-aquarium-day-cinematic-v2.jpg",
+  "courses/assets/course-fish-sprites.webp",
+  "courses/assets/course-reef-sprites.webp"
+]);
 
 function listFiles(directory, prefix = "") {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -97,6 +112,7 @@ test("production Pages build publishes only the explicit frontend artifact", () 
     "coursekeys/data/course-material-seed.json",
     "courses/index.html",
     "courses/courses.mjs",
+    ...aquariumArtifacts,
     "data/hkbu-catalogue-current.json",
     "data/hkbu-2026-27-s1-catalog.json",
     "downloads/concourse-hkbu-portal-connector.zip"
@@ -112,6 +128,13 @@ test("production Pages build publishes only the explicit frontend artifact", () 
       readFileSync(path.join(projectRoot, "dist", immersiveAsset)),
       readFileSync(path.join(projectRoot, immersiveAsset)),
       immersiveAsset
+    );
+  }
+  for (const aquariumArtifact of aquariumArtifacts) {
+    assert.deepEqual(
+      readFileSync(path.join(projectRoot, "dist", aquariumArtifact)),
+      readFileSync(path.join(projectRoot, aquariumArtifact)),
+      aquariumArtifact
     );
   }
   assert.equal(outputFiles.some(file => file.endsWith(".sql")), false);
