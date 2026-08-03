@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash, webcrypto } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -90,7 +90,8 @@ test("keeps both course tools clean before an explicit search", async () => {
   assert.ok(assistantStage);
   assert.match(searchStage, /<h1[^>]+>Courses<\/h1>/);
   assert.match(searchStage, /<form[^>]+id="courseSearchForm"[^>]+role="search"/);
-  assert.doesNotMatch(searchStage, /<p\b|<article\b|statistics|filters/i);
+  assert.match(searchStage, /class="course-community-bridge"[^>]+data-copy="communityBridge"/);
+  assert.doesNotMatch(searchStage, /<article\b|statistics|filters/i);
   assert.match(searchHtml, /id="courseSearchResults" hidden/);
   assert.match(searchHtml, /data-course-route="timetable"[^>]+data-course-auth-only[^>]+data-copy="timetable"/);
   assert.doesNotMatch(searchHtml, /href="\.\.\/assistant\/"/);
@@ -137,6 +138,101 @@ test("keeps the standalone course mastheads aligned with the root destinations a
   assert.match(styles, /@media \(max-width: 820px\) and \(min-width: 761px\)/);
   assert.match(styles, /@media \(max-width: 520px\)/);
   assert.match(styles, /@media \(max-width: 480px\)/);
+});
+
+test("keeps the Course community aquarium bounded, interactive, and efficient", async () => {
+  const [html, styles, ambientSource, searchSource, buildScript] = await Promise.all([
+    read("courses/index.html"),
+    read("courses/course-ambient.css"),
+    read("courses/course-ambient.mjs"),
+    read("courses/courses.mjs"),
+    read("scripts/build-pages.mjs"),
+  ]);
+
+  assert.match(html, /<body class="course-ambient-page">/);
+  assert.match(html, /class="course-aquarium"[^>]+data-course-aquarium/);
+  assert.match(html, /data-course-aquarium-viewport[^>]+aria-hidden="true"/);
+  assert.match(html, /data-course-aquarium-canvas[^>]+width="1"[^>]+height="1"/);
+  assert.match(html, /<button[^>]+data-course-community-action[^>]+data-copy="communityAction"[^>]+hidden/);
+  assert.match(html, /course-ambient\.css\?v=20260803-reef1/);
+  assert.match(html, /course-ambient\.mjs\?v=20260803-reef1/);
+  assert.ok(html.indexOf("courses.mjs") < html.indexOf("course-ambient.mjs"));
+  assert.ok(html.indexOf("</form>") < html.indexOf("data-course-aquarium"));
+
+  assert.match(styles, /body\.course-ambient-page/);
+  assert.match(styles, /\.course-aquarium-viewport[\s\S]*?aspect-ratio: 3\.15 \/ 1/);
+  assert.match(styles, /course-aquarium-night-1280\.avif/);
+  assert.match(styles, /course-aquarium-day-1280\.avif/);
+  assert.match(styles, /\.course-aquarium-canvas[\s\S]*?touch-action: auto/);
+  assert.match(styles, /\.course-aquarium-canvas\.is-community-hovered[\s\S]*?cursor: pointer/);
+  assert.match(styles, /\.course-community-action:focus-visible/);
+  assert.match(styles, /body\.has-course-results \.course-aquarium/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /@media \(forced-colors: active\), print/);
+  assert.doesNotMatch(styles, /\.course-site-header|\.course-header-controls/);
+  assert.doesNotMatch(styles, /course-atlas-/);
+
+  assert.match(ambientSource, /canvas\.getContext\("2d"/);
+  assert.match(ambientSource, /Math\.min\(devicePixelRatio \|\| 1, dprLimit, pixelBudgetDpr\)/);
+  assert.match(ambientSource, /const compactAquarium = matchMedia\("\(max-width: 760px\)"\)/);
+  assert.match(ambientSource, /return compactAquarium\.matches \? mobileFormation\.length : desktopFormation\.length/);
+  assert.match(ambientSource, /mode: "school"/);
+  assert.match(ambientSource, /member\.mode = "flee"/);
+  assert.match(ambientSource, /member\.mode = "returning"/);
+  assert.match(ambientSource, /crab\.mode = "scuttling"/);
+  assert.match(ambientSource, /coral\.bloomStarted = timestamp/);
+  assert.match(ambientSource, /for \(let index = fish\.length - 1; index >= 0; index -= 1\)/);
+  assert.match(ambientSource, /for \(let index = crabs\.length - 1; index >= 0; index -= 1\)/);
+  assert.match(ambientSource, /for \(let index = corals\.length - 1; index >= 0; index -= 1\)/);
+  assert.match(ambientSource, /const minimumRadius = expandedTarget \? 22 : 14/);
+  assert.match(ambientSource, /canvas\.addEventListener\("pointerup"/);
+  assert.match(ambientSource, /hint\.addEventListener\("click"/);
+  assert.match(ambientSource, /const actorCount = fish\.length \+ crabs\.length \+ corals\.length/);
+  assert.match(ambientSource, /state\.actionActor = \(ordinal \+ 1\) % actorCount/);
+  const pointerUpHandler = ambientSource.match(/canvas\.addEventListener\("pointerup"[\s\S]*?\}, \{ passive: true \}\);/)?.[0];
+  assert.ok(pointerUpHandler);
+  assert.doesNotMatch(pointerUpHandler, /finePointer/);
+  assert.match(pointerUpHandler, /coarsePointer\.matches/);
+  assert.match(ambientSource, /new IntersectionObserver/);
+  assert.match(ambientSource, /document\.hidden/);
+  assert.match(ambientSource, /navigator\.connection\?\.saveData/);
+  assert.match(ambientSource, /body\.classList\.contains\("has-course-results"\)/);
+  assert.match(ambientSource, /if \(reducedMotion\.matches\) \{\s+state\.selectedActor = actor;\s+settleCommunity\(\);\s+drawStatic\(\);/);
+  assert.match(ambientSource, /const highlighted = \(state\.hoveredActor === index && finePointer\.matches\) \|\| state\.selectedActor === index/);
+  assert.match(ambientSource, /form\.addEventListener\("submit", \(\) => \{\s+if \(saveData \|\| reducedMotion\.matches \|\| forcedColors\.matches\) return;/);
+  assert.match(ambientSource, /function handleForcedColors\(\)[\s\S]*?stopAnimation\(\);\s+settleCommunity\(\);\s+hint\.hidden = true;\s+drawStatic\(\);/);
+  assert.match(ambientSource, /startMotion\(4_800\)/);
+  assert.match(ambientSource, /new URL\("\.\/assets\/course-fish-sprites\.webp\?v=20260803-reef1", import\.meta\.url\)/);
+  assert.match(ambientSource, /new URL\("\.\/assets\/course-reef-sprites\.webp\?v=20260803-reef1", import\.meta\.url\)/);
+  assert.match(ambientSource, /window\.addEventListener\("pageshow"[\s\S]+event\.persisted/);
+  assert.match(ambientSource, /state\.generation \+= 1;\s+state\.loadingSprite = false;\s+if \(!event\.persisted\)/);
+  assert.match(ambientSource, /function refreshEffects\(\)[\s\S]*?settleCommunity\(\);[\s\S]*?drawStatic\(\);/);
+  assert.doesNotMatch(ambientSource, /preventDefault\(|pointer capture|setPointerCapture/i);
+
+  assert.match(searchSource, /reduceMotion \? "auto" : "smooth"/);
+  assert.match(searchSource, /communityBridge: "Discover courses\. Find your community\."/);
+  assert.match(searchSource, /communityBridge: "发现课程，找到你的社区。"/);
+  assert.match(searchSource, /communityBridge: "探索課程，找到你的社群。"/);
+  assert.match(searchSource, /communityAction: "Meet the community"/);
+  assert.match(searchSource, /communityAction: "认识这个社区"/);
+  assert.match(searchSource, /communityAction: "認識這個社群"/);
+
+  const assets = [
+    "course-aquarium-night-1280.avif",
+    "course-aquarium-night-1280.jpg",
+    "course-aquarium-day-1280.avif",
+    "course-aquarium-day-1280.jpg",
+    "course-fish-sprites.webp",
+    "course-reef-sprites.webp",
+  ];
+  let totalBytes = 0;
+  for (const asset of assets) {
+    assert.match(buildScript, new RegExp(`courses/assets/${asset.replaceAll(".", "\\.")}`));
+    const size = (await stat(new URL(`../courses/assets/${asset}`, import.meta.url))).size;
+    if (asset.endsWith("sprites.webp")) assert.ok(size < 100_000, `${asset} is ${size} bytes`);
+    totalBytes += size;
+  }
+  assert.ok(totalBytes < 900_000, `optimized aquarium assets are ${totalBytes} bytes`);
 });
 
 test("writes validated root routes for standalone course navigation", () => {

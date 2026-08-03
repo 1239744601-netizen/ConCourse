@@ -82,6 +82,14 @@ const publicFiles = Object.freeze([
   "coursekeys/data/course-material-seed.json",
   "courses/index.html",
   "courses/courses.mjs",
+  "courses/course-ambient.css",
+  "courses/course-ambient.mjs",
+  "courses/assets/course-aquarium-night-1280.avif",
+  "courses/assets/course-aquarium-night-1280.jpg",
+  "courses/assets/course-aquarium-day-1280.avif",
+  "courses/assets/course-aquarium-day-1280.jpg",
+  "courses/assets/course-fish-sprites.webp",
+  "courses/assets/course-reef-sprites.webp",
   "data/hkbu-catalogue-current.json",
   "data/hkbu-2026-27-s1-catalog.json"
 ]);

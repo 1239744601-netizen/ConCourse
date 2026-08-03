@@ -12,6 +12,8 @@ const COPY = Object.freeze({
     pageTitle: "Courses",
     searchLabel: "Search the course catalogue",
     searchPlaceholder: "Course, code, or instructor",
+    communityBridge: "Discover courses. Find your community.",
+    communityAction: "Meet the community",
     resultsTitle: "Results",
     loading: "Searching…",
     resultsCount: "{count} matches",
@@ -66,6 +68,8 @@ const COPY = Object.freeze({
     pageTitle: "课程",
     searchLabel: "搜索课程目录",
     searchPlaceholder: "课程、学院、教师、学期或班别",
+    communityBridge: "发现课程，找到你的社区。",
+    communityAction: "认识这个社区",
     resultsTitle: "结果",
     loading: "正在搜索…",
     resultsCount: "{count} 个匹配项",
@@ -120,6 +124,8 @@ const COPY = Object.freeze({
     pageTitle: "課程",
     searchLabel: "搜尋課程目錄",
     searchPlaceholder: "課程、學院、教師、學期或班別",
+    communityBridge: "探索課程，找到你的社群。",
+    communityAction: "認識這個社群",
     resultsTitle: "結果",
     loading: "搜尋緊…",
     resultsCount: "{count} 個匹配項",
@@ -535,6 +541,46 @@ async function ensureReadiness() {
   return state.readiness;
 }
 
+function waitForSearchStageToSettle() {
+  const stage = document.querySelector(".course-search-stage");
+  const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  if (!stage || reduceMotion) {
+    return new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    let timer = 0;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      stage.removeEventListener("transitionend", onTransitionEnd);
+      resolve();
+    };
+    const onTransitionEnd = (event) => {
+      if (event.target === stage && event.propertyName === "min-height") finish();
+    };
+    stage.addEventListener("transitionend", onTransitionEnd);
+    timer = window.setTimeout(finish, 380);
+  });
+}
+
+async function scrollResultsIntoView() {
+  await waitForSearchStageToSettle();
+  const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const results = byId("courseSearchResults");
+  const headerHeight = document.querySelector(".course-site-header")?.getBoundingClientRect().height || 0;
+  const targetTop = Math.max(
+    0,
+    globalThis.scrollY + results.getBoundingClientRect().top - headerHeight - 12
+  );
+  globalThis.scrollTo({
+    top: targetTop,
+    behavior: reduceMotion ? "auto" : "smooth",
+  });
+}
+
 byId("courseSearchForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const query = byId("courseSearchInput").value.trim();
@@ -557,7 +603,7 @@ byId("courseSearchForm").addEventListener("submit", async (event) => {
     byId("courseSearchResults").hidden = false;
     renderResults();
     byId("courseResultsTitle").focus({ preventScroll: true });
-    byId("courseSearchResults").scrollIntoView({ behavior: "smooth", block: "start" });
+    await scrollResultsIntoView();
   } catch (error) {
     console.error("ConCourse course search failed", error);
     state.results = [];
