@@ -2046,6 +2046,7 @@
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
 <link rel="stylesheet" href="community-redesign.css?v=20260731-clean1" />
 <link rel="stylesheet" href="academic-experiences.css?v=20260728-readable-controls1" />
+<link rel="stylesheet" href="timetable-immersive.css?v=20260803-course-path1" />
 <link rel="stylesheet" href="concourse-stabilization.css?v=20260731-visual1" />
 </head>
 <body>
@@ -4803,7 +4804,9 @@ function syncPrimaryNavigation(){
   const timetableButton = $("topTimetableBtn");
   const hubButton = $("hubOpenBtn");
   const courseSearchLink = $("courseSearchNav");
-  const hubAvailable = !!(stateReady && finalTimetable?.savedAt);
+  // Student-status verification and the protected Verification Center must
+  // remain reachable before a user has saved a final timetable.
+  const hubAvailable = stateReady;
   const hubActive = appStarted && document.body.classList.contains("hub-active");
   const timetableActive = appStarted && !hubActive;
 
@@ -4818,7 +4821,7 @@ function syncPrimaryNavigation(){
     hubButton.hidden = !signedIn;
     hubButton.disabled = !hubAvailable;
     hubButton.setAttribute("aria-disabled", String(!hubAvailable));
-    hubButton.title = hubAvailable ? "" : t("hubNoFinalSchedule");
+    hubButton.title = "";
     hubButton.toggleAttribute("aria-current", hubActive);
     if(hubActive) hubButton.setAttribute("aria-current", "page");
   }
@@ -7536,5 +7539,6 @@ initializeAccount();
 <script src="hkbu-portal.js?v=20260731-clean1"></script>
 <script src="marketplace.js?v=20260731-clean1"></script>
 <script src="academic-tools.js?v=20260731-clean1"></script>
+<script src="timetable-immersive.js?v=20260803-course-path1"></script>
 </body>
 </html>

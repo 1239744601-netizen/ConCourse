@@ -1,0 +1,586 @@
+/* ConCourse timetable immersion layer
+   Scoped to the semester-planning workspace so Student Hub and the final
+   timetable keep their existing layouts. */
+
+body.app-active:not(.schedule-active):not(.hub-active) #appWrap {
+  --planner-pointer-x: 50vw;
+  --planner-pointer-y: 50vh;
+  --planner-shift-x: 0px;
+  --planner-shift-y: 0px;
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) #appWrap::before {
+  display: none !important;
+}
+
+.planner-immersive-scene {
+  position: fixed !important;
+  z-index: 0 !important;
+  inset: 0;
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+  background: #04182b;
+  contain: strict;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .planner-immersive-scene {
+  display: block;
+}
+
+.planner-scene-image {
+  position: absolute;
+  inset: -4%;
+  background-image:
+    linear-gradient(105deg, rgba(2, 17, 32, .94) 0%, rgba(3, 22, 40, .72) 42%, rgba(3, 20, 36, .35) 100%),
+    linear-gradient(0deg, rgba(3, 21, 38, .74), rgba(3, 21, 38, .08) 52%, rgba(3, 21, 38, .42)),
+    url("concourse-timetable-journey-v1.png");
+  background-position: center;
+  background-size: cover;
+  transform: translate3d(var(--planner-shift-x), var(--planner-shift-y), 0) scale(1.07);
+  transform-origin: center;
+  will-change: transform;
+}
+
+.planner-scene-base {
+  opacity: .72;
+  filter: saturate(.92) contrast(1.05);
+  animation: planner-scene-breathe 24s ease-in-out infinite alternate;
+}
+
+.planner-scene-reveal {
+  opacity: .9;
+  filter: saturate(1.1) contrast(1.08) brightness(1.08);
+  -webkit-mask-image: radial-gradient(circle 290px at var(--planner-pointer-x) var(--planner-pointer-y), #000 0%, rgba(0, 0, 0, .94) 34%, rgba(0, 0, 0, .5) 65%, transparent 100%);
+  mask-image: radial-gradient(circle 290px at var(--planner-pointer-x) var(--planner-pointer-y), #000 0%, rgba(0, 0, 0, .94) 34%, rgba(0, 0, 0, .5) 65%, transparent 100%);
+}
+
+.planner-immersive-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at var(--planner-pointer-x) var(--planner-pointer-y), rgba(125, 217, 255, .11), transparent 18rem),
+    linear-gradient(90deg, rgba(2, 16, 31, .34), transparent 35%, rgba(2, 16, 31, .1));
+}
+
+.planner-particle-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .88;
+  mix-blend-mode: screen;
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-intro h1 {
+  color: #f7fbff;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: #f7fbff;
+  text-shadow: 0 16px 42px rgba(0, 0, 0, .28);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-intro > p:last-child {
+  color: rgba(218, 233, 245, .74);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
+  border-color: rgba(146, 213, 249, .18);
+  background: rgba(4, 28, 49, .82);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .22);
+}
+
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a,
+html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav b {
+  color: rgba(229, 240, 249, .82);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) #appWrap > :not(.planner-immersive-scene) {
+  position: relative;
+  z-index: 1;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .wrap {
+  background: transparent;
+}
+
+/* The Assistant is the main working surface; the wishlist is a compact,
+   independently scrolling reference rail. */
+@media (min-width: 1121px) {
+  body.app-active:not(.schedule-active):not(.hub-active) .wrap {
+    width: min(1680px, calc(100% - 2 * var(--atlas-gutter, 32px)));
+    grid-template-columns: minmax(300px, 360px) minmax(680px, 1fr) !important;
+    grid-template-areas: "wishlist config" !important;
+    column-gap: clamp(24px, 3vw, 48px);
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
+    padding: clamp(25px, 2.2vw, 34px) clamp(20px, 2vw, 28px) !important;
+    overflow: hidden !important;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-header {
+    display: block;
+    padding-bottom: 19px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-header h2 {
+    max-width: 8ch;
+    font-size: clamp(27px, 2.2vw, 34px);
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-header > div > p:last-child {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-count {
+    display: inline-flex;
+    margin-top: 15px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-profile {
+    width: 100%;
+    margin-bottom: 19px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-profile-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel #courseList {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: rgba(125, 217, 255, .5) transparent;
+    scrollbar-width: thin;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel #courseList > .empty-note {
+    min-height: 230px;
+    padding: 24px 14px;
+    font-size: 13px;
+  }
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
+  color: #f5f9fd;
+  border: 1px solid rgba(151, 213, 248, .18) !important;
+  border-radius: 34px !important;
+  background:
+    linear-gradient(155deg, rgba(8, 38, 66, .92), rgba(3, 20, 37, .88)) !important;
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, .25),
+    inset 0 1px 0 rgba(255, 255, 255, .07) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.08);
+  backdrop-filter: blur(22px) saturate(1.08);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel:hover {
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, .25),
+    inset 0 1px 0 rgba(255, 255, 255, .07) !important;
+}
+
+/* Expanded Assistant surface */
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel {
+  --assistant-progress: 0;
+  position: relative;
+  min-height: 390px;
+  margin-bottom: clamp(28px, 4vw, 54px);
+  padding: clamp(30px, 4.2vw, 58px);
+  overflow: hidden;
+  color: #f6f9fd;
+  border: 1px solid rgba(151, 218, 255, .28);
+  border-radius: clamp(30px, 3.4vw, 48px);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(93, 180, 255, .25), transparent 25rem),
+    linear-gradient(145deg, rgba(7, 40, 70, .93), rgba(3, 22, 40, .84));
+  box-shadow:
+    0 32px 90px rgba(0, 0, 0, .28),
+    inset 0 1px 0 rgba(255, 255, 255, .09);
+  -webkit-backdrop-filter: blur(24px) saturate(1.12);
+  backdrop-filter: blur(24px) saturate(1.12);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel[data-selection-state="needs-details"],
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel[data-selection-state="complete"] {
+  --assistant-progress: 1;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel::before {
+  content: "";
+  position: absolute;
+  top: -32%;
+  right: -8%;
+  width: min(520px, 52%);
+  aspect-ratio: 1;
+  border: 1px solid rgba(139, 216, 255, .15);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 38px rgba(139, 216, 255, .025),
+    0 0 0 90px rgba(139, 216, 255, .018);
+  pointer-events: none;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading {
+  align-items: center;
+  gap: clamp(24px, 4vw, 56px);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading h2 {
+  max-width: 14ch;
+  color: #fff;
+  font-size: clamp(32px, 4vw, 58px);
+  font-weight: 790;
+  letter-spacing: -.055em;
+  line-height: .98;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading p {
+  max-width: 680px;
+  margin-top: 13px;
+  color: rgba(226, 239, 250, .72);
+  font-size: clamp(13px, 1.25vw, 16px);
+  line-height: 1.55;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch {
+  min-height: 54px;
+  padding: 14px 22px;
+  color: #03182b;
+  background: linear-gradient(110deg, #f0bd4e, #9ce4ff 72%, #fff);
+  box-shadow:
+    0 16px 38px rgba(64, 171, 232, .25),
+    inset 0 1px 0 rgba(255, 255, 255, .72);
+  transition: transform .28s cubic-bezier(.16, 1, .3, 1), box-shadow .28s ease, filter .28s ease;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch:hover,
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch:focus-visible {
+  color: #03182b;
+  background: linear-gradient(110deg, #f4c966, #b8edff 72%, #fff);
+  box-shadow:
+    0 20px 48px rgba(64, 171, 232, .34),
+    0 0 0 6px rgba(139, 216, 255, .09);
+  filter: none;
+  transform: translateY(-2px);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide {
+  position: relative;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-top: clamp(34px, 5vw, 58px);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::before,
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 20px;
+  left: 20px;
+  width: calc(66.666% + 1px);
+  height: 2px;
+  border-radius: 999px;
+  transform-origin: left center;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::before {
+  background: rgba(176, 218, 245, .2);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
+  background: linear-gradient(90deg, #65ceff, #efbd50);
+  box-shadow: 0 0 15px rgba(101, 206, 255, .42);
+  transform: scaleX(var(--assistant-progress));
+  transition: transform .65s cubic-bezier(.16, 1, .3, 1);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-width: 0;
+  padding: 0 clamp(16px, 2.4vw, 34px) 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  transition: transform .28s cubic-bezier(.16, 1, .3, 1);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step:hover,
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step:focus-within {
+  transform: translateY(-3px);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-marker {
+  position: relative;
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  color: rgba(224, 237, 249, .7);
+  border: 1px solid rgba(171, 218, 248, .26);
+  background: rgba(4, 25, 45, .88);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .2);
+  font-size: 13px;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step[data-state="current"] .selection-assistant-step-marker {
+  color: #03182b;
+  border-color: rgba(255, 255, 255, .68);
+  background: #81dcff;
+  box-shadow:
+    0 0 0 7px rgba(129, 220, 255, .1),
+    0 0 30px rgba(129, 220, 255, .35);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step[data-state="complete"] .selection-assistant-step-marker {
+  color: transparent;
+  border-color: rgba(245, 205, 105, .68);
+  background: #efbd50;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy {
+  margin-top: 16px;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step b {
+  color: #f7fbff;
+  font-size: clamp(14px, 1.35vw, 17px);
+  letter-spacing: -.015em;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy > span {
+  max-width: 28ch;
+  margin-top: 7px;
+  color: rgba(220, 235, 247, .62);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-session-note {
+  margin-top: 28px;
+  color: rgba(213, 230, 244, .48);
+  font-size: 10.5px;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-manual-link {
+  color: #8adfff;
+  font-size: 12px;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-card {
+  color: #f4f8fc;
+  border-color: rgba(143, 210, 247, .2);
+  background: rgba(2, 22, 40, .56);
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-card strong {
+  color: #fff;
+}
+
+body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-card span,
+body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-status {
+  color: rgba(220, 235, 247, .66);
+}
+
+/* Day mode keeps the photographic depth while restoring strong ink contrast. */
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-immersive-scene {
+  background: #dff2ff;
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-scene-image {
+  background-image:
+    linear-gradient(105deg, rgba(224, 243, 255, .9) 0%, rgba(224, 243, 255, .69) 48%, rgba(230, 244, 252, .35) 100%),
+    linear-gradient(0deg, rgba(216, 239, 253, .7), rgba(238, 249, 255, .08) 50%, rgba(218, 238, 251, .38)),
+    url("concourse-timetable-journey-v1.png");
+  filter: saturate(.7) brightness(1.08) contrast(.9);
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-scene-reveal {
+  opacity: .72;
+  filter: saturate(.9) brightness(1.05) contrast(.96);
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-particle-field {
+  opacity: .78;
+  mix-blend-mode: multiply;
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel {
+  color: #071d32;
+  border-color: rgba(19, 92, 141, .2);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(121, 209, 250, .25), transparent 25rem),
+    linear-gradient(145deg, rgba(248, 253, 255, .94), rgba(221, 241, 253, .88));
+  box-shadow:
+    0 30px 76px rgba(8, 54, 88, .14),
+    inset 0 1px 0 rgba(255, 255, 255, .9);
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading h2,
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step b {
+  color: #071d32;
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading p,
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy > span,
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-session-note,
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-status {
+  color: #4f687c;
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-marker {
+  color: #31536e;
+  border-color: rgba(7, 57, 94, .2);
+  background: rgba(239, 248, 253, .92);
+  box-shadow: 0 8px 22px rgba(8, 54, 88, .1);
+}
+
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
+  color: #071d32;
+  border-color: rgba(7, 68, 111, .16) !important;
+  background: linear-gradient(155deg, rgba(248, 253, 255, .94), rgba(219, 239, 252, .9)) !important;
+  box-shadow:
+    0 25px 68px rgba(9, 56, 90, .13),
+    inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+}
+
+@media (max-width: 1120px) {
+  body.app-active:not(.schedule-active):not(.hub-active) .wrap {
+    grid-template-areas:
+      "config"
+      "wishlist" !important;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
+    min-height: 500px;
+    overflow: hidden !important;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel #courseList {
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .planner-scene-reveal {
+    display: none;
+  }
+
+  .planner-immersive-scene::after {
+    background: linear-gradient(rgba(3, 21, 38, .5), rgba(3, 21, 38, .68));
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel {
+    min-height: 0;
+    padding: 26px 21px 28px;
+    border-radius: 30px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading {
+    align-items: stretch;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading h2 {
+    max-width: 12ch;
+    font-size: 34px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    margin-top: 30px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::before,
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
+    top: 20px;
+    bottom: 20px;
+    left: 20px;
+    width: 2px;
+    height: auto;
+    transform-origin: center top;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
+    transform: scaleY(var(--assistant-progress));
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 14px;
+    padding: 0;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy {
+    margin-top: 1px;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy > span {
+    max-width: none;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
+    min-height: 430px;
+    border-radius: 30px !important;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .planner-scene-reveal {
+    display: none;
+  }
+}
+
+@keyframes planner-scene-breathe {
+  0% { transform: translate3d(var(--planner-shift-x), var(--planner-shift-y), 0) scale(1.07); }
+  100% { transform: translate3d(calc(var(--planner-shift-x) - 8px), calc(var(--planner-shift-y) + 5px), 0) scale(1.095); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planner-scene-base {
+    animation: none !important;
+  }
+
+  .planner-scene-reveal {
+    display: none;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step,
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch {
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .planner-immersive-scene {
+    display: none !important;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel,
+  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
+    color: CanvasText;
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    box-shadow: none !important;
+  }
+}
