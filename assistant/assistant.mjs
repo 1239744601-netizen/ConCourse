@@ -3,7 +3,7 @@ import {
   loadSelectionAssistantCatalogue,
   localeForLanguage,
   searchCourseGroups
-} from "../course-tools/course-tools.mjs?v=20260731-clean1";
+} from "../course-tools/course-tools.mjs?v=20260803-masthead1";
 import {
   ACTIVE_USER_SESSION_KEY,
   TIMETABLE_HANDOFF_SESSION_KEY,

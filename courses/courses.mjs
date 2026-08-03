@@ -5,7 +5,7 @@ import {
   localeForLanguage,
   safeOfficialUrl,
   searchCourseGroupsWithTotal
-} from "../course-tools/course-tools.mjs?v=20260731-clean1";
+} from "../course-tools/course-tools.mjs?v=20260803-masthead1";
 
 const COPY = Object.freeze({
   en: Object.freeze({

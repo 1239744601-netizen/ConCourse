@@ -15,12 +15,14 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png?v=20260731-double-c3" />
   <link rel="manifest" href="../site.webmanifest?v=20260731-double-c3" />
   <meta name="apple-mobile-web-app-title" content="ConCourse" />
-  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260731-visual2" />
+  <link rel="stylesheet" href="../course-tools/course-tools.css?v=20260803-masthead1" />
   <script>
     try {
       const savedTheme = localStorage.getItem("concourse_theme");
-      document.documentElement.dataset.theme =
-        savedTheme === "day" || savedTheme === "night" ? savedTheme : "night";
+      const initialTheme = savedTheme === "day" || savedTheme === "night" ? savedTheme : "night";
+      document.documentElement.dataset.theme = initialTheme;
+      document.querySelector('meta[name="theme-color"]').content =
+        initialTheme === "day" ? "#dff2ff" : "#061526";
     } catch (_error) {}
   </script>
 </head>
@@ -29,7 +31,7 @@
 
   <header class="course-site-header">
     <div class="course-site-header-inner">
-      <a class="course-brand" href="../" aria-label="ConCourse home">
+      <a class="course-brand" href="../" aria-label="ConCourse home" data-course-route="main">
         <span class="course-brand-mark" aria-hidden="true">
           <img class="brand-mark-night" src="../concourse-mark.svg" alt="" />
           <img class="brand-mark-day" src="../concourse-icon.svg" alt="" />
@@ -45,8 +47,9 @@
         aria-label="Primary destinations"
         data-copy-aria="primaryDestinations"
       >
-        <a href="../?destination=timetable" data-copy="timetable">Timetable</a>
+        <a href="../" data-course-route="timetable" data-course-auth-only hidden data-copy="timetable">Timetable</a>
         <a href="./" aria-current="page" data-copy="exploreCourses">Courses</a>
+        <a href="../" data-course-route="hub" data-course-auth-only hidden data-copy="studentHub">Student Hub</a>
       </nav>
 
       <div class="course-header-controls">
@@ -56,23 +59,32 @@
           aria-label="Page appearance"
           data-copy-aria="appearance"
         >
-          <button type="button" data-theme-value="day" aria-pressed="false" data-copy-aria="useDay">
-            <span aria-hidden="true">☼</span>
+          <button class="course-theme-option" type="button" data-theme-value="day" aria-pressed="false" data-copy-aria="useDay">
+            <span class="course-theme-symbol course-theme-symbol-day" aria-hidden="true"></span>
             <span class="theme-label" data-copy="day">Day</span>
           </button>
-          <button type="button" data-theme-value="night" aria-pressed="true" data-copy-aria="useNight">
-            <span aria-hidden="true">◐</span>
+          <button class="course-theme-option" type="button" data-theme-value="night" aria-pressed="true" data-copy-aria="useNight">
+            <span class="course-theme-symbol course-theme-symbol-night" aria-hidden="true"></span>
             <span class="theme-label" data-copy="night">Night</span>
           </button>
         </div>
-        <label class="course-language-control">
-          <span aria-hidden="true">◎</span>
-          <span class="visually-hidden" data-copy="language">Website language</span>
-          <select id="languageSelect" aria-label="Website language" data-copy-aria="language">
+        <label class="course-language-control" for="languageSelect">
+          <span class="course-language-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="8.25" stroke="currentColor" stroke-width="1.65"></circle>
+              <path d="M3.9 12h16.2M12 3.75c2.15 2.26 3.25 5.02 3.25 8.25S14.15 18 12 20.25C9.85 18 8.75 15.23 8.75 12S9.85 6.01 12 3.75Z" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"></path>
+              <path d="M5.8 7.4h12.4M5.8 16.6h12.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".72"></path>
+            </svg>
+          </span>
+          <span class="course-language-text" data-copy="languageLabel">Language</span>
+          <select class="course-language-select" id="languageSelect" aria-label="Website language" data-copy-aria="language">
             <option value="en">English</option>
             <option value="zh-CN">普通话</option>
-            <option value="zh-HK">廣東話</option>
+            <option value="zh-HK">粵語</option>
           </select>
+          <span class="course-language-chevron" aria-hidden="true">
+            <svg viewBox="0 0 12 12" width="12" height="12" fill="none"><path d="m3 4.75 3 3 3-3" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </span>
         </label>
       </div>
     </div>
@@ -117,6 +129,7 @@
     </section>
   </main>
 
-  <script type="module" src="courses.mjs?v=20260731-visual1"></script>
+  <script src="../navigation-state.js?v=20260731-unified1"></script>
+  <script type="module" src="courses.mjs?v=20260803-masthead1"></script>
 </body>
 </html>

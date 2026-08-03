@@ -10,8 +10,10 @@ import {
   isLocalCourseReviewLocation,
   loadCourseCatalogue,
   loadCourseKeysReadiness,
+  readCourseChromeUserId,
   safeOfficialUrl,
-  searchCourseGroups
+  searchCourseGroups,
+  writeCourseChromeRoute
 } from "../course-tools/course-tools.mjs";
 
 const read = (relativePath) =>
@@ -90,7 +92,7 @@ test("keeps both course tools clean before an explicit search", async () => {
   assert.match(searchStage, /<form[^>]+id="courseSearchForm"[^>]+role="search"/);
   assert.doesNotMatch(searchStage, /<p\b|<article\b|statistics|filters/i);
   assert.match(searchHtml, /id="courseSearchResults" hidden/);
-  assert.match(searchHtml, /href="\.\.\/\?destination=timetable"[^>]+data-copy="timetable"/);
+  assert.match(searchHtml, /data-course-route="timetable"[^>]+data-course-auth-only[^>]+data-copy="timetable"/);
   assert.doesNotMatch(searchHtml, /href="\.\.\/assistant\/"/);
   assert.doesNotMatch(searchHtml, /href="\.\.\/coursekeys\/"/);
 
@@ -99,6 +101,74 @@ test("keeps both course tools clean before an explicit search", async () => {
   assert.doesNotMatch(assistantStage, /<p\b|<article\b|statistics|filters/i);
   assert.match(assistantHtml, /id="assistantWorkspace" hidden/);
   assert.doesNotMatch(assistantHtml, /href="\.\.\/coursekeys\/"/);
+});
+
+test("keeps the standalone course mastheads aligned with the root destinations and controls", async () => {
+  const [searchHtml, assistantHtml, styles] = await Promise.all([
+    read("courses/index.html"),
+    read("assistant/index.html"),
+    read("course-tools/course-tools.css"),
+  ]);
+
+  for (const html of [searchHtml, assistantHtml]) {
+    const navigation = html.match(
+      /<nav[\s\S]*?class="course-primary-navigation"[\s\S]*?<\/nav>/,
+    )?.[0];
+    assert.ok(navigation);
+    const timetable = navigation.indexOf('data-copy="timetable"');
+    const courses = navigation.indexOf('data-copy="exploreCourses"');
+    const hub = navigation.indexOf('data-copy="studentHub"');
+    assert.ok(timetable >= 0 && courses > timetable && hub > courses);
+    assert.match(navigation, /data-course-route="hub"[^>]+data-course-auth-only/);
+    assert.match(html, /class="course-theme-symbol course-theme-symbol-day"/);
+    assert.match(html, /class="course-theme-symbol course-theme-symbol-night"/);
+    assert.match(html, /class="course-language-icon"[\s\S]*?<svg/);
+    assert.match(html, /class="course-language-chevron"/);
+    assert.doesNotMatch(html, />[☼◐◎]</);
+    assert.match(html, /navigation-state\.js\?v=20260731-unified1/);
+  }
+
+  assert.match(styles, /Canonical ConCourse masthead/);
+  assert.match(styles, /\.course-site-header \.course-theme-control::before/);
+  assert.match(
+    styles,
+    /@media \(max-width: 1380px\) and \(min-width: 761px\)[\s\S]*?\.course-site-header \.course-primary-navigation a \{[\s\S]*?min-width: 0;/,
+  );
+  assert.match(styles, /@media \(max-width: 820px\) and \(min-width: 761px\)/);
+  assert.match(styles, /@media \(max-width: 520px\)/);
+  assert.match(styles, /@media \(max-width: 480px\)/);
+});
+
+test("writes validated root routes for standalone course navigation", () => {
+  const userId = "a8b7c6d5-e4f3-4210-9876-1234567890ab";
+  const values = new Map([["concourse_active_user_id_v1", userId]]);
+  const storage = {
+    getItem: (key) => values.get(key) || null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const calls = [];
+  const navigationState = {
+    writeRoute: (...args) => {
+      calls.push(args);
+      return { screen: args[2], hubView: args[3] || "" };
+    },
+  };
+
+  assert.equal(readCourseChromeUserId(storage), userId);
+  assert.deepEqual(
+    writeCourseChromeRoute("timetable", storage, navigationState),
+    { screen: "timetable", hubView: "" },
+  );
+  assert.deepEqual(
+    writeCourseChromeRoute("hub", storage, navigationState),
+    { screen: "hub", hubView: "community" },
+  );
+  assert.deepEqual(calls[0], [storage, userId, "timetable"]);
+  assert.deepEqual(calls[1], [storage, userId, "hub", "community"]);
+
+  values.set("concourse_active_user_id_v1", "invalid");
+  assert.equal(readCourseChromeUserId(storage), "");
+  assert.equal(writeCourseChromeRoute("hub", storage, navigationState), null);
 });
 
 test("keeps official references on the exact HTTPS allowlist", () => {

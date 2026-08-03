@@ -159,7 +159,7 @@ test("reads the active user only from the defined session key", () => {
   assert.equal(readActiveUserId(adapter), "");
 });
 
-test("keeps Assistant contextual and exposes an explicit timetable action", async () => {
+test("keeps Assistant in the timetable flow and exposes an explicit timetable action", async () => {
   const [html, script] = await Promise.all([
     read("assistant/index.html"),
     read("assistant/assistant.mjs")
@@ -171,12 +171,10 @@ test("keeps Assistant contextual and exposes an explicit timetable action", asyn
   assert.ok(navigation);
   assert.match(
     navigation,
-    /class="course-navigation-context"[\s\S]*?href="\.\.\/\?destination=timetable"[\s\S]*?<small data-copy="selectionAssistant"/
+    /href="\.\.\/"[^>]+aria-current="page"[^>]+data-course-route="timetable"[^>]+data-copy="timetable"/
   );
-  assert.doesNotMatch(
-    navigation,
-    /<a[^>]+href="\.\/"[^>]+data-copy="selectionAssistant"/
-  );
+  assert.match(navigation, /data-course-route="hub"[^>]+data-copy="studentHub"/);
+  assert.doesNotMatch(navigation, /course-navigation-context|data-copy="selectionAssistant"/);
   assert.match(
     html,
     /id="continueToTimetable"[\s\S]*?disabled[\s\S]*?data-copy="continueToTimetable"/

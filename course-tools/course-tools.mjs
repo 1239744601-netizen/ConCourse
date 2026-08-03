@@ -1,4 +1,5 @@
 import {
+  ACTIVE_USER_SESSION_KEY,
   canonicalCatalogueInstitutionId,
   institutionById,
   readSignedInInstitutionContext
@@ -10,6 +11,7 @@ const BASE_COPY = Object.freeze({
     primaryDestinations: "Primary destinations",
     timetable: "Timetable",
     exploreCourses: "Courses",
+    studentHub: "Student Hub",
     selectionAssistant: "Assistant",
     courseKeys: "CourseKeys",
     appearance: "Page appearance",
@@ -18,6 +20,7 @@ const BASE_COPY = Object.freeze({
     day: "Day",
     night: "Night",
     language: "Website language",
+    languageLabel: "Language",
     search: "Search"
   }),
   "zh-CN": Object.freeze({
@@ -25,6 +28,7 @@ const BASE_COPY = Object.freeze({
     primaryDestinations: "主要功能",
     timetable: "课表",
     exploreCourses: "课程",
+    studentHub: "学生中心",
     selectionAssistant: "选课助手",
     courseKeys: "课程资源库",
     appearance: "页面外观",
@@ -33,6 +37,7 @@ const BASE_COPY = Object.freeze({
     day: "日间",
     night: "夜间",
     language: "网站语言",
+    languageLabel: "语言",
     search: "搜索"
   }),
   "zh-HK": Object.freeze({
@@ -40,6 +45,7 @@ const BASE_COPY = Object.freeze({
     primaryDestinations: "主要功能",
     timetable: "時間表",
     exploreCourses: "課程",
+    studentHub: "學生中心",
     selectionAssistant: "選科助手",
     courseKeys: "課程資源庫",
     appearance: "頁面外觀",
@@ -48,6 +54,7 @@ const BASE_COPY = Object.freeze({
     day: "日間",
     night: "夜間",
     language: "網站語言",
+    languageLabel: "語言",
     search: "搜尋"
   })
 });
@@ -740,6 +747,61 @@ function mergeCopy(pageCopy) {
   return Object.freeze(merged);
 }
 
+const COURSE_CHROME_USER_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function readCourseChromeUserId(storage = globalThis.sessionStorage) {
+  try {
+    const userId = String(storage?.getItem?.(ACTIVE_USER_SESSION_KEY) || "")
+      .trim()
+      .slice(0, 80);
+    return COURSE_CHROME_USER_ID_PATTERN.test(userId)
+      ? userId.toLowerCase()
+      : "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+export function writeCourseChromeRoute(
+  destination,
+  storage = globalThis.sessionStorage,
+  navigationState = globalThis.ConCourseNavigationState
+) {
+  const userId = readCourseChromeUserId(storage);
+  if (!userId || typeof navigationState?.writeRoute !== "function") return null;
+  if (destination === "hub") {
+    return navigationState.writeRoute(storage, userId, "hub", "community");
+  }
+  if (destination === "main" || destination === "timetable") {
+    return navigationState.writeRoute(storage, userId, destination);
+  }
+  return null;
+}
+
+function initializeCourseRoutes() {
+  let storage = null;
+  try {
+    storage = globalThis.sessionStorage;
+  } catch (_error) {}
+  const userId = readCourseChromeUserId(storage);
+  document.querySelectorAll("[data-course-auth-only]").forEach((element) => {
+    element.hidden = !userId;
+  });
+  document.querySelectorAll("[data-course-route]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const route = writeCourseChromeRoute(
+        link.dataset.courseRoute,
+        storage,
+        globalThis.ConCourseNavigationState
+      );
+      if (!route) return;
+      event.preventDefault();
+      globalThis.location.assign(link.href);
+    });
+  });
+}
+
 export function initializeCourseChrome(pageCopy, onLanguageChange = () => {}) {
   const copy = mergeCopy(pageCopy);
   let language = "en";
@@ -756,6 +818,8 @@ export function initializeCourseChrome(pageCopy, onLanguageChange = () => {}) {
     const nextTheme = theme === "day" ? "day" : "night";
     document.documentElement.dataset.theme = nextTheme;
     document.documentElement.style.colorScheme = nextTheme === "day" ? "light" : "dark";
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = nextTheme === "day" ? "#dff2ff" : "#061526";
     document.querySelectorAll("[data-theme-value]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.themeValue === nextTheme));
     });
@@ -800,6 +864,7 @@ export function initializeCourseChrome(pageCopy, onLanguageChange = () => {}) {
   } catch (_error) {}
   setTheme(document.documentElement.dataset.theme);
   applyLanguage(savedLanguage, false);
+  initializeCourseRoutes();
 
   return Object.freeze({
     get language() {
