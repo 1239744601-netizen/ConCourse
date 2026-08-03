@@ -80,6 +80,9 @@ test("production Pages build publishes only the explicit frontend artifact", () 
     "concourse-apple-touch-icon.png",
     "concourse-brand-favicon.svg",
     "member-hub.js",
+    "timetable-immersive.css",
+    "timetable-immersive.js",
+    "concourse-timetable-journey-v1.png",
     "assistant/index.html",
     "assistant/assistant.mjs",
     "assistant/handoff.mjs",
@@ -99,6 +102,17 @@ test("production Pages build publishes only the explicit frontend artifact", () 
     "downloads/concourse-hkbu-portal-connector.zip"
   ]) {
     assert.ok(outputFiles.includes(required), required);
+  }
+  for (const immersiveAsset of [
+    "timetable-immersive.css",
+    "timetable-immersive.js",
+    "concourse-timetable-journey-v1.png"
+  ]) {
+    assert.deepEqual(
+      readFileSync(path.join(projectRoot, "dist", immersiveAsset)),
+      readFileSync(path.join(projectRoot, immersiveAsset)),
+      immersiveAsset
+    );
   }
   assert.equal(outputFiles.some(file => file.endsWith(".sql")), false);
   assert.equal(outputFiles.some(file => file.endsWith(".md")), false);
