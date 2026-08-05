@@ -44,13 +44,13 @@ branch alias. Provider-generated branch and hash URLs are covered by the
 account redirect; the origin-bound Worker also returns `410 Gone` if one
 reaches it directly.
 
-Keep the Preview environment secret `CONCOURSE_BETA_ACCESS_TOKEN` encrypted in
-Cloudflare. The beta Worker refuses to serve any application or API response
-without the exact owner credential and fails closed when the secret is absent.
-Beta currently uses the production Supabase configuration, so it is a
-controlled release-review surface rather than a data-isolated staging
-environment. A wider beta requires a separate staging Supabase project and
-Cloudflare Access before access is expanded.
+The beta hostname is intentionally public so design revisions can be reviewed
+without a separate access prompt. Beta responses remain `noindex`, `noarchive`,
+and `no-store`; provider preview URLs stay retired and the Worker remains bound
+to the approved beta origin. Beta currently uses the production Supabase
+configuration, so it must preserve the same authorization boundaries as the
+production application. Use a separate staging Supabase project before adding
+test-only privileged data or widening backend capabilities.
 
 GitHub Actions stores these encrypted repository secrets:
 

@@ -1,7 +1,6 @@
 const SITE_ORIGIN = "__CONCOURSE_DEPLOYMENT_ORIGIN__";
 const PRODUCTION_ORIGIN = "https://concoursehk.com";
 const BETA_ORIGIN = "https://beta.concoursehk.com";
-const BETA_USERNAME = "concourse-beta";
 const ALLOWED_SITE_ORIGINS = new Set([PRODUCTION_ORIGIN, BETA_ORIGIN]);
 
 function responseHeaders() {
@@ -122,41 +121,6 @@ function courseKeysResponse(request, env) {
   }, 405);
 }
 
-function secureEqual(left, right) {
-  const leftValue = String(left);
-  const rightValue = String(right);
-  const length = Math.max(leftValue.length, rightValue.length);
-  let difference = leftValue.length ^ rightValue.length;
-  for (let index = 0; index < length; index += 1) {
-    difference |= (leftValue.charCodeAt(index) || 0) ^ (rightValue.charCodeAt(index) || 0);
-  }
-  return difference === 0;
-}
-
-function betaAccessState(request, env) {
-  const token = typeof env.CONCOURSE_BETA_ACCESS_TOKEN === "string"
-    ? env.CONCOURSE_BETA_ACCESS_TOKEN
-    : "";
-  if (!token) {
-    return "unconfigured";
-  }
-
-  const authorization = request.headers.get("Authorization") || "";
-  if (!authorization.startsWith("Basic ")) {
-    return "denied";
-  }
-
-  let supplied;
-  try {
-    supplied = atob(authorization.slice(6));
-  } catch {
-    return "denied";
-  }
-  return secureEqual(supplied, `${BETA_USERNAME}:${token}`)
-    ? "allowed"
-    : "denied";
-}
-
 export default {
   async fetch(request, env) {
     if (!ALLOWED_SITE_ORIGINS.has(SITE_ORIGIN)) {
@@ -186,27 +150,6 @@ export default {
         "Address not available",
         "This deployment is not authorized to serve the requested address."
       );
-    }
-
-    if (SITE_ORIGIN === BETA_ORIGIN) {
-      const accessState = betaAccessState(request, env);
-      if (accessState === "unconfigured") {
-        return messageResponse(
-          request,
-          503,
-          "Beta unavailable",
-          "The private beta access credential has not been configured."
-        );
-      }
-      if (accessState !== "allowed") {
-        return messageResponse(
-          request,
-          401,
-          "Private beta",
-          "Sign in with the owner beta credential to review this release.",
-          {"WWW-Authenticate": 'Basic realm="ConCourse Beta", charset="UTF-8"'}
-        );
-      }
     }
 
     if (

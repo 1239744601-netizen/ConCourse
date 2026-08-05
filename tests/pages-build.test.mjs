@@ -337,7 +337,7 @@ test("production worker serves only the production origin", async () => {
   assert.equal(assets.requestCount(), 1);
 });
 
-test("beta build is origin-bound, functional, and excluded from indexing", async () => {
+test("beta build is public, origin-bound, functional, and excluded from indexing", async () => {
   const result = runBuild(betaOrigin);
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 
@@ -355,50 +355,26 @@ test("beta build is origin-bound, functional, and excluded from indexing", async
     readFileSync(path.join(projectRoot, "dist/_worker.js"), "utf8")
   );
   const assets = assetEnvironment();
-  const unconfiguredResponse = await worker.fetch(
+  const betaResponse = await worker.fetch(
     new Request(`${betaOrigin}/courses/`),
     assets.env
-  );
-  assert.equal(unconfiguredResponse.status, 503);
-  assert.equal(assets.requestCount(), 0);
-
-  const betaToken = "unit-test-private-beta-token";
-  const betaEnv = {
-    ...assets.env,
-    CONCOURSE_BETA_ACCESS_TOKEN:betaToken
-  };
-  const deniedResponse = await worker.fetch(
-    new Request(`${betaOrigin}/courses/`),
-    betaEnv
-  );
-  assert.equal(deniedResponse.status, 401);
-  assert.match(deniedResponse.headers.get("WWW-Authenticate"), /ConCourse Beta/u);
-  assert.equal(assets.requestCount(), 0);
-
-  const authorization = `Basic ${Buffer.from(`concourse-beta:${betaToken}`).toString("base64")}`;
-  const betaResponse = await worker.fetch(
-    new Request(`${betaOrigin}/courses/`, {
-      headers:{Authorization:authorization}
-    }),
-    betaEnv
   );
   assert.equal(betaResponse.status, 200);
   assert.equal(await betaResponse.text(), "asset:/courses/");
   assert.equal(betaResponse.headers.get("Cache-Control"), "private, no-store");
   assert.match(betaResponse.headers.get("X-Robots-Tag"), /noindex/u);
+  assert.equal(betaResponse.headers.has("WWW-Authenticate"), false);
   assert.equal(assets.requestCount(), 1);
 
   const productionResponse = await worker.fetch(
-    new Request(`${productionOrigin}/courses/`, {
-      headers:{Authorization:authorization}
-    }),
-    betaEnv
+    new Request(`${productionOrigin}/courses/`),
+    assets.env
   );
   assert.equal(productionResponse.status, 421);
 
   const previewResponse = await worker.fetch(
     new Request("https://beta.concourse-95c.pages.dev/courses/"),
-    betaEnv
+    assets.env
   );
   assert.equal(previewResponse.status, 410);
   assert.equal(assets.requestCount(), 1);
