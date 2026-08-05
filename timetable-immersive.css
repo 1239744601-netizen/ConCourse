@@ -1,586 +1,2803 @@
-/* ConCourse timetable immersion layer
-   Scoped to the semester-planning workspace so Student Hub and the final
-   timetable keep their existing layouts. */
+/* ConCourse timetable industrial monitor study, August 2026. */
 
-body.app-active:not(.schedule-active):not(.hub-active) #appWrap {
-  --planner-pointer-x: 50vw;
-  --planner-pointer-y: 50vh;
-  --planner-shift-x: 0px;
-  --planner-shift-y: 0px;
-  position: relative;
-  isolation: isolate;
-  background: transparent;
+:root {
+  --monitor-black: #050504;
+  --monitor-graphite: #211f1b;
+  --monitor-edge: #716d66;
+  --monitor-paper: #e9e7e3;
+  --monitor-paper-bright: #f4f2ee;
+  --monitor-block: #d5d3cf;
+  --monitor-grid: rgba(10, 11, 12, .17);
+  --monitor-ink: #090a0b;
+  --monitor-copy: #f2f1ee;
+  --monitor-muted: #989a9d;
+  --monitor-window: #24231f;
+  --monitor-window-edge: #746f67;
+  --monitor-housing: #1b1b19;
+  --monitor-housing-deep: #0d0e0d;
+  --monitor-housing-edge: #676158;
+  --monitor-housing-rail: #3c3933;
+  --monitor-fastener: #8c8579;
+  --monitor-display-glass: rgba(231, 226, 216, .055);
+  --monitor-display-shadow: rgba(7, 8, 7, .46);
+  --monitor-display-pixel: rgba(65, 58, 48, .024);
+  --monitor-type-ui: "Avenir Next", "Trebuchet MS", sans-serif;
+  --monitor-type-industrial: "DIN Alternate", "Avenir Next Condensed", "Bahnschrift Condensed", sans-serif;
+  --monitor-progress: 0;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) #appWrap::before {
+.planner-scroll-journey {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  height: 700vh;
+  min-height: 4200px;
+  margin: 0;
+  color: var(--monitor-copy);
+  background: var(--monitor-black);
+  isolation: isolate;
+}
+
+.planner-journey-sticky {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100svh;
+  min-height: 620px;
+  overflow: hidden;
+  color-scheme: dark;
+  background: var(--monitor-black);
+  transform: translateZ(0);
+}
+
+body > .planner-journey-sticky,
+body.planner-journey-active #plannerScrollJourney > .planner-journey-sticky {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  width: 100vw;
+  height: 100svh;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.planner-journey-active > .planner-journey-sticky,
+body.planner-journey-active #plannerScrollJourney > .planner-journey-sticky {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.planner-journey-active #plannerScrollJourney {
+  z-index: 2200;
+}
+
+body.planner-journey-active #wishlistPanel,
+body.planner-journey-active .configurator-column > :not(#plannerScrollJourney) {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* The immersive FAN-T111 is the timetable route's first screen. The legacy
+   blue wishlist remains available only after the user explicitly chooses the
+   detailed-planner handoff; it must never precede the machine on entry. */
+body.app-active:not(.schedule-active):not(.hub-active):not(.planner-detailed-active) #wishlistPanel {
   display: none !important;
 }
 
-.planner-immersive-scene {
-  position: fixed !important;
-  z-index: 0 !important;
-  inset: 0;
-  display: none;
-  overflow: hidden;
-  pointer-events: none;
-  background: #04182b;
-  contain: strict;
+/* Keep the route's underlay continuous while ScrollTrigger settles at either
+   boundary. The legacy planner may opt back into its own palette only through
+   the explicit detailed-planner state. */
+body.app-active:not(.schedule-active):not(.hub-active):not(.planner-detailed-active),
+html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active):not(.planner-detailed-active),
+body.app-active:not(.schedule-active):not(.hub-active):not(.planner-detailed-active) #appWrap {
+  background: var(--monitor-black) !important;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .planner-immersive-scene {
-  display: block;
+body.planner-journey-active #landingScreen {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
-.planner-scene-image {
+body.planner-journey-active,
+html[data-theme="day"] body.planner-journey-active {
+  background: var(--monitor-black) !important;
+}
+
+body.planner-journey-active .configurator-column {
+  scroll-behavior: auto !important;
+}
+
+/* The legacy configurator constrains desktop routes to a viewport-height,
+   internally scrolling grid. The immersive timetable needs the document
+   itself to carry the 700vh camera timeline so a native mouse wheel can move
+   continuously through the machine. */
+@media (min-width: 761px) {
+  body.app-active.planner-journey-active {
+    height: auto !important;
+    min-height: 700vh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  body.app-active.planner-journey-active #appWrap {
+    display: block !important;
+    width: 100%;
+    max-width: none;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  body.app-active.planner-journey-active .configurator-column {
+    display: block;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  body.app-active.planner-journey-active #wishlistPanel,
+  body.app-active.planner-journey-active .configurator-column > :not(#plannerScrollJourney) {
+    display: none !important;
+  }
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney ::selection {
+  color: inherit;
+  background: rgba(216, 214, 208, .28);
+}
+
+.planner-monitor-nav {
   position: absolute;
-  inset: -4%;
-  background-image:
-    linear-gradient(105deg, rgba(2, 17, 32, .94) 0%, rgba(3, 22, 40, .72) 42%, rgba(3, 20, 36, .35) 100%),
-    linear-gradient(0deg, rgba(3, 21, 38, .74), rgba(3, 21, 38, .08) 52%, rgba(3, 21, 38, .42)),
-    url("concourse-timetable-journey-v1.png");
-  background-position: center;
-  background-size: cover;
-  transform: translate3d(var(--planner-shift-x), var(--planner-shift-y), 0) scale(1.07);
-  transform-origin: center;
-  will-change: transform;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 100%;
+  height: clamp(72px, 9.2svh, 94px);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(24px, 2.95vw, 46px);
+  font-family: var(--monitor-type-ui);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -.015em;
 }
 
-.planner-scene-base {
-  opacity: .72;
-  filter: saturate(.92) contrast(1.05);
-  animation: planner-scene-breathe 24s ease-in-out infinite alternate;
+.planner-monitor-nav-group {
+  display: flex;
+  align-items: center;
+  gap: clamp(30px, 3vw, 48px);
 }
 
-.planner-scene-reveal {
-  opacity: .9;
-  filter: saturate(1.1) contrast(1.08) brightness(1.08);
-  -webkit-mask-image: radial-gradient(circle 290px at var(--planner-pointer-x) var(--planner-pointer-y), #000 0%, rgba(0, 0, 0, .94) 34%, rgba(0, 0, 0, .5) 65%, transparent 100%);
-  mask-image: radial-gradient(circle 290px at var(--planner-pointer-x) var(--planner-pointer-y), #000 0%, rgba(0, 0, 0, .94) 34%, rgba(0, 0, 0, .5) 65%, transparent 100%);
+.planner-monitor-brand,
+.planner-monitor-section,
+.planner-monitor-nav a,
+.planner-monitor-nav button {
+  color: var(--monitor-copy);
+  border: 0;
+  background: none;
+  font: inherit;
+  text-decoration: none;
 }
 
-.planner-immersive-scene::after {
+.planner-monitor-brand {
+  font-size: 14px;
+  font-weight: 570;
+  letter-spacing: .32em;
+  text-transform: uppercase;
+}
+
+.planner-monitor-section {
+  color: rgba(242, 241, 238, .58);
+  letter-spacing: .015em;
+  text-transform: uppercase;
+}
+
+.planner-monitor-nav-actions {
+  gap: clamp(26px, 2.8vw, 44px);
+}
+
+.planner-monitor-nav a,
+.planner-monitor-nav button {
+  position: relative;
+  min-height: 44px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.planner-monitor-nav a::after,
+.planner-monitor-nav button::after {
+  position: absolute;
+  right: 0;
+  bottom: 7px;
+  left: 0;
+  height: 1px;
+  background: currentColor;
   content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at var(--planner-pointer-x) var(--planner-pointer-y), rgba(125, 217, 255, .11), transparent 18rem),
-    linear-gradient(90deg, rgba(2, 16, 31, .34), transparent 35%, rgba(2, 16, 31, .1));
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 220ms ease;
 }
 
-.planner-particle-field {
+.planner-monitor-nav a:hover::after,
+.planner-monitor-nav a:focus-visible::after,
+.planner-monitor-nav button:hover::after,
+.planner-monitor-nav button:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.planner-monitor-nav a:focus-visible,
+.planner-monitor-nav button:focus-visible,
+.planner-journey-window button:focus-visible,
+.planner-journey-skip:focus-visible {
+  outline: 2px solid var(--monitor-paper-bright);
+  outline-offset: 4px;
+}
+
+.planner-monitor-nav :is(a, button):focus-visible,
+.planner-journey-window button:focus-visible,
+.planner-journey-skip:focus-visible {
+  box-shadow: 0 0 0 2px rgba(216, 214, 208, .22) !important;
+}
+
+.planner-monitor-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 1600px;
+  transform-style: preserve-3d;
+}
+
+.planner-machine-viewport {
+  --vent-x: 50%;
+  --vent-y: 75.25%;
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  overflow: hidden;
+  background: #030302;
+  clip-path: ellipse(.16% .08% at var(--vent-x) var(--vent-y));
+  opacity: 0;
+  pointer-events: none;
+  transform: translateZ(0);
+  will-change: clip-path, opacity;
+}
+
+.planner-machine-canvas,
+.planner-machine-fallback,
+.planner-machine-lens {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: .88;
-  mix-blend-mode: screen;
 }
 
-html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-intro h1 {
-  color: #f7fbff;
-  background: none;
-  -webkit-background-clip: border-box;
-  background-clip: border-box;
-  -webkit-text-fill-color: #f7fbff;
-  text-shadow: 0 16px 42px rgba(0, 0, 0, .28);
+.planner-machine-canvas {
+  display: block;
+  opacity: 0;
 }
 
-html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-intro > p:last-child {
-  color: rgba(218, 233, 245, .74);
+/* Three-layer physical compositing:
+   1. the full mechanical world in #plannerMachineCanvas,
+   2. accessible interactive DOM displays,
+   3. real front clamp geometry in this transparent WebGL pass.
+   The body-level canvas can also sit above the independently projected result
+   page, while pointer-events remain with the controls beneath it. */
+.planner-machine-foreground-canvas {
+  position: fixed;
+  z-index: 8;
+  inset: 0;
+  display: block;
+  width: 100vw;
+  height: 100svh;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
 }
 
-html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav {
-  border-color: rgba(146, 213, 249, .18);
-  background: rgba(4, 28, 49, .82);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, .22);
+.planner-machine-foreground-canvas.is-active {
+  opacity: 1;
+  visibility: visible;
 }
 
-html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav a,
-html[data-theme="night"] body.app-active:not(.schedule-active):not(.hub-active) .configurator-nav b {
-  color: rgba(229, 240, 249, .82);
+.planner-machine-viewport.is-webgl .planner-machine-canvas {
+  opacity: 1;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) #appWrap > :not(.planner-immersive-scene) {
-  position: relative;
-  z-index: 1;
+/* WebGL owns the complete FAN-T111 enclosure from the first frame. The
+   photographic DOM shell remains the no-WebGL fallback only. */
+.planner-machine-viewport.is-webgl {
+  clip-path: none !important;
+  opacity: 1 !important;
+  will-change: auto;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .wrap {
-  background: transparent;
+.planner-machine-viewport.is-webgl ~ .planner-monitor-device {
+  z-index: 6;
+  width: min(100vw, 150svh);
 }
 
-/* The Assistant is the main working surface; the wishlist is a compact,
-   independently scrolling reference rail. */
-@media (min-width: 1121px) {
-  body.app-active:not(.schedule-active):not(.hub-active) .wrap {
-    width: min(1680px, calc(100% - 2 * var(--atlas-gutter, 32px)));
-    grid-template-columns: minmax(300px, 360px) minmax(680px, 1fr) !important;
-    grid-template-areas: "wishlist config" !important;
-    column-gap: clamp(24px, 3vw, 48px);
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
-    padding: clamp(25px, 2.2vw, 34px) clamp(20px, 2vw, 28px) !important;
-    overflow: hidden !important;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-header {
-    display: block;
-    padding-bottom: 19px;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-header h2 {
-    max-width: 8ch;
-    font-size: clamp(27px, 2.2vw, 34px);
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-header > div > p:last-child {
-    margin-top: 10px;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-count {
-    display: inline-flex;
-    margin-top: 15px;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-profile {
-    width: 100%;
-    margin-bottom: 19px;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel .wishlist-profile-controls {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel #courseList {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-color: rgba(125, 217, 255, .5) transparent;
-    scrollbar-width: thin;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel #courseList > .empty-note {
-    min-height: 230px;
-    padding: 24px 14px;
-    font-size: 13px;
-  }
+.planner-machine-viewport.is-webgl ~ .planner-monitor-device > img {
+  opacity: 0;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
-  color: #f5f9fd;
-  border: 1px solid rgba(151, 213, 248, .18) !important;
-  border-radius: 34px !important;
+.planner-machine-fallback {
+  object-fit: cover;
+  opacity: 1;
+}
+
+.planner-machine-viewport.is-webgl .planner-machine-fallback {
+  opacity: 0;
+}
+
+.planner-machine-lens {
+  z-index: 2;
   background:
-    linear-gradient(155deg, rgba(8, 38, 66, .92), rgba(3, 20, 37, .88)) !important;
-  box-shadow:
-    0 26px 70px rgba(0, 0, 0, .25),
-    inset 0 1px 0 rgba(255, 255, 255, .07) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.08);
-  backdrop-filter: blur(22px) saturate(1.08);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel:hover {
-  box-shadow:
-    0 26px 70px rgba(0, 0, 0, .25),
-    inset 0 1px 0 rgba(255, 255, 255, .07) !important;
-}
-
-/* Expanded Assistant surface */
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel {
-  --assistant-progress: 0;
-  position: relative;
-  min-height: 390px;
-  margin-bottom: clamp(28px, 4vw, 54px);
-  padding: clamp(30px, 4.2vw, 58px);
-  overflow: hidden;
-  color: #f6f9fd;
-  border: 1px solid rgba(151, 218, 255, .28);
-  border-radius: clamp(30px, 3.4vw, 48px);
-  background:
-    radial-gradient(circle at 88% 8%, rgba(93, 180, 255, .25), transparent 25rem),
-    linear-gradient(145deg, rgba(7, 40, 70, .93), rgba(3, 22, 40, .84));
-  box-shadow:
-    0 32px 90px rgba(0, 0, 0, .28),
-    inset 0 1px 0 rgba(255, 255, 255, .09);
-  -webkit-backdrop-filter: blur(24px) saturate(1.12);
-  backdrop-filter: blur(24px) saturate(1.12);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel[data-selection-state="needs-details"],
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel[data-selection-state="complete"] {
-  --assistant-progress: 1;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel::before {
-  content: "";
-  position: absolute;
-  top: -32%;
-  right: -8%;
-  width: min(520px, 52%);
-  aspect-ratio: 1;
-  border: 1px solid rgba(139, 216, 255, .15);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 38px rgba(139, 216, 255, .025),
-    0 0 0 90px rgba(139, 216, 255, .018);
+    radial-gradient(circle at 50% 48%, transparent 42%, rgba(0, 0, 0, .055) 76%, rgba(0, 0, 0, .25) 115%),
+    linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 18%, transparent 82%, rgba(0, 0, 0, .08));
   pointer-events: none;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel > * {
-  position: relative;
-  z-index: 1;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading {
-  align-items: center;
-  gap: clamp(24px, 4vw, 56px);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading > div {
-  min-width: 0;
-  flex: 1;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading h2 {
-  max-width: 14ch;
-  color: #fff;
-  font-size: clamp(32px, 4vw, 58px);
-  font-weight: 790;
-  letter-spacing: -.055em;
-  line-height: .98;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading p {
-  max-width: 680px;
-  margin-top: 13px;
-  color: rgba(226, 239, 250, .72);
-  font-size: clamp(13px, 1.25vw, 16px);
-  line-height: 1.55;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch {
-  min-height: 54px;
-  padding: 14px 22px;
-  color: #03182b;
-  background: linear-gradient(110deg, #f0bd4e, #9ce4ff 72%, #fff);
-  box-shadow:
-    0 16px 38px rgba(64, 171, 232, .25),
-    inset 0 1px 0 rgba(255, 255, 255, .72);
-  transition: transform .28s cubic-bezier(.16, 1, .3, 1), box-shadow .28s ease, filter .28s ease;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch:hover,
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch:focus-visible {
-  color: #03182b;
-  background: linear-gradient(110deg, #f4c966, #b8edff 72%, #fff);
-  box-shadow:
-    0 20px 48px rgba(64, 171, 232, .34),
-    0 0 0 6px rgba(139, 216, 255, .09);
-  filter: none;
-  transform: translateY(-2px);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide {
-  position: relative;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
-  margin-top: clamp(34px, 5vw, 58px);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::before,
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
-  content: "";
+.planner-monitor-device {
   position: absolute;
-  z-index: 0;
-  top: 20px;
-  left: 20px;
-  width: calc(66.666% + 1px);
-  height: 2px;
-  border-radius: 999px;
-  transform-origin: left center;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  width: min(97.3vw, 146svh);
+  aspect-ratio: 3 / 2;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 75.25%;
+  will-change: transform, opacity;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::before {
-  background: rgba(176, 218, 245, .2);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
-  background: linear-gradient(90deg, #65ceff, #efbd50);
-  box-shadow: 0 0 15px rgba(101, 206, 255, .42);
-  transform: scaleX(var(--assistant-progress));
-  transition: transform .65s cubic-bezier(.16, 1, .3, 1);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step {
-  position: relative;
-  z-index: 1;
+.planner-monitor-device > img {
   display: block;
-  min-width: 0;
-  padding: 0 clamp(16px, 2.4vw, 34px) 0 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  transition: transform .28s cubic-bezier(.16, 1, .3, 1);
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step:hover,
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step:focus-within {
-  transform: translateY(-3px);
+/* Keep raster shells out of the desktop motion-capable first paint. The live
+   DOM timetable screen remains mounted above the transparent exterior shell
+   while WebGL prepares the physical enclosure. */
+@media (min-width: 761px) {
+  .planner-monitor-device > img,
+  .planner-machine-fallback {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  .planner-machine-viewport.is-webgl .planner-machine-fallback,
+  .planner-machine-viewport.is-webgl ~ .planner-monitor-device > img {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  /* The live timetable is the display plane of the modeled enclosure. Once
+     WebGL owns that enclosure, release the raster-era source minimums so the
+     weekday columns contract with the physical screen instead of being
+     cropped by its overflow between tablet and full desktop widths. */
+  .planner-machine-viewport.is-webgl ~ .planner-monitor-device .planner-monitor-canvas {
+    min-width: 0;
+    min-height: 0;
+  }
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-marker {
-  position: relative;
+.planner-monitor-screen {
+  position: absolute;
   z-index: 2;
-  width: 42px;
-  height: 42px;
-  color: rgba(224, 237, 249, .7);
-  border: 1px solid rgba(171, 218, 248, .26);
-  background: rgba(4, 25, 45, .88);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, .2);
-  font-size: 13px;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step[data-state="current"] .selection-assistant-step-marker {
-  color: #03182b;
-  border-color: rgba(255, 255, 255, .68);
-  background: #81dcff;
+  top: 18.05%;
+  left: 13.55%;
+  width: 72.9%;
+  height: 54.35%;
+  overflow: hidden;
+  color: var(--monitor-ink);
+  border: 1px solid rgba(0, 0, 0, .58);
+  border-radius: .4%;
+  background:
+    radial-gradient(ellipse 82% 70% at 48% 44%, rgba(255, 252, 242, .2), transparent 74%),
+    linear-gradient(180deg, rgba(255, 255, 255, .3), transparent 3%, transparent 95%, rgba(50, 43, 34, .11)),
+    #dedbd4;
   box-shadow:
-    0 0 0 7px rgba(129, 220, 255, .1),
-    0 0 30px rgba(129, 220, 255, .35);
+    inset 0 0 0 1px rgba(21, 19, 16, .28),
+    inset 0 0 0 clamp(2px, .24vw, 4px) rgba(55, 48, 39, .075),
+    inset 0 13px 24px rgba(50, 42, 30, .065),
+    inset 0 -15px 28px rgba(50, 42, 30, .095),
+    inset 0 0 54px rgba(50, 42, 30, .14),
+    inset 0 1px 0 rgba(255, 255, 255, .62),
+    0 0 16px rgba(229, 218, 194, .045);
+  font-family: var(--monitor-type-industrial);
+  isolation: isolate;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step[data-state="complete"] .selection-assistant-step-marker {
-  color: transparent;
-  border-color: rgba(245, 205, 105, .68);
-  background: #efbd50;
+.planner-monitor-screen::before,
+.planner-monitor-screen::after {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  content: "";
+  pointer-events: none;
 }
 
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy {
-  margin-top: 16px;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step b {
-  color: #f7fbff;
-  font-size: clamp(14px, 1.35vw, 17px);
-  letter-spacing: -.015em;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy > span {
-  max-width: 28ch;
-  margin-top: 7px;
-  color: rgba(220, 235, 247, .62);
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-session-note {
-  margin-top: 28px;
-  color: rgba(213, 230, 244, .48);
-  font-size: 10.5px;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-manual-link {
-  color: #8adfff;
-  font-size: 12px;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-card {
-  color: #f4f8fc;
-  border-color: rgba(143, 210, 247, .2);
-  background: rgba(2, 22, 40, .56);
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-card strong {
-  color: #fff;
-}
-
-body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-card span,
-body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-status {
-  color: rgba(220, 235, 247, .66);
-}
-
-/* Day mode keeps the photographic depth while restoring strong ink contrast. */
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-immersive-scene {
-  background: #dff2ff;
-}
-
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-scene-image {
-  background-image:
-    linear-gradient(105deg, rgba(224, 243, 255, .9) 0%, rgba(224, 243, 255, .69) 48%, rgba(230, 244, 252, .35) 100%),
-    linear-gradient(0deg, rgba(216, 239, 253, .7), rgba(238, 249, 255, .08) 50%, rgba(218, 238, 251, .38)),
-    url("concourse-timetable-journey-v1.png");
-  filter: saturate(.7) brightness(1.08) contrast(.9);
-}
-
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-scene-reveal {
-  opacity: .72;
-  filter: saturate(.9) brightness(1.05) contrast(.96);
-}
-
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .planner-particle-field {
-  opacity: .78;
+.planner-monitor-screen::before {
+  background:
+    repeating-linear-gradient(180deg, transparent 0 2px, rgba(31, 27, 22, .018) 2px 3px),
+    repeating-linear-gradient(90deg, rgba(92, 64, 48, .008) 0 1px, rgba(48, 68, 55, .006) 1px 2px, transparent 2px 3px),
+    linear-gradient(90deg, rgba(37, 32, 25, .055), transparent 5%, transparent 94%, rgba(37, 32, 25, .07)),
+    linear-gradient(180deg, rgba(65, 58, 48, .035) 0%, transparent 1.4%, transparent 98.1%, rgba(65, 58, 48, .065) 100%),
+    radial-gradient(ellipse at 49% 46%, transparent 52%, rgba(57, 48, 36, .14) 100%);
   mix-blend-mode: multiply;
 }
 
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel {
-  color: #071d32;
-  border-color: rgba(19, 92, 141, .2);
+.planner-monitor-screen::after {
   background:
-    radial-gradient(circle at 88% 8%, rgba(121, 209, 250, .25), transparent 25rem),
-    linear-gradient(145deg, rgba(248, 253, 255, .94), rgba(221, 241, 253, .88));
+    linear-gradient(112deg, transparent 4%, rgba(255, 255, 255, .022) 18%, rgba(255, 255, 255, .17) 31%, rgba(255, 255, 255, .035) 43%, transparent 61%),
+    linear-gradient(180deg, rgba(255, 249, 235, .045), transparent 2.2%, transparent 96.8%, rgba(39, 32, 23, .055)),
+    radial-gradient(ellipse 64% 31% at 54% -8%, rgba(255, 255, 255, .19), transparent 74%);
+  mix-blend-mode: screen;
+  opacity: .34;
+}
+
+.planner-monitor-canvas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 6.3% repeat(var(--monitor-day-count, 5), minmax(0, 1fr));
+  grid-template-rows: 9.1% 90.9%;
+  min-width: 640px;
+  min-height: 312px;
+  background: linear-gradient(165deg, #e5e2dc 0%, #d9d6cf 100%);
+}
+
+.planner-monitor-corner,
+.planner-monitor-day {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border-right: 1px solid var(--monitor-grid);
+  border-bottom: 1px solid var(--monitor-grid);
+  background: rgba(249, 247, 243, .56);
+}
+
+.planner-monitor-day {
+  gap: 5%;
+  grid-auto-flow: column;
+  align-content: center;
+  justify-content: center;
+  font-size: clamp(9px, .98vw, 15px);
+  font-weight: 650;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.planner-monitor-day span:last-child {
+  font-weight: 470;
+}
+
+.planner-monitor-time-axis,
+.planner-monitor-days-grid {
+  position: relative;
+  min-height: 0;
+}
+
+.planner-monitor-time-axis {
+  border-right: 1px solid var(--monitor-grid);
+  background: rgba(249, 247, 243, .42);
+}
+
+.planner-monitor-time {
+  position: absolute;
+  right: 14%;
+  color: rgba(9, 10, 11, .82);
+  font-size: clamp(7px, .78vw, 12px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.planner-monitor-days-grid {
+  grid-column: 2 / -1;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 calc(11.111% - 1px), var(--monitor-grid) calc(11.111% - 1px) 11.111%),
+    repeating-linear-gradient(to right, transparent 0 calc(20% - 1px), var(--monitor-grid) calc(20% - 1px) 20%),
+    var(--monitor-paper);
+}
+
+.planner-monitor-day-wash {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  width: 20%;
+  background: rgba(255, 255, 255, .22);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.planner-monitor-day-wash.is-selected {
+  opacity: 1;
+}
+
+.planner-monitor-course-block {
+  position: absolute;
+  z-index: 2;
+  min-height: 20px;
+  overflow: hidden;
+  padding: clamp(3px, .42vw, 7px) clamp(4px, .55vw, 9px);
+  color: var(--monitor-ink);
+  border: 1px solid rgba(8, 9, 10, .2);
+  border-radius: 4px;
+  background: linear-gradient(140deg, #dddcd9, #ceccc8);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .09), inset 0 1px 0 rgba(255, 255, 255, .55);
+  font-size: clamp(6px, .63vw, 10px);
+  line-height: 1.25;
+  opacity: 1;
+}
+
+.planner-monitor-course-block.is-preview {
+  border-style: dashed;
+  background: rgba(244, 242, 238, .68);
+}
+
+.planner-monitor-course-block.is-entering {
+  animation: monitor-course-seat 360ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.planner-monitor-course-code {
+  display: block;
+  overflow: hidden;
+  font-size: 1.04em;
+  font-weight: 760;
+  letter-spacing: .02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.planner-monitor-course-detail {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner-monitor-empty {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(9, 10, 11, .34);
+  font-size: clamp(8px, .72vw, 11px);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.planner-monitor-model {
+  position: absolute;
+  z-index: 3;
+  top: 14.35%;
+  right: 17.6%;
+  color: rgba(238, 237, 233, .78);
+  font-family: var(--monitor-type-industrial);
+  font-size: clamp(7px, .72vw, 11px);
+  letter-spacing: .045em;
+}
+
+.planner-monitor-scan {
+  position: absolute;
+  z-index: 3;
+  top: 18.05%;
+  left: 13.55%;
+  width: 72.9%;
+  height: 54.35%;
+  border: 1px solid var(--monitor-display-glass);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .045), transparent 8%, transparent 88%, rgba(17, 15, 12, .08));
   box-shadow:
-    0 30px 76px rgba(8, 54, 88, .14),
-    inset 0 1px 0 rgba(255, 255, 255, .9);
+    inset 0 0 0 1px rgba(15, 14, 12, .18),
+    inset 9px 0 17px rgba(23, 20, 16, .045),
+    inset -9px 0 17px rgba(23, 20, 16, .055);
+  opacity: 1;
+  pointer-events: none;
+  transform: none;
 }
 
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading h2,
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step b {
-  color: #071d32;
+.planner-monitor-footer {
+  position: absolute;
+  z-index: 9;
+  inset: 0;
+  pointer-events: none;
 }
 
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading p,
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy > span,
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-session-note,
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-handoff-status {
-  color: #4f687c;
+.planner-machine-ui-layer {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  pointer-events: none;
 }
 
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-marker {
-  color: #31536e;
-  border-color: rgba(7, 57, 94, .2);
-  background: rgba(239, 248, 253, .92);
-  box-shadow: 0 8px 22px rgba(8, 54, 88, .1);
+.planner-monitor-copy {
+  position: absolute;
+  bottom: clamp(62px, 8.6svh, 94px);
+  left: clamp(28px, 3.2vw, 50px);
+  width: min(430px, 40vw);
 }
 
-html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
-  color: #071d32;
-  border-color: rgba(7, 68, 111, .16) !important;
-  background: linear-gradient(155deg, rgba(248, 253, 255, .94), rgba(219, 239, 252, .9)) !important;
+.planner-monitor-copy h1 {
+  margin: 0;
+  color: var(--monitor-copy);
+  font-family: var(--monitor-type-ui);
+  font-size: clamp(28px, 2.5vw, 39px);
+  font-weight: 320;
+  letter-spacing: -.035em;
+  line-height: 1.06;
+}
+
+.planner-monitor-copy p {
+  margin: 13px 0 0;
+  color: var(--monitor-muted);
+  font-family: var(--monitor-type-ui);
+  font-size: clamp(13px, 1.15vw, 18px);
+  line-height: 1.25;
+}
+
+.planner-monitor-scrubber {
+  position: absolute;
+  right: 18.4vw;
+  bottom: clamp(12px, 1.8svh, 20px);
+  left: 17.7vw;
+  display: flex;
+  height: 22px;
+  align-items: center;
+  pointer-events: none;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney #plannerJourneyScrubber {
+  display: block;
+  width: 100%;
+  height: 1px;
+  min-height: 0 !important;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  color: var(--monitor-copy) !important;
+  background: rgba(244, 243, 240, .28) !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney #plannerJourneyScrubber::-webkit-progress-bar {
+  height: 1px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: rgba(244, 243, 240, .28) !important;
+  box-shadow: none !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney #plannerJourneyScrubber::-webkit-progress-value,
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney #plannerJourneyScrubber::-moz-progress-bar {
+  height: 1px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: rgba(244, 243, 240, .52) !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, .12) !important;
+}
+
+.planner-journey-window {
+  --housing-contact-x: -16px;
+  --housing-contact-y: 24px;
+  --housing-rail-light: #756f65;
+  --display-backlight-alpha: .065;
+  --display-edge-depth: 17px;
+  --display-clip-inset: 5px;
+  --display-reflection-alpha: .052;
+  --display-reflection-x: 50%;
+  --display-view-shade: .014;
+  position: absolute;
+  z-index: 8;
+  top: var(--machine-anchor-y, 50%);
+  left: var(--machine-anchor-x, 50%);
+  display: flex;
+  width: min(366px, 31vw);
+  height: min(44svh, 450px);
+  min-height: 300px;
+  flex-direction: column;
+  padding: 0;
+  color: var(--monitor-copy);
+  border: 1px solid var(--monitor-housing-edge);
+  border-radius: 1px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .045), transparent 8%, transparent 92%, rgba(0, 0, 0, .34)),
+    linear-gradient(180deg, rgba(255, 255, 255, .018), transparent 7%, transparent 91%, rgba(0, 0, 0, .2)),
+    linear-gradient(145deg, #292824 0%, var(--monitor-housing) 46%, #111210 100%);
   box-shadow:
-    0 25px 68px rgba(9, 56, 90, .13),
-    inset 0 1px 0 rgba(255, 255, 255, .92) !important;
+    var(--housing-contact-x) var(--housing-contact-y) 32px rgba(0, 0, 0, .72),
+    0 38px 82px rgba(0, 0, 0, .78),
+    0 8px 13px rgba(0, 0, 0, .78),
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -3px 0 rgba(0, 0, 0, .78),
+    inset 3px 0 0 rgba(255, 255, 255, .025),
+    inset -3px 0 0 rgba(0, 0, 0, .34);
+  font-family: var(--monitor-type-ui);
+  isolation: isolate;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(-50%, -50%, 0) scale(var(--machine-panel-scale, .86));
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
 }
 
-@media (max-width: 1120px) {
-  body.app-active:not(.schedule-active):not(.hub-active) .wrap {
-    grid-template-areas:
-      "config"
-      "wishlist" !important;
+.planner-journey-window::before,
+.planner-journey-window::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+}
+
+.planner-journey-course::before {
+  top: 13%;
+  bottom: 13%;
+  left: -10px;
+  width: 9px;
+  border: 1px solid #0a0a09;
+  background: linear-gradient(90deg, #11110f, var(--housing-rail-light) 48%, var(--monitor-housing-rail) 54%, #0a0a09);
+  box-shadow: -7px 10px 16px rgba(0, 0, 0, .66), inset 1px 0 rgba(255, 255, 255, .12);
+}
+
+.planner-journey-course::after {
+  right: 18%;
+  bottom: -8px;
+  left: 18%;
+  height: 7px;
+  border: 1px solid #090a09;
+  background: linear-gradient(180deg, var(--housing-rail-light), #282620 42%, #090a09);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, .72);
+}
+
+.planner-journey-meeting::before,
+.planner-journey-meeting::after {
+  top: 12%;
+  bottom: 12%;
+  width: 9px;
+  border: 1px solid #090a09;
+  background: linear-gradient(90deg, #0a0a09, #34312c 30%, var(--housing-rail-light) 52%, #151512);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, .7), inset 1px 0 rgba(255, 255, 255, .12);
+}
+
+.planner-journey-meeting::before {
+  left: -10px;
+}
+
+.planner-journey-meeting::after {
+  right: -10px;
+  transform: scaleX(-1);
+}
+
+.planner-journey-priorities::before,
+.planner-journey-priorities::after {
+  right: 8%;
+  left: 8%;
+  height: 8px;
+  border: 1px solid #090a09;
+  background: linear-gradient(180deg, #161512, var(--housing-rail-light) 42%, #26231e 50%, #080908);
+  box-shadow: 12px 8px 18px rgba(0, 0, 0, .68), inset 0 1px rgba(255, 255, 255, .11);
+}
+
+.planner-journey-priorities::before {
+  top: -9px;
+}
+
+.planner-journey-priorities::after {
+  bottom: -9px;
+  transform: scaleY(-1);
+}
+
+.planner-journey-window[aria-hidden="false"] {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.planner-journey-course {
+  --machine-anchor-x: 25%;
+  --machine-anchor-y: 51%;
+  --machine-projection-source-width: 366px;
+  --machine-aperture-ratio: 2.38 / 2.55;
+}
+
+.planner-journey-meeting {
+  --housing-contact-x: 0;
+  --housing-rail-light: #817a6f;
+  --machine-anchor-x: 50%;
+  --machine-anchor-y: 49%;
+  --machine-projection-source-width: 380px;
+  --machine-aperture-ratio: 2.72 / 2.81;
+  width: min(380px, 32vw);
+  height: min(46svh, 470px);
+}
+
+.planner-journey-priorities {
+  --housing-contact-x: 16px;
+  --housing-rail-light: #7b6850;
+  --machine-anchor-x: 75%;
+  --machine-anchor-y: 51%;
+  --machine-projection-source-width: 560px;
+  --machine-aperture-ratio: 3.95 / 2.8;
+  width: min(560px, 42vw);
+  height: min(43svh, 440px);
+}
+
+.planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window {
+  text-shadow: none;
+}
+
+/* A projected window is the live control surface seated in a Three.js carrier.
+   The carrier supplies the exterior frame and cast shadow, so this DOM layer
+   keeps only the dark inset treatment of a recessed equipment bay. */
+@media (min-width: 761px) {
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected {
+    --monitor-block: #cbc9c4;
+    --monitor-paper-bright: #dfddd8;
+    --display-backlight-alpha: .105;
+    --display-reflection-alpha: .022;
+    --display-view-shade: .004;
+    top: 0;
+    left: 0;
+    width: var(--machine-projection-source-width);
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+    aspect-ratio: var(--machine-aperture-ratio);
+    border: 0;
+    border-radius: 1px;
+    background:
+      radial-gradient(ellipse at 50% 8%, rgb(236 230 216 / var(--display-backlight-alpha)) 0%, transparent 58%),
+      linear-gradient(90deg, rgba(255, 255, 255, .022), transparent 9%, transparent 91%, rgba(0, 0, 0, .16)),
+      linear-gradient(180deg, #181916 0%, #10110f 64%, #0c0d0b 100%);
+    box-shadow:
+      inset 0 0 0 2px rgba(0, 0, 0, .94),
+      inset 0 0 0 5px rgba(111, 104, 92, .13),
+      inset 0 18px 30px rgba(0, 0, 0, .5),
+      inset 0 -14px 26px rgba(0, 0, 0, .42),
+      inset 12px 0 20px rgba(0, 0, 0, .28),
+      inset -12px 0 20px rgba(0, 0, 0, .32),
+      inset 0 1px rgba(255, 255, 255, .04);
+    clip-path: inset(var(--display-clip-inset) round 1px);
+    transform: var(--machine-quad-transform);
+    transform-origin: 0 0;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
-    min-height: 500px;
-    overflow: hidden !important;
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected::before,
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected::after {
+    z-index: 6;
+    inset: 5px;
+    display: block;
+    width: auto;
+    height: auto;
+    border: 0;
+    opacity: 1;
+    transform: none;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel #courseList {
-    overflow-y: auto;
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected::before {
+    border: 1px solid var(--monitor-display-glass);
+    background:
+      repeating-linear-gradient(180deg, transparent 0 2px, rgba(232, 226, 213, .012) 2px 3px),
+      linear-gradient(90deg, transparent 0%, rgba(232, 226, 213, .014) 49.65%, transparent 50.35%),
+      linear-gradient(180deg, rgba(232, 226, 213, .022) 0%, transparent 1.25%, transparent 98.3%, rgba(0, 0, 0, .09) 100%),
+      radial-gradient(ellipse at 50% 48%, transparent 55%, rgba(0, 0, 0, .18) 100%);
+    box-shadow:
+      inset 0 0 var(--display-edge-depth) var(--monitor-display-shadow),
+      inset 0 1px rgba(255, 255, 255, .035),
+      inset 1px 0 rgba(255, 255, 255, .018);
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected::after {
+    z-index: 7;
+    background:
+      radial-gradient(ellipse 46% 160% at var(--display-reflection-x) -48%, rgb(245 239 226 / calc(var(--display-reflection-alpha) * .34)) 0%, transparent 72%),
+      linear-gradient(112deg, transparent 12%, rgb(245 239 226 / calc(var(--display-reflection-alpha) * .38)) 37%, transparent 62%),
+      linear-gradient(rgb(0 0 0 / var(--display-view-shade)), rgb(0 0 0 / var(--display-view-shade)));
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-heading {
+    border-bottom-color: rgba(0, 0, 0, .94);
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, .018), transparent 14%, transparent 88%, rgba(0, 0, 0, .2)),
+      linear-gradient(180deg, rgba(233, 227, 213, .075), transparent 34%),
+      #171815;
+    box-shadow:
+      inset 0 1px rgba(255, 255, 255, .055),
+      inset 0 -2px rgba(0, 0, 0, .9),
+      0 5px 9px rgba(0, 0, 0, .2);
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-scroll {
+    border-color: rgba(93, 88, 79, .48);
+    background:
+      radial-gradient(ellipse at 50% 0%, rgb(234 228 215 / var(--display-backlight-alpha)) 0%, transparent 54%),
+      linear-gradient(90deg, rgba(255, 255, 255, .018), transparent 10%, transparent 90%, rgba(0, 0, 0, .11)),
+      #10120f;
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, .86),
+      inset 0 11px 22px rgba(0, 0, 0, .36),
+      inset 5px 0 11px rgba(0, 0, 0, .14),
+      inset -5px 0 11px rgba(0, 0, 0, .13),
+      0 1px rgba(255, 255, 255, .025);
+  }
+}
+
+.planner-window-heading {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 61px;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  margin: 0;
+  padding: 17px 34px 14px 26px;
+  border-bottom: 1px solid rgba(0, 0, 0, .88);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .04), transparent 12%, transparent 86%, rgba(0, 0, 0, .22)),
+    linear-gradient(180deg, #2b2a27, #1a1a18);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .1),
+    inset 0 -3px #0a0b0a,
+    0 3px 8px rgba(0, 0, 0, .44);
+}
+
+.planner-window-heading::before,
+.planner-window-heading::after {
+  position: absolute;
+  top: 17px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid #070807;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--monitor-fastener), #36332e 52%, #11110f 54%);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .16), 0 1px 2px rgba(0, 0, 0, .72);
+  content: "";
+  pointer-events: none;
+}
+
+.planner-window-heading::before {
+  left: 10px;
+}
+
+.planner-window-heading::after {
+  right: 10px;
+}
+
+.planner-journey-priorities .planner-window-heading::after {
+  border-radius: 1px;
+  background: #bd7a24;
+  box-shadow: 0 0 8px rgba(189, 122, 36, .34), inset 0 1px rgba(255, 236, 188, .22);
+}
+
+.planner-window-heading p {
+  margin: 5px 0 0;
+  color: rgba(242, 241, 238, .46);
+  font: 620 8px/1.25 var(--monitor-type-industrial);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.planner-window-number {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  place-items: center;
+  color: var(--monitor-copy);
+  border: 1px solid rgba(255, 255, 255, .32);
+  border-radius: 50%;
+  font-family: var(--monitor-type-industrial);
+  font-size: 10px;
+  font-weight: 640;
+  letter-spacing: .06em;
+}
+
+.planner-window-label,
+.planner-window-fields label > span,
+.planner-journey-switches label > span {
+  color: rgba(242, 241, 238, .62);
+  font-family: var(--monitor-type-industrial);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .11em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.planner-window-heading h2 {
+  margin: 0;
+  color: var(--monitor-copy);
+  font-size: 18px;
+  font-weight: 520;
+  letter-spacing: -.025em;
+  line-height: 1.12;
+}
+
+.planner-window-scroll {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 9px 10px 10px;
+  padding: 14px 14px 24px;
+  border: 1px solid rgba(103, 97, 88, .56);
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .018), transparent 9%, transparent 92%, rgba(0, 0, 0, .18)),
+    var(--monitor-housing-deep);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, .78),
+    inset 0 9px 18px rgba(0, 0, 0, .58),
+    inset 5px 0 10px rgba(0, 0, 0, .24),
+    0 1px rgba(255, 255, 255, .055);
+  scrollbar-color: rgba(242, 241, 238, .48) rgba(0, 0, 0, .18);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  /* At a tray boundary the same wheel gesture returns to the outer camera
+     journey, so users never have to hunt for a non-interactive metal gap. */
+  overscroll-behavior-y: auto;
+  touch-action: pan-y;
+}
+
+.planner-window-scroll::before {
+  position: sticky;
+  z-index: 3;
+  top: -14px;
+  display: block;
+  height: 5px;
+  margin: -14px -14px 12px;
+  border-bottom: 1px solid rgba(124, 117, 106, .36);
+  background: linear-gradient(180deg, #070807, #292722 58%, #0b0c0b);
+  box-shadow: 0 5px 8px rgba(0, 0, 0, .42);
+  content: "";
+  pointer-events: none;
+}
+
+.planner-window-scroll::after {
+  display: block;
+  height: 6px;
+  margin: 18px -6px -16px;
+  border-top: 1px solid rgba(124, 117, 106, .28);
+  background: linear-gradient(180deg, #2a2823, #090a09);
+  content: "";
+  pointer-events: none;
+}
+
+.planner-window-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.planner-window-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, .18);
+}
+
+.planner-window-scroll::-webkit-scrollbar-thumb {
+  border-radius: 0;
+  background: rgba(242, 241, 238, .46);
+}
+
+.planner-window-scroll:focus-visible {
+  outline: 1px solid rgba(242, 241, 238, .75);
+  outline-offset: 4px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, .78),
+    inset 0 9px 18px rgba(0, 0, 0, .58),
+    0 0 0 2px rgba(216, 214, 208, .2) !important;
+}
+
+.planner-journey-skip {
+  position: absolute;
+  z-index: 20;
+  top: 18px;
+  left: 50%;
+  padding: 9px 12px;
+  color: var(--monitor-copy);
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 4px;
+  background: rgba(5, 5, 4, .94);
+  font: 600 12px/1 var(--monitor-type-ui);
+  text-decoration: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -12px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.planner-journey-skip:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.planner-window-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.planner-window-fields-course {
+  grid-template-columns: minmax(0, 1.55fr) minmax(88px, .8fr);
+}
+
+.planner-window-fields-course label:first-child {
+  grid-column: 1 / -1;
+}
+
+.planner-window-fields-course label:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.planner-window-fields-time,
+.planner-window-fields-credits {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.planner-window-fields-frequency {
+  grid-template-columns: 1fr;
+}
+
+.planner-window-fields-breaks {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.planner-window-fields label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+}
+
+.planner-window-fields :is(input, select) {
+  width: 100%;
+  height: 37px;
+  min-width: 0;
+  padding: 0 10px;
+  font: 500 13px/1 var(--monitor-type-industrial);
+}
+
+.planner-window-fields-breaks > button {
+  height: 37px;
+  padding: 0 12px;
+  color: var(--monitor-copy);
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, .16);
+  font: 650 10px/1 var(--monitor-type-industrial);
+  cursor: pointer;
+}
+
+.planner-journey-days {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0 0 12px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 2px;
+}
+
+.planner-journey-free-days {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 9px;
+}
+
+.planner-journey-days button {
+  min-width: 0;
+  height: 34px;
+  padding: 0;
+  color: rgba(242, 241, 238, .64);
+  border: 0;
+  border-right: 1px solid rgba(255, 255, 255, .17);
+  border-radius: 0;
+  background: rgba(0, 0, 0, .18);
+  font: 650 10px/1 var(--monitor-type-industrial);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.planner-journey-days button:last-child {
+  border-right: 0;
+}
+
+.planner-journey-days button[aria-pressed="true"] {
+  color: #e5e1d9;
+  background: linear-gradient(180deg, #56544f, #3c3b37);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .16), inset 0 -2px rgba(0, 0, 0, .35);
+}
+
+.planner-journey-switches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin-top: 12px;
+}
+
+.planner-journey-switches-stack {
+  grid-template-columns: 1fr;
+}
+
+.planner-journey-switches label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.planner-journey-switches input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+
+.planner-journey-threshold {
+  display: grid !important;
+  grid-template-columns: 15px minmax(0, 1fr) 88px;
+}
+
+.planner-journey-threshold input[type="time"] {
+  width: 88px;
+  height: 31px;
+  padding: 0 5px;
+  font: 600 11px/1 var(--monitor-type-industrial);
+}
+
+.planner-window-kicker {
+  display: block;
+  margin: 18px 0 8px;
+  padding-top: 12px;
+  color: rgba(242, 241, 238, .66);
+  border-top: 1px solid rgba(255, 255, 255, .12);
+  font: 660 9px/1.25 var(--monitor-type-industrial);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.planner-window-scroll > .planner-window-kicker:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.planner-window-note {
+  margin: 10px 0 0;
+  color: rgba(242, 241, 238, .54);
+  font: 500 10px/1.45 var(--monitor-type-ui);
+}
+
+.planner-journey-radio-group {
+  display: grid;
+  gap: 7px;
+}
+
+.planner-journey-radio-group label {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, .15);
+  background: rgba(0, 0, 0, .16);
+  cursor: pointer;
+}
+
+.planner-journey-radio-group label:has(input[type="radio"]:checked) {
+  border-color: rgba(242, 241, 238, .58);
+  background: rgba(255, 255, 255, .08);
+}
+
+.planner-journey-radio-group input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  margin: 0;
+}
+
+.planner-journey-radio-group span {
+  min-width: 0;
+  flex: 1;
+  color: rgba(242, 241, 238, .72);
+  font: 560 10px/1.3 var(--monitor-type-ui);
+}
+
+.planner-journey-exact input[type="number"] {
+  width: 54px;
+  height: 29px;
+  padding: 0 5px;
+  font: 600 11px/1 var(--monitor-type-industrial);
+}
+
+.planner-journey-slot-list,
+.planner-journey-course-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.planner-journey-slot-item,
+.planner-journey-course-item {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 9px;
+  border-left: 2px solid rgba(242, 241, 238, .45);
+  background: rgba(0, 0, 0, .2);
+  font: 540 10px/1.35 var(--monitor-type-ui);
+}
+
+.planner-journey-course-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.planner-journey-course-copy strong {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planner-journey-course-copy span {
+  color: rgba(242, 241, 238, .52);
+  font-size: 9px;
+}
+
+.planner-journey-remove {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 7px;
+  color: rgba(242, 241, 238, .7);
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 2px;
+  background: transparent;
+  font: 620 9px/1 var(--monitor-type-industrial);
+  cursor: pointer;
+}
+
+.planner-journey-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.planner-journey-actions-single {
+  grid-template-columns: 1fr;
+}
+
+.planner-journey-actions-utilities {
+  margin-top: 18px;
+}
+
+.planner-journey-tool-link {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  margin-top: 12px;
+  color: rgba(242, 241, 238, .72);
+  border-bottom: 1px solid rgba(242, 241, 238, .38);
+  font: 620 10px/1.2 var(--monitor-type-industrial);
+  letter-spacing: .045em;
+  text-decoration: none;
+}
+
+.planner-journey-tool-link:hover {
+  color: var(--monitor-copy);
+  border-bottom-color: rgba(242, 241, 238, .72);
+}
+
+.planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-projection-invalid {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.planner-journey-actions-priority {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  margin-top: 18px;
+}
+
+.planner-journey-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 2px;
+  font: 650 11px/1 var(--monitor-type-industrial);
+  letter-spacing: .035em;
+  cursor: pointer;
+}
+
+.planner-journey-add {
+  color: #e7e3da;
+  background: linear-gradient(180deg, #56544f, #383733);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .16), inset 0 -2px rgba(0, 0, 0, .38);
+}
+
+.planner-journey-continue {
+  color: var(--monitor-copy);
+  background: rgba(0, 0, 0, .16);
+}
+
+.planner-journey-actions button:hover {
+  filter: brightness(.92);
+}
+
+.planner-journey-status {
+  min-height: 16px;
+  margin: 9px 0 0;
+  color: rgba(242, 241, 238, .7);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.planner-journey-status[data-state="error"] {
+  color: #ffb5af;
+}
+
+/* The embedded planner is a neutral machine surface. Isolate it from the
+   legacy blue control theme without changing any other ConCourse route. */
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+  min-height: 0 !important;
+  color: #e1ddd4 !important;
+  -webkit-text-fill-color: #e1ddd4 !important;
+  caret-color: #f0e7d7 !important;
+  border: 1px solid rgba(121, 115, 104, .72) !important;
+  border-radius: 2px !important;
+  background: linear-gradient(180deg, #474641 0%, #3c3b37 52%, #31302d 100%) !important;
+  -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 -2px 5px rgba(0, 0, 0, .32), 0 1px 0 rgba(255, 255, 255, .025) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 -2px 5px rgba(0, 0, 0, .32), 0 1px 0 rgba(255, 255, 255, .025) !important;
+  color-scheme: dark !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window select {
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window select :is(option, optgroup) {
+  color: #e1ddd4 !important;
+  -webkit-text-fill-color: #e1ddd4 !important;
+  background: #2f2e2b !important;
+  color-scheme: dark !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window select option:checked {
+  color: #f1ede5 !important;
+  -webkit-text-fill-color: #f1ede5 !important;
+  background: #54514b !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:not([type="checkbox"]):not([type="radio"]), select):hover {
+  border-color: #9b958a !important;
+  background: linear-gradient(180deg, #514f49, #3d3b37) !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:not([type="checkbox"]):not([type="radio"]), select):focus {
+  border-color: #9d9a94 !important;
+  outline: 1px solid #d8d6d0 !important;
+  outline-offset: 1px !important;
+  -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, .1), 0 0 0 1px #d8d6d0 !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .1), 0 0 0 1px #d8d6d0 !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:not([type="checkbox"]):not([type="radio"]), select):focus-visible {
+  outline: 2px solid #d8d6d0 !important;
+  outline-offset: 2px !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window input::placeholder {
+  color: rgba(237, 233, 224, .74) !important;
+  -webkit-text-fill-color: rgba(237, 233, 224, .74) !important;
+  opacity: 1 !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:-webkit-autofill, input:autofill),
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:-webkit-autofill, input:autofill):hover,
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:-webkit-autofill, input:autofill):focus {
+  color: #e1ddd4 !important;
+  -webkit-text-fill-color: #e1ddd4 !important;
+  caret-color: #f0e7d7 !important;
+  background: #3c3b37 !important;
+  -webkit-box-shadow: 0 0 0 1000px #3c3b37 inset !important;
+  box-shadow: 0 0 0 1000px #3c3b37 inset !important;
+  transition: none !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input:not([type="checkbox"]):not([type="radio"]), select):disabled {
+  color: rgba(225, 221, 212, .42) !important;
+  -webkit-text-fill-color: rgba(225, 221, 212, .42) !important;
+  border-color: rgba(121, 115, 104, .36) !important;
+  background: #2b2a27 !important;
+  opacity: .72 !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input[type="checkbox"], input[type="radio"]) {
+  min-height: 0 !important;
+  padding: 0 !important;
+  color: var(--monitor-copy) !important;
+  border-color: #89847b !important;
+  background: transparent !important;
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  accent-color: #d8d6d0 !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+  color-scheme: dark !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input[type="checkbox"], input[type="radio"]):focus-visible {
+  outline: 2px solid #d8d6d0 !important;
+  outline-offset: 3px !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window :is(input[type="checkbox"], input[type="radio"]):disabled {
+  cursor: not-allowed;
+  opacity: .52 !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window input[type="checkbox"] {
+  border-radius: 2px !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window input[type="radio"] {
+  border-radius: 50% !important;
+}
+
+body.app-active.planner-journey-active #appWrap #plannerScrollJourney .planner-journey-window input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: grayscale(1) contrast(1.25) !important;
+  opacity: .76;
+}
+
+/* Desktop carrier screens are optically reduced by their perspective quads.
+   Keep their source UI legible and touch-sized while the fixed carrier shell
+   and scrollable recessed bay continue to own the physical silhouette. */
+@media (min-width: 761px) {
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-heading {
+    min-height: 72px;
+    padding: 19px 34px 16px 26px;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-heading h2 {
+    font-size: 24px;
+    line-height: 1.15;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-heading p {
+    color: rgba(242, 241, 238, .86);
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected :is(.planner-window-label, .planner-window-fields label > span, .planner-journey-switches label > span) {
+    color: rgba(246, 244, 239, .94);
+    font-size: 15px;
+    font-weight: 620;
+    letter-spacing: .035em;
+    line-height: 1.3;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-kicker {
+    color: rgba(246, 244, 239, .94);
+    font-size: 15px;
+    font-weight: 620;
+    letter-spacing: .035em;
+    line-height: 1.35;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-note {
+    color: rgba(242, 241, 238, .88);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-fields :is(input, select) {
+    height: 48px !important;
+    font-size: 17px !important;
+    font-weight: 560 !important;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-fields-breaks > button,
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-days button,
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-actions button {
+    min-height: 48px;
+    height: 48px;
+    font-size: 15px;
+    font-weight: 620;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-switches label,
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-radio-group label {
+    min-height: 48px;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-radio-group span,
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected :is(.planner-journey-slot-item, .planner-journey-course-item) {
+    color: rgba(246, 244, 239, .92);
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-course-copy strong {
+    font-size: 16px;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-course-copy span {
+    color: rgba(242, 241, 238, .82);
+    font-size: 14px;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-threshold input[type="time"],
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-exact input[type="number"] {
+    height: 48px;
+    font-size: 15px;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-remove,
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-tool-link {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-journey-status {
+    color: rgba(242, 241, 238, .9);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-scroll {
+    scrollbar-color: rgba(242, 241, 238, .64) rgba(0, 0, 0, .18);
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected .planner-window-scroll::-webkit-scrollbar-thumb {
+    background: rgba(242, 241, 238, .62);
+  }
+}
+
+.planner-journey-wheel-surface {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.planner-scroll-journey.is-static {
+  height: auto;
+  min-height: 0;
+  padding-bottom: 34px;
+}
+
+.planner-scroll-journey.is-static .planner-journey-sticky {
+  position: relative;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.planner-scroll-journey.is-static .planner-monitor-stage {
+  position: relative;
+  height: auto;
+  min-height: 660px;
+  padding-top: min(100svh, 1024px);
+}
+
+.planner-scroll-journey.is-static .planner-machine-viewport {
+  display: none;
+}
+
+body:has(#plannerScrollJourney.is-static) .planner-machine-foreground-canvas,
+body.hub-active .planner-machine-foreground-canvas,
+body.planner-detailed-active .planner-machine-foreground-canvas,
+body.schedule-terminal-fallback .planner-machine-foreground-canvas,
+html.timetable-webgl-failed .planner-machine-foreground-canvas,
+html.timetable-webgl-context-lost .planner-machine-foreground-canvas {
+  display: none;
+}
+
+.planner-scroll-journey.is-static .planner-machine-ui-layer {
+  position: relative;
+  inset: auto;
+}
+
+.planner-scroll-journey.is-static .planner-journey-window {
+  position: relative;
+  inset: auto;
+  width: min(620px, calc(100% - 40px));
+  margin: 16px auto 0;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+body.planner-journey-active #plannerScrollJourney.is-static > .planner-journey-sticky {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 820px;
+  visibility: visible;
+  opacity: 1;
+}
+
+@keyframes monitor-course-seat {
+  from { opacity: 0; transform: translateY(9px) scale(.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 1100px) {
+  .planner-scroll-journey {
+    height: 620vh;
+  }
+
+  .planner-monitor-nav {
+    height: 72px;
+  }
+
+  .planner-monitor-device {
+    width: min(112vw, 150svh);
+  }
+
+  .planner-monitor-footer {
+    inset: 0;
+  }
+
+  .planner-monitor-copy,
+  .planner-monitor-scrubber {
+    bottom: 24px;
+  }
+
+  .planner-journey-window {
+    width: min(344px, 42vw);
+  }
+
+  .planner-journey-priorities {
+    width: min(460px, 54vw);
   }
 }
 
 @media (max-width: 760px) {
-  .planner-scene-reveal {
-    display: none;
-  }
-
-  .planner-immersive-scene::after {
-    background: linear-gradient(rgba(3, 21, 38, .5), rgba(3, 21, 38, .68));
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel {
-    min-height: 0;
-    padding: 26px 21px 28px;
-    border-radius: 30px;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading {
-    align-items: stretch;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-heading h2 {
-    max-width: 12ch;
-    font-size: 34px;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
-    margin-top: 30px;
-  }
-
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::before,
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
-    top: 20px;
-    bottom: 20px;
-    left: 20px;
-    width: 2px;
+  .planner-scroll-journey {
     height: auto;
-    transform-origin: center top;
+    min-height: 0;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-guide::after {
-    transform: scaleY(var(--assistant-progress));
+  .planner-journey-sticky {
+    min-height: 600px;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step {
-    display: grid;
-    grid-template-columns: 42px minmax(0, 1fr);
-    gap: 14px;
-    padding: 0;
+  .planner-monitor-nav {
+    height: 64px;
+    padding-inline: 18px;
+    font-size: 13px;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy {
-    margin-top: 1px;
+  .planner-monitor-brand {
+    font-size: 12px;
+    letter-spacing: .25em;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step-copy > span {
-    max-width: none;
+  .planner-monitor-nav-group {
+    gap: 17px;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
-    min-height: 430px;
-    border-radius: 30px !important;
-  }
-}
-
-@media (hover: none), (pointer: coarse) {
-  .planner-scene-reveal {
+  .planner-monitor-nav-actions a {
     display: none;
   }
+
+  .planner-monitor-device {
+    top: 39%;
+    width: max(153vw, 920px);
+    transform-origin: 50% 75.25%;
+  }
+
+  .planner-machine-viewport {
+    display: none;
+  }
+
+  .planner-machine-foreground-canvas {
+    display: none;
+  }
+
+  .planner-monitor-screen {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .planner-monitor-canvas {
+    width: 920px;
+  }
+
+  .planner-monitor-footer {
+    inset: 0;
+  }
+
+  .planner-monitor-copy {
+    right: 18px;
+    bottom: 64px;
+    left: 18px;
+    width: auto;
+  }
+
+  .planner-monitor-copy h1 {
+    font-size: 27px;
+  }
+
+  .planner-monitor-copy p {
+    margin-top: 7px;
+    font-size: 13px;
+  }
+
+  .planner-monitor-scrubber {
+    right: 12vw;
+    bottom: 24px;
+    left: 12vw;
+    margin: 0;
+  }
+
+  .planner-journey-window,
+  .planner-journey-course,
+  .planner-journey-meeting,
+  .planner-journey-priorities {
+    top: auto;
+    right: 16px;
+    bottom: 96px;
+    left: 16px;
+    width: auto;
+    height: 48svh;
+    max-height: 48svh;
+    overflow: visible;
+    transform: none;
+  }
+
+  .planner-machine-ui-layer {
+    position: relative;
+    inset: auto;
+  }
+
+  .planner-window-fields-course {
+    grid-template-columns: 1fr 96px;
+  }
 }
 
-@keyframes planner-scene-breathe {
-  0% { transform: translate3d(var(--planner-shift-x), var(--planner-shift-y), 0) scale(1.07); }
-  100% { transform: translate3d(calc(var(--planner-shift-x) - 8px), calc(var(--planner-shift-y) + 5px), 0) scale(1.095); }
+@media (max-height: 950px) and (min-width: 761px) {
+  .planner-monitor-copy {
+    bottom: 4px;
+  }
+
+  .planner-monitor-scrubber {
+    right: 4vw;
+    bottom: 19px;
+    left: 33vw;
+  }
+}
+
+@media (max-height: 800px) and (min-width: 761px) {
+  .planner-monitor-copy h1 {
+    font-size: 28px;
+  }
+
+  .planner-monitor-copy p {
+    margin-top: 6px;
+    font-size: 13px;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 761px) {
+  .planner-monitor-nav {
+    height: 62px;
+  }
+
+  .planner-monitor-footer {
+    inset: 0;
+  }
+
+  .planner-monitor-copy {
+    bottom: 4px;
+  }
+
+  .planner-monitor-scrubber {
+    bottom: 19px;
+  }
+
+  .planner-monitor-copy h1 {
+    font-size: 28px;
+  }
+
+  .planner-monitor-copy p {
+    margin-top: 6px;
+    font-size: 13px;
+  }
+
+  .planner-window-heading {
+    min-height: 54px;
+    padding-block: 13px 11px;
+  }
+
+  .planner-window-heading::before,
+  .planner-window-heading::after {
+    top: 13px;
+  }
+
+  .planner-window-scroll {
+    margin: 7px 8px 8px;
+    padding: 11px 12px 20px;
+  }
+}
+
+/* Generated timetable — the final planner now belongs to the same neutral
+   FAN-T111 world as the journey. It reads as a recessed inspection display
+   instead of falling back to the retired deep-blue product theme. */
+@media screen {
+  html:has(body.schedule-active) {
+    background: #050504 !important;
+  }
+
+  html body.schedule-active {
+    --text: #f1eee7;
+    --muted: #a9a59c;
+    --muted-2: #7f7b73;
+    --accent: #d5a444;
+    --accent-2: #b9b2a6;
+    --border: rgba(227, 220, 207, .15);
+    --panel: #11110f;
+    --panel-2: #181714;
+    --shadow: 0 28px 88px rgba(0, 0, 0, .46);
+    color: var(--text);
+    background:
+      radial-gradient(ellipse 72% 42% at 50% -10%, rgba(229, 220, 201, .11), transparent 62%),
+      radial-gradient(ellipse 42% 32% at 92% 18%, rgba(183, 131, 41, .055), transparent 74%),
+      linear-gradient(180deg, #0b0b0a 0%, #050504 72%, #020202 100%) !important;
+  }
+
+  /* The result lives inside the modeled terminal, so the page underlay stays
+     materially quiet. A decorative tiled grid would read as a second visual
+     system behind the real mechanical structure and can create moire through
+     the projected display glass. */
+  html body.schedule-active::before {
+    display: none !important;
+  }
+
+  html body.schedule-active #schedulePage {
+    position: relative;
+    z-index: 3;
+    max-width: 1680px;
+    padding-inline: clamp(54px, 7vw, 116px);
+    background: transparent;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+  }
+
+  html body.schedule-active #scheduleTerminalScroll {
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+    outline: none;
+  }
+
+  /* The final timetable remains inside the same physical world. The real
+     Three.js terminal stays alive as a fixed, inert portal around the DOM
+     inspection display; no raster capture is used for this surround. */
+  html body.schedule-active #appWrap {
+    position: fixed !important;
+    z-index: 0;
+    inset: 0;
+    display: block !important;
+    width: 100vw;
+    height: 100svh;
+    overflow: hidden !important;
+    opacity: 1;
+    pointer-events: none !important;
+  }
+
+  /* The generated result stays hidden while the physical lift closes the
+     editing carriers and docks. Only an explicit fallback may reveal the
+     ordinary full-page timetable. */
+  html body.schedule-active.schedule-terminal-awaiting #schedulePage {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  html body.schedule-active.schedule-terminal-awaiting #appWrap {
+    opacity: 1;
+  }
+
+  /* If the fourth physical carrier is unavailable after the readiness
+     watchdog, keep the original result page legible and push the inert
+     machine into ambience. */
+  html body.schedule-active.schedule-terminal-fallback #appWrap {
+    opacity: .2;
+  }
+
+  html body.schedule-active.schedule-terminal-fallback #schedulePage {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Avoid an additional full-viewport offscreen filter pass while WebGL is
+     already redrawing the live gears and particles behind the result glass. */
+  html body.schedule-active.schedule-terminal-projected #appWrap {
+    opacity: 1;
+  }
+
+  html body.schedule-active #appWrap .configurator-column > :not(#plannerScrollJourney),
+  html body.schedule-active #plannerScrollJourney .planner-machine-ui-layer,
+  html body.schedule-active #plannerScrollJourney .planner-monitor-device,
+  html body.schedule-active #plannerScrollJourney .planner-monitor-nav,
+  html body.schedule-active #plannerScrollJourney .planner-journey-copy,
+  html body.schedule-active #plannerScrollJourney .planner-journey-progress,
+  html body.schedule-active #plannerScrollJourney .planner-journey-skip {
+    display: none !important;
+  }
+
+  html body.schedule-active #plannerScrollJourney {
+    z-index: 0 !important;
+    height: 100svh;
+    min-height: 100svh;
+    background: transparent;
+  }
+
+  html body.schedule-active #plannerScrollJourney > .planner-journey-sticky {
+    position: fixed;
+    z-index: 0;
+    inset: 0;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  html body.schedule-active #plannerMachineViewport {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Desktop result mode is still ordinary interactive DOM. The 1366 × 864
+     source rectangle is mapped into the four projected corners of the real
+     result carrier, while its own vertical scroll and the calendar's native
+     horizontal scroll remain independent. */
+  html body.schedule-active.schedule-terminal-projected {
+    overflow: hidden !important;
+  }
+
+  html body.schedule-active.schedule-terminal-projected #schedulePage {
+    position: fixed;
+    z-index: 3;
+    inset: 0;
+    width: 100vw;
+    max-width: none;
+    height: 100svh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected {
+    --display-backlight-alpha: .082;
+    --display-edge-depth: 16px;
+    --display-clip-inset: 5px;
+    --display-reflection-alpha: .026;
+    --display-reflection-x: 50%;
+    --display-view-shade: .012;
+    position: fixed;
+    top: 0;
+    left: 0;
+    isolation: isolate;
+    width: 1366px;
+    height: 864px;
+    min-width: 1366px;
+    margin: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 1px;
+    color: #ece9e1;
+    background:
+      radial-gradient(ellipse at 50% 4%, rgb(239 232 217 / var(--display-backlight-alpha)) 0%, transparent 58%),
+      linear-gradient(90deg, rgba(255, 255, 255, .018), transparent 8%, transparent 92%, rgba(0, 0, 0, .14)),
+      linear-gradient(180deg, #171815 0%, #10110f 66%, #0b0c0a 100%);
+    box-shadow:
+      inset 0 0 0 2px rgba(0, 0, 0, .96),
+      inset 0 0 0 5px rgba(116, 108, 94, .14),
+      inset 0 0 var(--display-edge-depth) rgba(0, 0, 0, .82),
+      inset 0 1px rgba(255, 255, 255, .045);
+    clip-path: inset(var(--display-clip-inset) round 1px);
+    transform: var(--machine-quad-transform);
+    transform-origin: 0 0;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    pointer-events: auto;
+    will-change: transform;
+    animation: terminal-display-ignition 420ms cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  @keyframes terminal-display-ignition {
+    0% { opacity: .08; }
+    34% { opacity: .48; }
+    72% { opacity: .94; }
+    100% { opacity: 1; }
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected::before,
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected::after {
+    content: "";
+    position: absolute;
+    z-index: 4;
+    inset: 5px;
+    pointer-events: none;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected::before {
+    opacity: 1;
+    background-color: transparent;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 4px, rgba(248, 243, 232, .018) 4px 5px);
+    animation: terminal-display-veil 420ms cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  @keyframes terminal-display-veil {
+    0% { background-color: rgba(3, 3, 2, .94); }
+    34% { background-color: rgba(3, 3, 2, .68); }
+    72% { background-color: rgba(3, 3, 2, .08); }
+    100% { background-color: transparent; }
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected::after {
+    background:
+      radial-gradient(ellipse 48% 145% at var(--display-reflection-x) -44%, rgb(248 242 229 / calc(var(--display-reflection-alpha) * .54)) 0%, transparent 72%),
+      linear-gradient(111deg, transparent 17%, rgb(248 242 229 / calc(var(--display-reflection-alpha) * .42)) 39%, transparent 61%),
+      linear-gradient(rgb(0 0 0 / var(--display-view-shade)), rgb(0 0 0 / var(--display-view-shade)));
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected #scheduleTerminalScroll {
+    position: relative;
+    z-index: 2;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 34px 42px 46px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(213, 164, 68, .48) rgba(0, 0, 0, .28);
+    touch-action: pan-x pan-y;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected #scheduleTerminalScroll::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected #scheduleTerminalScroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, .28);
+    box-shadow: inset 1px 0 rgba(255, 255, 255, .035);
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected #scheduleTerminalScroll::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background: linear-gradient(#d4aa5a, #80612b) padding-box;
+  }
+
+  html body.schedule-active #scheduleTerminalScroll:focus-visible {
+    outline: 2px solid #8d7444;
+    outline-offset: -6px;
+    box-shadow: none !important;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected #scheduleTerminalScroll:focus-visible {
+    outline: 3px solid #8d7444;
+    outline-offset: -8px;
+    box-shadow: none !important;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected .schedule-page-header {
+    grid-template-columns: minmax(180px, .25fr) minmax(0, 1fr);
+    gap: 36px;
+    align-items: end;
+    margin: 0 0 22px;
+    padding: 0 4px;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected .schedule-page-header h1 {
+    font-size: 48px;
+    line-height: .96;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected .schedule-page-header > div > p:last-child {
+    margin-top: 10px;
+    font-size: 16px;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected #timetablePanel {
+    min-height: 0;
+    padding: 28px 30px 34px;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected #calArea {
+    min-height: 590px;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected .calendar-scroll {
+    min-height: 540px;
+    overscroll-behavior-inline: contain;
+    scrollbar-gutter: stable;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected :is(button, .alt-btn) {
+    min-height: 52px;
+  }
+
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected :is(input[type="radio"], input[type="checkbox"]) {
+    min-width: 20px;
+    min-height: 20px;
+  }
+
+  html body.schedule-active #schedulePage::before,
+  html body.schedule-active #schedulePage::after {
+    display: none !important;
+  }
+
+  html body.schedule-active .schedule-page-header {
+    padding-inline: clamp(4px, 1vw, 14px);
+  }
+
+  html body.schedule-active .schedule-page-header h1 {
+    color: #f4f1ea !important;
+    font-weight: 560;
+    letter-spacing: -.038em;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .08), 0 2px 6px rgba(0, 0, 0, .34);
+  }
+
+  html body.schedule-active .schedule-page-header > div > p:last-child {
+    color: #918d84 !important;
+    letter-spacing: .01em;
+  }
+
+  html body.schedule-active .schedule-back {
+    min-height: 42px;
+    border: 1px solid rgba(232, 224, 207, .2);
+    border-radius: 4px;
+    color: #d7d1c4;
+    background: linear-gradient(180deg, #25241f, #151512);
+    box-shadow:
+      0 2px 5px rgba(0, 0, 0, .34),
+      inset 0 1px 0 rgba(255, 255, 255, .08),
+      inset 0 -1px 0 rgba(0, 0, 0, .7);
+  }
+
+  html body.schedule-active .schedule-back:is(:hover, :focus-visible) {
+    color: #fffdf7;
+    border-color: rgba(213, 164, 68, .5);
+    background: linear-gradient(180deg, #302d25, #191815);
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid rgba(220, 212, 196, .26) !important;
+    border-radius: 4px !important;
+    color: #e9e5dc;
+    background:
+      linear-gradient(90deg,
+        #292822 0 5px,
+        #080807 5px 9px,
+        transparent 9px calc(100% - 9px),
+        #080807 calc(100% - 9px) calc(100% - 5px),
+        #292822 calc(100% - 5px) 100%),
+      radial-gradient(ellipse 66% 32% at 50% 0%, rgba(255, 249, 235, .07), transparent 68%),
+      linear-gradient(102deg, rgba(255, 255, 255, .018), transparent 16% 84%, rgba(255, 255, 255, .014)),
+      linear-gradient(180deg, #171714 0%, #0e0e0c 42%, #090908 100%) !important;
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, .38),
+      inset 0 1px 0 rgba(255, 255, 255, .11),
+      inset 0 0 0 4px rgba(0, 0, 0, .78),
+      inset 0 0 0 5px rgba(218, 209, 190, .13),
+      inset 0 0 0 9px rgba(0, 0, 0, .34),
+      inset 0 -8px 18px rgba(0, 0, 0, .22) !important;
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel::before {
+    content: "";
+    position: absolute;
+    z-index: 4;
+    top: 8px;
+    right: clamp(28px, 6vw, 104px);
+    left: clamp(28px, 6vw, 104px);
+    height: 2px;
+    border-radius: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(213, 164, 68, .18) 18%, #d5a444 50%, rgba(213, 164, 68, .18) 82%, transparent);
+    box-shadow: 0 1px 5px rgba(213, 164, 68, .18);
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel::after {
+    content: none;
+    display: none;
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel :is(.panel-heading h2, .stat b, .cm-opt, .cm-legend .lg, .hint) {
+    color: #eeeae1 !important;
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel :is(.panel-heading p, .stat, .color-bar .cm-label, .calendar-days, .empty-note) {
+    color: #97938a !important;
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel .grid-head {
+    padding-bottom: 21px;
+    border-bottom: 1px solid rgba(229, 222, 208, .13);
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel .panel-heading h2 {
+    font-weight: 590;
+    letter-spacing: -.035em;
+  }
+
+  html body.schedule-active #schedulePage #scoreArea .badge {
+    border: 1px solid rgba(213, 164, 68, .24);
+    border-radius: 5px;
+    color: #d8b66f;
+    background: rgba(213, 164, 68, .075);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+  }
+
+  html body.schedule-active #schedulePage :is(.stat-row, .stat, .alt-list, .color-bar, .cm-opt) {
+    border-color: rgba(228, 220, 205, .14);
+  }
+
+  html body.schedule-active #schedulePage .stat-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    margin-block: 0 12px;
+    border-bottom: 1px solid rgba(228, 220, 205, .14);
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel .stat {
+    min-width: 0;
+    border: 0;
+    border-right: 1px solid rgba(228, 220, 205, .14);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel .stat:last-child {
+    border-right: 0;
+  }
+
+  html body.schedule-active #schedulePage #timetablePanel .stat b {
+    font-weight: 530;
+    font-variant-numeric: tabular-nums;
+  }
+
+  html body.schedule-active #schedulePage .alt-list {
+    padding-block: 3px 14px;
+    border-bottom: 1px solid rgba(228, 220, 205, .11);
+  }
+
+  html body.schedule-active #schedulePage .alt-btn {
+    border: 0;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    color: #8c887f;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  html body.schedule-active #schedulePage .alt-btn:is(:hover, :focus-visible, .active, [aria-pressed="true"]) {
+    color: #f1ede4;
+    border-bottom-color: #d5a444;
+    background: transparent;
+    outline: 0;
+  }
+
+  html body.schedule-active .final-timetable-bar {
+    border: 1px solid rgba(228, 220, 205, .15);
+    border-radius: 4px;
+    color: #eeeae1;
+    background:
+      linear-gradient(98deg, rgba(255, 255, 255, .028), transparent 42%),
+      linear-gradient(180deg, #1b1a17, #11110f) !important;
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, .3),
+      inset 0 1px 0 rgba(255, 255, 255, .055),
+      inset 0 -1px 0 rgba(0, 0, 0, .78);
+  }
+
+  html body.schedule-active .final-timetable-copy b {
+    color: #ece7dd;
+    font-weight: 590;
+  }
+
+  html body.schedule-active .final-timetable-copy span {
+    color: #8d887f;
+  }
+
+  html body.schedule-active #schedulePage :is(.btn-primary, .final-timetable-bar .btn-ghost) {
+    min-height: 42px;
+    border: 1px solid rgba(243, 215, 151, .48);
+    border-radius: 4px;
+    color: #18140c;
+    background: linear-gradient(180deg, #e5bd69, #bb8730);
+    box-shadow:
+      0 2px 5px rgba(0, 0, 0, .3),
+      inset 0 1px 0 rgba(255, 255, 255, .34),
+      inset 0 -1px 0 rgba(78, 45, 7, .52);
+  }
+
+  html body.schedule-active #schedulePage :is(.btn-primary, .final-timetable-bar .btn-ghost):is(:hover, :focus-visible) {
+    color: #080704;
+    filter: brightness(1.07);
+  }
+
+  html body.schedule-active #schedulePage .info-box {
+    color: #d8d0c2;
+    border-color: rgba(213, 164, 68, .24);
+    background: rgba(213, 164, 68, .075);
+    border-radius: 3px;
+  }
+
+  html body.schedule-active #schedulePage .conflict-warn {
+    color: #dbb8ab;
+    border-color: rgba(194, 123, 99, .28);
+    background: rgba(151, 77, 55, .12);
+    border-radius: 3px;
+  }
+
+  html body.schedule-active #schedulePage .dropped {
+    color: #aaa59c;
+    border-color: rgba(228, 220, 205, .14);
+    background: rgba(255, 255, 255, .026);
+    border-radius: 3px;
+  }
+
+  html body.schedule-active #schedulePage .color-bar {
+    border: 0;
+    border-top: 1px solid rgba(228, 220, 205, .13);
+    border-bottom: 1px solid rgba(228, 220, 205, .13);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  html body.schedule-active #schedulePage .color-bar input {
+    accent-color: #d5a444;
+  }
+
+  html body.schedule-active #schedulePage #calArea {
+    border-top: 1px solid rgba(228, 220, 205, .1);
+    background:
+      radial-gradient(ellipse 46% 32% at 50% 0%, rgba(255, 248, 232, .035), transparent 74%),
+      linear-gradient(180deg, rgba(255, 255, 255, .014), transparent 24%);
+  }
+
+  html body.schedule-active #schedulePage .calendar-days {
+    color: #938f86 !important;
+    background: linear-gradient(#11110f 72%, rgba(17, 17, 15, 0)) !important;
+  }
+
+  html body.schedule-active #schedulePage .event {
+    border-color: rgba(255, 250, 239, .18);
+    border-radius: 3px;
+    color: #171510;
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, .28),
+      inset 0 1px 0 rgba(255, 255, 255, .32),
+      inset 0 0 0 1px rgba(35, 30, 23, .1);
+    filter: saturate(.72) contrast(.96);
+  }
+
+  html body.schedule-active #schedulePage .link {
+    color: #d5a444;
+  }
+
+  @media (max-width: 760px) {
+    html body.schedule-active #schedulePage {
+      padding-inline: 14px;
+    }
+
+    html body.schedule-active #appWrap {
+      opacity: .2;
+    }
+
+    html body.schedule-active #schedulePage .stat-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    html body.schedule-active #schedulePage #timetablePanel .stat {
+      border-bottom: 1px solid rgba(228, 220, 205, .12);
+    }
+
+    html body.schedule-active #schedulePage #timetablePanel {
+      border-radius: 4px !important;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .planner-scene-base {
+  .planner-monitor-nav *,
+  .planner-monitor-course-block,
+  .planner-monitor-screen::after,
+  #scheduleTerminalSurface.is-machine-projected,
+  #scheduleTerminalSurface.is-machine-projected::before {
     animation: none !important;
+    transition: none !important;
   }
 
-  .planner-scene-reveal {
+  #scheduleTerminalSurface.is-machine-projected::before {
+    background-color: transparent !important;
+  }
+
+  .planner-scroll-journey {
+    height: auto;
+    min-height: 0;
+  }
+
+  .planner-scroll-journey .planner-journey-sticky {
+    position: relative;
+  }
+
+  .planner-machine-viewport {
     display: none;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-step,
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-launch {
-    transform: none !important;
+  .planner-machine-foreground-canvas {
+    display: none;
+  }
+
+  .planner-monitor-device > img,
+  .planner-machine-viewport.is-webgl ~ .planner-monitor-device > img {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .planner-monitor-screen::after,
+  .planner-monitor-scan,
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected::after,
+  html body.schedule-active #scheduleTerminalSurface.is-machine-projected::after {
+    display: none;
   }
 }
 
 @media (forced-colors: active) {
-  .planner-immersive-scene {
+  .planner-machine-foreground-canvas {
+    display: none;
+  }
+
+  body.app-active:not(.schedule-active):not(.hub-active):not(.planner-detailed-active),
+  html[data-theme="day"] body.app-active:not(.schedule-active):not(.hub-active):not(.planner-detailed-active),
+  body.app-active:not(.schedule-active):not(.hub-active):not(.planner-detailed-active) #appWrap {
+    background: Canvas !important;
+  }
+
+  .planner-monitor-screen::before,
+  .planner-monitor-screen::after,
+  .planner-monitor-scan,
+  .planner-journey-window::before,
+  .planner-journey-window::after,
+  .planner-window-heading::before,
+  .planner-window-heading::after,
+  .planner-window-scroll::before,
+  .planner-window-scroll::after {
+    display: none;
+  }
+
+  .planner-journey-sticky,
+  .planner-journey-window,
+  .planner-monitor-screen,
+  .planner-monitor-canvas,
+  .planner-monitor-days-grid {
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .planner-scroll-journey:not(.is-static) .planner-machine-viewport.is-webgl ~ .planner-machine-ui-layer .planner-journey-window.is-machine-projected {
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    clip-path: none;
+  }
+
+  .planner-monitor-device > img {
+    opacity: .28;
+  }
+
+  .planner-monitor-course-block,
+  .planner-journey-actions button,
+  .planner-window-fields input {
+    color: ButtonText;
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+  }
+}
+
+/* Compact screens use the semantic planner as the primary surface. The 3D
+   traversal is intentionally desktop-only; forcing the wide FAN-T111 shell
+   into a phone viewport delayed the usable controls by several screens. */
+@media (max-width: 760px) {
+  html,
+  html[data-theme="day"],
+  body.app-active,
+  html[data-theme="day"] body.app-active {
+    color: #f1eee7 !important;
+    background: #050504 !important;
+  }
+
+  body.app-active #appWrap {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100svh;
+    padding: 34px 18px 72px !important;
+    background: #050504 !important;
+  }
+
+  html body.app-active::before,
+  html body.app-active #appWrap::before {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+  }
+
+  body.app-active #plannerScrollJourney,
+  body.app-active .planner-machine-foreground-canvas {
     display: none !important;
   }
 
-  body.app-active:not(.schedule-active):not(.hub-active) .selection-assistant-panel,
-  body.app-active:not(.schedule-active):not(.hub-active) #wishlistPanel {
-    color: CanvasText;
-    border: 1px solid CanvasText !important;
-    background: Canvas !important;
+  body.app-active .configurator-column {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  body.app-active .configurator-intro {
+    display: block !important;
+    margin: 0 0 28px !important;
+    color: #f1eee7 !important;
+  }
+
+  body.app-active .configurator-intro h1 {
+    max-width: 12ch;
+    margin: 0 0 12px;
+    color: inherit !important;
+    font-size: clamp(34px, 11vw, 48px) !important;
+    font-weight: 560;
+    letter-spacing: -.035em;
+    line-height: .98;
+  }
+
+  body.app-active .configurator-intro p {
+    max-width: 34rem;
+    margin: 0;
+    color: #aaa59c !important;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  body.app-active .configurator-nav,
+  body.app-active .panel-index,
+  body.app-active #courseSelectionHandoffPanel {
+    display: none !important;
+  }
+
+  html body.app-active #appWrap #courseBuilderPanel,
+  html body.app-active #appWrap #semesterPanel,
+  html body.app-active #appWrap #wishlistPanel {
+    position: relative !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 0 16px !important;
+    padding: 22px 18px !important;
+    overflow: visible !important;
+    color: #f1eee7 !important;
+    border: 1px solid rgba(227, 220, 207, .18) !important;
+    border-radius: 14px !important;
+    background: #11110f !important;
+    background-image: none !important;
     box-shadow: none !important;
+  }
+
+  body.app-active :is(#courseBuilderPanel, #semesterPanel, #wishlistPanel) :is(h2, h3, b, legend, label) {
+    color: #f1eee7 !important;
+  }
+
+  body.app-active :is(#courseBuilderPanel, #semesterPanel, #wishlistPanel) :is(p, .hint, .empty-note, .wishlist-profile-note) {
+    color: #aaa59c !important;
+  }
+
+  html body.app-active #appWrap :is(#courseBuilderPanel, #semesterPanel, #wishlistPanel) :is(input, select) {
+    min-height: 44px;
+    color: #171510 !important;
+    border: 1px solid #aaa59c !important;
+    border-radius: 6px !important;
+    background: #e7e3dc !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  html body.app-active #appWrap :is(#courseBuilderPanel, #semesterPanel, #wishlistPanel) input::placeholder {
+    color: #45423d !important;
+    -webkit-text-fill-color: #45423d !important;
+    font-weight: 500;
+    opacity: 1 !important;
+  }
+
+  body.app-active :is(#courseBuilderPanel, #semesterPanel, #wishlistPanel) :is(button, .btn-primary, .btn-accent, .btn-ghost) {
+    min-height: 44px;
+    border-radius: 6px !important;
+  }
+
+  body.app-active #wishlistPanel {
+    margin-top: 16px !important;
+  }
+
+  body.app-active #wishlistPanel #courseList {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html body.app-active #appWrap :is(#courseBuilderPanel, #semesterPanel, #wishlistPanel) .panel-heading h2::before,
+  html body.app-active #appWrap #wishlistPanel .wishlist-header h2::before {
+    background: #d5a444 !important;
+    background-image: none !important;
+  }
+
+  html body.app-active #appWrap :is(#courseBuilderPanel, #semesterPanel, #wishlistPanel) .panel-heading h2::after,
+  html body.app-active #appWrap #wishlistPanel .wishlist-header h2::after {
+    height: 1px !important;
+    background: #d5a444 !important;
+    background-image: none !important;
+  }
+}
+
+@media print {
+  .planner-scroll-journey,
+  body > .planner-journey-sticky {
+    display: none !important;
   }
 }

@@ -50,10 +50,14 @@ test("planner validation and conflict guidance are available in all languages", 
   }
 });
 
-test("the final stabilization stylesheet owns focus, compact viewport, and header overlap fixes", () => {
+test("stabilization keeps global fixes while the scoped timetable journey is its final planner layer", () => {
   assert.ok(
     html.lastIndexOf("concourse-stabilization.css") > html.lastIndexOf("academic-experiences.css"),
-    "stabilization styles should load after every feature stylesheet"
+    "stabilization styles should load after shared feature styles"
+  );
+  assert.ok(
+    html.lastIndexOf("timetable-immersive.css") > html.lastIndexOf("concourse-stabilization.css"),
+    "the timetable journey should be the final scoped planner style"
   );
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media \(max-width: 1380px\) and \(min-width: 761px\)/);

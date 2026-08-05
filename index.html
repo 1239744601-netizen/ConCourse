@@ -3,23 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ConCourse — Conquer your courses</title>
-<meta name="description" content="Plan your semester, meet your campus community, and exchange study materials and campus essentials on ConCourse." />
+<title>ConCourse Timetable — Build a conflict-free semester</title>
+<meta name="description" content="Build, compare, and save a conflict-free university timetable with ConCourse." />
 <link rel="canonical" href="https://concoursehk.com/" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ConCourse — Plan Your Semester and Connect on Campus" />
-<meta property="og:description" content="Build a conflict-free timetable, explore academic tools, join your campus community, and exchange useful student resources." />
+<meta property="og:title" content="ConCourse Timetable — Build a conflict-free semester" />
+<meta property="og:description" content="Add real course meetings, set semester constraints, and compare ranked conflict-free timetables." />
 <meta property="og:url" content="https://concoursehk.com/" />
 <meta property="og:image" content="https://concoursehk.com/concourse-marketplace-og.png" />
 <meta property="og:image:width" content="1734" />
 <meta property="og:image:height" content="907" />
 <meta property="og:image:alt" content="ConCourse academic planning, campus community, and student marketplace" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="ConCourse — Plan Your Semester and Connect on Campus" />
-<meta name="twitter:description" content="Build a conflict-free timetable, explore academic tools, join your campus community, and exchange useful student resources." />
+<meta name="twitter:title" content="ConCourse Timetable — Build a conflict-free semester" />
+<meta name="twitter:description" content="Add real course meetings, set semester constraints, and compare ranked conflict-free timetables." />
 <meta name="twitter:image" content="https://concoursehk.com/concourse-marketplace-og.png" />
 <meta name="twitter:image:alt" content="ConCourse academic planning, campus community, and student marketplace" />
-<meta name="theme-color" content="#061526" />
+<meta name="theme-color" content="#050504" />
 <script>
   (() => {
     let theme = "night";
@@ -28,7 +28,7 @@
       if(savedTheme === "day" || savedTheme === "night") theme = savedTheme;
     } catch(_error){}
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]').content = theme === "day" ? "#dff2ff" : "#061526";
+    document.querySelector('meta[name="theme-color"]').content = "#050504";
   })();
 </script>
 <script src="navigation-state.js?v=20260731-unified1"></script>
@@ -64,15 +64,15 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20260731-double-c3" />
 <link rel="manifest" href="/site.webmanifest?v=20260731-double-c3" />
 <meta name="apple-mobile-web-app-title" content="ConCourse" />
-<link rel="preload" as="image" type="image/webp" href="concourse-course-odyssey.webp" fetchpriority="high" />
+<link rel="preload" as="image" type="image/png" href="concourse-timetable-monitor-blank-v1.png" fetchpriority="high" />
 <style>
   #concourseInitialPaint { display: none; }
   html[data-concourse-nav-pending] body {
     overflow: hidden !important;
-    background: #061526 !important;
+    background: #050504 !important;
   }
   html[data-theme="day"][data-concourse-nav-pending] body {
-    background: #e8f3f9 !important;
+    background: #050504 !important;
   }
   html[data-concourse-nav-pending] body > :not(#concourseInitialPaint) {
     visibility: hidden !important;
@@ -86,16 +86,12 @@
     visibility: visible !important;
     place-items: center;
     padding: 28px;
-    color: #f7fbff;
-    background:
-      radial-gradient(circle at 50% 34%, rgba(105, 210, 241, .16), transparent 22rem),
-      linear-gradient(145deg, #03101f, #061a30 58%, #08213b);
+    color: #f2f1ee;
+    background: #050504;
   }
   html[data-theme="day"][data-concourse-nav-pending] #concourseInitialPaint {
-    color: #061a30;
-    background:
-      radial-gradient(circle at 50% 34%, rgba(43, 166, 209, .18), transparent 22rem),
-      linear-gradient(145deg, #f7fcff, #e7f3f9 58%, #d9edf6);
+    color: #f2f1ee;
+    background: #050504;
   }
   .concourse-initial-paint-card {
     display: grid;
@@ -108,7 +104,7 @@
     position: relative;
     width: 76px;
     height: 76px;
-    border: 1px solid rgba(105, 210, 241, .28);
+    border: 1px solid rgba(242, 241, 238, .28);
     border-radius: 24px;
     background: rgba(255, 255, 255, .06);
     box-shadow: 0 24px 72px rgba(0, 0, 0, .22);
@@ -126,7 +122,7 @@
   .concourse-initial-paint-mark::before {
     top: 14px;
     border-right-color: transparent;
-    color: #69d2f1;
+    color: #b8b5ae;
     transform: rotate(-5deg);
   }
   .concourse-initial-paint-mark::after {
@@ -134,7 +130,7 @@
     border-left-color: transparent;
     color: #faf8f2;
   }
-  html[data-theme="day"] .concourse-initial-paint-mark::after { color: #061a30; }
+  html[data-theme="day"] .concourse-initial-paint-mark::after { color: #faf8f2; }
   .concourse-initial-paint-brand {
     font-size: 22px;
     font-weight: 800;
@@ -147,26 +143,22 @@
     font-weight: 650;
     letter-spacing: .04em;
   }
-  html[data-theme="day"] .concourse-initial-paint-status { color: rgba(6, 26, 48, .66); }
+  html[data-theme="day"] .concourse-initial-paint-status { color: rgba(231, 229, 223, .72); }
   .concourse-initial-paint-progress {
     width: 112px;
     height: 3px;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(105, 210, 241, .16);
+    background: rgba(242, 241, 238, .16);
   }
   .concourse-initial-paint-progress::after {
     content: "";
     display: block;
-    width: 46%;
+    width: 100%;
     height: 100%;
     border-radius: inherit;
-    background: #69d2f1;
-    animation: concourse-initial-paint-progress 1.1s ease-in-out infinite alternate;
-  }
-  @keyframes concourse-initial-paint-progress {
-    from { transform: translateX(-15%); }
-    to { transform: translateX(132%); }
+    background: #b8b5ae;
+    animation: none;
   }
   @media (prefers-reduced-motion: reduce) {
     .concourse-initial-paint-progress::after {
@@ -235,7 +227,7 @@
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 22px;
-    box-shadow: 0 24px 70px rgba(20,30,60,.24);
+    box-shadow: 0 24px 70px rgba(0,0,0,.28);
   }
   .auth-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .auth-card h2 { margin: 0; font-size: 20px; }
@@ -399,9 +391,7 @@
     z-index: -1;
     inset: 0;
     pointer-events: none;
-    background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
-    background-size: 64px 64px;
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,.35), transparent 70%);
+    display: none;
   }
 
   header {
@@ -2046,10 +2036,21 @@
 <link rel="stylesheet" href="concourse-art.css?v=20260723-boxfix1" />
 <link rel="stylesheet" href="community-redesign.css?v=20260731-clean1" />
 <link rel="stylesheet" href="academic-experiences.css?v=20260728-readable-controls1" />
-<link rel="stylesheet" href="timetable-immersive.css?v=20260803-course-path1" />
 <link rel="stylesheet" href="concourse-stabilization.css?v=20260731-visual1" />
+<link rel="stylesheet" href="timetable-immersive.css?v=20260805-wheel9" />
 </head>
 <body>
+<script>
+  document.body.classList.add("app-active", "planner-journey-active");
+</script>
+<!--
+  THESIS: Turn semester planning into a spatial journey from uncertainty to a clear weekly plan.
+  OWN-WORLD: Soot-black industrial hardware, neutral metal, warm-white paper, and real planning controls.
+  STORY: Arrive, define a course, place its meeting, set priorities, then enter the complete planner.
+  FIRST VIEWPORT: The FAN-T111 timetable device, its live week, the navigation, copy, and progress rail only.
+  FORM: Faithful to the user-provided FAN-T111 reference, followed by one continuous mechanical traversal.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
 <div id="concourseInitialPaint" hidden role="status" aria-live="polite" aria-busy="true">
   <div class="concourse-initial-paint-card">
     <span class="concourse-initial-paint-mark" aria-hidden="true"></span>
@@ -2058,7 +2059,7 @@
     <span class="concourse-initial-paint-progress" aria-hidden="true"></span>
   </div>
 </div>
-<header id="landingScreen">
+<header id="landingScreen" hidden aria-hidden="true">
   <span class="landing-cinema" aria-hidden="true"></span>
   <div class="header-row">
   <div class="brand">
@@ -2285,17 +2286,266 @@
 </div>
 
 <div class="wrap" id="appWrap" hidden>
+  <script>
+    document.currentScript.parentElement.hidden = false;
+  </script>
   <!-- Scrolling configuration column -->
   <div class="configurator-column">
+    <section class="planner-scroll-journey" id="plannerScrollJourney" aria-labelledby="plannerJourneyTitle" data-visual-authority="industrial-monitor">
+      <div class="planner-journey-sticky">
+        <nav class="planner-monitor-nav" aria-label="Timetable presentation">
+          <div class="planner-monitor-nav-group">
+            <a class="planner-monitor-brand" href="#plannerScrollJourney">ConCourse</a>
+            <span class="planner-monitor-section" data-i18n="timetableNav">Timetable</span>
+          </div>
+          <div class="planner-monitor-nav-group planner-monitor-nav-actions">
+            <button type="button" data-planner-profile>Account</button>
+          </div>
+        </nav>
+
+        <div class="planner-monitor-stage">
+          <div class="planner-machine-viewport" id="plannerMachineViewport" aria-hidden="true">
+            <canvas class="planner-machine-canvas" id="plannerMachineCanvas"></canvas>
+            <img
+              class="planner-machine-fallback"
+              src="concourse-timetable-machine-interior-v2.png"
+              alt=""
+              width="1536"
+              height="1024"
+              loading="eager"
+              decoding="async"
+            />
+            <div class="planner-machine-lens" aria-hidden="true"></div>
+          </div>
+
+          <figure class="planner-monitor-device" aria-label="Live semester timetable">
+            <img src="concourse-timetable-monitor-blank-v1.png" alt="A black industrial timetable monitor" width="1536" height="1024" />
+            <div class="planner-monitor-screen" id="plannerMonitorScreen">
+              <div class="planner-monitor-canvas" id="plannerMonitorCanvas" aria-live="polite"></div>
+            </div>
+            <figcaption class="planner-monitor-model">FAN-T111</figcaption>
+            <div class="planner-monitor-scan" aria-hidden="true"></div>
+          </figure>
+
+          <div class="planner-machine-ui-layer" id="plannerMachineUiLayer">
+          <div class="planner-journey-window planner-journey-course" data-journey-window="course" aria-hidden="true">
+            <div class="planner-window-heading">
+              <div>
+                <h2 data-i18n="plannerJourneyCourseTitle">Add a course</h2>
+              </div>
+            </div>
+            <div class="planner-window-scroll" data-journey-scroll tabindex="0" aria-label="Course conditions" data-i18n-aria-label="plannerJourneyCourseKicker">
+              <div class="planner-window-fields planner-window-fields-course">
+                <label for="journeyCourseName">
+                  <span data-i18n="courseName">Course name</span>
+                  <input id="journeyCourseName" autocomplete="off" placeholder="Introduction to Algorithms" data-i18n-placeholder="courseNameExample" />
+                </label>
+                <label for="journeyCourseCode">
+                  <span data-i18n="courseCode">Course code</span>
+                  <input id="journeyCourseCode" autocomplete="off" placeholder="CS 3410" data-i18n-placeholder="courseCodeExample" />
+                </label>
+                <label for="journeyCourseProfessor">
+                  <span data-i18n="professor">Professor</span>
+                  <input id="journeyCourseProfessor" autocomplete="off" placeholder="Dr. Lee" data-i18n-placeholder="professorExample" />
+                </label>
+                <label for="journeyCourseCredits">
+                  <span data-i18n="credits">Credits</span>
+                  <input id="journeyCourseCredits" type="number" min="0" step="1" value="3" inputmode="numeric" />
+                </label>
+              </div>
+              <div class="planner-journey-switches planner-journey-switches-stack">
+                <label><input id="journeyCourseRequired" type="checkbox" /><span data-i18n="mustTake">Must take this course</span></label>
+              </div>
+              <p class="planner-window-note" data-i18n="wishlistDescription">Courses you add appear here for review before timetable generation.</p>
+              <a class="planner-journey-tool-link" href="assistant/" data-i18n="openSelectionAssistant" hidden aria-hidden="true" tabindex="-1">Open Assistant</a>
+              <div class="planner-journey-actions planner-journey-actions-single">
+                <button type="button" class="planner-journey-add" id="journeyAddCourse" data-i18n="plannerJourneyAddCourse">Add course</button>
+              </div>
+              <span class="planner-window-kicker" data-i18n="courseWishlist">Course wishlist</span>
+              <div class="planner-journey-course-list" id="journeyCourseWishlist" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="planner-journey-window planner-journey-meeting" data-journey-window="meeting" aria-hidden="true">
+            <div class="planner-window-heading">
+              <div>
+                <h2 data-i18n="plannerJourneyMeetingTitle">Place it in the week</h2>
+              </div>
+            </div>
+            <div class="planner-window-scroll" data-journey-scroll tabindex="0" aria-label="Meeting pattern conditions" data-i18n-aria-label="plannerJourneyMeetingKicker">
+              <div class="planner-window-fields planner-window-fields-time planner-window-fields-frequency">
+                <label for="journeySessionsPerWeek">
+                  <span data-i18n="sessionsPerWeek">Sessions per week</span>
+                  <select id="journeySessionsPerWeek">
+                    <option value="1" data-i18n="oneSession">1 session per week</option>
+                    <option value="2" data-i18n="twoSessions">2 sessions per week</option>
+                    <option value="3" data-i18n="threeSessions">3 sessions per week</option>
+                    <option value="4" data-i18n="fourSessions">4 sessions per week</option>
+                    <option value="5" data-i18n="fiveSessions">5 sessions per week</option>
+                    <option value="6" data-i18n="sixSessions">6 sessions per week</option>
+                  </select>
+                </label>
+              </div>
+              <div class="planner-journey-switches planner-journey-switches-stack">
+                <label><input id="journeyMultipleOptions" type="checkbox" /><span data-i18n-html="multipleTimes">More than one time option</span></label>
+              </div>
+              <span class="planner-window-kicker" data-i18n="addSessionTime">Add session time</span>
+              <div class="planner-journey-days" role="group" aria-label="Meeting days" data-i18n-aria-label="plannerJourneyMeetingDays">
+                <button type="button" data-journey-day="1" aria-pressed="false" data-i18n="monday">Mon</button>
+                <button type="button" data-journey-day="2" aria-pressed="false" data-i18n="tuesday">Tue</button>
+                <button type="button" data-journey-day="3" aria-pressed="false" data-i18n="wednesday">Wed</button>
+                <button type="button" data-journey-day="4" aria-pressed="false" data-i18n="thursday">Thu</button>
+                <button type="button" data-journey-day="5" aria-pressed="false" data-i18n="friday">Fri</button>
+                <button type="button" data-journey-day="6" aria-pressed="false" data-i18n="saturday">Sat</button>
+              </div>
+              <div class="planner-window-fields planner-window-fields-time">
+                <label for="journeyStart">
+                  <span data-i18n="start">Start</span>
+                  <input id="journeyStart" type="time" value="09:00" />
+                </label>
+                <label for="journeyEnd">
+                  <span data-i18n="end">End</span>
+                  <input id="journeyEnd" type="time" value="10:15" />
+                </label>
+              </div>
+              <div class="planner-journey-actions planner-journey-actions-single">
+                <button type="button" class="planner-journey-continue" id="journeyAddSession" data-i18n="addSession">+ Add session</button>
+              </div>
+              <div class="planner-journey-slot-list" id="journeyPendingSessions" aria-live="polite"></div>
+              <div id="journeyOptionArea" hidden>
+                <div class="planner-journey-actions planner-journey-actions-single">
+                  <button type="button" class="planner-journey-continue" id="journeySaveOption" data-i18n="saveTimeOption">Save time option</button>
+                </div>
+                <div class="planner-journey-slot-list" id="journeySavedOptions" aria-live="polite"></div>
+              </div>
+              <p class="planner-window-note" id="journeySessionHint">Add the complete weekly meeting pattern.</p>
+            </div>
+          </div>
+
+          <div class="planner-journey-window planner-journey-priorities" data-journey-window="priorities" aria-hidden="true">
+            <div class="planner-window-heading">
+              <div>
+                <h2 data-i18n="plannerJourneyPriorityTitle">Set your limits</h2>
+              </div>
+            </div>
+            <div class="planner-window-scroll" data-journey-scroll tabindex="0" aria-label="Semester constraints" data-i18n-aria-label="plannerJourneyPriorityKicker">
+              <span class="planner-window-kicker" data-i18n="academicProfile">Academic profile</span>
+              <div class="planner-window-fields planner-window-fields-credits">
+                <label for="journeyDegreeLevel">
+                  <span data-i18n="degreeLevel">Degree level</span>
+                  <select id="journeyDegreeLevel">
+                    <option value="" data-i18n="chooseDegree">Choose degree</option>
+                    <option value="bachelor" data-i18n="bachelorDegree">Bachelor</option>
+                    <option value="master" data-i18n="masterDegree">Master</option>
+                    <option value="phd" data-i18n="phdDegree">PhD</option>
+                  </select>
+                </label>
+                <label for="journeyStudyYear">
+                  <span data-i18n="yearOfStudy">Year of study</span>
+                  <select id="journeyStudyYear">
+                    <option value="" data-i18n="chooseYear">Choose year</option>
+                    <option value="1" data-i18n="studyYear1">Year 1</option>
+                    <option value="2" data-i18n="studyYear2">Year 2</option>
+                    <option value="3" data-i18n="studyYear3">Year 3</option>
+                    <option value="4" data-i18n="studyYear4">Year 4</option>
+                    <option value="5" data-i18n="studyYear5">Year 5</option>
+                    <option value="6" data-i18n="studyYear6">Year 6</option>
+                    <option value="7" data-i18n="studyYear7">Year 7</option>
+                    <option value="8" data-i18n="studyYear8">Year 8</option>
+                  </select>
+                </label>
+              </div>
+
+              <span class="planner-window-kicker" data-i18n="requiredCredits">Required credits</span>
+              <div class="planner-window-fields planner-window-fields-credits">
+                <label for="journeyMinCredits">
+                  <span data-i18n="plannerJourneyMinimumCredits">Minimum credits</span>
+                  <input id="journeyMinCredits" type="number" min="0" step="1" value="15" inputmode="numeric" />
+                </label>
+                <label for="journeyMaxCredits">
+                  <span data-i18n="plannerJourneyMaximumCredits">Maximum credits</span>
+                  <input id="journeyMaxCredits" type="number" min="0" step="1" value="21" inputmode="numeric" />
+                </label>
+              </div>
+
+              <span class="planner-window-kicker" data-i18n="courseCount">How many courses do you want?</span>
+              <div class="planner-journey-radio-group" role="radiogroup" aria-label="Course count mode" data-i18n-aria-label="courseCount">
+                <label><input id="journeyCountFewest" type="radio" name="journeyCountMode" value="fewest" checked /><span data-i18n-html="fewestCourses">Fewest courses to meet my credit target</span></label>
+                <label class="planner-journey-exact"><input id="journeyCountExact" type="radio" name="journeyCountMode" value="exact" /><span data-i18n-html="exactCourses">An exact number of courses</span><input id="journeyExactN" type="number" min="1" step="1" value="5" aria-label="Exact course count" disabled /></label>
+              </div>
+
+              <div class="planner-window-fields planner-window-fields-frequency">
+                <label for="journeyFreeCount">
+                  <span data-i18n="freeWeekdays">Preferred free weekdays</span>
+                  <select id="journeyFreeCount">
+                    <option value="0" data-i18n="noFreeDayPreference">No preference</option>
+                    <option value="1" data-i18n="oneFreeWeekday">At least 1 free weekday</option>
+                    <option value="2" data-i18n="twoFreeWeekdays">At least 2 free weekdays</option>
+                  </select>
+                </label>
+              </div>
+              <div class="planner-journey-days planner-journey-free-days" role="group" aria-label="Specific free weekdays" data-i18n-aria-label="freeWeekdays">
+                <button type="button" data-journey-free-day="1" aria-pressed="false" data-i18n="monday">Mon</button>
+                <button type="button" data-journey-free-day="2" aria-pressed="false" data-i18n="tuesday">Tue</button>
+                <button type="button" data-journey-free-day="3" aria-pressed="false" data-i18n="wednesday">Wed</button>
+                <button type="button" data-journey-free-day="4" aria-pressed="false" data-i18n="thursday">Thu</button>
+                <button type="button" data-journey-free-day="5" aria-pressed="false" data-i18n="friday">Fri</button>
+              </div>
+
+              <span class="planner-window-kicker" data-i18n="schedulePreferences">Schedule preferences</span>
+              <div class="planner-journey-switches planner-journey-switches-stack">
+                <label><input id="journeyCompact" type="checkbox" checked /><span data-i18n="compactClasses">Prefer compact classes</span></label>
+                <label><input id="journeyFewDays" type="checkbox" checked /><span data-i18n="fewerDays">Prefer fewer days on campus</span></label>
+                <label class="planner-journey-threshold"><input id="journeyNoEarly" type="checkbox" /><span data-i18n="avoidBefore">Avoid classes before</span><input id="journeyEarlyTime" type="time" value="09:00" aria-label="Avoid classes before" /></label>
+                <label class="planner-journey-threshold"><input id="journeyNoLate" type="checkbox" /><span data-i18n="avoidAfter">Avoid classes after</span><input id="journeyLateTime" type="time" value="17:00" aria-label="Avoid classes after" /></label>
+              </div>
+
+              <span class="planner-window-kicker" data-i18n="dailyBreaks">Free time blocks (optional)</span>
+              <div class="planner-window-fields planner-window-fields-breaks">
+                <label for="journeyBreakStart"><span data-i18n="start">Start</span><input id="journeyBreakStart" type="time" value="12:00" /></label>
+                <label for="journeyBreakEnd"><span data-i18n="end">End</span><input id="journeyBreakEnd" type="time" value="13:00" /></label>
+                <button type="button" class="planner-journey-continue" id="journeyAddBreak" data-i18n="add">+ Add</button>
+              </div>
+              <div class="planner-journey-slot-list" id="journeyBreakList" aria-live="polite"></div>
+
+              <div class="planner-journey-actions planner-journey-actions-utilities">
+                <button type="button" class="planner-journey-continue" id="journeyLoadSample" data-i18n="loadSample">Load sample data</button>
+                <button type="button" class="planner-journey-continue" id="journeyClearAll" data-i18n="clearAll">Clear all</button>
+              </div>
+
+              <div class="planner-journey-actions planner-journey-actions-priority">
+                <button type="button" class="planner-journey-add" id="journeyGenerate" data-i18n="generateTimetable">Generate timetable</button>
+                <button type="button" class="planner-journey-continue" id="journeyContinue" data-i18n="plannerJourneyContinue">Detailed planner</button>
+              </div>
+              <p class="planner-journey-status" id="plannerJourneyStatus" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+          </div>
+
+          <div class="planner-monitor-footer">
+            <div class="planner-monitor-copy">
+              <h1 id="plannerJourneyTitle" data-i18n="plannerJourneyTitle">Make the week yours.</h1>
+              <p data-i18n="plannerJourneyDescription">Scroll to move through the machine</p>
+            </div>
+            <div class="planner-monitor-scrubber">
+              <progress id="plannerJourneyScrubber" max="1000" value="0" aria-label="Timetable journey progress">0%</progress>
+            </div>
+          </div>
+
+          <a class="planner-journey-skip" href="#courseBuilderPanel">Use the accessible planner</a>
+        </div>
+      </div>
+      <span class="planner-journey-wheel-surface" aria-hidden="true"></span>
+    </section>
     <div class="configurator-intro">
       <h1 data-i18n-html="configuratorTitle">Choose courses.<br>Set your priorities.</h1>
       <p data-i18n="configuratorDescription">Add courses, set priorities, and generate ranked timetables.</p>
     </div>
     <nav class="configurator-nav" aria-label="Planner sections">
-      <a href="#courseSelectionHandoffPanel"><span>01</span><b data-i18n="courses">Courses</b></a>
-      <a href="#semesterPanel"><span>02</span><b data-i18n="criteria">Criteria</b></a>
+      <a href="#courseBuilderPanel"><b data-i18n="courses">Courses</b></a>
+      <a href="#semesterPanel"><b data-i18n="criteria">Criteria</b></a>
     </nav>
-    <section class="selection-assistant-panel" id="courseSelectionHandoffPanel" aria-labelledby="selectionAssistantTitle">
+    <section class="selection-assistant-panel" id="courseSelectionHandoffPanel" aria-labelledby="selectionAssistantTitle" hidden aria-hidden="true">
       <div class="selection-assistant-heading">
         <div>
           <h2 id="selectionAssistantTitle" data-i18n="selectionAssistantTitle">Choose courses with the Assistant</h2>
@@ -2436,10 +2686,10 @@
       <label><span data-i18n="requiredCredits">Required credits</span> <span style="color:var(--danger)">*</span> <span data-i18n="mandatory">(required)</span></label>
       <div class="row">
         <div>
-          <input id="minCredits" type="number" min="0" step="1" placeholder="e.g. 15 — required" data-i18n-placeholder="minimumCredits" />
+          <input id="minCredits" type="number" min="0" step="1" placeholder="e.g. 15 (required)" data-i18n-placeholder="minimumCredits" />
         </div>
         <div>
-          <input id="maxCredits" type="number" min="0" step="1" placeholder="max — optional" data-i18n-placeholder="maximumCredits" />
+          <input id="maxCredits" type="number" min="0" step="1" placeholder="maximum (optional)" data-i18n-placeholder="maximumCredits" />
         </div>
       </div>
 
@@ -2539,44 +2789,59 @@
   </div>
 </div>
 
+<!-- A transparent, pointer-inert WebGL pass renders only the physical clamp
+     hardware that must sit in front of the live DOM displays. Keeping it as a
+     body-level sibling lets the same real geometry occlude both the planner
+     controls inside #appWrap and the projected final timetable below. -->
+<canvas
+  class="planner-machine-foreground-canvas"
+  id="plannerMachineForegroundCanvas"
+  aria-hidden="true"
+></canvas>
+
 <!-- Dedicated full-size timetable page -->
 <section id="schedulePage" class="schedule-page" hidden aria-label="Generated timetable">
-  <div class="schedule-page-header">
-    <button class="btn-ghost schedule-back" id="editSelections"><span aria-hidden="true">←</span> <span data-i18n="editSelections">Edit selections</span></button>
-    <div>
-      <h1 data-i18n="weeklyTimetable">Weekly timetable</h1>
-      <p data-i18n="timetableDescription">Compare options and save one.</p>
-    </div>
-  </div>
-  <div class="panel" id="timetablePanel">
-    <div class="grid-head">
-      <div class="panel-heading timetable-heading">
-        <div><h2 data-i18n="bestSchedule">Best conflict-free schedule</h2><p data-i18n="bestScheduleDescription">Highest-ranked option.</p></div>
+  <p id="scheduleTerminalStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+  <div id="scheduleTerminalSurface" class="schedule-terminal-surface">
+    <div id="scheduleTerminalScroll" class="schedule-terminal-scroll" tabindex="0" role="region" aria-label="Generated timetable controls and weekly calendar">
+      <div class="schedule-page-header">
+        <button class="btn-ghost schedule-back" id="editSelections"><span aria-hidden="true">←</span> <span data-i18n="editSelections">Edit selections</span></button>
+        <div>
+          <h1 data-i18n="weeklyTimetable">Weekly timetable</h1>
+          <p data-i18n="timetableDescription">Compare options and save one.</p>
+        </div>
       </div>
-      <div id="scoreArea"></div>
-    </div>
-    <div id="statArea"></div>
-    <div id="altArea"></div>
-    <div class="final-timetable-bar">
-      <div class="final-timetable-copy">
-        <b data-i18n="finalTimetableTitle">Final semester timetable</b>
-        <span id="finalTimetableStatus" data-i18n="finalTimetableNotSaved">Not saved yet.</span>
+      <div class="panel" id="timetablePanel">
+        <div class="grid-head">
+          <div class="panel-heading timetable-heading">
+            <div><h2 data-i18n="bestSchedule">Best conflict-free schedule</h2><p data-i18n="bestScheduleDescription">Highest-ranked option.</p></div>
+          </div>
+          <div id="scoreArea"></div>
+        </div>
+        <div id="statArea"></div>
+        <div id="altArea"></div>
+        <div class="final-timetable-bar">
+          <div class="final-timetable-copy">
+            <b data-i18n="finalTimetableTitle">Final semester timetable</b>
+            <span id="finalTimetableStatus" data-i18n="finalTimetableNotSaved">Not saved yet.</span>
+          </div>
+          <div class="final-timetable-actions">
+            <button type="button" class="btn-ghost" id="enterMemberHub" hidden data-i18n="enterStudentHub">Enter student hub</button>
+            <button type="button" class="btn-primary" id="saveFinalTimetable" data-i18n="saveFinalTimetable">Save as final timetable</button>
+          </div>
+        </div>
+        <div id="warnArea"></div>
+        <div id="droppedArea"></div>
+        <div id="colorModeBar" class="color-bar" role="radiogroup" aria-labelledby="colorModeLabel" style="display:none">
+          <span class="cm-label" id="colorModeLabel" data-i18n="colorBy">Color by</span>
+          <label class="cm-opt"><input type="radio" name="colorMode" value="course" checked /> <span data-i18n="everyCourse">Every course</span></label>
+          <label class="cm-opt"><input type="radio" name="colorMode" value="type" /> <span data-i18n="mustElective">Must-take vs elective</span></label>
+          <span id="colorLegend" class="cm-legend"></span>
+        </div>
+        <div id="calArea">
+          <div class="empty-note" data-i18n="emptySchedule">Add courses, then generate a timetable.</div>
+        </div>
       </div>
-      <div class="final-timetable-actions">
-        <button type="button" class="btn-ghost" id="enterMemberHub" hidden data-i18n="enterStudentHub">Enter student hub</button>
-        <button type="button" class="btn-primary" id="saveFinalTimetable" data-i18n="saveFinalTimetable">Save as final timetable</button>
-      </div>
-    </div>
-    <div id="warnArea"></div>
-    <div id="droppedArea"></div>
-    <div id="colorModeBar" class="color-bar" role="radiogroup" aria-labelledby="colorModeLabel" style="display:none">
-      <span class="cm-label" id="colorModeLabel" data-i18n="colorBy">Color by</span>
-      <label class="cm-opt"><input type="radio" name="colorMode" value="course" checked /> <span data-i18n="everyCourse">Every course</span></label>
-      <label class="cm-opt"><input type="radio" name="colorMode" value="type" /> <span data-i18n="mustElective">Must-take vs elective</span></label>
-      <span id="colorLegend" class="cm-legend"></span>
-    </div>
-    <div id="calArea">
-      <div class="empty-note" data-i18n="emptySchedule">Add courses, then generate a timetable.</div>
     </div>
   </div>
 </section>
@@ -2588,7 +2853,7 @@
       <div class="hub-member-card">
         <button type="button" class="hub-avatar-button" id="hubEditProfileShortcut" data-hub-target="profile" data-profile-entry aria-controls="hubProfileView" aria-label="Edit profile" data-i18n-aria-label="editProfile">
           <span class="hub-avatar" id="hubUserInitials" aria-hidden="true">CC</span>
-          <img class="hub-avatar-image" id="hubUserAvatar" alt="" hidden />
+          <img class="hub-avatar-image" id="hubUserAvatar" src="concourse-art-profile.jpg" alt="" hidden />
           <span class="hub-avatar-edit-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm16.5-10.3a.93.93 0 0 0 0-1.3l-1.4-1.4a.93.93 0 0 0-1.3 0l-1.1 1.1 3.5 3.5 1.1-1.1Z"/></svg></span>
         </button>
         <div class="hub-member-copy">
@@ -3256,7 +3521,7 @@
             <div class="hub-avatar-editor">
               <button type="button" class="hub-avatar-preview" id="chooseProfileAvatar" aria-label="Choose a profile photo" data-i18n-aria-label="chooseProfilePhoto">
                 <span id="profileAvatarInitials" aria-hidden="true">CC</span>
-                <img id="profileAvatarPreview" alt="" hidden />
+                <img id="profileAvatarPreview" src="concourse-art-profile.jpg" alt="" hidden />
                 <span class="hub-avatar-preview-overlay" data-i18n="replacePhoto">Replace</span>
               </button>
               <input id="profileAvatarInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/bmp,image/heic,image/heif,.jpg,.jpeg,.jfif,.png,.webp,.gif,.avif,.bmp,.heic,.heif,.heics,.heifs" hidden />
@@ -3433,7 +3698,7 @@
         <path d="M2.75 2.75 17.25 17.25M17.25 2.75 2.75 17.25" />
       </svg>
     </button>
-    <div class="hub-profile-preview-avatar"><span id="schoolmateProfileInitials">CC</span><img id="schoolmateProfileAvatar" alt="" hidden /></div>
+    <div class="hub-profile-preview-avatar"><span id="schoolmateProfileInitials">CC</span><img id="schoolmateProfileAvatar" src="concourse-art-profile.jpg" alt="" hidden /></div>
     <p class="hub-kicker" data-i18n="campusProfile">Campus profile</p>
     <h2 id="schoolmateProfileName">Student</h2>
     <p class="hub-profile-preview-meta" id="schoolmateProfileMeta"></p>
@@ -3485,7 +3750,7 @@ let solutions = [];      // ranked list
 let activeSolution = 0;
 let genNote = "";        // banner note from last generation (e.g. free-day tradeoff)
 let finalTimetable = null; // explicitly saved final schedule snapshot for the semester
-let appStarted = false;  // authenticated users still choose when to enter the planner
+let appStarted = true;  // the public FAN-T111 journey is the default entrance; account actions remain gated
 const ACTIVE_USER_STORAGE_KEY = "concourse_active_user_id_v1";
 const INSTITUTION_CONTEXT_STORAGE_KEY = "concourse_institution_context_v1";
 const SELECTION_HANDOFF_STORAGE_KEY = "concourse_timetable_selection_handoff_v1";
@@ -3613,7 +3878,7 @@ const TRANSLATIONS = {
     monday:"周一", tuesday:"周二", wednesday:"周三", thursday:"周四", friday:"周五", saturday:"周六", start:"开始", end:"结束",
     addSession:"+ 添加时段", saveTimeOption:"保存时间选项", sessionHint:"添加课程的上课日期和时间。所有时段会作为固定每周安排保存在一起。",
     addCourse:"加入课程清单", semesterCriteria:"学期条件", semesterCriteriaDescription:"设置学分目标、课程数量和空闲时间。",
-    requiredCredits:"本学期所需学分", mandatory:"（必填）", minimumCredits:"例如：15 — 必填", maximumCredits:"最高 — 选填",
+    requiredCredits:"本学期所需学分", mandatory:"（必填）", minimumCredits:"例如：15（必填）", maximumCredits:"最高学分（选填）",
     courseCount:"你希望修读多少门课程？", schedulePreferences:"课表偏好", generateTimetable:"生成课表",
     fewestCourses:"<b>用最少课程达到学分要求</b> — 尽可能用较少课程满足所需学分。", exactCourses:"<b>指定课程数量</b>", exactCourseCount:"指定课程数量",
     freeWeekdays:"空闲工作日（周末以外的休息日）", noFreeDayPreference:"无 — 没有偏好", oneFreeWeekday:"至少 1 个空闲工作日", twoFreeWeekdays:"至少 2 个空闲工作日",
@@ -3715,7 +3980,7 @@ const TRANSLATIONS = {
     monday:"週一", tuesday:"週二", wednesday:"週三", thursday:"週四", friday:"週五", saturday:"週六", start:"開始", end:"結束",
     addSession:"+ 加入時段", saveTimeOption:"儲存時間選項", sessionHint:"加入呢科上堂嘅日子同時間。所有時段會一齊保留做固定每週安排。",
     addCourse:"加入選科清單", semesterCriteria:"學期條件", semesterCriteriaDescription:"設定學分目標、科目數量同空閒時間。",
-    requiredCredits:"今個學期所需學分", mandatory:"（必填）", minimumCredits:"例如：15 — 必填", maximumCredits:"最高 — 選填",
+    requiredCredits:"今個學期所需學分", mandatory:"（必填）", minimumCredits:"例如：15（必填）", maximumCredits:"最高學分（選填）",
     courseCount:"你想讀幾多科？", schedulePreferences:"時間表偏好", generateTimetable:"產生時間表",
     fewestCourses:"<b>用最少科目達到學分要求</b> — 盡量用較少科目滿足所需學分。", exactCourses:"<b>指定科目數量</b>", exactCourseCount:"指定科目數量",
     freeWeekdays:"空閒平日（週末以外嘅休息日）", noFreeDayPreference:"冇 — 無特別偏好", oneFreeWeekday:"最少 1 個空閒平日", twoFreeWeekdays:"最少 2 個空閒平日",
@@ -3804,7 +4069,7 @@ Object.assign(TRANSLATIONS["zh-CN"], {
   saveTimeOption:"保存时段方案",
   semesterCriteria:"学期要求",
   semesterCriteriaDescription:"设置学分目标、科目数量与可上课时间。",
-  maximumCredits:"最高学分 — 选填",
+  maximumCredits:"最高学分（选填）",
   freeWeekdays:"希望保留的无课日（周末除外）",
   noFreeDayPreference:"不限制",
   oneFreeWeekday:"至少保留 1 个工作日无课",
@@ -4249,7 +4514,7 @@ const COMPACT_INTERFACE_COPY = Object.freeze({
     selectionManualEntry:"Or enter a course manually.",
     courseBuilderDescription:"Add courses and meeting times.",
     sessionsPerWeek:"Sessions per week", oneSession:"1 session per week", twoSessions:"2 sessions per week",
-    multipleTimes:"<b>More than one time option</b> — add each option.",
+    multipleTimes:"<b>More than one time option</b>. Add each option.",
     addSessionTime:"Add session time", sessionHint:"Add the complete weekly meeting pattern.",
     semesterCriteriaDescription:"Set credits, course count, and availability.",
     requiredCredits:"Required credits", mandatory:"(required)",
@@ -4266,7 +4531,17 @@ const COMPACT_INTERFACE_COPY = Object.freeze({
     profilePhotoHint:"JPG, PNG, WebP, GIF, AVIF, BMP, or HEIC/HEIF. Metadata is removed and the copy stays private; SVG is blocked.",
     socialVerificationNote:"Connected accounts are authenticated; pasted links are self-reported.",
     profileLinksDisclosure:"Pasted contacts are unverified; phone and WhatsApp stay private.",
-    messagesDescription:"Message verified schoolmates or sellers. Blocking and reporting stay available."
+    messagesDescription:"Message verified schoolmates or sellers. Blocking and reporting stay available.",
+    plannerExplore:"Explore", plannerJourneyEyebrow:"Semester Studio", plannerJourneyTitle:"Make the week yours.",
+    plannerJourneyDescription:"Scroll to move through the machine",
+    plannerJourneyOpen:"Open detailed planner", plannerJourneyCourseKicker:"Course input",
+    plannerJourneyCourseTitle:"Add a course", plannerJourneyMeetingKicker:"Meeting input",
+    plannerJourneyMeetingTitle:"Place it in the week", plannerJourneyMeetingDays:"Meeting days",
+    plannerJourneyPriorityKicker:"Semester constraints", plannerJourneyPriorityTitle:"Set your limits",
+    plannerJourneyMinimumCredits:"Minimum credits", plannerJourneyMaximumCredits:"Maximum credits",
+    plannerJourneyAddCourse:"Add course", plannerJourneyContinue:"Detailed planner",
+    plannerJourneyCourseAdded:"Course added to your wishlist.", plannerJourneyCourseRequired:"Enter a course name before adding it.",
+    plannerJourneyDayRequired:"Choose at least one meeting day.", plannerJourneyTimeRequired:"Enter a valid meeting time."
   }),
   "zh-CN":Object.freeze({
     heroDescription:"建立符合学分目标、没有时间冲突的课表。",
@@ -4305,7 +4580,17 @@ const COMPACT_INTERFACE_COPY = Object.freeze({
     profilePhotoHint:"支持 JPG、PNG、WebP、GIF、AVIF、BMP 或 HEIC/HEIF。系统会移除元数据并保持副本私密；SVG 会被拦截。",
     socialVerificationNote:"已连接账户经过平台授权；粘贴的链接由用户自行提供。",
     profileLinksDisclosure:"粘贴的联系方式未经验证；电话和 WhatsApp 保持私密。",
-    messagesDescription:"私信联系已验证同学或卖家；可随时拉黑或举报。"
+    messagesDescription:"私信联系已验证同学或卖家；可随时拉黑或举报。",
+    plannerExplore:"探索", plannerJourneyEyebrow:"学期规划室", plannerJourneyTitle:"让这一周，由你定义。",
+    plannerJourneyDescription:"滚动页面推进镜头",
+    plannerJourneyOpen:"打开完整规划工具", plannerJourneyCourseKicker:"课程输入",
+    plannerJourneyCourseTitle:"添加一门课程", plannerJourneyMeetingKicker:"时间输入",
+    plannerJourneyMeetingTitle:"放入你的每周安排", plannerJourneyMeetingDays:"上课日期",
+    plannerJourneyPriorityKicker:"学期限制", plannerJourneyPriorityTitle:"设置你的边界",
+    plannerJourneyMinimumCredits:"最低学分", plannerJourneyMaximumCredits:"最高学分",
+    plannerJourneyAddCourse:"添加课程", plannerJourneyContinue:"详细规划",
+    plannerJourneyCourseAdded:"课程已添加到愿望清单。", plannerJourneyCourseRequired:"请先输入课程名称。",
+    plannerJourneyDayRequired:"请至少选择一个上课日期。", plannerJourneyTimeRequired:"请输入有效的上课时间。"
   }),
   "zh-HK":Object.freeze({
     heroDescription:"建立符合學分目標、沒有時間衝突的時間表。",
@@ -4344,7 +4629,17 @@ const COMPACT_INTERFACE_COPY = Object.freeze({
     profilePhotoHint:"支援 JPG、PNG、WebP、GIF、AVIF、BMP 或 HEIC/HEIF。系統會移除中繼資料並保持副本私密；SVG 會被封鎖。",
     socialVerificationNote:"已連接帳戶經過平台授權；貼上的連結由用戶自行提供。",
     profileLinksDisclosure:"貼上的聯絡方式未經驗證；電話和 WhatsApp 保持私密。",
-    messagesDescription:"私訊聯絡已驗證同學或賣家；可以隨時封鎖或舉報。"
+    messagesDescription:"私訊聯絡已驗證同學或賣家；可以隨時封鎖或舉報。",
+    plannerExplore:"探索", plannerJourneyEyebrow:"學期規劃室", plannerJourneyTitle:"讓這一週，由你定義。",
+    plannerJourneyDescription:"滾動頁面推進鏡頭",
+    plannerJourneyOpen:"開啟完整規劃工具", plannerJourneyCourseKicker:"課程輸入",
+    plannerJourneyCourseTitle:"加入一科", plannerJourneyMeetingKicker:"時間輸入",
+    plannerJourneyMeetingTitle:"放入你的每週安排", plannerJourneyMeetingDays:"上課日子",
+    plannerJourneyPriorityKicker:"學期限制", plannerJourneyPriorityTitle:"設定你的界線",
+    plannerJourneyMinimumCredits:"最低學分", plannerJourneyMaximumCredits:"最高學分",
+    plannerJourneyAddCourse:"加入課程", plannerJourneyContinue:"詳細規劃",
+    plannerJourneyCourseAdded:"課程已加入願望清單。", plannerJourneyCourseRequired:"請先輸入課程名稱。",
+    plannerJourneyDayRequired:"請至少選擇一個上課日子。", plannerJourneyTimeRequired:"請輸入有效的上課時間。"
   })
 });
 
@@ -5449,14 +5744,25 @@ function handleSchoolInput(){
   schoolSearchTimer = setTimeout(() => searchSchoolDirectory(query), query.length === 1 ? 550 : 300);
 }
 
+function setTimetableMachineMode(mode){
+  const nextMode = mode === "result" ? "result" : "planner";
+  // The Three.js module is asynchronous. Keep the desired mode available for
+  // its ready handler while still applying it immediately when the API exists.
+  window.__concourseTimetableMachineMode = nextMode;
+  window.ConcourseTimetableMachine?.setMode?.(nextMode);
+}
+
 function enterPlanner(){
-  if(!currentUser){ openAuthModal(); return; }
-  rememberConCourseDestination("planner");
+  if(currentUser) rememberConCourseDestination("planner");
   appStarted = true;
   updateBrandHomeState();
   document.body.classList.add("app-active");
   document.body.classList.remove("schedule-active", "hub-active");
+  setTimetableMachineMode("planner");
   $("appWrap").hidden = false;
+  $("appWrap").inert = false;
+  $("appWrap").removeAttribute("inert");
+  $("appWrap").removeAttribute("aria-hidden");
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
   syncPrimaryNavigation();
@@ -5466,10 +5772,15 @@ function enterPlanner(){
 function leavePlanner(){
   if(currentUser) rememberConCourseDestination("main");
   else clearRememberedConCourseDestination();
-  appStarted = false;
+  appStarted = true;
   updateBrandHomeState();
-  document.body.classList.remove("app-active", "schedule-active", "hub-active");
-  $("appWrap").hidden = true;
+  document.body.classList.add("app-active");
+  document.body.classList.remove("schedule-active", "hub-active");
+  setTimetableMachineMode("planner");
+  $("appWrap").hidden = false;
+  $("appWrap").inert = false;
+  $("appWrap").removeAttribute("inert");
+  $("appWrap").removeAttribute("aria-hidden");
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
   syncPrimaryNavigation();
@@ -5497,26 +5808,103 @@ function showSchedulePage(){
   appStarted = true;
   updateBrandHomeState();
   document.body.classList.add("app-active");
+  window.__concourseTimetableReturnFocusId = document.activeElement?.id || "generate";
   $("plannerAlert").innerHTML = "";
-  $("appWrap").hidden = true;
+  // Keep the settled WebGL terminal as a real, inert mechanical portal behind
+  // the generated timetable. The results remain ordinary accessible DOM; the
+  // 3D scene is environmental context rather than a screenshot or texture.
+  $("appWrap").hidden = false;
+  $("appWrap").inert = true;
+  $("appWrap").setAttribute("inert", "");
+  $("appWrap").setAttribute("aria-hidden", "true");
   $("schedulePage").hidden = false;
   if($("memberHub")) $("memberHub").hidden = true;
+  const terminalProjectionIsKnownUnavailable = (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    || !window.matchMedia("(min-width: 761px)").matches
+    || Boolean(navigator.connection?.saveData)
+    || !window.gsap
+    || !window.ScrollTrigger
+    || document.documentElement.classList.contains("timetable-webgl-failed")
+    || document.documentElement.classList.contains("timetable-webgl-context-lost")
+  );
+  const terminalAuditFrame = new URLSearchParams(window.location.search)
+    .get("timetableAuditFrame") === "1";
+  const initialTerminalState = terminalProjectionIsKnownUnavailable ? "fallback" : "awaiting";
+  document.body.classList.remove(
+    "schedule-terminal-awaiting",
+    "schedule-terminal-projected",
+    "schedule-terminal-fallback"
+  );
+  document.body.classList.add(`schedule-terminal-${initialTerminalState}`);
   document.body.classList.add("schedule-active");
   document.body.classList.remove("hub-active");
+  setTimetableMachineMode("result");
+  window.clearTimeout(window.__concourseTimetableResultWatchdog);
+  // If the module, context, or projection bridge never becomes ready, recover
+  // the complete ordinary timetable instead of trapping users behind a blank
+  // cinematic layer. A healthy carrier docks in 1.35 s, leaving ample margin.
+  const terminalStatus = $("scheduleTerminalStatus");
+  if(terminalStatus){
+    terminalStatus.textContent = terminalProjectionIsKnownUnavailable
+      ? "Generated timetable ready. Standard display enabled."
+      : "Preparing the mechanical timetable terminal.";
+  }
+  if(initialTerminalState === "awaiting" && !terminalAuditFrame){
+    window.__concourseTimetableResultWatchdog = window.setTimeout(() => {
+      if(!document.body.classList.contains("schedule-active")) return;
+      if(document.body.classList.contains("schedule-terminal-projected")) return;
+      if(document.body.classList.contains("schedule-terminal-fallback")) return;
+      document.body.classList.remove("schedule-terminal-awaiting");
+      document.body.classList.add("schedule-terminal-fallback");
+      if(terminalStatus) terminalStatus.textContent = "Generated timetable ready. Standard display enabled.";
+      $("scheduleTerminalScroll")?.focus({preventScroll:true});
+    }, 2800);
+  } else if(initialTerminalState !== "awaiting") {
+    window.requestAnimationFrame(() => $("scheduleTerminalScroll")?.focus({preventScroll:true}));
+  }
+  $("scheduleTerminalScroll")?.scrollTo({top:0, left:0, behavior:"instant"});
   syncPrimaryNavigation();
   if(!finishConCourseInitialPaint()) window.scrollTo({top:0, behavior:"smooth"});
 }
 
 function showPlannerEditor(){
+  const {detailed = false} = arguments[0] || {};
   rememberConCourseDestination("planner");
   appStarted = true;
   updateBrandHomeState();
   document.body.classList.add("app-active");
-  document.body.classList.remove("schedule-active", "hub-active");
+  document.body.classList.remove(
+    "schedule-active",
+    "hub-active",
+    "schedule-terminal-awaiting",
+    "schedule-terminal-projected",
+    "schedule-terminal-fallback"
+  );
+  window.clearTimeout(window.__concourseTimetableResultWatchdog);
+  setTimetableMachineMode("planner");
+  if(detailed){
+    document.body.classList.add("planner-detailed-active");
+    document.body.classList.remove("planner-journey-active");
+  } else {
+    document.body.classList.remove("planner-detailed-active");
+  }
   $("schedulePage").hidden = true;
   if($("memberHub")) $("memberHub").hidden = true;
   $("appWrap").hidden = false;
+  $("appWrap").inert = false;
+  $("appWrap").removeAttribute("inert");
+  $("appWrap").removeAttribute("aria-hidden");
   syncPrimaryNavigation();
+  if(detailed){
+    document.dispatchEvent(new CustomEvent("concourse:timetable-show-detailed-planner"));
+  } else {
+    document.dispatchEvent(new CustomEvent("concourse:timetable-show-immersive-planner"));
+    const returnFocusId = window.__concourseTimetableReturnFocusId;
+    window.requestAnimationFrame(() => {
+      if(returnFocusId) document.getElementById(returnFocusId)?.focus({preventScroll:true});
+    });
+  }
   if(!finishConCourseInitialPaint()) window.scrollTo({top:0, behavior:"smooth"});
 }
 
@@ -5613,6 +6001,7 @@ function applyUserState(state={}, profile={}){
   syncChoice("countModeChoice");
   renderFinalTimetableStatus();
   loadingUserState = false;
+  document.dispatchEvent(new CustomEvent("concourse:planner-state-applied"));
 }
 
 async function saveUserState({silent=false}={}){
@@ -5801,7 +6190,9 @@ function applySession(session){
     ? (academic || t("signedInReady", {email: currentUser.email}))
     : t("signInUnlock");
   if(!signedIn || !appStarted){
-    $("appWrap").hidden = true;
+    appStarted = true;
+    document.body.classList.add("app-active");
+    $("appWrap").hidden = false;
     $("schedulePage").hidden = true;
     if($("memberHub")) $("memberHub").hidden = true;
     document.body.classList.remove("schedule-active", "hub-active");
@@ -6383,11 +6774,42 @@ function addCourseFromBuilder(){
 }
 $("addCourse").addEventListener("click", addCourseFromBuilder);
 
+function plannerCoursesSnapshot(){
+  return courses.map(course => ({
+    id: course.id,
+    name: course.name,
+    code: course.code,
+    prof: course.prof,
+    credits: course.credits,
+    required: Boolean(course.required),
+    options: (course.options || []).map(option => ({
+      sessions: (option.sessions || []).map(session => ({
+        days: [...(session.days || [])],
+        start: session.start,
+        end: session.end,
+        venue: session.venue || null
+      }))
+    }))
+  }));
+}
+
+window.getConcoursePlannerSnapshot = () => ({ courses: plannerCoursesSnapshot() });
+
+function emitPlannerCoursesChanged(){
+  document.dispatchEvent(new CustomEvent("concourse:planner-courses-changed", {
+    detail: { courses: plannerCoursesSnapshot() }
+  }));
+}
+
 function renderCourses(){
   const el = $("courseList");
   renderSelectionAssistantGuide();
   $("wishlistCount").textContent = t(courses.length === 1 ? "wishlistCountOne" : "wishlistCountMany", {count:courses.length});
-  if(courses.length === 0){ el.innerHTML = `<div class="empty-note">${escapeHtml(t("noCourses"))}</div>`; return; }
+  if(courses.length === 0){
+    el.innerHTML = `<div class="empty-note">${escapeHtml(t("noCourses"))}</div>`;
+    emitPlannerCoursesChanged();
+    return;
+  }
   el.innerHTML = courses.map(c=>`
     <div class="course-card ${c.required?"req":""}">
       <div class="top">
@@ -6413,6 +6835,7 @@ function renderCourses(){
     renderCourses();
     queueUserStateSave();
   });
+  emitPlannerCoursesChanged();
 }
 
 function selectionHandoffKey(draft){
@@ -6560,7 +6983,7 @@ function beginSelectionDraft(draftId){
   }
   updateSessionUi();
   renderPending();
-  showPlannerEditor();
+  showPlannerEditor({detailed:true});
   $("courseBuilderPanel").scrollIntoView({behavior:"smooth", block:"start"});
   window.setTimeout(() => {
     (draft.creditsKnown ? $("dayPicker").querySelector(".day-chip") : $("cCredits"))?.focus();
@@ -6601,7 +7024,7 @@ function consumeCourseSelectionHandoff(){
     && routeParameters.get("destination")?.trim().toLowerCase() === "timetable";
   if(!raw){
     if(explicitRoute){
-      showPlannerEditor();
+      showPlannerEditor({detailed:true});
       clearSelectionRouteParameters();
     }
     return;
@@ -6615,7 +7038,7 @@ function consumeCourseSelectionHandoff(){
     status.dataset.preserveMessage = "true";
     status.textContent = t(messageKey);
     renderSelectionHandoffDrafts();
-    if(explicitRoute) showPlannerEditor();
+    if(explicitRoute) showPlannerEditor({detailed:true});
     clearSelectionRouteParameters();
   };
   if(!payload || payload.version !== 1 || payload.kind !== "course-selection" || !Array.isArray(payload.selections)){
@@ -6660,7 +7083,7 @@ function consumeCourseSelectionHandoff(){
   status.textContent = t("selectionReady", {count:normalized.length});
   renderSelectionHandoffDrafts();
   if(explicitRoute || normalized.length){
-    showPlannerEditor();
+    showPlannerEditor({detailed:true});
     $("courseSelectionHandoffPanel").scrollIntoView({behavior:"smooth", block:"start"});
   }
   clearSelectionRouteParameters();
@@ -6732,7 +7155,7 @@ function stageCourseContextForTimetable(group){
     selectionHandoffDrafts.push(draft);
   }
   renderSelectionHandoffDrafts();
-  showPlannerEditor();
+  showPlannerEditor({detailed:true});
   const status = $("courseSelectionHandoffStatus");
   status.dataset.preserveMessage = "true";
   status.textContent = t("courseContextStaged", {course:draft.title});
@@ -6782,7 +7205,7 @@ async function consumeCourseContextRoute(){
       clearCourseContextRoute();
       if(!staged){
         showSiteNotice(t("courseContextUnavailable"), {error:true, timeout:9000});
-        showPlannerEditor();
+        showPlannerEditor({detailed:true});
       }
       return staged;
     }
@@ -6994,7 +7417,7 @@ function buildFinalTimetableSnapshot(){
 
 $("saveFinalTimetable").addEventListener("click", async () => {
   if(!academicStageComplete()){
-    showPlannerEditor();
+    showPlannerEditor({detailed:true});
     setPlannerAlert(`<b>${escapeHtml(t("requiredInformation"))}</b> ${escapeHtml(t("academicStageRequired"))}`);
     ($("degreeLevel").value ? $("studyYear") : $("degreeLevel")).focus();
     return;
@@ -7373,9 +7796,9 @@ function renderResults(){
   renderCalendar(sol.picks);
 }
 
-const COLORS = ["#8fd6a4","#9db8ff","#ffcf87","#ff9db1","#c7a2ff","#87e0e0","#ffd0a0","#a0e6b0","#e0b0ff","#b0d0ff"];
-const MUST_COLOR = "#ffcf87";      // must-take courses (amber)
-const ELECTIVE_COLOR = "#9db8ff";  // elective courses (blue)
+const COLORS = ["#a8c69f","#c1b7a0","#d6ae72","#b88f87","#a99ab7","#8fb7b2","#c8a98b","#96b4a0","#b79daf","#9caebd"];
+const MUST_COLOR = "#d6ae72";      // must-take courses (amber)
+const ELECTIVE_COLOR = "#9caebd";  // elective courses (cool steel)
 let colorMode = "course";          // "course" = each course its own colour, "type" = must-take vs elective
 
 document.querySelectorAll('input[name="colorMode"]').forEach(r => r.addEventListener("change", () => {
@@ -7467,6 +7890,26 @@ function renderCalendar(picks, courseSource=courses, options={}){
   const printScale = Math.min(1, 690 / (totalH + 30));
   document.documentElement.style.setProperty("--print-scale", printScale.toFixed(3));
   const pb = $("printBtn"); if(pb) pb.onclick = ()=>window.print();
+  document.dispatchEvent(new CustomEvent("concourse:timetable-rendered", {
+    detail: {
+      courses: courseSource.map(course => ({
+        id: course.id,
+        name: course.name,
+        code: course.code,
+        prof: course.prof,
+        credits: course.credits
+      })),
+      picks: picks.map(pick => ({
+        courseId: pick.courseId,
+        slots: (pick.slots || []).map(slot => ({
+          days: [...(slot.days || [])],
+          start: slot.start,
+          end: slot.end,
+          venue: slot.venue || null
+        }))
+      }))
+    }
+  }));
 }
 
 // ---------- Sample + clear ----------
@@ -7539,6 +7982,9 @@ initializeAccount();
 <script src="hkbu-portal.js?v=20260731-clean1"></script>
 <script src="marketplace.js?v=20260731-clean1"></script>
 <script src="academic-tools.js?v=20260731-clean1"></script>
-<script src="timetable-immersive.js?v=20260803-course-path1"></script>
+<script src="vendor/gsap/gsap.min.js?v=3.15.0"></script>
+<script src="vendor/gsap/ScrollTrigger.min.js?v=3.15.0"></script>
+<script type="module" src="timetable-machine-3d.mjs?v=20260805-hyperreal-machine76" onerror="document.documentElement.classList.add('timetable-webgl-failed');window.dispatchEvent(new CustomEvent('concourse:timetable-machine-failed',{detail:{reason:'module-load-failed'}}))"></script>
+<script src="timetable-immersive.js?v=20260805-wheel3"></script>
 </body>
 </html>

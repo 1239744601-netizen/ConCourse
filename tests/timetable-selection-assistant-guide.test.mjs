@@ -12,7 +12,7 @@ function sourceBetween(source, start, end) {
   return source.slice(startIndex, endIndex);
 }
 
-test("Timetable makes the Assistant the guided start of course selection", () => {
+test("the Timetable-only rebuild starts with its native course builder while preserving handoff compatibility", () => {
   const workflow = sourceBetween(
     indexHtml,
     '<div class="wrap" id="appWrap" hidden>',
@@ -21,11 +21,11 @@ test("Timetable makes the Assistant the guided start of course selection", () =>
 
   assert.match(
     workflow,
-    /class="configurator-nav"[\s\S]*?href="#courseSelectionHandoffPanel"/
+    /class="configurator-nav"[\s\S]*?href="#courseBuilderPanel"/
   );
   assert.match(
     workflow,
-    /id="courseSelectionHandoffPanel"[\s\S]*?id="selectionAssistantGuide"/
+    /id="courseSelectionHandoffPanel"[^>]+hidden[^>]+aria-hidden="true"[\s\S]*?id="selectionAssistantGuide"/
   );
   assert.equal(
     [...workflow.matchAll(/data-selection-step="(search|shortlist|complete)"/g)]
@@ -36,6 +36,10 @@ test("Timetable makes the Assistant the guided start of course selection", () =>
   assert.match(
     workflow,
     /class="selection-assistant-launch" href="assistant\/"/
+  );
+  assert.match(
+    workflow,
+    /class="planner-journey-tool-link"[^>]+href="assistant\/"[^>]+hidden[^>]+aria-hidden="true"/
   );
   assert.doesNotMatch(
     workflow.match(/class="selection-assistant-launch"[\s\S]*?<\/a>/)?.[0] || "",
@@ -97,6 +101,7 @@ test("Returned choices name missing details before focusing Course Builder", () 
   assert.match(renderer, /t\("selectionStillNeeded", \{details:missingDetails\}\)/);
   assert.match(renderer, /t\("selectionReviewDetails"\)/);
   assert.match(begin, /resetCourseOptions\(\)/);
+  assert.match(begin, /showPlannerEditor\(\{detailed:true\}\)/);
   assert.match(begin, /courseBuilderPanel"\)\.scrollIntoView/);
   assert.match(begin, /t\("selectionCompletePrompt"/);
   assert.match(begin, /selectionDraftRequirements\(draft\)\.join\(" \+ "\)/);
@@ -132,6 +137,9 @@ test("guided access preserves the account-bound one-time session handoff", () =>
     /payloadUserId\.toLowerCase\(\) !== String\(currentUser\.id\)\.toLowerCase\(\)/
   );
   assert.match(consume, /payload\.selections\s*\.slice\(0, 20\)/);
+  assert.match(consume, /if\(explicitRoute\)\{\s*showPlannerEditor\(\{detailed:true\}\)/u);
+  assert.match(consume, /if\(explicitRoute\) showPlannerEditor\(\{detailed:true\}\)/u);
+  assert.match(consume, /if\(explicitRoute \|\| normalized\.length\)\{\s*showPlannerEditor\(\{detailed:true\}\)/u);
   assert.match(
     consume,
     /sessionStorage\.removeItem\(SELECTION_HANDOFF_STORAGE_KEY\)/

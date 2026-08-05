@@ -9,6 +9,17 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const productionOrigin = "https://concoursehk.com";
 const betaOrigin = "https://beta.concoursehk.com";
 const workerToken = "__CONCOURSE_DEPLOYMENT_ORIGIN__";
+const gsapArtifacts = Object.freeze([
+  "vendor/gsap/gsap.min.js",
+  "vendor/gsap/ScrollTrigger.min.js"
+]);
+const timetableMachineArtifacts = Object.freeze([
+  "timetable-machine-3d.mjs",
+  "vendor/three/three.module.min.js",
+  "vendor/three/three.core.min.js",
+  "vendor/three/LICENSE.txt",
+  "concourse-timetable-machine-interior-v2.png"
+]);
 const aquariumArtifacts = Object.freeze([
   "courses/course-ambient.css",
   "courses/course-ambient.mjs",
@@ -98,6 +109,9 @@ test("production Pages build publishes only the explicit frontend artifact", () 
     "timetable-immersive.css",
     "timetable-immersive.js",
     "concourse-timetable-journey-v1.png",
+    "concourse-timetable-monitor-blank-v1.png",
+    ...gsapArtifacts,
+    ...timetableMachineArtifacts,
     "assistant/index.html",
     "assistant/assistant.mjs",
     "assistant/handoff.mjs",
@@ -122,12 +136,27 @@ test("production Pages build publishes only the explicit frontend artifact", () 
   for (const immersiveAsset of [
     "timetable-immersive.css",
     "timetable-immersive.js",
-    "concourse-timetable-journey-v1.png"
+    "concourse-timetable-journey-v1.png",
+    "concourse-timetable-monitor-blank-v1.png"
   ]) {
     assert.deepEqual(
       readFileSync(path.join(projectRoot, "dist", immersiveAsset)),
       readFileSync(path.join(projectRoot, immersiveAsset)),
       immersiveAsset
+    );
+  }
+  for (const gsapArtifact of gsapArtifacts) {
+    assert.deepEqual(
+      readFileSync(path.join(projectRoot, "dist", gsapArtifact)),
+      readFileSync(path.join(projectRoot, gsapArtifact)),
+      gsapArtifact
+    );
+  }
+  for (const timetableMachineArtifact of timetableMachineArtifacts) {
+    assert.deepEqual(
+      readFileSync(path.join(projectRoot, "dist", timetableMachineArtifact)),
+      readFileSync(path.join(projectRoot, timetableMachineArtifact)),
+      timetableMachineArtifact
     );
   }
   for (const aquariumArtifact of aquariumArtifacts) {
