@@ -9,6 +9,16 @@ const canonicalPublicOrigin = "https://concoursehk.com";
 const betaPublicOrigin = "https://beta.concoursehk.com";
 const primaryConnectorOrigin = "https://concoursehk.com";
 const workerOriginToken = "__CONCOURSE_DEPLOYMENT_ORIGIN__";
+const buildProfileToken = "__CONCOURSE_BUILD_PROFILE__";
+const supabaseSdkToken = "<!-- __CONCOURSE_SUPABASE_SDK__ -->";
+const productionBuildProfile = "production";
+const betaBuildProfile = "beta-timetable-preview";
+const productionSupabaseSdk = `<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"
+  integrity="sha256-DuMHOPEzedO06xqfV3c99eVcC+pkOq13OC1HMzLfS3s="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>`;
 const allowedDeploymentOrigins = new Set([
   canonicalPublicOrigin,
   betaPublicOrigin
@@ -107,6 +117,40 @@ const publicFiles = Object.freeze([
   "data/hkbu-2026-27-s1-catalog.json"
 ]);
 
+const betaPreviewExcludedFiles = new Set([
+  "navigation-state.js",
+  "institution-portal-policy.js",
+  "course-catalog.js",
+  "member-hub.js",
+  "hkbu-portal.js",
+  "marketplace.js",
+  "academic-tools.js"
+]);
+const betaPreviewExcludedPrefixes = Object.freeze([
+  "assistant/",
+  "course-tools/",
+  "coursekeys/",
+  "courses/",
+  "data/"
+]);
+const betaPreviewRemovedScriptSources = Object.freeze([
+  "navigation-state.js",
+  "institution-portal-policy.js",
+  "course-catalog.js",
+  "member-hub.js",
+  "hkbu-portal.js",
+  "marketplace.js",
+  "academic-tools.js"
+]);
+const betaForbiddenContentPatterns = Object.freeze([
+  "@supabase/supabase-js",
+  ".supabase.co",
+  "sb_publishable_",
+  "window.supabase.createClient",
+  "api.ror.org",
+  "universities.hipolabs.com"
+]);
+
 const publicAliases = Object.freeze([
   ["concourse-favicon-32.png", "favicon-32x32.png"],
   ["concourse-apple-touch-icon.png", "apple-touch-icon.png"],
@@ -158,8 +202,31 @@ function assertSafeRelativePath(relativePath) {
   }
 }
 
+function escapeRegularExpression(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function replaceExactlyOnce(source, token, replacement, label) {
+  const segments = source.split(token);
+  if (segments.length !== 2) {
+    throw new Error(`${label} token must appear exactly once`);
+  }
+  return segments.join(replacement);
+}
+
+function removeScriptSource(source, scriptSource) {
+  const pattern = new RegExp(
+    `<script\\b[^>]*\\bsrc="${escapeRegularExpression(scriptSource)}(?:\\?[^\"]*)?"[^>]*>\\s*</script>\\s*`,
+    "u"
+  );
+  if (!pattern.test(source)) {
+    throw new Error(`Missing Beta-excluded script: ${scriptSource}`);
+  }
+  return source.replace(pattern, "");
+}
+
 function replaceMetaContent(html, attributeName, attributeValue, content) {
-  const escapedValue = attributeValue.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const escapedValue = escapeRegularExpression(attributeValue);
   const pattern = new RegExp(
     `(<meta\\s+${attributeName}="${escapedValue}"\\s+content=")[^"]*("\\s*\\/?>)`,
     "u"
@@ -170,7 +237,7 @@ function replaceMetaContent(html, attributeName, attributeValue, content) {
   return html.replace(pattern, `$1${content}$2`);
 }
 
-function renderIndex(source, publicOrigin) {
+function renderIndex(source, publicOrigin, deploymentOrigin) {
   let output = source;
   output = replaceMetaContent(output, "property", "og:url", `${publicOrigin}/`);
   output = replaceMetaContent(
@@ -185,6 +252,73 @@ function renderIndex(source, publicOrigin) {
     "twitter:image",
     `${publicOrigin}/concourse-marketplace-og.png`
   );
+  const isBetaPreview = deploymentOrigin === betaPublicOrigin;
+  const buildProfile = isBetaPreview ? betaBuildProfile : productionBuildProfile;
+  output = replaceExactlyOnce(
+    output,
+    buildProfileToken,
+    buildProfile,
+    "ConCourse build profile"
+  );
+  output = replaceExactlyOnce(
+    output,
+    supabaseSdkToken,
+    isBetaPreview ? "" : productionSupabaseSdk,
+    "Supabase SDK"
+  );
+
+  if (isBetaPreview) {
+    for (const scriptSource of betaPreviewRemovedScriptSources) {
+      output = removeScriptSource(output, scriptSource);
+    }
+    output = replaceExactlyOnce(
+      output,
+      'const SUPABASE_URL = "https://uqnwvxceznsxbxhkspeo.supabase.co";',
+      'const SUPABASE_URL = "";',
+      "Supabase URL"
+    );
+    output = replaceExactlyOnce(
+      output,
+      'const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Sl_mKACQoAp70JNH3og2uw_hMFXSZn4";',
+      'const SUPABASE_PUBLISHABLE_KEY = "";',
+      "Supabase publishable key"
+    );
+    output = replaceExactlyOnce(
+      output,
+      'const ROR_DIRECTORY_URL = "https://api.ror.org/v2/organizations";',
+      'const ROR_DIRECTORY_URL = "";',
+      "ROR directory URL"
+    );
+    output = replaceExactlyOnce(
+      output,
+      'const HIPO_DIRECTORY_URL = "https://universities.hipolabs.com/search";',
+      'const HIPO_DIRECTORY_URL = "";',
+      "HIPO directory URL"
+    );
+    output = replaceExactlyOnce(
+      output,
+      `const SUPABASE_CONFIGURED =
+  !CONCOURSE_SAFE_PREVIEW &&
+  /^https:\\/\\/.+\\.supabase\\.co$/.test(SUPABASE_URL) &&
+  !SUPABASE_PUBLISHABLE_KEY.startsWith("PASTE_");`,
+      "const SUPABASE_CONFIGURED = false;",
+      "Supabase configured guard"
+    );
+    output = replaceExactlyOnce(
+      output,
+      "authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);",
+      "authClient = null;",
+      "Supabase client initialization"
+    );
+    for (const forbiddenPattern of betaForbiddenContentPatterns) {
+      if (output.includes(forbiddenPattern)) {
+        throw new Error(`Beta Timetable preview contains forbidden dependency: ${forbiddenPattern}`);
+      }
+    }
+    if (!output.includes(`const CONCOURSE_BUILD_PROFILE = "${betaBuildProfile}";`)) {
+      throw new Error("Beta Timetable preview profile injection failed");
+    }
+  }
   return output;
 }
 
@@ -314,13 +448,23 @@ async function build() {
     );
   }
   const publicOrigin = canonicalPublicOrigin;
+  const isBetaPreview = deploymentOrigin === betaPublicOrigin;
+  const filesToPublish = isBetaPreview
+    ? publicFiles.filter(relativePath =>
+        !betaPreviewExcludedFiles.has(relativePath)
+        && !betaPreviewExcludedPrefixes.some(prefix => relativePath.startsWith(prefix))
+      )
+    : [...publicFiles];
   let stagingDirectory = await mkdtemp(path.join(projectRoot, ".pages-build-"));
   try {
-    for (const relativePath of publicFiles) {
+    for (const relativePath of filesToPublish) {
       const source = await readRequiredFile(relativePath);
       let output = source;
       if (relativePath === "index.html") {
-        output = Buffer.from(renderIndex(source.toString("utf8"), publicOrigin), "utf8");
+        output = Buffer.from(
+          renderIndex(source.toString("utf8"), publicOrigin, deploymentOrigin),
+          "utf8"
+        );
       } else if (relativePath === "_worker.js") {
         output = Buffer.from(
           renderWorker(source.toString("utf8"), deploymentOrigin),
@@ -338,39 +482,41 @@ async function build() {
       );
     }
 
-    const connectorEntries = [];
-    for (const fileName of connectorFiles) {
-      const relativePath = `extensions/hkbu-portal-connector/${fileName}`;
-      let source = await readRequiredFile(relativePath);
-      if (fileName === "popup.js") {
-        const rendered = source.toString("utf8").replaceAll(
-          primaryConnectorOrigin,
-          deploymentOrigin
-        );
-        const connectorOriginIsIsolated = [...allowedDeploymentOrigins].every(
-          allowedOrigin =>
-            rendered.includes(allowedOrigin) === (allowedOrigin === deploymentOrigin)
-        );
-        if (!connectorOriginIsIsolated) {
-          throw new Error("Connector origin injection failed");
+    if (!isBetaPreview) {
+      const connectorEntries = [];
+      for (const fileName of connectorFiles) {
+        const relativePath = `extensions/hkbu-portal-connector/${fileName}`;
+        let source = await readRequiredFile(relativePath);
+        if (fileName === "popup.js") {
+          const rendered = source.toString("utf8").replaceAll(
+            primaryConnectorOrigin,
+            deploymentOrigin
+          );
+          const connectorOriginIsIsolated = [...allowedDeploymentOrigins].every(
+            allowedOrigin =>
+              rendered.includes(allowedOrigin) === (allowedOrigin === deploymentOrigin)
+          );
+          if (!connectorOriginIsIsolated) {
+            throw new Error("Connector origin injection failed");
+          }
+          source = Buffer.from(rendered, "utf8");
         }
-        source = Buffer.from(rendered, "utf8");
+        connectorEntries.push({
+          name: `hkbu-portal-connector/${fileName}`,
+          data: source
+        });
       }
-      connectorEntries.push({
-        name: `hkbu-portal-connector/${fileName}`,
-        data: source
-      });
+      await writeBuildFile(
+        stagingDirectory,
+        connectorArchivePath,
+        createStoredZip(connectorEntries)
+      );
     }
-    await writeBuildFile(
-      stagingDirectory,
-      connectorArchivePath,
-      createStoredZip(connectorEntries)
-    );
 
     const expectedFiles = [
-      ...publicFiles,
+      ...filesToPublish,
       ...publicAliases.map(([, destinationPath]) => destinationPath),
-      connectorArchivePath
+      ...(!isBetaPreview ? [connectorArchivePath] : [])
     ].sort();
     const actualFiles = (await listOutputFiles(stagingDirectory)).sort();
     if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) {
@@ -383,6 +529,18 @@ async function build() {
     );
     if (forbidden.length) {
       throw new Error(`Forbidden public files: ${forbidden.join(", ")}`);
+    }
+    if (isBetaPreview) {
+      for (const file of actualFiles) {
+        const contents = await readFile(path.join(stagingDirectory, file));
+        for (const forbiddenPattern of betaForbiddenContentPatterns) {
+          if (contents.includes(Buffer.from(forbiddenPattern, "utf8"))) {
+            throw new Error(
+              `Beta Timetable preview file ${file} contains forbidden dependency: ${forbiddenPattern}`
+            );
+          }
+        }
+      }
     }
 
     await rm(distDirectory, { recursive: true, force: true });

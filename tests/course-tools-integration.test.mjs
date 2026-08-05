@@ -19,7 +19,7 @@ import {
 const read = (relativePath) =>
   readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
 
-test("adds Courses as the root course-search destination", async () => {
+test("keeps Courses as the production destination while the safe preview hides it", async () => {
   const index = await read("index.html");
   const controls = await read("concourse-controls.css");
   const navigation = index.match(
@@ -38,8 +38,8 @@ test("adds Courses as the root course-search destination", async () => {
   assert.match(index, /courseEngineNav:"Courses"/);
   assert.match(index, /courseEngineNav:"课程"/);
   assert.match(index, /courseEngineNav:"課程"/);
-  assert.match(index, /navigation\.hidden = false/);
-  assert.match(index, /courseSearchLink\.hidden = false/);
+  assert.match(index, /navigation\.hidden = CONCOURSE_SAFE_PREVIEW/);
+  assert.match(index, /courseSearchLink\.hidden = CONCOURSE_SAFE_PREVIEW/);
   assert.match(index, /timetableButton\.hidden = !signedIn/);
   assert.match(index, /hubButton\.hidden = !signedIn/);
   assert.match(index, /hubButton\.disabled = !hubAvailable/);

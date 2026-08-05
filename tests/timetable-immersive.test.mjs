@@ -46,6 +46,23 @@ test("the industrial monitor journey layers over the preserved planner", () => {
   assert.ok(existsSync(new URL("../vendor/three/three.core.min.js", import.meta.url)));
 });
 
+test("the unrendered and Beta profiles default to a local-only Timetable preview", () => {
+  assert.match(html, /const CONCOURSE_BUILD_PROFILE = "__CONCOURSE_BUILD_PROFILE__";/u);
+  assert.match(html, /const CONCOURSE_SAFE_PREVIEW = CONCOURSE_BUILD_PROFILE !== "production";/u);
+  assert.match(html, /<!-- __CONCOURSE_SUPABASE_SDK__ -->/u);
+  assert.match(html, /!CONCOURSE_SAFE_PREVIEW &&\s*\/\^https:/u);
+  assert.match(html, /document\.documentElement\.dataset\.concoursePreview = "timetable";/u);
+  assert.match(html, /\$\("authModal"\)\.inert = true;/u);
+  assert.match(html, /\$\("courseSearchNav"\)\.hidden = true;/u);
+  assert.match(html, /\$\("saveFinalTimetable"\)\.hidden = true;/u);
+  assert.match(html, /profileButton\.hidden = true;/u);
+  assert.ok(
+    html.indexOf("if(CONCOURSE_SAFE_PREVIEW){", html.indexOf("function initializeAccount"))
+      < html.indexOf("rememberVerificationEmail(restoreVerificationEmail());", html.indexOf("function initializeAccount")),
+    "preview initialization exits before account restoration"
+  );
+});
+
 test("the three physical control trays retain all 36 planner conditions and workflows", () => {
   const conditionControlIds = [
     "journeyCourseName",

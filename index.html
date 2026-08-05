@@ -3729,12 +3729,7 @@
   </section>
 </div>
 
-<script
-  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"
-  integrity="sha256-DuMHOPEzedO06xqfV3c99eVcC+pkOq13OC1HMzLfS3s="
-  crossorigin="anonymous"
-  referrerpolicy="no-referrer"
-></script>
+<!-- __CONCOURSE_SUPABASE_SDK__ -->
 <script>
 "use strict";
 const DAYS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -3751,6 +3746,8 @@ let activeSolution = 0;
 let genNote = "";        // banner note from last generation (e.g. free-day tradeoff)
 let finalTimetable = null; // explicitly saved final schedule snapshot for the semester
 let appStarted = true;  // the public FAN-T111 journey is the default entrance; account actions remain gated
+const CONCOURSE_BUILD_PROFILE = "__CONCOURSE_BUILD_PROFILE__";
+const CONCOURSE_SAFE_PREVIEW = CONCOURSE_BUILD_PROFILE !== "production";
 const ACTIVE_USER_STORAGE_KEY = "concourse_active_user_id_v1";
 const INSTITUTION_CONTEXT_STORAGE_KEY = "concourse_institution_context_v1";
 const SELECTION_HANDOFF_STORAGE_KEY = "concourse_timetable_selection_handoff_v1";
@@ -4745,7 +4742,12 @@ function applyLanguage(language, {persist=true}={}){
   }
   setAuthMode(authMode, {clearMessage:false, focus:false});
   renderAuthResendButton();
-  if(!SUPABASE_CONFIGURED || !window.supabase){
+  if(CONCOURSE_SAFE_PREVIEW){
+    $("authUser").hidden = true;
+    $("authAcademic").hidden = true;
+    $("authOpenBtn").hidden = true;
+    $("startHint").textContent = "Timetable design preview";
+  } else if(!SUPABASE_CONFIGURED || !window.supabase){
     $("authUser").textContent = t("supabaseRequired");
     $("authAcademic").hidden = true;
     $("authOpenBtn").textContent = t("configureLogin");
@@ -4829,6 +4831,7 @@ const PENDING_PRIVACY_NOTICE_STORAGE_KEY = "concourse_pending_privacy_notice";
 // without shipping a stale hard-coded URL.
 const AUTH_EMAIL_REDIRECT_URL = new URL(".", window.location.href).href;
 const SUPABASE_CONFIGURED =
+  !CONCOURSE_SAFE_PREVIEW &&
   /^https:\/\/.+\.supabase\.co$/.test(SUPABASE_URL) &&
   !SUPABASE_PUBLISHABLE_KEY.startsWith("PASTE_");
 
@@ -5105,7 +5108,7 @@ function syncPrimaryNavigation(){
   const hubActive = appStarted && document.body.classList.contains("hub-active");
   const timetableActive = appStarted && !hubActive;
 
-  if(navigation) navigation.hidden = false;
+  if(navigation) navigation.hidden = CONCOURSE_SAFE_PREVIEW;
   if(timetableButton){
     timetableButton.hidden = !signedIn;
     timetableButton.disabled = signedIn && !stateReady;
@@ -5121,7 +5124,7 @@ function syncPrimaryNavigation(){
     if(hubActive) hubButton.setAttribute("aria-current", "page");
   }
   if(courseSearchLink){
-    courseSearchLink.hidden = false;
+    courseSearchLink.hidden = CONCOURSE_SAFE_PREVIEW;
     courseSearchLink.removeAttribute("aria-current");
   }
 }
@@ -6390,9 +6393,7 @@ async function submitAuth(mode){
 }
 
 function initializeAccount(){
-  rememberVerificationEmail(restoreVerificationEmail());
   $("siteNoticeClose").onclick = clearSiteNotice;
-  $("authOpenBtn").onclick = openAuthModal;
   $("startAppBtn").onclick = enterPlanner;
   $("topTimetableBtn").onclick = openTimetableDestination;
   $("editSelections").onclick = showPlannerEditor;
@@ -6402,6 +6403,45 @@ function initializeAccount(){
     if(appStarted && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); leavePlanner(); }
   };
   updateBrandHomeState();
+
+  if(CONCOURSE_SAFE_PREVIEW){
+    document.documentElement.dataset.concoursePreview = "timetable";
+    document.body.dataset.concoursePreview = "timetable";
+    currentUser = null;
+    loadedUserId = null;
+    loadingUserId = null;
+    loadedAcademicProfile = {};
+    $("authUser").hidden = true;
+    $("authAcademic").hidden = true;
+    $("authOpenBtn").hidden = true;
+    $("signOutBtn").hidden = true;
+    $("saveAccountBtn").hidden = true;
+    $("saveFinalTimetable").hidden = true;
+    $("startAppBtn").hidden = true;
+    $("topTimetableBtn").hidden = true;
+    $("hubOpenBtn").hidden = true;
+    $("courseSearchNav").hidden = true;
+    $("authModal").hidden = true;
+    $("authModal").inert = true;
+    $("authModal").setAttribute("aria-hidden", "true");
+    if($("memberHub")){
+      $("memberHub").hidden = true;
+      $("memberHub").inert = true;
+      $("memberHub").setAttribute("aria-hidden", "true");
+    }
+    const profileButton = document.querySelector("[data-planner-profile]");
+    if(profileButton){
+      profileButton.hidden = true;
+      profileButton.inert = true;
+    }
+    $("startHint").textContent = "Timetable design preview";
+    leavePlanner();
+    finishConCourseInitialPaint();
+    return;
+  }
+
+  rememberVerificationEmail(restoreVerificationEmail());
+  $("authOpenBtn").onclick = openAuthModal;
   $("authCloseBtn").onclick = closeAuthModal;
   $("authUsername").addEventListener("input", handleUsernameInput);
   $("schoolName").addEventListener("input", handleSchoolInput);

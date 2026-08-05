@@ -175,6 +175,12 @@ test("production Pages build publishes only the explicit frontend artifact", () 
   assert.match(html, /rel="canonical" href="https:\/\/concoursehk\.com\/"/u);
   assert.match(html, /property="og:url" content="https:\/\/concoursehk\.com\/"/u);
   assert.doesNotMatch(html, /pages\.dev|github\.io|beta\.concoursehk\.com/u);
+  assert.match(html, /const CONCOURSE_BUILD_PROFILE = "production";/u);
+  assert.match(html, /@supabase\/supabase-js/u);
+  assert.match(html, /https:\/\/uqnwvxceznsxbxhkspeo\.supabase\.co/u);
+  assert.match(html, /sb_publishable_Sl_mKACQoAp70JNH3og2uw_hMFXSZn4/u);
+  assert.match(html, /window\.supabase\.createClient/u);
+  assert.match(html, /<script src="member-hub\.js/u);
   assert.match(
     html,
     /rel="icon"[^>]+href="\/favicon-32x32\.png\?v=20260731-double-c3"/u
@@ -337,43 +343,123 @@ test("production worker serves only the production origin", async () => {
   assert.equal(assets.requestCount(), 1);
 });
 
-test("beta build is public, origin-bound, functional, and excluded from indexing", async () => {
+test("beta build is a public, data-isolated Timetable preview", async () => {
   const result = runBuild(betaOrigin);
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+
+  const outputFiles = listFiles(path.join(projectRoot, "dist"));
+  for (const required of [
+    "index.html",
+    "_worker.js",
+    "timetable-immersive.css",
+    "timetable-immersive.js",
+    "timetable-machine-3d.mjs",
+    ...gsapArtifacts,
+    ...timetableMachineArtifacts
+  ]) {
+    assert.ok(outputFiles.includes(required), required);
+  }
+  for (const excluded of [
+    "navigation-state.js",
+    "institution-portal-policy.js",
+    "course-catalog.js",
+    "member-hub.js",
+    "hkbu-portal.js",
+    "marketplace.js",
+    "academic-tools.js",
+    "assistant/index.html",
+    "course-tools/course-tools.mjs",
+    "coursekeys/index.html",
+    "courses/index.html",
+    "data/hkbu-catalogue-current.json",
+    "downloads/concourse-hkbu-portal-connector.zip"
+  ]) {
+    assert.equal(outputFiles.includes(excluded), false, excluded);
+  }
+  for (const file of outputFiles) {
+    const contents = readFileSync(path.join(projectRoot, "dist", file));
+    for (const forbiddenPattern of [
+      "@supabase/supabase-js",
+      ".supabase.co",
+      "sb_publishable_",
+      "window.supabase.createClient",
+      "api.ror.org",
+      "universities.hipolabs.com"
+    ]) {
+      assert.equal(
+        contents.includes(Buffer.from(forbiddenPattern, "utf8")),
+        false,
+        `${file}: ${forbiddenPattern}`
+      );
+    }
+  }
 
   const html = readFileSync(path.join(projectRoot, "dist/index.html"), "utf8");
   assert.match(html, /rel="canonical" href="https:\/\/concoursehk\.com\/"/u);
   assert.match(html, /property="og:url" content="https:\/\/concoursehk\.com\/"/u);
-
-  const connector = readFileSync(
-    path.join(projectRoot, "dist/downloads/concourse-hkbu-portal-connector.zip")
-  );
-  assert.ok(connector.includes(Buffer.from(betaOrigin)));
-  assert.equal(connector.includes(Buffer.from(productionOrigin)), false);
+  assert.match(html, /const CONCOURSE_BUILD_PROFILE = "beta-timetable-preview";/u);
+  assert.match(html, /const CONCOURSE_SAFE_PREVIEW = CONCOURSE_BUILD_PROFILE !== "production";/u);
+  assert.match(html, /const SUPABASE_URL = "";/u);
+  assert.match(html, /const SUPABASE_PUBLISHABLE_KEY = "";/u);
+  assert.match(html, /const SUPABASE_CONFIGURED = false;/u);
+  assert.match(html, /authClient = null;/u);
+  assert.doesNotMatch(html, /@supabase\/supabase-js/u);
+  assert.doesNotMatch(html, /window\.supabase\.createClient/u);
+  assert.doesNotMatch(html, /uqnwvxceznsxbxhkspeo|sb_publishable_|api\.ror\.org|universities\.hipolabs\.com/u);
+  assert.doesNotMatch(html, /<script[^>]+(?:navigation-state|member-hub|hkbu-portal|marketplace|academic-tools)\.js/u);
+  assert.match(html, /\$\("authModal"\)\.inert = true;/u);
+  assert.match(html, /profileButton\.hidden = true;/u);
 
   const worker = await importWorker(
     readFileSync(path.join(projectRoot, "dist/_worker.js"), "utf8")
   );
   const assets = assetEnvironment();
   const betaResponse = await worker.fetch(
-    new Request(`${betaOrigin}/courses/`),
+    new Request(`${betaOrigin}/`),
     assets.env
   );
   assert.equal(betaResponse.status, 200);
-  assert.equal(await betaResponse.text(), "asset:/courses/");
+  assert.equal(await betaResponse.text(), "asset:/");
   assert.equal(betaResponse.headers.get("Cache-Control"), "private, no-store");
   assert.match(betaResponse.headers.get("X-Robots-Tag"), /noindex/u);
+  assert.match(betaResponse.headers.get("Content-Security-Policy"), /connect-src 'none'/u);
+  assert.doesNotMatch(betaResponse.headers.get("Content-Security-Policy"), /supabase/u);
   assert.equal(betaResponse.headers.has("WWW-Authenticate"), false);
   assert.equal(assets.requestCount(), 1);
 
+  for (const disabledPath of [
+    "/api/coursekeys/resources",
+    "/assistant/",
+    "/course-tools/",
+    "/coursekeys/",
+    "/courses/",
+    "/data/hkbu-catalogue-current.json",
+    "/downloads/concourse-hkbu-portal-connector.zip"
+  ]) {
+    const disabledResponse = await worker.fetch(
+      new Request(`${betaOrigin}${disabledPath}`),
+      assets.env
+    );
+    assert.equal(disabledResponse.status, 404, disabledPath);
+  }
+  assert.equal(assets.requestCount(), 1);
+
+  const mutationResponse = await worker.fetch(
+    new Request(`${betaOrigin}/`, {method:"POST"}),
+    assets.env
+  );
+  assert.equal(mutationResponse.status, 405);
+  assert.equal(mutationResponse.headers.get("Allow"), "GET, HEAD");
+  assert.equal(assets.requestCount(), 1);
+
   const productionResponse = await worker.fetch(
-    new Request(`${productionOrigin}/courses/`),
+    new Request(`${productionOrigin}/`),
     assets.env
   );
   assert.equal(productionResponse.status, 421);
 
   const previewResponse = await worker.fetch(
-    new Request("https://beta.concourse-95c.pages.dev/courses/"),
+    new Request("https://beta.concourse-95c.pages.dev/"),
     assets.env
   );
   assert.equal(previewResponse.status, 410);

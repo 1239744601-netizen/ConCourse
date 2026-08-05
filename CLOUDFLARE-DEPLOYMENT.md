@@ -44,13 +44,16 @@ branch alias. Provider-generated branch and hash URLs are covered by the
 account redirect; the origin-bound Worker also returns `410 Gone` if one
 reaches it directly.
 
-The beta hostname is intentionally public so design revisions can be reviewed
-without a separate access prompt. Beta responses remain `noindex`, `noarchive`,
-and `no-store`; provider preview URLs stay retired and the Worker remains bound
-to the approved beta origin. Beta currently uses the production Supabase
-configuration, so it must preserve the same authorization boundaries as the
-production application. Use a separate staging Supabase project before adding
-test-only privileged data or widening backend capabilities.
+The beta hostname is an intentionally public, Timetable-only design preview.
+Its build profile omits the Supabase SDK, clears the production Supabase
+endpoint and publishable key, excludes account and non-Timetable application
+scripts/routes, and fails if those production dependencies reappear. The Beta
+Worker rejects API and non-Timetable routes and applies a `connect-src 'none'`
+policy, so the preview cannot read or mutate production data. Responses remain
+`noindex`, `noarchive`, and `no-store`; provider preview URLs stay retired and
+the Worker remains bound to the approved beta origin. The former
+`CONCOURSE_BETA_ACCESS_TOKEN` Preview secret is no longer used and may be
+removed from Cloudflare as routine credential hygiene.
 
 GitHub Actions stores these encrypted repository secrets:
 

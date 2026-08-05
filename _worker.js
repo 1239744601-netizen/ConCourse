@@ -2,6 +2,17 @@ const SITE_ORIGIN = "__CONCOURSE_DEPLOYMENT_ORIGIN__";
 const PRODUCTION_ORIGIN = "https://concoursehk.com";
 const BETA_ORIGIN = "https://beta.concoursehk.com";
 const ALLOWED_SITE_ORIGINS = new Set([PRODUCTION_ORIGIN, BETA_ORIGIN]);
+const BETA_PREVIEW_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'none'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+const BETA_DISABLED_SECTIONS = new Set([
+  "api",
+  "assistant",
+  "course-tools",
+  "coursekeys",
+  "courses",
+  "data",
+  "downloads",
+  "extensions"
+]);
 
 function responseHeaders() {
   return {
@@ -54,6 +65,11 @@ function messageResponse(request, status, title, message, extraHeaders = {}) {
 function isPagesHostname(hostname) {
   const normalized = hostname.toLowerCase().replace(/\.+$/u, "");
   return normalized === "pages.dev" || normalized.endsWith(".pages.dev");
+}
+
+function isDisabledBetaSection(pathname) {
+  const firstSegment = pathname.split("/").filter(Boolean)[0]?.toLowerCase() || "";
+  return BETA_DISABLED_SECTIONS.has(firstSegment);
 }
 
 function enabled(value) {
@@ -152,6 +168,29 @@ export default {
       );
     }
 
+    if (SITE_ORIGIN === BETA_ORIGIN && isDisabledBetaSection(url.pathname)) {
+      return messageResponse(
+        request,
+        404,
+        "Preview unavailable",
+        "This public review build contains only the Timetable design preview."
+      );
+    }
+
+    if (
+      SITE_ORIGIN === BETA_ORIGIN
+      && request.method !== "GET"
+      && request.method !== "HEAD"
+    ) {
+      return messageResponse(
+        request,
+        405,
+        "Preview is read-only",
+        "This public review build does not accept data changes.",
+        {Allow:"GET, HEAD"}
+      );
+    }
+
     if (
       url.pathname === "/api/coursekeys/resources"
       || url.pathname === "/api/coursekeys/resources/"
@@ -166,6 +205,7 @@ export default {
 
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "private, no-store");
+    headers.set("Content-Security-Policy", BETA_PREVIEW_CSP);
     headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
     return new Response(response.body, {
       status:response.status,
